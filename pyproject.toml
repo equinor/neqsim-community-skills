@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-community-skills"
+version = "0.1.0"
+description = "Public community-contributed skills for NeqSim agentic engineering workflows."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "NeqSim community" }]
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+dev = ["pytest>=7.4", "ruff>=0.5"]
+
+[tool.setuptools]
+packages = []
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra"
+testpaths = ["skills"]
+pythonpath = [
+  "skills/process/separator-modelling/src",
+  "skills/pvt/fluid-quality-check/src",
+  "skills/flow-assurance/hydrate-screening/src",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

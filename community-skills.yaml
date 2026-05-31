@@ -1,0 +1,37 @@
+# NeqSim Community Skill Catalog Preview
+#
+# These entries mirror the format used by the main NeqSim community catalog:
+# https://github.com/equinor/neqsim/blob/master/community-skills.yaml
+#
+# To publish a skill, submit the corresponding entry to the main NeqSim repo.
+
+catalog_version: "1.0"
+last_updated: "2026-05-31"
+
+skills:
+  - name: neqsim-separator-modelling
+    version: "0.1.0"
+    description: "Educational separator screening indicators for gas load, residence time, and capacity warnings. USE WHEN: a task needs public separator capacity screening without proprietary design methods."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/separator-modelling/SKILL.md"
+    tags: [process, separator, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-fluid-quality-check
+    version: "0.1.0"
+    description: "Public checks for fluid composition quality before NeqSim simulation. USE WHEN: a task needs mole fraction sum checks, negative fraction checks, required component checks, or water/CO2/H2S flags."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/pvt/fluid-quality-check/SKILL.md"
+    tags: [pvt, composition, validation, quality]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-hydrate-screening
+    version: "0.1.0"
+    description: "Educational hydrate risk screening placeholder with public assumptions. USE WHEN: a task needs a quick hydrate risk triage and should be directed to validated NeqSim methods for real calculations."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/flow-assurance/hydrate-screening/SKILL.md"
+    tags: [flow-assurance, hydrate, screening, education]
+    min_neqsim_version: "3.7.0"

@@ -1,49 +1,89 @@
 # NeqSim Community Skills
 
-A community-driven collection of reusable engineering skills for NeqSim and agentic engineering workflows.
+NeqSim Community Skills is a public, open-source starting point for community-contributed skills that support [NeqSim](https://github.com/equinor/neqsim) users, AI agents, students, researchers, and engineers.
 
-This repository contains skills that help AI agents, engineers, researchers, and students perform process engineering, thermodynamic analysis, flow assurance studies, field development screening, and energy system evaluations using NeqSim.
+A skill is a small, self-contained knowledge package. It can contain:
 
-Skills are distributed as self-contained packages consisting of:
+- `SKILL.md` agent guidance with YAML frontmatter
+- optional Python implementation code
+- examples using public inputs
+- pytest tests
+- documentation and references
+- a validation checklist
 
-* `SKILL.md` knowledge files
-* Python implementations
-* Engineering examples
-* Validation tests
-* Documentation and references
-
-The goal is to create an open ecosystem where the community can contribute domain expertise, engineering workflows, and reusable analysis methods that can be leveraged by AI agents and engineers alike.
-
-## Typical Skill Areas
-
-* PVT and fluid characterization
-* Thermodynamics
-* Process simulation
-* Flow assurance
-* Compressor and rotating equipment analysis
-* Separator modelling
-* Heat exchanger analysis
-* CO₂ transport and CCS
-* Hydrogen production and transport
-* LNG processes
-* Energy efficiency and emissions
-* Field development and tie-in screening
-* Digital twins and process monitoring
-
-## Who Can Contribute?
-
-All NeqSim users are welcome with their contributions.
-
-Contributors can share engineering knowledge, Python implementations, workflows, and best practices without modifying the NeqSim core.
+This repository is for public knowledge only. Do not add proprietary methods, confidential data, internal tag names, private URLs, company-specific standards, unpublished correlations, or production design rules.
 
 ## Relationship to NeqSim
 
-This repository complements the main [NeqSim project](https://github.com/equinor/neqsim?utm_source=chatgpt.com).
+NeqSim provides the thermodynamic and process simulation engine. This repository provides community skills that can guide agents and users when applying open workflows around NeqSim.
 
-While NeqSim provides the simulation and thermodynamic engine, this repository provides reusable engineering skills and agent-ready workflows built on top of NeqSim.
+The main NeqSim repository documents the skill workflow in the [Skills Guide](https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md) and lists public community entries in [`community-skills.yaml`](https://github.com/equinor/neqsim/blob/master/community-skills.yaml).
 
-## Vision
+Community skills can be discovered and installed with the NeqSim CLI:
 
-Create the largest open collection of engineering skills for process systems engineering, enabling engineers and AI agents to collaborate on solving real-world energy, process, and sustainability challenges.
+```bash
+neqsim skill list                    # browse the catalog
+neqsim skill install <skill-name>    # install a skill
+neqsim skill publish user/repo-name  # publish yours by creating a draft PR
+```
 
-**Energy for people. Progress for society.**
+For this multi-skill repository, each skill is cataloged by a path such as `skills/process/separator-modelling/SKILL.md`.
+
+## Initial Skills
+
+| Skill | Catalog name | Purpose |
+| --- | --- | --- |
+| [skills/process/separator-modelling](skills/process/separator-modelling) | `neqsim-separator-modelling` | Educational gas/liquid separator screening indicators |
+| [skills/pvt/fluid-quality-check](skills/pvt/fluid-quality-check) | `neqsim-fluid-quality-check` | Public composition quality checks before simulation |
+| [skills/flow-assurance/hydrate-screening](skills/flow-assurance/hydrate-screening) | `neqsim-hydrate-screening` | Educational hydrate risk screening placeholder |
+
+These examples are intentionally simple. They are suitable for learning, testing agent workflows, and demonstrating the repository structure. They are not design tools.
+
+## Install and Run
+
+Use Python 3.10 or newer.
+
+```bash
+python -m venv .venv
+python -m pip install --upgrade pip
+python -m pip install -e ".[test]"
+python -m pytest
+```
+
+Install a specific example skill in editable mode:
+
+```bash
+python -m pip install -e skills/process/separator-modelling
+python skills/process/separator-modelling/examples/basic_separator_screening.py
+```
+
+The Python examples do not require confidential data. They detect whether the optional `neqsim` Python package is available and fall back to public placeholder logic when it is not installed.
+
+## How Agents Use Skills
+
+Agents read `SKILL.md` files when a task matches the skill description and `USE WHEN` trigger. A good skill gives the agent:
+
+- clear trigger conditions
+- expected inputs and outputs
+- public engineering assumptions
+- Python usage patterns
+- validation checks
+- common mistakes and limitations
+
+Installed community skills are typically stored under `~/.neqsim/skills/<name>/SKILL.md`. VS Code users can also copy a skill file to their user prompts folder and reference it from chat.
+
+## Contribute
+
+Start from [templates/skill-template](templates/skill-template), then add your skill under the most relevant domain folder in [skills](skills). Follow [CONTRIBUTING.md](CONTRIBUTING.md) and the standards in [docs/skill-standard.md](docs/skill-standard.md).
+
+Every contribution must:
+
+- use public, reproducible examples
+- include `SKILL.md`, `README.md`, `pyproject.toml`, `src`, `examples`, and `tests`
+- include pytest coverage for Python logic
+- document limitations clearly
+- avoid confidential or company-specific information
+
+## Public Limitations
+
+Community skills are not a substitute for validated NeqSim models, peer-reviewed methods, project design bases, or qualified engineering judgment. Use validated NeqSim methods and appropriate review for production work, safety-critical decisions, and formal design.

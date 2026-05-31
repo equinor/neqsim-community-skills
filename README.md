@@ -32,15 +32,7 @@ The goal is to create an open ecosystem where the community can contribute domai
 
 ## Who Can Contribute?
 
-We welcome contributions from:
-
-* Process engineers
-* Researchers
-* Students
-* Universities
-* Technology vendors
-* Industrial partners
-* Open-source developers
+All NeqSim users are welcome with their contributions.
 
 Contributors can share engineering knowledge, Python implementations, workflows, and best practices without modifying the NeqSim core.
 

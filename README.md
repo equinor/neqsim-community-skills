@@ -15,7 +15,7 @@ This repository is for public knowledge only. Do not add proprietary methods, co
 
 ## Relationship to NeqSim
 
-NeqSim provides the thermodynamic and process simulation engine. This repository provides community skills that can guide agents and users when applying open workflows around NeqSim.
+[NeqSim is a library for calculation of fluid behavior, phase equilibrium and process simulation](https://github.com/equinor/neqsim). It provides the thermodynamic and process simulation engine. This repository provides community skills that can guide agents and users when applying open workflows around NeqSim.
 
 The main NeqSim repository documents the skill workflow in the [Skills Guide](https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md) and lists public community entries in [`community-skills.yaml`](https://github.com/equinor/neqsim/blob/master/community-skills.yaml).
 

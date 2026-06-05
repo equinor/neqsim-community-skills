@@ -27,6 +27,11 @@ pythonpath = [
   "skills/process/separator-modelling/src",
   "skills/pvt/fluid-quality-check/src",
   "skills/flow-assurance/hydrate-screening/src",
+  "skills/process/piping-section-yaml/src",
+  "skills/process/process-factory/src",
+  "skills/process/compressor-validation/src",
+  "skills/process/digital-twin-validation/src",
+  "skills/process/vfp-generation/src",
 ]
 
 [tool.ruff]

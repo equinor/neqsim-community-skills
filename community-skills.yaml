@@ -35,3 +35,48 @@ skills:
     path: "skills/flow-assurance/hydrate-screening/SKILL.md"
     tags: [flow-assurance, hydrate, screening, education]
     min_neqsim_version: "3.7.0"
+
+  - name: neqsim-piping-section-yaml
+    version: "0.1.0"
+    description: "Load and validate piping/equipment section definitions from YAML, including fitting equivalent-length and elevation totals. USE WHEN: a task needs to parse a piping section spec, compute Crane TP-410 equivalent lengths, or validate section geometry before simulation."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/piping-section-yaml/SKILL.md"
+    tags: [process, piping, yaml, validation]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-process-factory
+    version: "0.1.0"
+    description: "Build a deterministic unit-operation plan from a piping/equipment section and optionally assemble a NeqSim process system. USE WHEN: a task needs to turn a section definition into ordered unit operations or wire equipment into a NeqSim ProcessSystem."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/process-factory/SKILL.md"
+    tags: [process, factory, neqsim, modelling]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-compressor-validation
+    version: "0.1.0"
+    description: "Evaluate centrifugal compressor operating points against speed-line performance curves with polytropic head, fan-law scaling, chart tuning, and drivetrain shaft power. USE WHEN: a task needs to interpolate a compressor map, compute polytropic head/power, or check an operating point against a curve."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/compressor-validation/SKILL.md"
+    tags: [process, compressor, performance, validation]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-digital-twin-validation
+    version: "0.1.0"
+    description: "Compare measured plant data against simulated values with per-channel absolute/percent tolerances and produce a PASS/WARN/FAIL HTML validation report. USE WHEN: a task needs tolerance-based reconciliation of measured vs simulated values or a digital-twin validation report."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/digital-twin-validation/SKILL.md"
+    tags: [process, validation, digital-twin, reporting]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-vfp-generation
+    version: "0.1.0"
+    description: "Generate, post-process, import, and compare Eclipse VFPPROD lift-curve tables from a constraint-based compressor model, with a documented diagnostic visualization style. USE WHEN: a task needs to build or read VFPPROD tables, classify operating points against compressor constraints, or enforce monotonic lift curves."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/vfp-generation/SKILL.md"
+    tags: [process, vfp, eclipse, compressor]
+    min_neqsim_version: "3.7.0"

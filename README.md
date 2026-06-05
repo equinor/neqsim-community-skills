@@ -36,6 +36,11 @@ For this multi-skill repository, each skill is cataloged by a path such as `skil
 | [skills/process/separator-modelling](skills/process/separator-modelling) | `neqsim-separator-modelling` | Educational gas/liquid separator screening indicators |
 | [skills/pvt/fluid-quality-check](skills/pvt/fluid-quality-check) | `neqsim-fluid-quality-check` | Public composition quality checks before simulation |
 | [skills/flow-assurance/hydrate-screening](skills/flow-assurance/hydrate-screening) | `neqsim-hydrate-screening` | Educational hydrate risk screening placeholder |
+| [skills/process/piping-section-yaml](skills/process/piping-section-yaml) | `neqsim-piping-section-yaml` | Load and validate piping/equipment sections from YAML with fitting equivalent-length |
+| [skills/process/process-factory](skills/process/process-factory) | `neqsim-process-factory` | Build a deterministic unit-operation plan and optional NeqSim process system from a section |
+| [skills/process/compressor-validation](skills/process/compressor-validation) | `neqsim-compressor-validation` | Evaluate compressor operating points against performance curves with polytropic head/power |
+| [skills/process/digital-twin-validation](skills/process/digital-twin-validation) | `neqsim-digital-twin-validation` | Tolerance-based measured-vs-simulated reconciliation with HTML validation report |
+| [skills/process/vfp-generation](skills/process/vfp-generation) | `neqsim-vfp-generation` | Constraint classification and Eclipse VFPPROD lift-curve import/export |
 
 These examples are intentionally simple. They are suitable for learning, testing agent workflows, and demonstrating the repository structure. They are not design tools.
 

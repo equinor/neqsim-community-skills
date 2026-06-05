@@ -1,0 +1,43 @@
+# Demonstration piping section (public, synthetic).
+# Inlet header to a scrubber, then a two-branch parallel run to an outlet.
+section_id: demo_inlet
+description: "Inlet header to scrubber with a parallel two-branch run"
+
+flow_path:
+  - type: node
+    id: header
+    pressure_bara: 90.0
+    temperature_C: 40.0
+
+  - type: segment
+    id: S1
+    length_m: 57.8
+    inner_diameter_m: 0.467
+    elevation_m: 3.5
+    wall_roughness_m: 0.000046
+    fittings:
+      - { type: elbow_90, count: 4 }
+      - { type: tee_branch, count: 1 }
+
+  - type: equipment
+    id: scrubber
+    equipment_type: gas_scrubber
+
+  - type: parallel
+    split_factors: [0.5, 0.5]
+    branches:
+      - - type: segment
+          id: A1
+          length_m: 20.0
+          inner_diameter_m: 0.30
+          fittings:
+            - { type: elbow_90, count: 2 }
+      - - type: segment
+          id: B1
+          length_m: 20.0
+          inner_diameter_m: 0.30
+          fittings:
+            - { type: elbow_90, count: 2 }
+
+  - type: node
+    id: outlet

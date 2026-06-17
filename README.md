@@ -78,6 +78,47 @@ Agents read `SKILL.md` files when a task matches the skill description and `USE 
 
 Installed community skills are typically stored under `~/.neqsim/skills/<name>/SKILL.md`. VS Code users can also copy a skill file to their user prompts folder and reference it from chat.
 
+## Using a Skill in a Harness
+
+A *harness* is any small driver program (a test, a script, a CLI, or the main NeqSim repo's task workflow) that loads a skill's Python package and calls it directly. Each skill ships an installable package, so a harness only needs the package name and the documented `evaluate` contract.
+
+1. Install the skill package (from this repo or after `neqsim skill install <name>`):
+
+   ```bash
+   python -m pip install -e skills/flow-assurance/hydrate-margin-check
+   ```
+
+2. Import the model and call it from your harness:
+
+   ```python
+   # harness.py — runs a community skill from anywhere, including the neqsim main repo
+   from hydrate_margin_check import HydrateMarginModel
+
+   model = HydrateMarginModel(min_margin=3.0)
+   result = model.evaluate(
+       operating_temperature=15.0,        # deg C
+       hydrate_equilibrium_temperature=8.0,  # deg C (from a validated NeqSim hydrate calc)
+   )
+
+   print(result.hydrate_margin_c, result.margin_warning)
+   for note in result.assumptions:
+       print("assumption:", note)
+   ```
+
+3. Feed the inputs from a validated NeqSim calculation. In the main NeqSim repo, compute the hydrate equilibrium temperature with NeqSim, then pass it into the skill as `hydrate_equilibrium_temperature`. The skill stays a thin, testable screening layer on top of the physics.
+
+The same pattern works for every skill: read its `SKILL.md` for the package name and the `evaluate` keyword arguments, install the package, then call it. Because each skill is a normal Python package, a harness can compose several skills in one run and surface their combined assumptions and limitations for human review.
+
+### Automatic discovery via the Engineering Harness
+
+This repository publishes a machine-readable catalog, [`community-skills.yaml`](community-skills.yaml), so a runtime can discover every skill without scanning each `SKILL.md` by hand. The [Engineering Harness](https://github.com/equinor/engineering-harness) lists this repo as a default plugin source and imports it with:
+
+```powershell
+engineering-harness plugins sync      # imports community skills (public, no token)
+```
+
+Each catalog entry maps to a harness `Skill` (name, description, `recommended_tools: [neqsim]`, tags). The harness then loads these skills alongside its own examples, so a workflow launched from the main NeqSim repo can reference them by name.
+
 ## Contribute
 
 Start from [templates/skill-template](templates/skill-template), then add your skill under the most relevant domain folder in [skills](skills). Follow [CONTRIBUTING.md](CONTRIBUTING.md) and the standards in [docs/skill-standard.md](docs/skill-standard.md).

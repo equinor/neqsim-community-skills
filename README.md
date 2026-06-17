@@ -36,6 +36,12 @@ For this multi-skill repository, each skill is cataloged by a path such as `skil
 | [skills/process/separator-modelling](skills/process/separator-modelling) | `neqsim-separator-modelling` | Educational gas/liquid separator screening indicators |
 | [skills/pvt/fluid-quality-check](skills/pvt/fluid-quality-check) | `neqsim-fluid-quality-check` | Public composition quality checks before simulation |
 | [skills/flow-assurance/hydrate-screening](skills/flow-assurance/hydrate-screening) | `neqsim-hydrate-screening` | Educational hydrate risk screening placeholder |
+| [skills/safety/relief-load-screening](skills/safety/relief-load-screening) | `neqsim-relief-load-screening` | Educational fire-case relief load screening placeholder |
+| [skills/safety/depressurization-screening](skills/safety/depressurization-screening) | `neqsim-depressurization-screening` | Educational blowdown time and low-temperature screening placeholder |
+| [skills/process/line-velocity-check](skills/process/line-velocity-check) | `neqsim-line-velocity-check` | Educational line velocity screening against erosional velocity and a guideline |
+| [skills/process/compressor-operating-window-check](skills/process/compressor-operating-window-check) | `neqsim-compressor-operating-window-check` | Educational compressor surge/stonewall operating window screening placeholder |
+| [skills/flow-assurance/hydrate-margin-check](skills/flow-assurance/hydrate-margin-check) | `neqsim-hydrate-margin-check` | Educational hydrate operating-margin (subcooling) screening placeholder |
+| [skills/flow-assurance/wax-margin-check](skills/flow-assurance/wax-margin-check) | `neqsim-wax-margin-check` | Educational wax appearance temperature operating-margin screening placeholder |
 
 These examples are intentionally simple. They are suitable for learning, testing agent workflows, and demonstrating the repository structure. They are not design tools.
 

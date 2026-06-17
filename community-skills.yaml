@@ -35,3 +35,57 @@ skills:
     path: "skills/flow-assurance/hydrate-screening/SKILL.md"
     tags: [flow-assurance, hydrate, screening, education]
     min_neqsim_version: "3.7.0"
+
+  - name: neqsim-relief-load-screening
+    version: "0.1.0"
+    description: "Educational fire-case relief load screening placeholder with public assumptions. USE WHEN: a task needs a quick fire-zone relief load triage and should be directed to validated API 520/521 and NeqSim methods for real relief sizing."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/relief-load-screening/SKILL.md"
+    tags: [safety, relief, fire-case, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-depressurization-screening
+    version: "0.1.0"
+    description: "Educational blowdown and depressurization screening with time-to-target and low-temperature flags. USE WHEN: a task needs a public, screening-level blowdown time indicator and auto-refrigeration low-temperature triage without proprietary blowdown design methods."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/depressurization-screening/SKILL.md"
+    tags: [safety, depressurization, blowdown, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-line-velocity-check
+    version: "0.1.0"
+    description: "Educational process line velocity screening against erosional velocity and a velocity guideline. USE WHEN: a task needs a public, screening-level check that a pipe flow velocity sits within erosional-velocity and NORSOK/API line-velocity guidelines before detailed line sizing."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/line-velocity-check/SKILL.md"
+    tags: [process, line-sizing, velocity, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-compressor-operating-window-check
+    version: "0.1.0"
+    description: "Educational compressor operating window screening against surge and stonewall margins. USE WHEN: a task needs a public, screening-level check that a centrifugal compressor operating point sits inside the surge and stonewall limits before detailed performance review."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/compressor-operating-window-check/SKILL.md"
+    tags: [process, compressor, operating-window, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-hydrate-margin-check
+    version: "0.1.0"
+    description: "Educational hydrate operating-margin screening placeholder with public assumptions. USE WHEN: a task needs a quick check of whether an operating point keeps a safe temperature margin above a hydrate equilibrium temperature and should be directed to validated NeqSim methods for real calculations."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/flow-assurance/hydrate-margin-check/SKILL.md"
+    tags: [flow-assurance, hydrate, margin, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-wax-margin-check
+    version: "0.1.0"
+    description: "Educational wax operating-margin screening placeholder with public assumptions. USE WHEN: a task needs a quick check of whether an operating point keeps a safe temperature margin above a wax appearance temperature and should be directed to validated NeqSim methods for real calculations."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/flow-assurance/wax-margin-check/SKILL.md"
+    tags: [flow-assurance, wax, margin, screening, education]
+    min_neqsim_version: "3.7.0"

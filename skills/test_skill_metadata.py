@@ -32,7 +32,7 @@ def _frontmatter(text: str) -> dict[str, str]:
 def test_all_public_skills_have_required_frontmatter_and_sections() -> None:
     skill_files = sorted(SKILL_ROOT.glob("*/*/SKILL.md"))
 
-    assert len(skill_files) == 3
+    assert len(skill_files) == 9
     for skill_file in skill_files:
         text = skill_file.read_text(encoding="utf-8")
         metadata = _frontmatter(text)

@@ -89,3 +89,93 @@ skills:
     path: "skills/flow-assurance/wax-margin-check/SKILL.md"
     tags: [flow-assurance, wax, margin, screening, education]
     min_neqsim_version: "3.7.0"
+
+  - name: neqsim-pressure-drop-screening
+    version: "0.1.0"
+    description: "Educational single-phase line pressure-drop screening against a recommended pressure-gradient guideline. USE WHEN: a task needs a public, screening-level Darcy-Weisbach pressure-drop estimate and a check against NORSOK P-002 / GPSA style line pressure-gradient guidelines before detailed hydraulic design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/pressure-drop-screening/SKILL.md"
+    tags: [process, pressure-drop, hydraulics, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-flow-induced-vibration-screening
+    version: "0.1.0"
+    description: "Educational flow-induced vibration (FIV) screening using a public fluid kinetic-energy (rho v^2) likelihood-of-failure index. USE WHEN: a task needs a public, screening-level check of whether a main-line flow velocity and density produce a kinetic-energy level that warrants a detailed Energy Institute style FIV assessment before piping vibration design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/flow-induced-vibration-screening/SKILL.md"
+    tags: [process, vibration, piping, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-pipe-wall-thickness-screening
+    version: "0.1.0"
+    description: "Educational process-pipe wall-thickness screening using the public ASME B31.3 hoop-stress (Barlow style) equation. USE WHEN: a task needs a public, screening-level minimum wall-thickness estimate and a check against a nominal schedule wall before detailed piping or pipeline mechanical design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/pipe-wall-thickness-screening/SKILL.md"
+    tags: [process, piping, mechanical, wall-thickness, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-flare-radiation-screening
+    version: "0.1.0"
+    description: "Educational flare thermal-radiation screening using the public API 521 / API 537 point-source equation. USE WHEN: a task needs a public, screening-level estimate of radiant heat flux at a distance from a flare and a check against allowable radiation limits before detailed flare and radiation design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/flare-radiation-screening/SKILL.md"
+    tags: [safety, flare, radiation, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-psv-orifice-screening
+    version: "0.1.0"
+    description: "Educational pressure-safety-valve orifice screening using the public API 520 Part I critical gas-flow equation. USE WHEN: a task needs a public, screening-level required PSV orifice area and a mapped API orifice letter before detailed relief-valve sizing and selection."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/psv-orifice-screening/SKILL.md"
+    tags: [safety, relief, psv, orifice, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-safety-function-coverage-screening
+    version: "0.1.0"
+    description: "Educational process safety-function coverage screening using the public API RP 14C / ISO 10418 SAFE-chart concept. USE WHEN: a task needs a public, screening-level check of whether a process component has the typically required protective functions (PSH, PSL, PSV, LSH, LSL, etc.) before a formal SAFE-chart and safety analysis review."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/safety-function-coverage-screening/SKILL.md"
+    tags: [safety, safe-chart, protective-functions, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-water-dewpoint-dehydration-screening
+    version: "0.1.0"
+    description: "Educational gas water-content and dehydration screening using a public saturated-water-content correlation. USE WHEN: a task needs a public, screening-level estimate of saturated water content in natural gas and a check against a sales-gas water spec before detailed dehydration design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/water-dewpoint-dehydration-screening/SKILL.md"
+    tags: [process, dehydration, water-content, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-compressor-power-screening
+    version: "0.1.0"
+    description: "Educational centrifugal-compressor power screening using the public polytropic-head equation (API 617 / API 619 style). USE WHEN: a task needs a public, screening-level estimate of polytropic head, discharge temperature, and gas power for a single compression stage before detailed compressor selection."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/compressor-power-screening/SKILL.md"
+    tags: [process, compressor, power, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-fired-heater-duty-screening
+    version: "0.1.0"
+    description: "Educational fired-heater duty and radiant-flux screening using public energy-balance relations (API 560 style). USE WHEN: a task needs a public, screening-level estimate of process duty, fired duty, fuel rate, and average radiant flux for a fired heater before detailed thermal design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/fired-heater-duty-screening/SKILL.md"
+    tags: [process, fired-heater, duty, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-resource-classification-screening
+    version: "0.1.0"
+    description: "Educational petroleum resource classification screening using the public SPE-PRMS framework and the open Norwegian Petroleum Directorate resource-class scheme. USE WHEN: a task needs a public, screening-level mapping of a project maturity stage to a reserves, contingent-resources, or prospective-resources category before a formal resource estimate."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/resource-classification-screening/SKILL.md"
+    tags: [field-development, reserves, resource-classification, screening, education]
+    min_neqsim_version: "3.7.0"

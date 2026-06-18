@@ -54,9 +54,19 @@ Every skill must include:
 - `Validation Checklist`
 - `Common Mistakes`
 - `Limitations`
+- `Related NeqSim Functionality`
 - `References`
 
 Use clear units for all engineering quantities. Distinguish screening assumptions from validated simulation methods.
+
+## Linking to NeqSim Functionality
+
+Where possible, every skill should link to NeqSim functionality in a `Related NeqSim Functionality` section. This makes the skill traceable to the validated engine that does the real calculation:
+
+- Name the concrete NeqSim Java classes or methods the skill maps to, for example `neqsim.thermodynamicoperations.ThermodynamicOperations#TPflash()` or `neqsim.process.equipment.separator.Separator`, and/or the relevant NeqSim MCP tool.
+- Note how NeqSim is reached, for example `from neqsim import jneqsim` in Python.
+- If a skill only prepares, transports, or renders data (document reading, historian access, reporting), say so honestly and name the downstream NeqSim Java/MCP workflow the data feeds into rather than claiming it runs calculations itself.
+- Only cite NeqSim classes, methods, or MCP tools that actually exist. If no NeqSim functionality applies yet, state that explicitly and, where useful, record it as a candidate NeqSim gap.
 
 ## Public Content Rules
 

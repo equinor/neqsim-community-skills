@@ -77,6 +77,15 @@ If the optional `neqsim` Python package is available, the result records that fa
 - No proprietary hydrate curves or company operating envelopes are included.
 - Not suitable for flow assurance design, inhibitor dosage, or operating-limit decisions.
 
+## Related NeqSim Functionality
+
+This educational screening corresponds to validated, rigorous functionality in the NeqSim Java library that a qualified engineer should use for design-grade work:
+
+- `neqsim.thermo.system.SystemSrkCPAstatoil` — CPA equation of state for water-bearing natural gas.
+- `neqsim.thermodynamicoperations.ThermodynamicOperations#hydrateFormationTemperature()` — rigorous hydrate equilibrium temperature.
+
+In Python the same classes are reachable through the `neqsim` package (for example `from neqsim import jneqsim`).
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

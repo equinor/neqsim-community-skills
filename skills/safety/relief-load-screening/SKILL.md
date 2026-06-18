@@ -89,6 +89,15 @@ If the optional `neqsim` Python package is available, the result records that fa
 - No back-pressure, inlet/outlet line, or reaction-force checks are included.
 - Not suitable for safety-critical, design, guarantee, or standards-compliance work.
 
+## Related NeqSim Functionality
+
+This educational screening corresponds to validated, rigorous functionality in the NeqSim Java library that a qualified engineer should use for design-grade work:
+
+- `neqsim.process.util.fire.ReliefValveSizing` — API 520 / API 521 relief-load and orifice sizing.
+- `neqsim.process.equipment.valve.SafetyValve` — relief-device model inside a process flowsheet.
+
+In Python the same classes are reachable through the `neqsim` package (for example `from neqsim import jneqsim`).
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

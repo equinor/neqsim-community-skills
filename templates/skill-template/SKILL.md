@@ -56,6 +56,15 @@ Describe the public method, assumptions, and boundaries. State clearly whether t
 - No confidential data or proprietary methods are included.
 - State what this skill must not be used for.
 
+## Related NeqSim Functionality
+
+Link this skill to NeqSim functionality where possible:
+
+- NeqSim Java classes/methods this skill maps to, for example `neqsim.thermodynamicoperations.ThermodynamicOperations#TPflash()`.
+- NeqSim MCP tools, if applicable.
+- How NeqSim is reached, for example `from neqsim import jneqsim`.
+- If the skill only supplies or renders data, name the downstream NeqSim Java/MCP workflow it feeds instead of claiming it runs calculations. Only cite functionality that actually exists.
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

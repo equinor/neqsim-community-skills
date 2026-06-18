@@ -89,6 +89,15 @@ If the optional `neqsim` Python package is available, the result records that fa
 - No transient, recycle, or control-margin dynamics are included.
 - Not suitable for safety-critical, design, guarantee, or standards-compliance work.
 
+## Related NeqSim Functionality
+
+This educational screening corresponds to validated, rigorous functionality in the NeqSim Java library that a qualified engineer should use for design-grade work:
+
+- `neqsim.process.equipment.compressor.Compressor` — rigorous polytropic compression with real-gas properties.
+- `neqsim.process.equipment.compressor.CompressorChart` — vendor performance maps with surge and stonewall limits.
+
+In Python the same classes are reachable through the `neqsim` package (for example `from neqsim import jneqsim`).
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

@@ -95,6 +95,15 @@ If the optional `neqsim` Python package is available, the result records that fa
 - No reaction force, flare back-pressure, or downstream network effects are included.
 - Not suitable for safety-critical, design, guarantee, or standards-compliance work.
 
+## Related NeqSim Functionality
+
+This educational screening corresponds to validated, rigorous functionality in the NeqSim Java library that a qualified engineer should use for design-grade work:
+
+- `neqsim.process.safety.depressurization.DepressurizationSimulator` — transient blowdown inventory and time-to-target-pressure.
+- `neqsim.process.equipment.valve.SafetyValve` — relief/blowdown valve model inside a process flowsheet.
+
+In Python the same classes are reachable through the `neqsim` package (for example `from neqsim import jneqsim`).
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

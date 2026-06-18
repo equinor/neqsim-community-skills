@@ -90,6 +90,15 @@ If the optional `neqsim` Python package is available, the result records that fa
 - No transient, slug, or acoustic velocity checks are included.
 - Not suitable for safety-critical, design, guarantee, or standards-compliance work.
 
+## Related NeqSim Functionality
+
+This educational screening corresponds to validated, rigorous functionality in the NeqSim Java library that a qualified engineer should use for design-grade work:
+
+- `neqsim.process.equipment.pipeline.PipeBeggsAndBrills` — rigorous multiphase pressure drop and velocity profile.
+- `neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe` — two-phase pipe hydraulics for line-velocity evaluation.
+
+In Python the same classes are reachable through the `neqsim` package (for example `from neqsim import jneqsim`).
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

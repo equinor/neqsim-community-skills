@@ -82,6 +82,15 @@ If the optional `neqsim` Python package is available, the result records that fa
 - No proprietary wax models or company operating limits are included.
 - Not suitable for flow assurance design, pigging strategy, or operating-limit decisions.
 
+## Related NeqSim Functionality
+
+This educational screening corresponds to validated, rigorous functionality in the NeqSim Java library that a qualified engineer should use for design-grade work:
+
+- `neqsim.thermo.system.SystemInterface#addWaxModel()` — solid wax-phase characterisation for the fluid.
+- `neqsim.thermodynamicoperations.ThermodynamicOperations#calcWAT()` — rigorous wax appearance temperature.
+
+In Python the same classes are reachable through the `neqsim` package (for example `from neqsim import jneqsim`).
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

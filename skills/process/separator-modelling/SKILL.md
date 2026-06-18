@@ -91,6 +91,15 @@ If the optional `neqsim` Python package is available, the result records that fa
 - No droplet settling, foam, carryover, control, or slugging model is included.
 - Not suitable for safety-critical, design, guarantee, or standards-compliance work.
 
+## Related NeqSim Functionality
+
+This educational screening corresponds to validated, rigorous functionality in the NeqSim Java library that a qualified engineer should use for design-grade work:
+
+- `neqsim.process.equipment.separator.Separator` and `neqsim.process.equipment.separator.ThreePhaseSeparator` — rigorous gas/liquid separation with phase equilibrium.
+- `neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign` — Souders-Brown gas-load factor, retention-time sizing, and demister/inlet-device internals.
+
+In Python the same classes are reachable through the `neqsim` package (for example `from neqsim import jneqsim`).
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

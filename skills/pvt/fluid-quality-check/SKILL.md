@@ -87,6 +87,15 @@ If the optional `neqsim` Python package is available, the result records that fa
 - Water, CO2, and H2S flags are informational only and are not compliance checks.
 - Not a replacement for validated PVT analysis or NeqSim thermodynamic calculations.
 
+## Related NeqSim Functionality
+
+This educational screening corresponds to validated, rigorous functionality in the NeqSim Java library that a qualified engineer should use for design-grade work:
+
+- `neqsim.thermodynamicoperations.ThermodynamicOperations#TPflash()` — rigorous phase equilibrium for composition quality checks.
+- `neqsim.standards.gasquality.Standard_ISO6976` — ISO 6976 calorific value, density, and Wobbe index.
+
+In Python the same classes are reachable through the `neqsim` package (for example `from neqsim import jneqsim`).
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

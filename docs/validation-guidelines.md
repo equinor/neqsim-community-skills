@@ -25,6 +25,7 @@ python skills/<domain>/<skill-name>/examples/<example>.py
 - Optional NeqSim integration does not break when NeqSim is not installed.
 - `SKILL.md` usage patterns match executable code.
 - Limitations prevent confusion between screening examples and validated calculations.
+- `SKILL.md` includes a `Related NeqSim Functionality` section that links the skill to real NeqSim Java classes/methods or NeqSim MCP tools where possible, or states explicitly that none applies yet.
 
 ## Public Example Data
 

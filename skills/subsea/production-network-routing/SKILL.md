@@ -1,7 +1,7 @@
 ---
 name: neqsim-production-network-routing
 version: "0.1.0"
-description: "Educational production-network routing screening that routes wells through manifolds and flowlines/risers to a host and rolls up an arrival pressure. USE WHEN: a task needs a public, screening-level inflow rate per well, aggregated manifold rates, and a platform arrival-pressure roll-up before detailed NeqSim inflow and multiphase-hydraulics design."
+description: "Educational production-network routing screening that routes wells through manifolds and flowlines/risers to a host and rolls up an arrival pressure, and screens multiwell flow regulated by a facility inlet/separator pressure. USE WHEN: a task needs a public, screening-level inflow rate per well, aggregated manifold rates, a platform arrival-pressure roll-up, or pressure-regulated multiwell flow from an inlet/separator and reservoir pressures before detailed NeqSim inflow and multiphase-hydraulics design."
 last_verified: "2026-06-24"
 requires:
   python_packages: []
@@ -50,6 +50,10 @@ multiphase-hydraulics workflows.
 - `neqsim_available`: whether the optional NeqSim package is importable.
 - `assumptions`: public assumptions and required follow-up.
 
+A separate `regulate_flow_from_inlet_pressure` entry point screens
+pressure-regulated multiwell flow from a facility inlet/separator pressure and
+the reservoir pressures (see "Pressure-Regulated Multiwell / Manifold Flow").
+
 ## Engineering Method
 
 Each well rate is a linear productivity-index inflow:
@@ -90,6 +94,50 @@ result = ProductionNetworkModel().evaluate(
 )
 print(result.min_arrival_pressure_bara, result.overall_warning)
 ```
+
+## Pressure-Regulated Multiwell / Manifold Flow
+
+In addition to the arrival-pressure roll-up above, this skill can screen the
+inverse problem: **given a fixed facility inlet/separator pressure and each
+well's reservoir pressure, how much does each well flow?** This generalizes the
+single-train NeqSim `Adjuster` pattern (which tunes one well rate to hit a target
+pipeline outlet pressure) to many wells and manifolds, mirroring NeqSim
+`WellFlowlineNetwork.setTargetEndpointPressure`.
+
+`regulate_flow_from_inlet_pressure(wells, target_inlet_pressure_bara,
+segment_dp_bar=None)`:
+
+- Each well's flowing bottomhole pressure is the target inlet pressure plus a
+  screening sum of segment pressure drops (`well`, `choke`, `flowline`, `riser`;
+  default `60 + 10 + 5 + 8 = 83` bar). Override per call or per well via
+  `segment_dp_bar`.
+- Each well rate is a linear productivity-index inflow:
+  `q = PI * max(0, P_res - P_bhp)`. A well whose reservoir pressure cannot
+  overcome the flowing bottomhole pressure flags `high` and produces zero rate.
+- An optional per-well `max_rate_sm3_per_day` caps the rate and flags `watch`.
+
+```python
+from production_network_routing import ProductionNetworkModel
+
+wells = [
+    {"name": "WELL-A", "manifold": "MANIFOLD-1", "reservoir_pressure_bara": 300.0,
+     "productivity_index_sm3_per_day_bar": 1.0e5},
+    {"name": "WELL-B", "manifold": "MANIFOLD-1", "reservoir_pressure_bara": 295.0,
+     "productivity_index_sm3_per_day_bar": 0.9e5},
+]
+
+regulated = ProductionNetworkModel().regulate_flow_from_inlet_pressure(
+    wells=wells, target_inlet_pressure_bara=140.0,
+)
+print(regulated.total_rate_sm3_per_day, regulated.flowing_well_count)
+for w in regulated.wells:
+    print(w.name, w.flowing_bottomhole_pressure_bara, w.rate_sm3_per_day, w.flow_warning)
+```
+
+Outputs: per-well `flowing_bottomhole_pressure_bara`, `drawdown_bar`,
+`rate_sm3_per_day`, and `flow_warning`; network `total_rate_sm3_per_day`,
+`flowing_well_count`, `segment_dp_bar`, `overall_warning`, `neqsim_available`,
+and `assumptions`.
 
 ## Validated NeqSim Path
 

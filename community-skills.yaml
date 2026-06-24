@@ -81,6 +81,15 @@ skills:
     tags: [process, compressor, operating-window, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-compressor-antisurge-recycle
+    version: "0.1.0"
+    description: "Set up anti-surge recycle control for a centrifugal compressor in NeqSim, including auto-generating a compressor chart with surge and stonewall curves when no vendor chart is given. USE WHEN: a task needs to protect a NeqSim compressor from surge with a recycle (spill-back) loop driven by the anti-surge Calculator, and a compressor performance chart (with surge and stonewall curves) is either supplied or must be generated."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/compressor-antisurge-recycle/SKILL.md"
+    tags: [process, compressor, anti-surge, recycle, compressor-chart, surge, stonewall]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-hydrate-margin-check
     version: "0.1.0"
     description: "Educational hydrate operating-margin screening placeholder with public assumptions. USE WHEN: a task needs a quick check of whether an operating point keeps a safe temperature margin above a hydrate equilibrium temperature and should be directed to validated NeqSim methods for real calculations."

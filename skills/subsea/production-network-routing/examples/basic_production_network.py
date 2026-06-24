@@ -78,6 +78,39 @@ def main() -> None:
         "MCP runPipeline / runProcess"
     )
 
+    # Pressure-regulated multiwell flow: solve each well rate from a fixed
+    # facility inlet/separator pressure and the reservoir pressures.
+    regulated = ProductionNetworkModel().regulate_flow_from_inlet_pressure(
+        wells=[
+            {
+                "name": "WELL-A",
+                "manifold": "MANIFOLD-1",
+                "reservoir_pressure_bara": 300.0,
+                "productivity_index_sm3_per_day_bar": 1.0e5,
+            },
+            {
+                "name": "WELL-B",
+                "manifold": "MANIFOLD-1",
+                "reservoir_pressure_bara": 295.0,
+                "productivity_index_sm3_per_day_bar": 0.9e5,
+            },
+        ],
+        target_inlet_pressure_bara=140.0,
+    )
+
+    print("\nPressure-regulated flow (inlet 140 bara):")
+    print(f"  segment dp: {regulated.segment_dp_bar} bar")
+    print(
+        f"  total rate: {regulated.total_rate_sm3_per_day:.0f} Sm3/day, "
+        f"flowing wells: {regulated.flowing_well_count}, "
+        f"verdict: {regulated.overall_warning}"
+    )
+    for well in regulated.wells:
+        print(
+            f"  {well.name}: fbhp {well.flowing_bottomhole_pressure_bara} bara, "
+            f"rate {well.rate_sm3_per_day:.0f} Sm3/day ({well.flow_warning})"
+        )
+
 
 if __name__ == "__main__":
     main()

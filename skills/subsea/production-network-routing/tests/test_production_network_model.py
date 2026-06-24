@@ -140,3 +140,72 @@ def test_duplicate_well_name_raises() -> None:
             manifolds=_manifolds(),
             required_arrival_pressure_bara=90.0,
         )
+
+
+def _regulated_wells():
+    return [
+        {
+            "name": "WELL-A",
+            "manifold": "MANIFOLD-1",
+            "reservoir_pressure_bara": 300.0,
+            "productivity_index_sm3_per_day_bar": 1.0e5,
+        },
+        {
+            "name": "WELL-B",
+            "manifold": "MANIFOLD-1",
+            "reservoir_pressure_bara": 295.0,
+            "productivity_index_sm3_per_day_bar": 0.9e5,
+        },
+    ]
+
+
+def test_regulate_flow_solves_rates_from_inlet_pressure() -> None:
+    result = ProductionNetworkModel().regulate_flow_from_inlet_pressure(
+        wells=_regulated_wells(),
+        target_inlet_pressure_bara=140.0,
+    )
+    # default segment dp total = 60 + 10 + 5 + 8 = 83 -> fbhp = 223.
+    assert result.segment_dp_bar == pytest.approx(83.0)
+    well_a = next(w for w in result.wells if w.name == "WELL-A")
+    assert well_a.flowing_bottomhole_pressure_bara == pytest.approx(223.0)
+    # PI 1e5 * (300 - 223) = 7.7e6 Sm3/day.
+    assert well_a.rate_sm3_per_day == pytest.approx(7.7e6)
+    assert well_a.flow_warning == "ok"
+    assert result.flowing_well_count == 2
+    assert result.total_rate_sm3_per_day == pytest.approx(
+        7.7e6 + 0.9e5 * (295 - 223)
+    )
+
+
+def test_regulate_flow_flags_wells_that_cannot_flow() -> None:
+    wells = _regulated_wells()
+    wells[0]["reservoir_pressure_bara"] = 200.0  # below fbhp 223 -> no flow
+    result = ProductionNetworkModel().regulate_flow_from_inlet_pressure(
+        wells=wells,
+        target_inlet_pressure_bara=140.0,
+    )
+    well_a = next(w for w in result.wells if w.name == "WELL-A")
+    assert well_a.rate_sm3_per_day == 0.0
+    assert well_a.flow_warning == "high"
+    assert result.flowing_well_count == 1
+    assert result.overall_warning == "high"
+
+
+def test_regulate_flow_applies_max_rate_cap() -> None:
+    wells = _regulated_wells()
+    wells[0]["max_rate_sm3_per_day"] = 1.0e6
+    result = ProductionNetworkModel().regulate_flow_from_inlet_pressure(
+        wells=wells,
+        target_inlet_pressure_bara=140.0,
+    )
+    well_a = next(w for w in result.wells if w.name == "WELL-A")
+    assert well_a.rate_sm3_per_day == pytest.approx(1.0e6)
+    assert well_a.flow_warning == "watch"
+
+
+def test_regulate_flow_rejects_empty_wells() -> None:
+    with pytest.raises(ValueError):
+        ProductionNetworkModel().regulate_flow_from_inlet_pressure(
+            wells=[],
+            target_inlet_pressure_bara=140.0,
+        )

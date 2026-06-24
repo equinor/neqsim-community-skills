@@ -63,6 +63,15 @@ skills:
     tags: [process, line-sizing, velocity, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-sand-erosion-screening
+    version: "0.1.0"
+    description: "Educational sand-erosion and remaining-wall-life screening for solids-bearing lines. USE WHEN: a task needs a public, screening-level estimate of sand erosion rate, cumulative wall loss, and remaining wall life from a sand production rate before detailed DNV RP O501 erosion analysis."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/sand-erosion-screening/SKILL.md"
+    tags: [process, erosion, sand, integrity, screening, education]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-compressor-operating-window-check
     version: "0.1.0"
     description: "Educational compressor operating window screening against surge and stonewall margins. USE WHEN: a task needs a public, screening-level check that a centrifugal compressor operating point sits inside the surge and stonewall limits before detailed performance review."

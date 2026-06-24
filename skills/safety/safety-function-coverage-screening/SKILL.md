@@ -92,3 +92,8 @@ This skill is a public triage layer aligned with the NeqSim `SafetyAnalysisFunct
 - No proprietary SAFE charts, cause-and-effect matrices, or company safety specs are included.
 - No undesirable-event analysis, independence, or reliability assessment is performed.
 - The required-function sets are simplified public defaults for screening only.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

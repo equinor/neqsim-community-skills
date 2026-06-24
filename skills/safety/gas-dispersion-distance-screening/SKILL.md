@@ -102,3 +102,8 @@ This skill is a public dispersion-distance triage layer that decides when to inv
 - Neutral-buoyancy Gaussian model only; no dense-gas slumping or plume rise.
 - Flat open terrain, constant wind, no obstacles or buildings.
 - No deposition, reaction, or time-varying release.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

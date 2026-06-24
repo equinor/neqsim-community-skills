@@ -23,11 +23,8 @@ packages = []
 minversion = "7.0"
 addopts = "-ra"
 testpaths = ["skills"]
-pythonpath = [
-  "skills/process/separator-modelling/src",
-  "skills/pvt/fluid-quality-check/src",
-  "skills/flow-assurance/hydrate-screening/src",
-]
+# Per-skill src directories are added to sys.path by the root conftest.py,
+# which auto-discovers every skills/<category>/<skill>/src folder.
 
 [tool.ruff]
 line-length = 100

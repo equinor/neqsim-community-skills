@@ -111,3 +111,8 @@ This skill is a public hydraulics triage layer that decides when to invoke those
 - No proprietary pump curves, vendor data, or company specs are included.
 - No viscosity correction, suction recirculation, or minimum-flow recycle is modeled.
 - No real-fluid property variation across the pump is included.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

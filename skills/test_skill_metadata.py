@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -32,15 +33,19 @@ def _frontmatter(text: str) -> dict[str, str]:
 def test_all_public_skills_have_required_frontmatter_and_sections() -> None:
     skill_files = sorted(SKILL_ROOT.glob("*/*/SKILL.md"))
 
-    assert len(skill_files) == 9
+    assert len(skill_files) >= 9
     for skill_file in skill_files:
         text = skill_file.read_text(encoding="utf-8")
         metadata = _frontmatter(text)
 
         assert metadata["name"].startswith("neqsim-")
-        assert metadata["version"] == "0.1.0"
+        assert re.fullmatch(r"\d+\.\d+\.\d+", metadata["version"]), (
+            f"{skill_file} has non-semver version {metadata['version']!r}"
+        )
         assert "USE WHEN:" in metadata["description"]
-        assert metadata["last_verified"] == "2026-05-31"
+        assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", metadata["last_verified"]), (
+            f"{skill_file} has invalid last_verified {metadata['last_verified']!r}"
+        )
         for section in REQUIRED_SECTIONS:
             assert section in text, f"{skill_file} missing {section}"
 

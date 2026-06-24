@@ -104,3 +104,8 @@ This skill is a public polytropic-head triage layer that decides when to invoke 
 - No proprietary compressor curves, vendor data, or company specs are included.
 - No intercooling, mechanical losses, or surge and stonewall limits are modeled.
 - No real-gas property variation across the stage is included.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

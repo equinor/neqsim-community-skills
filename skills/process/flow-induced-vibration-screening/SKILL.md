@@ -97,3 +97,8 @@ This skill is a public `rho v^2` triage layer that decides when to invoke `FlowI
 - No proprietary Energy Institute scoring tables, correction factors, or fatigue calculations are included.
 - No mechanical, modal, acoustic, or support-stiffness analysis is performed.
 - No transient, slug, or two-phase intermittency excitation is modelled.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

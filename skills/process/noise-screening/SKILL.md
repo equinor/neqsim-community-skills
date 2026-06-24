@@ -100,3 +100,8 @@ Full aerodynamic-noise prediction follows IEC 60534-8-3. This skill is a public 
 - Screening indicator only, not IEC 60534-8-3 prediction.
 - No valve style, trim, pipe schedule, or frequency content.
 - Fixed transmission loss and generic acoustic efficiency.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

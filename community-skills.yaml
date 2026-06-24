@@ -296,3 +296,66 @@ skills:
     path: "skills/subsea/production-network-routing/SKILL.md"
     tags: [subsea, production, wells, manifold, arrival-pressure, screening, education]
     min_neqsim_version: "3.7.0"
+
+  - name: neqsim-co2-emissions-screening
+    version: "0.1.0"
+    description: "Educational combustion-CO2 emission screening that estimates the CO2 mass rate from a fuel-gas flow and composition using public per-component carbon-count stoichiometry and the IPCC basis. USE WHEN: a task needs a public, screening-level CO2 emission rate (kg/s or tonnes/day) from burning a fuel-gas stream before detailed combustion or emission-factor reporting."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/environment/co2-emissions-screening/SKILL.md"
+    tags: [environment, emissions, co2, combustion, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-two-phase-flow-regime-screening
+    version: "0.1.0"
+    description: "Educational two-phase flow-regime screening that classifies a horizontal gas-liquid flow pattern from superficial velocities using a simplified public Mandhane-style map and flags slug risk. USE WHEN: a task needs a public, screening-level flow-regime flag (stratified, slug, annular, bubble) and slug-risk triage to pair with slug-flow and flow-induced-vibration work."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/flow-assurance/two-phase-flow-regime-screening/SKILL.md"
+    tags: [flow-assurance, two-phase, flow-regime, slug, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-control-valve-cv-screening
+    version: "0.1.0"
+    description: "Educational control-valve sizing screening that estimates the required flow coefficient (Kv/Cv) and flags choked flow per public IEC 60534-2-1 / ISA-75.01 equations for liquid and gas service. USE WHEN: a task needs a public, screening-level required Cv and a choked-flow flag before detailed control-valve selection."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/control-valve-cv-screening/SKILL.md"
+    tags: [process, control-valve, cv, sizing, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-noise-screening
+    version: "0.1.0"
+    description: "Educational valve and line aerodynamic-noise indicator that estimates a screening sound-pressure level from gas mass flow, pressure drop, and density using a public IEC 60534-8 style energy approach. USE WHEN: a task needs a public, screening-level noise indicator and an action/high flag for a gas valve or restriction before detailed IEC 60534-8 noise prediction."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/noise-screening/SKILL.md"
+    tags: [process, noise, valve, acoustic, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-pump-hydraulics-screening
+    version: "0.1.0"
+    description: "Educational centrifugal-pump hydraulics screening for hydraulic/shaft power, NPSH-available, and best-efficiency-point window using public pump relations and affinity laws. USE WHEN: a task needs a public, screening-level pump power, NPSH-available estimate, and BEP-window check before detailed pump selection."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/pump-hydraulics-screening/SKILL.md"
+    tags: [process, pump, hydraulics, npsh, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-gas-dispersion-distance-screening
+    version: "0.1.0"
+    description: "Educational Gaussian point-source gas-dispersion screening that estimates the downwind distance to a target concentration (LFL or toxic ppm) using the public Pasquill-Gifford / Briggs rural model. USE WHEN: a task needs a public, screening-level distance-to-LFL or distance-to-ppm estimate for a continuous gas release before detailed dispersion or consequence analysis."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/gas-dispersion-distance-screening/SKILL.md"
+    tags: [safety, dispersion, gas-release, lfl, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-jet-fire-radiation-screening
+    version: "0.1.0"
+    description: "Educational jet-fire thermal-radiation screening that estimates the radiative flux at a distance, or the distance to a target flux, using the public single-point-source flame radiation model. USE WHEN: a task needs a public, screening-level jet-fire radiation flux or a distance to a personnel/equipment thermal limit before detailed fire-consequence analysis."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/jet-fire-radiation-screening/SKILL.md"
+    tags: [safety, jet-fire, radiation, thermal, screening, education]
+    min_neqsim_version: "3.7.0"

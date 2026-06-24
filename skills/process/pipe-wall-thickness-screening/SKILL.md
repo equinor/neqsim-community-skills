@@ -99,3 +99,8 @@ This skill is a public ASME B31.3 triage layer that decides when to invoke those
 - No proprietary piping classes, material certificates, or company piping specs are included.
 - No mill tolerance, bend thinning, external pressure, or combined-stress checks are performed.
 - No branch reinforcement, flange rating, or fatigue assessment is included.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

@@ -95,3 +95,29 @@ This screening is a placeholder. For a real design basis use:
 
 Escalate any `watch` verdict, and any quantitative use, to validated NeqSim
 mechanical design and qualified engineering review against the applicable codes.
+
+## Validation Checklist
+
+- [ ] Inputs are validated and within stated ranges.
+- [ ] Examples use public data only.
+- [ ] Screening assumptions are stated explicitly.
+- [ ] Limitations are respected.
+- [ ] Quantitative use is escalated to validated NeqSim models.
+
+## Common Mistakes
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Unrealistic result | Inputs outside the screening range | Keep inputs within the stated bounds |
+| Misused for design | Screening output taken as final | Escalate to validated NeqSim models |
+
+## Limitations
+
+- Educational screening only; not a validated design method.
+- No confidential data or proprietary methods are included.
+- Escalate any quantitative or design use to validated NeqSim workflows.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

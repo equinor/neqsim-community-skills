@@ -1,8 +1,8 @@
-import matplotlib
+import pytest
+
+matplotlib = pytest.importorskip("matplotlib")
 
 matplotlib.use("Agg")
-
-import pytest
 
 from subsea_layout_geometry import plot_subsea_layout
 

@@ -108,3 +108,29 @@ This screening is a placeholder. For real reservoir-to-facility behaviour use:
 Escalate any `watch` or `high` verdict, and any quantitative use, to validated
 NeqSim inflow and multiphase-hydraulics models and qualified production-technology
 review.
+
+## Validation Checklist
+
+- [ ] Inputs are validated and within stated ranges.
+- [ ] Examples use public data only.
+- [ ] Screening assumptions are stated explicitly.
+- [ ] Limitations are respected.
+- [ ] Quantitative use is escalated to validated NeqSim models.
+
+## Common Mistakes
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Unrealistic result | Inputs outside the screening range | Keep inputs within the stated bounds |
+| Misused for design | Screening output taken as final | Escalate to validated NeqSim models |
+
+## Limitations
+
+- Educational screening only; not a validated design method.
+- No confidential data or proprietary methods are included.
+- Escalate any quantitative or design use to validated NeqSim workflows.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

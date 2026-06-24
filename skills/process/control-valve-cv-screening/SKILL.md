@@ -119,3 +119,8 @@ This skill is a public sizing triage layer that decides when to invoke those val
 - No piping geometry factor `Fp`, Reynolds correction, or low-flow laminar handling.
 - No two-phase, flashing, or multiphase valve sizing.
 - No vendor valve characteristic, noise, or actuator sizing.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

@@ -102,3 +102,8 @@ This skill is a public flow-regime triage layer that decides when to invoke thos
 - Horizontal flow only; no inclination or terrain slugging.
 - Public approximate boundaries, not the digitized Mandhane chart.
 - No surface-tension, viscosity, or entrainment effects.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

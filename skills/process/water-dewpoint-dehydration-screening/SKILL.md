@@ -92,3 +92,8 @@ This skill is a public Bukacek triage layer that decides when to invoke validate
 - No proprietary dehydration designs, glycol data, or company gas specs are included.
 - No acid-gas, salinity, or hydrate-suppression corrections are performed.
 - No glycol contactor or regeneration performance is modeled.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

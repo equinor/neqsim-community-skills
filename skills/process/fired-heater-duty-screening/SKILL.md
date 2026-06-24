@@ -102,3 +102,8 @@ This skill is a public energy-balance triage layer that decides when to invoke t
 - No proprietary heater designs, vendor data, or company specs are included.
 - No convection-section split, tube-wall, draft, or emissions modeling is performed.
 - A constant specific heat is assumed over the full duty range.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

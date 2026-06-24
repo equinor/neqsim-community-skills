@@ -95,3 +95,8 @@ This skill is a public radiation triage layer that decides when to invoke those 
 - Point-source emission; no flame length, shape, or view factor.
 - No wind tilt, lift-off, or partial combustion.
 - No transient or impinging-fire effects.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

@@ -90,3 +90,8 @@ This skill is a public maturity-mapping triage layer that decides when to invoke
 - No confidential volumes, reservoir data, or company estimates are included.
 - No volumetric, recovery-factor, or uncertainty calculation is performed.
 - No company-specific maturity gate is applied.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

@@ -101,3 +101,8 @@ This skill is a public API 520 triage layer that decides when to invoke those va
 - No proprietary valve data, vendor capacity charts, or company relief specs are included.
 - No liquid, two-phase, or fire-case sizing logic is performed.
 - No inlet or outlet pressure-drop or certified-capacity checks are included.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

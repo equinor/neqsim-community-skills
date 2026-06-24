@@ -98,3 +98,8 @@ This skill is a public emission-rate triage layer that decides when to invoke th
 - Complete combustion only; no efficiency, slip, or capture.
 - Limited fuel-gas component set; no heavy hydrocarbons or oxygenates.
 - Not a certified greenhouse-gas inventory method.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

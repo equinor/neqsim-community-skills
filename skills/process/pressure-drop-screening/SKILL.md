@@ -103,3 +103,8 @@ This skill is a public triage layer that decides when to invoke those validated 
 - No proprietary piping classes, project line lists, or company piping specs are included.
 - No two-phase, slug, flashing, or transient pressure-drop modelling is performed.
 - No fittings, valves, elevation, or acceleration pressure losses are included.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

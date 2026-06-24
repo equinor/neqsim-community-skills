@@ -96,3 +96,8 @@ This skill is a public point-source triage layer that decides when to invoke tho
 - No proprietary flare designs, vendor tip data, or company radiation criteria are included.
 - No flame length, tilt, wind, view factor, or solar radiation is modeled.
 - No shielding, dispersion, or multi-flame interaction is considered.
+
+## References
+
+- NeqSim repository: https://github.com/equinor/neqsim
+- NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

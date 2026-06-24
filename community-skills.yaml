@@ -90,6 +90,15 @@ skills:
     tags: [flow-assurance, wax, margin, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-surf-cooldown-screening
+    version: "0.1.0"
+    description: "Educational SURF flowline/riser cooldown and no-touch-time screening placeholder with public assumptions. USE WHEN: a task needs a quick, public estimate of how long an insulated subsea flowline stays above its hydrate formation temperature after shutdown, and should be directed to validated NeqSim methods for real cooldown and hydrate calculations."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/flow-assurance/surf-cooldown-screening/SKILL.md"
+    tags: [flow-assurance, surf, subsea, cooldown, hydrate, screening, education]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-pressure-drop-screening
     version: "0.1.0"
     description: "Educational single-phase line pressure-drop screening against a recommended pressure-gradient guideline. USE WHEN: a task needs a public, screening-level Darcy-Weisbach pressure-drop estimate and a check against NORSOK P-002 / GPSA style line pressure-gradient guidelines before detailed hydraulic design."
@@ -232,6 +241,24 @@ skills:
     repo: "equinor/neqsim-community-skills"
     path: "skills/field-development/asset-value-npv-screening/SKILL.md"
     tags: [field-development, economics, npv, asset-value, cash-flow, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-economy-basis-screening
+    version: "0.1.0"
+    description: "Educational economy-basis assembly and range-check screening that collects price, discount-rate, inflation, currency, and tax-regime assumptions and checks them against public typical ranges. USE WHEN: a task needs a public, screening-level economic-basis sanity check before detailed NeqSim field-economics DCF or fiscal-regime modelling."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/economy-basis-screening/SKILL.md"
+    tags: [field-development, economics, economy-basis, discount-rate, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-design-basis-screening
+    version: "0.1.0"
+    description: "Educational design-basis margin screening that checks operating-versus-design flow, pressure, and temperature margins and notes applicable standards. USE WHEN: a task needs a public, screening-level design-margin sanity check before detailed NeqSim equipment sizing and mechanical design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/design-basis-screening/SKILL.md"
+    tags: [field-development, design-basis, margins, standards, screening, education]
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-energy-emissions-screening

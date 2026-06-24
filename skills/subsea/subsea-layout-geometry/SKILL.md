@@ -1,8 +1,8 @@
 ---
 name: neqsim-subsea-layout-geometry
-version: "0.1.0"
-description: "Educational subsea field-layout geometry screening from supplied coordinates. USE WHEN: a task needs public, screening-level step-out distances, tie-back lengths, and a node-to-node distance matrix for wells, manifolds, and a host from a subsea map before detailed routing and hydraulic design."
-last_verified: "2026-05-31"
+version: "0.2.0"
+description: "Educational subsea field-layout geometry screening from supplied coordinates. USE WHEN: a task needs public, screening-level step-out distances, tie-back lengths, a node-to-node distance matrix, or a schematic plan-view illustration for wells, manifolds, templates, and a host from a subsea map before detailed routing and hydraulic design."
+last_verified: "2026-06-14"
 requires:
   python_packages: []
   java_packages: []
@@ -67,6 +67,36 @@ print(result.assumptions)
 ```
 
 If the optional `neqsim` Python package is available, the result records that fact so an agent can recommend moving to validated NeqSim routing and hydraulic workflows. If not, the example still runs with the public geometry logic.
+
+## Schematic Plan-View Illustration
+
+The skill can also draw a deterministic schematic plan-view map of the layout so an agent can illustrate a subsea field development. This is a screening-level illustration only — not a routed flowline drawing, a bathymetric chart, or a georeferenced basemap.
+
+`plot_subsea_layout(...)` renders each node with a kind-specific marker (host, well, manifold, template, riser_base, tie_in), draws either dashed host tie-back lines with step-out distance labels (default) or explicit routed `flowlines`/`umbilical` segments, and returns a matplotlib `Figure` so it plugs directly into the field-development workflow and report generator. Pass `save_path` to also write a PNG (dpi 150 by default).
+
+Matplotlib is an optional dependency. Install the plotting extra (for example `pip install neqsim-skill-subsea-layout-geometry[plot]` or `pip install matplotlib`). The geometry screening works without it; only the illustration requires matplotlib.
+
+```python
+from subsea_layout_geometry import plot_subsea_layout
+
+nodes = [
+    {"name": "HOST", "x": 0.0, "y": 0.0, "water_depth_m": 320.0, "kind": "host"},
+    {"name": "MANIFOLD-1", "x": 6000.0, "y": 1500.0, "water_depth_m": 335.0, "kind": "manifold"},
+    {"name": "TEMPLATE-A", "x": 8500.0, "y": 3200.0, "water_depth_m": 340.0, "kind": "template"},
+    {"name": "WELL-A1", "x": 8800.0, "y": 3600.0, "water_depth_m": 342.0, "kind": "well"},
+]
+
+fig = plot_subsea_layout(
+    nodes,
+    host_name="HOST",
+    coordinate_system="cartesian",
+    flowlines=[("HOST", "MANIFOLD-1"), ("MANIFOLD-1", "TEMPLATE-A"), ("TEMPLATE-A", "WELL-A1")],
+    umbilical=[("HOST", "MANIFOLD-1")],
+    save_path="subsea_field_layout.png",
+)
+```
+
+With no `flowlines`, the renderer draws a dashed star tie-back from the host to every other node and labels each line with the horizontal step-out distance in km, consistent with the numeric `SubseaLayoutModel` result. Cartesian coordinates are shown in km with an equal aspect ratio; geographic coordinates are shown directly in degrees (longitude/latitude).
 
 ## Validation Checklist
 

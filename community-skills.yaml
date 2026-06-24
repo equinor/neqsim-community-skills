@@ -179,3 +179,93 @@ skills:
     path: "skills/field-development/resource-classification-screening/SKILL.md"
     tags: [field-development, reserves, resource-classification, screening, education]
     min_neqsim_version: "3.7.0"
+
+  - name: neqsim-reservoir-depletion-screening
+    version: "0.1.0"
+    description: "Educational reservoir tank-depletion vs time screening with gas/oil and water-cut evolution. USE WHEN: a task needs a public, screening-level pressure-decline and production profile over time from a recoverable volume and offtake rate before detailed NeqSim SimpleReservoir or reservoir-engineering modelling."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/reservoir-depletion-screening/SKILL.md"
+    tags: [field-development, reservoir, depletion, production-profile, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-field-layout-import
+    version: "0.1.0"
+    description: "Educational subsea field-layout import and normalization from supplied GeoJSON or tabular rows. USE WHEN: a task needs to turn an already-parsed subsea map (GeoJSON point features or CSV-like rows) into a clean, validated node list of wells, manifolds, and a host before geometry and routing screening."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/field-layout-import/SKILL.md"
+    tags: [subsea, field-development, layout, geojson, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-subsea-layout-geometry
+    version: "0.2.0"
+    description: "Educational subsea field-layout geometry screening and schematic plan-view illustration from supplied coordinates. USE WHEN: a task needs public, screening-level step-out distances, tie-back lengths, a node-to-node distance matrix, or a schematic plan-view map of wells, manifolds, templates, and a host from a subsea map before detailed routing and hydraulic design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/subsea-layout-geometry/SKILL.md"
+    tags: [subsea, field-development, layout, step-out, illustration, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-pipe-route-profile
+    version: "0.1.0"
+    description: "Educational pipe-route length and elevation-profile screening from supplied waypoints. USE WHEN: a task needs a public, screening-level flowline or riser route length, segment list, and seabed elevation profile from a subsea map before detailed pressure-drop and flow assurance design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/pipe-route-profile/SKILL.md"
+    tags: [subsea, pipeline, route, elevation-profile, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-capex-opex-screening
+    version: "0.1.0"
+    description: "Educational CAPEX/OPEX cost screening that turns installed-equipment cost drivers, an installation/contingency basis, and field-life OPEX into a transparent total cost picture. USE WHEN: a task needs a public, screening-level CAPEX and OPEX summary before detailed NeqSim CostEstimationCalculator or AACE class cost estimation."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/capex-opex-screening/SKILL.md"
+    tags: [field-development, economics, capex, opex, cost, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-asset-value-npv-screening
+    version: "0.1.0"
+    description: "Educational asset-value screening that discounts a net cash-flow profile into a screening NPV with discounted payback and a value verdict. USE WHEN: a task needs a public, screening-level NPV and payback for a field-development concept before detailed NeqSim field-economics DCF or fiscal-regime modelling."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/asset-value-npv-screening/SKILL.md"
+    tags: [field-development, economics, npv, asset-value, cash-flow, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-energy-emissions-screening
+    version: "0.1.0"
+    description: "Educational field-life energy and CO2-equivalent emissions roll-up that turns a year-by-year energy use into annual and total CO2e, a carbon intensity (kg CO2e/boe), and an optional CO2-tax cost. USE WHEN: a task needs a public, screening-level field-life emissions and carbon-intensity picture before detailed NeqSim combustion modelling or certified emission reporting."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/environment/energy-emissions-screening/SKILL.md"
+    tags: [environment, economics, emissions, co2, carbon-intensity, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-bathymetry-profile-screening
+    version: "0.1.0"
+    description: "Educational bathymetry profile screening from supplied soundings. USE WHEN: a task needs public, screening-level seabed depth interpolation along a route, slope screening, and steep-section flags from sounding points before detailed free-span and on-bottom-stability design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/bathymetry-profile-screening/SKILL.md"
+    tags: [subsea, bathymetry, seabed, slope, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-step-out-screening
+    version: "0.1.0"
+    description: "Educational subsea tie-back step-out and arrival-pressure screening with optional hydrate-margin input. USE WHEN: a task needs a public, screening-level check of whether a tie-back step-out distance and arrival pressure stay within simple guidelines before detailed flow-assurance and hydraulic design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/step-out-screening/SKILL.md"
+    tags: [subsea, tie-back, step-out, arrival-pressure, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-production-network-routing
+    version: "0.1.0"
+    description: "Educational production-network routing screening that routes wells through manifolds and flowlines/risers to a host and rolls up an arrival pressure. USE WHEN: a task needs a public, screening-level inflow rate per well, aggregated manifold rates, and a platform arrival-pressure roll-up before detailed NeqSim inflow and multiphase-hydraulics design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/production-network-routing/SKILL.md"
+    tags: [subsea, production, wells, manifold, arrival-pressure, screening, education]
+    min_neqsim_version: "3.7.0"

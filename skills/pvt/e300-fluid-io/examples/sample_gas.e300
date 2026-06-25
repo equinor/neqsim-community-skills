@@ -1,0 +1,123 @@
+-- Synthetic public example fluid for the neqsim-e300-fluid-io skill
+-- This is fictional data for testing only. It is not a real reservoir fluid.
+-- Units
+METRIC
+-- Number of components:
+NCOMPS
+4 /
+-- Equation of state
+EOS
+PR /
+PRCORR
+-- Reservoir temperature (C)
+RTEMP
+    90.00 /
+-- Standard Conditions (C and bara)
+STCOND
+   15.00000    1.01325  /
+-- Component names
+CNAMES
+N2
+CO2
+C1
+C2
+/
+-- Tc (K)
+TCRIT
+   126.261
+   304.206
+   190.578
+   305.422
+/
+-- Pc (Bar)
+PCRIT
+   33.9912
+   73.8153
+   46.0432
+   48.8011
+/
+-- Omega
+ACF
+   0.04500
+   0.23100
+   0.01150
+   0.09080
+/
+-- OmegaA
+OMEGAA
+     0.45724
+     0.45724
+     0.45724
+     0.45724
+/
+-- OmegaB
+OMEGAB
+     0.07780
+     0.07780
+     0.07780
+     0.07780
+/
+-- Molecular weights
+MW
+   28.0130
+   44.0100
+   16.0430
+   30.0700
+/
+-- Boiling points (K)
+TBOIL
+    77.666
+   184.546
+   111.956
+   183.864
+/
+-- Critical volumes (m3/kg-mole)
+VCRIT
+   0.09006
+   0.09395
+   0.09925
+   0.14794
+/
+-- Critical Z-factors
+ZCRIT
+   0.29159
+   0.27417
+   0.28839
+   0.28429
+/
+-- Volume translation/co-volume
+SSHIFT
+ -0.193010
+ -0.082004
+ -0.159008
+ -0.113006
+/
+-- Parachors (dyn/cm)
+PARACHOR
+    41.000
+    70.000
+    77.000
+   108.000
+/
+-- Overall composition
+ZI
+  0.010000
+  0.020000
+  0.900000
+  0.070000
+/
+-- Binary interaction coefficients for PR
+BIC
+  0.0000
+  0.0250  0.1050
+  0.0100  0.1300  0.0000
+/
+-- Viscosity correlation
+PEDERSEN
+-- Volume translation/co-volume at surface conditions
+SSHIFTS
+ -0.193010
+ -0.082004
+ -0.159008
+ -0.113006
+/

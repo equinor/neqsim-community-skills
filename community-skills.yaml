@@ -27,6 +27,15 @@ skills:
     tags: [pvt, composition, validation, quality]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-e300-fluid-io
+    version: "0.1.0"
+    description: "Reads Eclipse E300 compositional files into NeqSim fluids, writes NeqSim fluids to E300, and adds water with the public PVTsim water parameters. USE WHEN: a task needs to load an E300 fluid, export a NeqSim fluid to E300, or add water to a fluid or E300 file (volume shift 0.084004, parachor 10.0, kij 0.5)."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/pvt/e300-fluid-io/SKILL.md"
+    tags: [pvt, e300, fluid, water, io]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-hydrate-screening
     version: "0.1.0"
     description: "Educational hydrate risk screening placeholder with public assumptions. USE WHEN: a task needs a quick hydrate risk triage and should be directed to validated NeqSim methods for real calculations."
@@ -106,6 +115,15 @@ skills:
     repo: "equinor/neqsim-community-skills"
     path: "skills/flow-assurance/wax-margin-check/SKILL.md"
     tags: [flow-assurance, wax, margin, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-produced-water-scale-screening
+    version: "0.1.0"
+    description: "Public produced-water brine builder and screening-level scale evaluation. USE WHEN: a task needs to turn an ion analysis, preset, or TDS value into a NeqSim-ready electrolyte ion mapping and a quick scale/mixing-incompatibility screening (BaSO4, SrSO4, CaSO4, CaCO3), and should be directed to validated NeqSim checkScalePotential methods for design-grade work."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/flow-assurance/produced-water-scale-screening/SKILL.md"
+    tags: [flow-assurance, produced-water, scale, brine, electrolyte, screening, education]
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-surf-cooldown-screening
@@ -376,4 +394,22 @@ skills:
     repo: "equinor/neqsim-community-skills"
     path: "skills/safety/jet-fire-radiation-screening/SKILL.md"
     tags: [safety, jet-fire, radiation, thermal, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-dry-gas-seal-screening
+    version: "0.1.0"
+    description: "Educational dry gas seal supply and condensation screening for centrifugal compressors. USE WHEN: a task needs a public, screening-level estimate of seal-gas and separation-gas supply demand and a seal-gas condensation-margin check (cavity temperature versus hydrocarbon dew point) before detailed dry gas seal system design per API 692."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/dry-gas-seal-screening/SKILL.md"
+    tags: [process, compressor, dry-gas-seal, api692, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-multiphase-flow-slug-screening
+    version: "0.1.0"
+    description: "Educational multiphase slug-flow regime and slug-catcher volume screening. USE WHEN: a task needs a public, screening-level indicator of whether a multiphase line is in an intermittent/slug regime and a first-pass slug-catcher volume estimate before validated multiphase flow analysis."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/flow-assurance/multiphase-flow-slug-screening/SKILL.md"
+    tags: [flow-assurance, multiphase, slug, slug-catcher, screening, education]
     min_neqsim_version: "3.7.0"

@@ -41,6 +41,8 @@ For this multi-skill repository, each skill is cataloged by a path such as `skil
 | [skills/process/line-velocity-check](skills/process/line-velocity-check) | `neqsim-line-velocity-check` | Educational line velocity screening against erosional velocity and a guideline |
 | [skills/process/sand-erosion-screening](skills/process/sand-erosion-screening) | `neqsim-sand-erosion-screening` | Educational sand-erosion rate and remaining-wall-life screening placeholder |
 | [skills/process/compressor-operating-window-check](skills/process/compressor-operating-window-check) | `neqsim-compressor-operating-window-check` | Educational compressor surge/stonewall operating window screening placeholder |
+| [skills/process/dynamic-process-preparation](skills/process/dynamic-process-preparation) | `neqsim-dynamic-process-preparation` | Prepare NeqSim process flowsheets for dynamic simulation readiness |
+| [skills/process/dynamic-instrument-controller-setup](skills/process/dynamic-instrument-controller-setup) | `neqsim-dynamic-instrument-controller-setup` | Set up dynamic transmitters and PID-style controller loops for NeqSim workflows |
 | [skills/flow-assurance/hydrate-margin-check](skills/flow-assurance/hydrate-margin-check) | `neqsim-hydrate-margin-check` | Educational hydrate operating-margin (subcooling) screening placeholder |
 | [skills/flow-assurance/wax-margin-check](skills/flow-assurance/wax-margin-check) | `neqsim-wax-margin-check` | Educational wax appearance temperature operating-margin screening placeholder |
 

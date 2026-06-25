@@ -99,6 +99,24 @@ skills:
     tags: [process, compressor, anti-surge, recycle, compressor-chart, surge, stonewall]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-dynamic-process-preparation
+    version: "0.1.0"
+    description: "Prepare NeqSim ProcessSystem and ProcessModel flowsheets for dynamic simulation, including equipment holdup, mechanical-design, and volume-readiness checks. USE WHEN: a task needs to convert a steady-state NeqSim process into a dynamic-ready model before runTransient calculations."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/dynamic-process-preparation/SKILL.md"
+    tags: [process, dynamic-simulation, process-system, process-model, mechanical-design]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-dynamic-instrument-controller-setup
+    version: "0.1.0"
+    description: "Set up measurement devices and PID-style controllers for NeqSim dynamic process simulations. USE WHEN: a task needs to add transmitters, controller devices, valve manipulation, setpoints, controller action, and autotuning workflow guidance before runTransient calculations."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/dynamic-instrument-controller-setup/SKILL.md"
+    tags: [process, dynamic-simulation, instruments, controllers, pid]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-hydrate-margin-check
     version: "0.1.0"
     description: "Educational hydrate operating-margin screening placeholder with public assumptions. USE WHEN: a task needs a quick check of whether an operating point keeps a safe temperature margin above a hydrate equilibrium temperature and should be directed to validated NeqSim methods for real calculations."
@@ -412,4 +430,76 @@ skills:
     repo: "equinor/neqsim-community-skills"
     path: "skills/flow-assurance/multiphase-flow-slug-screening/SKILL.md"
     tags: [flow-assurance, multiphase, slug, slug-catcher, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-reciprocating-compressor-screening
+    version: "0.1.0"
+    description: "Educational reciprocating compressor staging, volumetric-efficiency, discharge-temperature, and rod-load screening. USE WHEN: a task needs a public, screening-level check of reciprocating compressor staging, volumetric efficiency, discharge temperature, and rod load before detailed machine selection per API 618/619."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/reciprocating-compressor-screening/SKILL.md"
+    tags: [process, compressor, reciprocating, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-gas-turbine-performance-screening
+    version: "0.1.0"
+    description: "Educational gas-turbine driver site-rating, heat-rate, and exhaust screening. USE WHEN: a task needs a public, screening-level estimate of gas-turbine site-rated power, heat rate, and exhaust mass flow/temperature with ambient and pressure-loss derates before detailed performance analysis per ISO 3977."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/gas-turbine-performance-screening/SKILL.md"
+    tags: [process, gas-turbine, power, performance, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-piping-flexibility-screening
+    version: "0.1.0"
+    description: "Educational piping flexibility, hoop-stress, thermal-expansion, and flange-rating screening. USE WHEN: a task needs a public, screening-level check of pipe hoop stress, thermal displacement stress range, and flange pressure rating before detailed stress analysis per ASME B31.3 and ASME B16.5."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/piping-flexibility-screening/SKILL.md"
+    tags: [process, piping, flexibility, stress, asme-b31.3, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-acoustic-induced-vibration-screening
+    version: "0.1.0"
+    description: "Educational acoustic-induced vibration (AIV) likelihood-of-failure screening for gas pressure-reducing devices. USE WHEN: a task needs a public, screening-level AIV sound-power-level and likelihood-of-failure index for control valves, relief valves, or restriction orifices before detailed Energy Institute AIV assessment."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/acoustic-induced-vibration-screening/SKILL.md"
+    tags: [process, vibration, aiv, energy-institute, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-gas-scrubber-sizing-screening
+    version: "0.1.0"
+    description: "Educational Souders-Brown gas scrubber sizing and mist-eliminator load screening. USE WHEN: a task needs a public, screening-level vertical gas scrubber diameter, velocity utilisation, and mist-eliminator gas-load check before detailed separator sizing per GPSA and API RP 12J."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/gas-scrubber-sizing-screening/SKILL.md"
+    tags: [process, scrubber, separator, souders-brown, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-utility-balance-screening
+    version: "0.1.0"
+    description: "Educational utility-system balance screening for instrument air, fuel gas Wobbe index, and cooling water. USE WHEN: a task needs a public, screening-level instrument-air demand, fuel-gas Wobbe-index band check, and cooling-water flow estimate before detailed utility-system design per NORSOK U-001."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/utility-balance-screening/SKILL.md"
+    tags: [process, utilities, instrument-air, fuel-gas, cooling-water, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-reliability-data-screening
+    version: "0.1.0"
+    description: "Educational ISO 14224 / OREDA reliability and availability screening for equipment and simple redundant systems. USE WHEN: a task needs a public, screening-level availability, MTBF, and reliability estimate for an equipment item or k-out-of-n redundant configuration before detailed RAM analysis."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/reliability-data-screening/SKILL.md"
+    tags: [process, reliability, availability, iso14224, oreda, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-artificial-lift-screening
+    version: "0.1.0"
+    description: "Educational artificial-lift feasibility screening of gas lift versus ESP against a simple IPR. USE WHEN: a task needs a public, screening-level check of whether a well meets a target rate by natural flow, gas lift, or ESP before detailed artificial-lift design."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/artificial-lift-screening/SKILL.md"
+    tags: [field-development, artificial-lift, gas-lift, esp, ipr, screening, education]
     min_neqsim_version: "3.7.0"

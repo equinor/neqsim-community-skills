@@ -96,6 +96,7 @@ If the optional `neqsim` Python package is available, the result records that fa
 This educational screening corresponds to validated, rigorous functionality in the NeqSim Java library that a qualified engineer should use for design-grade work:
 
 - `neqsim.process.equipment.separator.Separator` and `neqsim.process.equipment.separator.ThreePhaseSeparator` — rigorous gas/liquid separation with phase equilibrium.
+- `Separator.setEntrainment(val, specType, specifiedStream, phaseFrom, phaseTo)` — models imperfect separation / carry-over by transferring a fraction of one phase into another outlet (specType `mole`/`mass`/`volume`; basis `feed` or `product`). The base `Separator` supports `oil->gas`, `aqueous->gas`, `gas->liquid`; `ThreePhaseSeparator` supports all six phase-to-phase paths.
 - `neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign` — Souders-Brown gas-load factor, retention-time sizing, and demister/inlet-device internals.
 
 In Python the same classes are reachable through the `neqsim` package (for example `from neqsim import jneqsim`).

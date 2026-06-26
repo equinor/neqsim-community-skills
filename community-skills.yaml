@@ -216,6 +216,15 @@ skills:
     tags: [process, dehydration, water-content, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-teg-dehydration-modeling
+    version: "0.1.0"
+    description: "Build a validated, closed-loop TEG (triethylene glycol) gas dehydration plant in NeqSim, including absorber, flash drum, regeneration column, stripper, lean-TEG recycle, and still-vent emission classification. USE WHEN: a task needs a runnable NeqSim TEG dehydration flowsheet (water dew point, lean-TEG purity, NMVOC/methane/benzene still-vent emissions) rather than a screening-level water-content estimate."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/teg-dehydration-modeling/SKILL.md"
+    tags: [process, dehydration, teg, glycol, emissions]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-compressor-power-screening
     version: "0.1.0"
     description: "Educational centrifugal-compressor power screening using the public polytropic-head equation (API 617 / API 619 style). USE WHEN: a task needs a public, screening-level estimate of polytropic head, discharge temperature, and gas power for a single compression stage before detailed compressor selection."

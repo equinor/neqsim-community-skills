@@ -1,8 +1,8 @@
 ---
 name: neqsim-compressor-antisurge-recycle
 version: 0.1.0
-description: "Set up anti-surge recycle control for a centrifugal compressor in NeqSim, including auto-generating a compressor chart with surge and stonewall curves when no vendor chart is given. USE WHEN: a task needs to protect a NeqSim compressor from surge with a recycle (spill-back) loop driven by the anti-surge Calculator, and a compressor performance chart (with surge and stonewall curves) is either supplied or must be generated."
-last_verified: "2026-06-25"
+description: "Set up anti-surge recycle control for a centrifugal compressor in NeqSim, including auto-generating a compressor chart with surge and stonewall curves when no vendor chart is given, and the dynamic AntiSurgeController PI option. USE WHEN: a task needs to protect a NeqSim compressor from surge with a recycle (spill-back) loop driven by the anti-surge Calculator (steady state) or AntiSurgeController (dynamic), and a compressor performance chart (with surge and stonewall curves) is either supplied or must be generated."
+last_verified: "2026-06-26"
 requires:
   python_packages: []
   java_packages:
@@ -201,6 +201,56 @@ process.run()
 
 The forward process continues on `gas_splitter.getSplitStream(0)`.
 
+## Dynamic Anti-Surge Control (AntiSurgeController)
+
+The `Calculator`-driven loop above is a **steady-state** recycle solver. For a
+**dynamic (transient)** anti-surge response, NeqSim provides a dedicated
+reverse-acting PI controller, `AntiSurgeController`
+(`neqsim.process.controllerdevice.AntiSurgeController`), that reads
+`Compressor.getDistanceToSurge()` and drives a recycle `ThrottlingValve` open as
+the margin falls below the set point, then closes it again on recovery.
+
+```python
+from neqsim import jneqsim
+
+controllerdevice = jneqsim.process.controllerdevice
+
+# `recycle_valve` is the anti-surge ThrottlingValve on the recycle branch.
+asc = controllerdevice.AntiSurgeController("anti-surge", compressor, recycle_valve)
+asc.setSurgeMarginSetPoint(0.10)   # protect a 10% distance-to-surge margin
+asc.setProportionalGain(400.0)     # percent opening per unit margin error
+asc.setIntegralTime(20.0)          # s
+asc.setOpeningRange(0.0, 100.0)    # valve opening clamp (%) with anti-windup
+asc.setActive(True)
+recycle_valve.addController("anti-surge", asc)
+```
+
+Control law each transient step: `error = setPoint - distanceToSurge`,
+`integral += Kp/Ti * error * dt`, `opening = clamp(Kp*error + integral)` with
+anti-windup. A reproducible benchmark,
+`neqsim.process.util.scenario.AntiSurgeDynamicBenchmark`, drives the real
+controller against a transparent first-order gas-path surrogate
+(`m_next = m - disturbance*dt + authority*(opening/100)*dt`) and is the preferred
+way to verify or tune the control law without solver fragility.
+
+**Critical gotchas when building a full dynamic recycle flowsheet:**
+
+- A fixed-factor `Splitter` (`setSplitFactors([0.97, 0.03])`) **pins the recycle
+  fraction** in dynamic mode, so the anti-surge valve has no authority over the
+  actual recycle flow — it can reach 100% open with no effect. Let the recycle
+  flow be set by the valve (`Cv`/resistance), or keep the steady-state
+  `Calculator` pattern.
+- Once the operating point crosses left of the surge line,
+  `getDistanceToSurge()` **clamps at -1.0 and the steady solver cannot recover**;
+  a flowsheet driven into deep surge will not self-heal even after the inlet is
+  reopened. Apply gradual/ramped disturbances and keep the machine off deep surge.
+- Aggressive proportional gain can slam the recycle valve to minimum opening,
+  starve a stream, and trigger an SRK flash `NaN`
+  (`PhaseSrkEos:molarVolume ... NaN`). Keep gains moderate.
+
+Dynamic controller tuning and transient surge analysis still require qualified
+rotating-equipment review (API 617 / API 692).
+
 ## Validation Checklist
 
 - The compressor has a chart with an active surge curve before the loop runs;
@@ -228,12 +278,18 @@ The forward process continues on `gas_splitter.getSplitStream(0)`.
   the operating head and speed.
 - Treating the generated chart as a vendor-validated map; generated charts are
   estimates for modelling, not design certification.
+- For dynamic studies, leaving a fixed-factor `Splitter` on the recycle branch so
+  the `AntiSurgeController` valve has no authority over the recycle flow.
+- Driving a dynamic recycle flowsheet straight into deep surge, where
+  `getDistanceToSurge()` clamps at -1.0 and the steady solver cannot recover.
 
 ## Limitations
 
 - Screening logic only; it does not tune an anti-surge controller or set
   recycle valve `Cv`, response time, or surge control line offset.
-- It does not perform dynamic surge, ESD, or transient recycle analysis.
+- The Python helper does not perform dynamic surge, ESD, or transient recycle
+  analysis; for dynamic response use NeqSim's `AntiSurgeController` /
+  `AntiSurgeDynamicBenchmark` under qualified review.
 - Generated compressor charts are model estimates, not vendor performance maps.
 - It does not replace API 617 / API 692 rotating-equipment design and review.
 - Results require qualified human review before any design or operating use.
@@ -251,8 +307,14 @@ The forward process continues on `gas_splitter.getSplitStream(0)`.
   `generateCompressorChart(...)`.
 - `neqsim.process.equipment.splitter.Splitter` — discharge split into forward
   and recycle branches.
-- `neqsim.process.equipment.util.Calculator` — anti-surge engine
+- `neqsim.process.equipment.util.Calculator` — steady-state anti-surge engine
   (`runAntiSurgeCalc`) triggered by the `"anti surge calculator"` name prefix.
+- `neqsim.process.controllerdevice.AntiSurgeController` — dynamic reverse-acting
+  PI controller on `getDistanceToSurge()` driving a recycle valve
+  (`setSurgeMarginSetPoint`, `setProportionalGain`, `setIntegralTime`,
+  `setOpeningRange`, `setActive`).
+- `neqsim.process.util.scenario.AntiSurgeDynamicBenchmark` — reproducible
+  surrogate benchmark for verifying/tuning the dynamic control law.
 - `neqsim.process.equipment.valve.ThrottlingValve` — anti-surge recycle valve.
 - `neqsim.process.equipment.util.Recycle` — closes the recycle loop.
 

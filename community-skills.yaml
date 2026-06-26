@@ -63,6 +63,15 @@ skills:
     tags: [safety, depressurization, blowdown, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-vacuum-collapse-screening
+    version: "0.1.0"
+    description: "Educational vacuum-collapse (implosion) screening for a blocked-in vessel that cools down, with vacuum-depth and external-rating flags. USE WHEN: a task needs a public, screening-level check of whether a closed vessel cooldown or steam/vapour condensation can pull a vacuum below the external pressure rating, without proprietary vacuum-collapse design methods."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/vacuum-collapse-screening/SKILL.md"
+    tags: [safety, vacuum, implosion, external-pressure, screening, education]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-line-velocity-check
     version: "0.1.0"
     description: "Educational process line velocity screening against erosional velocity and a velocity guideline. USE WHEN: a task needs a public, screening-level check that a pipe flow velocity sits within erosional-velocity and NORSOK/API line-velocity guidelines before detailed line sizing."

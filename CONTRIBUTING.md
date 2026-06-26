@@ -2,6 +2,15 @@
 
 Thank you for helping build a public catalog of reusable NeqSim skills. Contributions should be useful to students, researchers, engineers, and open-source users without exposing private or proprietary information.
 
+## Where Does This Belong?
+
+Before adding a skill here, confirm this is the right repository. See the
+[Where Does This Go? placement guide](docs/where-does-this-go.md): community
+skills hold **educational, screening-level** methods that reference — but do not
+replace — the validated Java classes in core NeqSim. Validated calculations
+belong in core neqsim; company-policy or confidential content belongs in the
+enterprise repos.
+
 ## Add a New Skill
 
 1. Copy [templates/skill-template](templates/skill-template) into the relevant domain folder under [skills](skills).

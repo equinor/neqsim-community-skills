@@ -124,7 +124,7 @@ Each catalog entry maps to a harness `Skill` (name, description, `recommended_to
 
 ## Contribute
 
-Not sure which repository a contribution belongs in? See the shared [Contribution Router](https://github.com/equinor/idea-sharing-AI-agents/blob/main/CONTRIBUTION-ROUTER.md).
+Not sure which repository a contribution belongs in? See the shared [Contribution Router](https://github.com/equinor/idea-sharing-AI-agents/blob/main/CONTRIBUTION-ROUTER.md), then the NeqSim-specific [Where Does This Go? placement guide](docs/where-does-this-go.md) for core vs. community vs. enterprise and skill vs. agent.
 
 Start from [templates/skill-template](templates/skill-template), then add your skill under the most relevant domain folder in [skills](skills). Follow [CONTRIBUTING.md](CONTRIBUTING.md) and the standards in [docs/skill-standard.md](docs/skill-standard.md).
 

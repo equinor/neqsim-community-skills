@@ -7,10 +7,12 @@ surge and stonewall curves when no vendor chart is given.
 This skill provides a pure-Python `AntiSurgeRecycleModel` that mirrors NeqSim's
 proportional anti-surge step so an agent can estimate the recycle flow needed to
 keep a compressor off surge and decide whether a chart must be generated first.
-The `SKILL.md` documents the validated NeqSim wiring pattern (surge curve,
-recycle stream, discharge splitter, anti-surge `Calculator`, anti-surge valve,
-`Recycle`) and the chart-generation API. It is intended for learning and
-workflow scaffolding only.
+The `SKILL.md` documents the validated NeqSim implementation paths: steady-state
+`AntiSurgeRecycleCalculator` recycle initialization, the legacy splitter /
+anti-surge `Calculator` topology, dynamic `AntiSurgeController` PI recycle-valve
+control, and `CompressorAntiSurgeApplication` topology binding for executable
+dynamic studies with hot/cold recycle valves and optional compressor speed
+runback. It is intended for learning and workflow scaffolding only.
 
 ## Install
 
@@ -33,7 +35,7 @@ python -m pytest skills/process/compressor-antisurge-recycle/tests
 ## Public Scope
 
 The model does not contain proprietary performance maps, vendor curves,
-anti-surge controller settings, or company-specific compressor data. The example
-data are generic. For real anti-surge control, use validated NeqSim compressor
-models and curves, vendor performance maps, and qualified rotating-equipment
-review per API 617 and API 692.
+anti-surge controller settings, certified protection logic, or company-specific
+compressor data. The example data are generic. For real anti-surge control, use
+validated NeqSim compressor models and curves, vendor performance maps, and
+qualified rotating-equipment review per API 617 and API 692.

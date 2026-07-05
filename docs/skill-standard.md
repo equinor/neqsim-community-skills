@@ -21,6 +21,7 @@ Python code is optional. If a skill has no Python code, keep `src`, `examples`, 
 - Folder names use kebab-case, for example `hydrate-screening`.
 - Python package names use snake_case, for example `hydrate_screening`.
 - Catalog skill names must start with `neqsim-`, for example `neqsim-hydrate-screening`.
+- Catalog metadata follows the shared NeqSim agent and skill schema in `docs/integration/agent_skill_catalog_schema.md` in the main NeqSim repository.
 
 ## SKILL.md Frontmatter
 
@@ -41,6 +42,10 @@ requires:
 ```
 
 Required fields are `name`, `version`, `description`, and `last_verified`. The description must contain `USE WHEN:` so agents can decide when to load the skill.
+
+Legacy shorthand names may appear in prose for reader convenience, but catalog
+entries and machine-readable dependency metadata must use the canonical
+`neqsim-*` ID.
 
 ## Required SKILL.md Sections
 

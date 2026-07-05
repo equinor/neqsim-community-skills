@@ -13,6 +13,8 @@ A skill is a small, self-contained knowledge package. It can contain:
 
 This repository is for public knowledge only. Do not add proprietary methods, confidential data, internal tag names, private URLs, company-specific standards, unpublished correlations, or production design rules.
 
+Company-specific skills belong in private enterprise repositories instead of this public community repository. See the main NeqSim [Enterprise Agent and Skill Repositories](https://github.com/equinor/neqsim/blob/master/docs/integration/enterprise_agent_skill_repos.md) guide for the paired enterprise skills/agents setup and Engineering Harness install/discovery configuration.
+
 ## Relationship to NeqSim
 
 [NeqSim is a library for calculation of fluid behavior, phase equilibrium and process simulation](https://github.com/equinor/neqsim). It provides the thermodynamic and process simulation engine. This repository provides community skills that can guide agents and users when applying open workflows around NeqSim.
@@ -120,7 +122,7 @@ This repository publishes a machine-readable catalog, [`community-skills.yaml`](
 engineering-harness plugins sync      # imports community skills (public, no token)
 ```
 
-Each catalog entry maps to a harness `Skill` (name, description, `recommended_tools: [neqsim]`, tags). The harness then loads these skills alongside its own examples, so a workflow launched from the main NeqSim repo can reference them by name.
+Each catalog entry maps to a harness `Skill` (name, description, `recommended_tools: [neqsim]`, tags, `trust: community`). The harness then loads these skills alongside its own examples, so a workflow launched from the main NeqSim repo can reference them by canonical `neqsim-*` name.
 
 ## Contribute
 

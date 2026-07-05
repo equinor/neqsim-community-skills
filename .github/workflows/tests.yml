@@ -29,3 +29,6 @@ jobs:
 
       - name: Run tests
         run: python -m pytest
+
+      - name: Run catalog metadata tests
+        run: python -m pytest skills/test_skill_metadata.py

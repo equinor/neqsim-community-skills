@@ -11,6 +11,8 @@ replace — the validated Java classes in core NeqSim. Validated calculations
 belong in core neqsim; company-policy or confidential content belongs in the
 enterprise repos.
 
+For company-private skills, set up paired enterprise skills and agents repositories instead of adding the content here. The main NeqSim [Enterprise Agent and Skill Repositories](https://github.com/equinor/neqsim/blob/master/docs/integration/enterprise_agent_skill_repos.md) guide explains the `enterprise-skills.yaml` / `enterprise-agents.yaml` catalogs and Engineering Harness discovery/install configuration.
+
 ## Add a New Skill
 
 1. Copy [templates/skill-template](templates/skill-template) into the relevant domain folder under [skills](skills).
@@ -20,7 +22,8 @@ enterprise repos.
 5. Add Python code under `src` if the skill includes executable logic.
 6. Add examples that run with public inputs only.
 7. Add pytest tests for all executable behavior.
-8. Update any local catalog preview, README tables, or documentation that should mention the skill.
+8. Add or update the root `community-skills.yaml` catalog entry.
+9. Update any local catalog preview, README tables, or documentation that should mention the skill.
 
 ## Required Files
 
@@ -90,6 +93,7 @@ Use small synthetic examples and cite public references only.
 Before requesting review, confirm that:
 
 - [ ] The skill name starts with `neqsim-`.
+- [ ] The skill appears in `community-skills.yaml` with the canonical `neqsim-*` ID.
 - [ ] `SKILL.md` has valid YAML frontmatter and all required sections.
 - [ ] Examples run with public data.
 - [ ] Tests pass with Python 3.10 or newer.

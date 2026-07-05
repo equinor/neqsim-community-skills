@@ -31,24 +31,33 @@ neqsim skill publish user/repo-name  # publish yours by creating a draft PR
 
 For this multi-skill repository, each skill is cataloged by a path such as `skills/process/separator-modelling/SKILL.md`.
 
-## Initial Skills
+## Skill Catalog
+
+The complete source of truth is [`community-skills.yaml`](community-skills.yaml). The catalog currently contains 57 community skills across these public domains:
+
+| Domain | Folder | Skills |
+| --- | --- | ---: |
+| Environment | [skills/environment](skills/environment) | 2 |
+| Field development | [skills/field-development](skills/field-development) | 7 |
+| Flow assurance | [skills/flow-assurance](skills/flow-assurance) | 7 |
+| Process | [skills/process](skills/process) | 25 |
+| PVT | [skills/pvt](skills/pvt) | 2 |
+| Safety | [skills/safety](skills/safety) | 8 |
+| Subsea | [skills/subsea](skills/subsea) | 6 |
+
+Representative skills include:
 
 | Skill | Catalog name | Purpose |
 | --- | --- | --- |
 | [skills/process/separator-modelling](skills/process/separator-modelling) | `neqsim-separator-modelling` | Educational gas/liquid separator screening indicators |
-| [skills/pvt/fluid-quality-check](skills/pvt/fluid-quality-check) | `neqsim-fluid-quality-check` | Public composition quality checks before simulation |
-| [skills/flow-assurance/hydrate-screening](skills/flow-assurance/hydrate-screening) | `neqsim-hydrate-screening` | Educational hydrate risk screening placeholder |
-| [skills/safety/relief-load-screening](skills/safety/relief-load-screening) | `neqsim-relief-load-screening` | Educational fire-case relief load screening placeholder |
-| [skills/safety/depressurization-screening](skills/safety/depressurization-screening) | `neqsim-depressurization-screening` | Educational blowdown time and low-temperature screening placeholder |
-| [skills/process/line-velocity-check](skills/process/line-velocity-check) | `neqsim-line-velocity-check` | Educational line velocity screening against erosional velocity and a guideline |
-| [skills/process/sand-erosion-screening](skills/process/sand-erosion-screening) | `neqsim-sand-erosion-screening` | Educational sand-erosion rate and remaining-wall-life screening placeholder |
-| [skills/process/compressor-operating-window-check](skills/process/compressor-operating-window-check) | `neqsim-compressor-operating-window-check` | Educational compressor surge/stonewall operating window screening placeholder |
-| [skills/process/dynamic-process-preparation](skills/process/dynamic-process-preparation) | `neqsim-dynamic-process-preparation` | Prepare NeqSim process flowsheets for dynamic simulation readiness |
-| [skills/process/dynamic-instrument-controller-setup](skills/process/dynamic-instrument-controller-setup) | `neqsim-dynamic-instrument-controller-setup` | Set up dynamic transmitters and PID-style controller loops for NeqSim workflows |
-| [skills/flow-assurance/hydrate-margin-check](skills/flow-assurance/hydrate-margin-check) | `neqsim-hydrate-margin-check` | Educational hydrate operating-margin (subcooling) screening placeholder |
-| [skills/flow-assurance/wax-margin-check](skills/flow-assurance/wax-margin-check) | `neqsim-wax-margin-check` | Educational wax appearance temperature operating-margin screening placeholder |
+| [skills/pvt/e300-fluid-io](skills/pvt/e300-fluid-io) | `neqsim-e300-fluid-io` | Eclipse E300 fluid import/export and public water-parameter handling |
+| [skills/flow-assurance/produced-water-scale-screening](skills/flow-assurance/produced-water-scale-screening) | `neqsim-produced-water-scale-screening` | Public produced-water brine builder and scale screening |
+| [skills/process/teg-dehydration-modeling](skills/process/teg-dehydration-modeling) | `neqsim-teg-dehydration-modeling` | Runnable NeqSim TEG dehydration flowsheet guidance |
+| [skills/safety/vacuum-collapse-screening](skills/safety/vacuum-collapse-screening) | `neqsim-vacuum-collapse-screening` | Public cooldown and external-pressure screening for blocked-in vessels |
+| [skills/subsea/subsea-layout-geometry](skills/subsea/subsea-layout-geometry) | `neqsim-subsea-layout-geometry` | Public subsea layout geometry and step-out screening |
+| [skills/environment/energy-emissions-screening](skills/environment/energy-emissions-screening) | `neqsim-energy-emissions-screening` | Field-life energy and CO2-equivalent emissions screening |
 
-These examples are intentionally simple. They are suitable for learning, testing agent workflows, and demonstrating the repository structure. They are not design tools.
+These skills are intentionally simple and public. They are suitable for learning, testing agent workflows, and demonstrating repository structure. They are not design tools.
 
 ## Install and Run
 
@@ -81,7 +90,15 @@ Agents read `SKILL.md` files when a task matches the skill description and `USE 
 - validation checks
 - common mistakes and limitations
 
-Installed community skills are typically stored under `~/.neqsim/skills/<name>/SKILL.md`. VS Code users can also copy a skill file to their user prompts folder and reference it from chat.
+Installed community skills are typically stored under `~/.neqsim/skills/<name>/SKILL.md`.
+VS Code users should export generated discovery copies to their private user prompts folder:
+
+```bash
+neqsim skill install <name> --target vscode
+neqsim skill doctor
+```
+
+Use `--target generic` for tool-neutral agents that read `~/.neqsim/export/generic/manifest.json`.
 
 ## Using a Skill in a Harness
 

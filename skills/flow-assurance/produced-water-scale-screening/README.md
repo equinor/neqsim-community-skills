@@ -20,7 +20,7 @@ and informational CO2/H2S corrosion flags.
 ## Install / test
 
 ```bash
-pip install -e .[test]
+python -m pip install -e .[test]
 pytest -q
 ```
 

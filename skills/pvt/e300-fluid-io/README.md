@@ -33,7 +33,7 @@ This community skill provides:
 ## Quick Start
 
 ```bash
-pip install -e ".[test]"
+python -m pip install -e ".[test]"
 pytest
 python examples/build_water_e300.py
 ```

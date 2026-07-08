@@ -91,7 +91,7 @@ Agents read `SKILL.md` files when a task matches the skill description and `USE 
 - common mistakes and limitations
 
 Installed community skills are typically stored under `~/.neqsim/skills/<name>/SKILL.md`.
-VS Code users should export generated discovery copies to their private user prompts folder:
+VS Code users should export generated discovery copies to their personal `~/.copilot/skills` folder (the folder VS Code and the GitHub Copilot CLI scan for user-global skills):
 
 ```bash
 neqsim skill install <name> --target vscode

@@ -154,6 +154,7 @@ print(water_dew_C, lean_teg_wt, still_vent["NMVOC"])
 | Class not found | Wrong CPA class name | Use `SystemSrkCPAstatoil` (lowercase `statoil`) |
 | Run blocks or stalls | Running inline instead of on a thread | Use `process.runAsThread()` + `thr.join(timeout_ms)` |
 | TEG inventory drifts | No makeup | Add the `Calculator` makeup sized from TEG in dry gas, flash gas, still vent, water draws |
+| Water balance looks ~1-2% open | Only counting still vent + regen water draw | Water removed from the gas leaves via **still vent + regen water/HC draw + degassing flash gas**; include the flash-gas water term and closure tightens to <0.1% |
 
 ## Limitations
 

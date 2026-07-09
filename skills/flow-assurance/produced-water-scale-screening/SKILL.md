@@ -132,6 +132,9 @@ the NeqSim Java library that a qualified engineer should use for design-grade wo
 - `neqsim.thermo.util.ProducedWaterFluidBuilder` — builds an electrolyte-CPA produced-water system from TDS, a type preset, or explicit ions (the `neqsim_components` mapping feeds `createFromIons`).
 - `neqsim.thermodynamicoperations.ThermodynamicOperations#checkScalePotential(int)` — rigorous scale-potential evaluation on an electrolyte-CPA fluid.
 - `neqsim.thermodynamicoperations.ThermodynamicOperations#addIonToScaleSaturation(int, String, String)` — register a scale salt / ion pair for saturation tracking.
+- `neqsim.process.chemistry.scale.ElectrolyteScaleCalculator` — activity-corrected saturation index (CaCO3, BaSO4, CaSO4, SrSO4) from ion mg/L.
+- `neqsim.process.chemistry.scale.ScaleKinetics` — induction time and reaction-vs-transport growth regime on top of a saturation index.
+- `neqsim.process.chemistry.scale.BrineMixingScaleEvaluator` — mixing-fraction sweep for incompatible brines (worst mineral and mixing fraction).
 
 In Python the same classes are reachable through the `neqsim` package (for
 example `from neqsim import jneqsim`).

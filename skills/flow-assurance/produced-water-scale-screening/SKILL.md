@@ -135,6 +135,7 @@ the NeqSim Java library that a qualified engineer should use for design-grade wo
 - `neqsim.process.chemistry.scale.ElectrolyteScaleCalculator` — activity-corrected saturation index (CaCO3, BaSO4, CaSO4, SrSO4) from ion mg/L.
 - `neqsim.process.chemistry.scale.ScaleKinetics` — induction time and reaction-vs-transport growth regime on top of a saturation index.
 - `neqsim.process.chemistry.scale.BrineMixingScaleEvaluator` — mixing-fraction sweep for incompatible brines (worst mineral and mixing fraction).
+- `neqsim.process.corrosion.PipeSegmentIntegrity` — coupled per-segment CO2 corrosion + CaCO3 scale profile along a `PipeBeggsAndBrills` line (locate worst corrosion/scale segments).
 
 In Python the same classes are reachable through the `neqsim` package (for
 example `from neqsim import jneqsim`).

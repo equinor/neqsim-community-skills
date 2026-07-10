@@ -119,7 +119,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-dynamic-instrument-controller-setup
-    version: "0.1.0"
+    version: "0.2.0"
     description: "Set up measurement devices and PID-style controllers for NeqSim dynamic process simulations. USE WHEN: a task needs to add transmitters, controller devices, valve manipulation, setpoints, controller action, and autotuning workflow guidance before runTransient calculations."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"

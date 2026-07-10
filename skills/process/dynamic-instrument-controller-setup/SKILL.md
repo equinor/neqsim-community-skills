@@ -1,8 +1,8 @@
 ---
 name: neqsim-dynamic-instrument-controller-setup
-version: "0.1.0"
+version: "0.2.0"
 description: "Set up measurement devices and PID-style controllers for NeqSim dynamic process simulations. USE WHEN: a task needs to add transmitters, controller devices, valve manipulation, setpoints, controller action, and autotuning workflow guidance before runTransient calculations."
-last_verified: "2026-06-25"
+last_verified: "2026-07-10"
 requires:
   python_packages: []
   java_packages: []
@@ -140,6 +140,7 @@ print(lc01.getKp(), lc01.getTi(), lc01.getTd())
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | Controller drives the valve in the wrong direction | Reverse/direct action is wrong | Check process cause and effect, then set `setReverseActing(True/False)` correctly |
+| Pressure rises or falls away from setpoint | Outlet-valve PI error has the wrong sign | When increasing controller output opens the gas outlet, use measured pressure minus setpoint so high pressure increases outflow |
 | Controller never responds | Transmitter or controller was not added or attached | Add the measurement device to the process and attach the controller to manipulated equipment |
 | Output saturates at valve limit | Transmitter range, setpoint, or PID gain is unrealistic | Check min/max range, setpoint basis, valve opening limits, and PID parameters |
 | Autotune gives poor parameters | Event log does not contain a clear response | Reset event log, apply deliberate setpoint steps, and run enough transient time |

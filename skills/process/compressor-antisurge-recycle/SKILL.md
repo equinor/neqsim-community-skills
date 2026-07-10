@@ -397,6 +397,14 @@ a certified machinery-protection package.
 - `neqsim.process.equipment.valve.ThrottlingValve` — anti-surge recycle valve.
 - `neqsim.process.equipment.util.Recycle` — closes the recycle loop.
 
+The `total_suction_flow` (net forward flow + recycle) computed here is the
+**actual compressor throughput**. When you go on to compute polytropic
+head/efficiency or shaft power from measured conditions, use this actual
+throughput — not the metered net/export flow. Using net flow while the recycle is
+open understates suction volume and power and mis-locates the operating point on
+the surge map (a common error when diagnosing compressor degradation at
+turndown).
+
 In Python these classes are reachable through the `neqsim` package (for example
 `from neqsim import jneqsim`).
 

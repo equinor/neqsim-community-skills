@@ -13,8 +13,8 @@ authors = [{ name = "NeqSim community" }]
 dependencies = []
 
 [project.optional-dependencies]
-test = ["pytest>=7.4"]
-dev = ["pytest>=7.4", "ruff>=0.5"]
+test = ["pytest>=7.4", "PyYAML>=6.0", "jsonschema>=4.0"]
+dev = ["pytest>=7.4", "ruff>=0.5", "PyYAML>=6.0", "jsonschema>=4.0"]
 
 [tool.setuptools]
 packages = []

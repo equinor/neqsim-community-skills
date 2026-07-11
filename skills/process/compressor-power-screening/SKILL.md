@@ -53,6 +53,30 @@ The Python class `CompressorPowerModel` uses the open polytropic-head equation o
 
 This is educational and screening-only logic. It assumes a single stage, constant `k` and `Z`, and an ideal-gas head form. It does not include real-gas property variation, intercooling, mechanical losses, surge or stonewall limits, or vendor curves. It is not a replacement for validated compressor selection and a qualified rotating-equipment review.
 
+## Driver Power-Margin Sizing (operating margin to rated/max power)
+
+When the binding limit is the **driver / rated maximum power** (not surge), a
+common operations question is *how large a power margin to keep* so the machine
+can run close to maximum without tripping. The screening relation is dimensionless:
+
+- At near-constant pressure ratio, `power ∝ mass flow`, so
+  **throughput headroom [%] = power_margin / operating_power**.
+- Therefore the *same absolute MW margin protects a smaller machine less* — margin
+  must be **scaled to each machine's operating power**, not applied as a flat MW.
+  To give machine B the same % headroom as machine A: `margin_B = margin_A × (P0_B / P0_A)`.
+- Size the margin to the **fastest credible power excursion** before the control
+  system reacts. The dominant excursions raise the pressure ratio: a **suction-pressure
+  drop** or a **discharge-pressure rise**. A downstream pressure controller (e.g. an
+  MPC holding delivery pressure fixed) removes a first-order power disturbance and so
+  *buys back* margin: residual swing `≈ (∂power/∂P_discharge) × ΔP_controlled`.
+
+Obtain the local slopes `∂power/∂flow`, `∂power/∂P_suction`, `∂power/∂P_discharge`,
+`∂power/∂T_suction` by finite-differencing a validated `Compressor.getPower()` around
+the operating point (this screening class only gives the flow-proportional term). The
+**driver rated power and performance curves must come from STID/vendor data** before
+any margin is fixed. (Pattern first used for a Troll A export-compressor power-margin
+PEPR action; see the `compressor-agent` / `enterprise-compressor-agent`.)
+
 ## Python Usage Pattern
 
 ```python

@@ -6,10 +6,19 @@
 # To publish a skill, submit the corresponding entry to the main NeqSim repo.
 
 catalog_version: "1.0"
-last_updated: "2026-05-31"
+last_updated: "2026-07-11"
 trust: community
 
 skills:
+  - name: neqsim-document-intelligence-extraction
+    version: "0.1.0"
+    description: "Classify mixed engineering documents and images, route native text/table, OCR, and vision extraction, and produce source-traceable evidence packages with confidence and human-review gates. USE WHEN: a NeqSim task receives PDFs, scans, Word/Excel files, drawings, charts, photographs, or multiple conflicting engineering sources."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/engineering-data/document-intelligence-extraction/SKILL.md"
+    tags: [engineering-data, documents, images, ocr, vision, provenance]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-separator-modelling
     version: "0.1.0"
     description: "Educational separator screening indicators for gas load, residence time, and capacity warnings. USE WHEN: a task needs public separator capacity screening without proprietary design methods."

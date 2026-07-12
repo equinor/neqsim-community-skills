@@ -280,6 +280,15 @@ skills:
     tags: [field-development, reservoir, depletion, production-profile, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-norwegian-continental-shelf-data
+    version: "0.2.0"
+    description: "Public Norwegian Continental Shelf (NCS) reference-facts database and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, and field facts (from norskpetroleum.no / Norwegian Offshore Directorate FactPages) to orient a production, resource-accounting, or field-inventory analysis before a validated NeqSim reservoir/process study."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/norwegian-continental-shelf-data/SKILL.md"
+    tags: [field-development, norwegian-continental-shelf, production, resources, open-data, database, screening, education]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-field-layout-import
     version: "0.1.0"
     description: "Educational subsea field-layout import and normalization from supplied GeoJSON or tabular rows. USE WHEN: a task needs to turn an already-parsed subsea map (GeoJSON point features or CSV-like rows) into a clean, validated node list of wells, manifolds, and a host before geometry and routing screening."

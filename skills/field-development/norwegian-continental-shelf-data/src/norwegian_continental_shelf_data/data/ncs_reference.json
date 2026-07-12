@@ -1,0 +1,151 @@
+{
+  "meta": {
+    "title": "Norwegian Continental Shelf public reference facts",
+    "source": "norskpetroleum.no (Norwegian Petroleum) and the Norwegian Offshore Directorate (Sodir, formerly NPD) FactPages",
+    "source_urls": [
+      "https://www.norskpetroleum.no/en/",
+      "https://www.norskpetroleum.no/en/facts/field/",
+      "https://www.norskpetroleum.no/en/facts/historical-production/",
+      "https://www.norskpetroleum.no/en/petroleum-resources/",
+      "https://www.norskpetroleum.no/en/interactive-map-quick-downloads/quick-downloads/",
+      "https://factpages.sodir.no/"
+    ],
+    "license": "Content from norskpetroleum.no may be reused with attribution to the source and a link to www.norskpetroleum.no. Sodir FactPages data is open data (attribution requested). No proprietary or confidential data is included.",
+    "attribution": "Source: Norwegian Petroleum (www.norskpetroleum.no), Norwegian Ministry of Energy and Norwegian Offshore Directorate.",
+    "snapshot_date": "2026-07-13",
+    "reference_year": 2025,
+    "disclaimer": "This is a curated public seed snapshot of headline national facts and a qualitative inventory of major fields. Per-field production, reserves, and full annual production time series must be refreshed by ingesting the official Sodir FactPages / norskpetroleum.no quick-download tables. Figures are as published for the stated reference year and may be revised by the sources.",
+    "refresh_instructions": "Download the official yearly production and field tables from the norskpetroleum.no quick-downloads page or Sodir FactPages CSV exports, then ingest them with NcsDataset.ingest_sodir_production_csv() / NcsDataset.ingest_annual_production()."
+  },
+  "national": {
+    "fields_total_since_1971": {
+      "value": 129,
+      "unit": "fields",
+      "as_of_year": 2025,
+      "note": "Fields that have produced oil and/or gas since production started in 1971.",
+      "source_url": "https://www.norskpetroleum.no/en/facts/field/"
+    },
+    "fields_in_production": {
+      "value": 97,
+      "unit": "fields",
+      "as_of_year": 2025,
+      "note": "Fields in production at year-end 2025.",
+      "source_url": "https://www.norskpetroleum.no/en/facts/field/"
+    },
+    "discoveries_under_consideration": {
+      "value": 91,
+      "unit": "discoveries",
+      "as_of_year": 2025,
+      "note": "Discoveries being considered for development at year-end 2025; most are small satellite candidates.",
+      "source_url": "https://www.norskpetroleum.no/en/facts/discoveries/"
+    },
+    "annual_production_oe": {
+      "value": 239.2,
+      "unit": "mill Sm3 o.e.",
+      "as_of_year": 2025,
+      "note": "Total Norwegian production in 2025; more than half of the volume was gas.",
+      "source_url": "https://www.norskpetroleum.no/en/facts/historical-production/"
+    },
+    "export_value": {
+      "value": 1000.0,
+      "unit": "bn NOK",
+      "as_of_year": 2025,
+      "note": "Export value of crude oil, natural gas and condensate in 2025 (~57% of Norway's total goods exports).",
+      "source_url": "https://www.norskpetroleum.no/en/production-and-exports/exports-of-oil-and-gas/"
+    },
+    "government_net_cash_flow": {
+      "value": 686.0,
+      "unit": "bn NOK",
+      "as_of_year": 2026,
+      "note": "Government's estimated total net cash flow from petroleum activities in 2026 (taxes, fees, dividend and SDFI).",
+      "source_url": "https://www.norskpetroleum.no/en/economy/governments-revenues/"
+    },
+    "petroleum_investments": {
+      "value": 225.0,
+      "unit": "bn NOK",
+      "as_of_year": 2024,
+      "note": "Investments in the petroleum sector, about one fifth of total investments in productive capital in Norway in 2024.",
+      "source_url": "https://www.norskpetroleum.no/en/economy/investments-operating-costs/"
+    },
+    "gas_pipeline_network_length": {
+      "value": 8800.0,
+      "unit": "km",
+      "as_of_year": 2025,
+      "note": "Total length of the Norwegian gas pipeline network.",
+      "source_url": "https://www.norskpetroleum.no/en/production-and-exports/the-oil-and-gas-pipeline-system/"
+    },
+    "petroleum_employment": {
+      "value": 210000,
+      "unit": "people",
+      "as_of_year": 2023,
+      "note": "Total employment in the petroleum sector in 2023.",
+      "source_url": "https://www.norskpetroleum.no/en/economy/employment/"
+    }
+  },
+  "resource_accounting": {
+    "total_petroleum_resources": {
+      "value": 15.6,
+      "unit": "billion Sm3 o.e.",
+      "as_of_year": 2025,
+      "source_url": "https://www.norskpetroleum.no/en/petroleum-resources/"
+    },
+    "produced_sold_delivered_fraction": {
+      "value": 0.56,
+      "unit": "fraction",
+      "as_of_year": 2025,
+      "note": "56 per cent of total resources have been produced, sold and delivered.",
+      "source_url": "https://www.norskpetroleum.no/en/petroleum-resources/"
+    },
+    "remaining_fraction": {
+      "value": 0.44,
+      "unit": "fraction",
+      "as_of_year": 2025,
+      "note": "44 per cent of total resources remain.",
+      "source_url": "https://www.norskpetroleum.no/en/petroleum-resources/"
+    }
+  },
+  "sea_areas": [
+    {
+      "id": "north_sea",
+      "name": "North Sea",
+      "note": "Most mature area of the Norwegian shelf; largest number of producing fields."
+    },
+    {
+      "id": "norwegian_sea",
+      "name": "Norwegian Sea",
+      "note": "Mix of oil and gas/condensate fields, several with subsea tie-backs."
+    },
+    {
+      "id": "barents_sea",
+      "name": "Barents Sea",
+      "note": "Northernmost area; fewer developments, gas (Snohvit) and oil (Goliat, Johan Castberg)."
+    }
+  ],
+  "fields": [
+    {"name": "Ekofisk", "operator": "ConocoPhillips", "sea_area": "north_sea", "main_product": "oil", "production_start_year": 1971, "status": "producing"},
+    {"name": "Statfjord", "operator": "Equinor", "sea_area": "north_sea", "main_product": "oil", "production_start_year": 1979, "status": "producing"},
+    {"name": "Gullfaks", "operator": "Equinor", "sea_area": "north_sea", "main_product": "oil", "production_start_year": 1986, "status": "producing"},
+    {"name": "Oseberg", "operator": "Equinor", "sea_area": "north_sea", "main_product": "oil", "production_start_year": 1988, "status": "producing"},
+    {"name": "Sleipner Ost", "operator": "Equinor", "sea_area": "north_sea", "main_product": "gas", "production_start_year": 1993, "status": "producing"},
+    {"name": "Troll", "operator": "Equinor", "sea_area": "north_sea", "main_product": "gas", "production_start_year": 1995, "status": "producing"},
+    {"name": "Snorre", "operator": "Equinor", "sea_area": "north_sea", "main_product": "oil", "production_start_year": 1992, "status": "producing"},
+    {"name": "Grane", "operator": "Equinor", "sea_area": "north_sea", "main_product": "oil", "production_start_year": 2003, "status": "producing"},
+    {"name": "Edvard Grieg", "operator": "Aker BP", "sea_area": "north_sea", "main_product": "oil", "production_start_year": 2015, "status": "producing"},
+    {"name": "Ivar Aasen", "operator": "Aker BP", "sea_area": "north_sea", "main_product": "oil", "production_start_year": 2016, "status": "producing"},
+    {"name": "Johan Sverdrup", "operator": "Equinor", "sea_area": "north_sea", "main_product": "oil", "production_start_year": 2019, "status": "producing"},
+    {"name": "Draugen", "operator": "OKEA", "sea_area": "norwegian_sea", "main_product": "oil", "production_start_year": 1993, "status": "producing"},
+    {"name": "Heidrun", "operator": "Equinor", "sea_area": "norwegian_sea", "main_product": "oil", "production_start_year": 1995, "status": "producing"},
+    {"name": "Norne", "operator": "Equinor", "sea_area": "norwegian_sea", "main_product": "oil", "production_start_year": 1997, "status": "producing"},
+    {"name": "Asgard", "operator": "Equinor", "sea_area": "norwegian_sea", "main_product": "oil", "production_start_year": 1999, "status": "producing"},
+    {"name": "Kristin", "operator": "Equinor", "sea_area": "norwegian_sea", "main_product": "gas", "production_start_year": 2005, "status": "producing"},
+    {"name": "Ormen Lange", "operator": "A/S Norske Shell", "sea_area": "norwegian_sea", "main_product": "gas", "production_start_year": 2007, "status": "producing"},
+    {"name": "Aasta Hansteen", "operator": "Equinor", "sea_area": "norwegian_sea", "main_product": "gas", "production_start_year": 2018, "status": "producing"},
+    {"name": "Snohvit", "operator": "Equinor", "sea_area": "barents_sea", "main_product": "gas", "production_start_year": 2007, "status": "producing"},
+    {"name": "Goliat", "operator": "Var Energi", "sea_area": "barents_sea", "main_product": "oil", "production_start_year": 2016, "status": "producing"},
+    {"name": "Johan Castberg", "operator": "Equinor", "sea_area": "barents_sea", "main_product": "oil", "production_start_year": 2025, "status": "producing"}
+  ],
+  "field_attribute_notes": "Field operator and status are a public reference snapshot and can change over time (transfers, cessation of production). Verify current operator, status, and any per-field production/reserves figures against the Sodir FactPages before quantitative use. Per-field recoverable/remaining/produced oil-equivalent volumes are intentionally left unset in this seed (no numbers are invented) and are populated by ingesting the official Sodir field-reserves export via NcsDataset.ingest_sodir_field_reserves_csv().",
+  "annual_production_seed": [
+    {"year": 2025, "oe_mill_sm3": 239.2, "gas_share_over_half": true, "source_url": "https://www.norskpetroleum.no/en/facts/historical-production/"}
+  ]
+}

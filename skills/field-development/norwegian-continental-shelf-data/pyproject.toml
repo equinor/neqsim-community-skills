@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-norwegian-continental-shelf-data"
-version = "0.3.0"
-description = "Public Norwegian Continental Shelf reference facts, carbon-cost basis, and screening-analysis helpers for NeqSim community examples."
+version = "0.4.0"
+description = "Public Norwegian Continental Shelf reference facts, carbon-cost basis, decline-curve forecasting, and screening-analysis helpers for NeqSim community examples."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }

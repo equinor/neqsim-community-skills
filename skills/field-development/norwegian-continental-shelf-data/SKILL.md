@@ -1,7 +1,7 @@
 ---
 name: neqsim-norwegian-continental-shelf-data
-version: "0.3.0"
-description: "Public Norwegian Continental Shelf (NCS) reference-facts database, carbon-cost basis, and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, field, and carbon-cost/emission-abatement facts (from norskpetroleum.no / Norwegian Offshore Directorate FactPages) to orient a production, resource-accounting, field-inventory, or emission-reduction screening before a validated NeqSim reservoir/process study."
+version: "0.4.0"
+description: "Public Norwegian Continental Shelf (NCS) reference-facts database, carbon-cost basis, decline-curve forecasting, and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, field, carbon-cost/emission-abatement, or Arps decline-forecast facts (from norskpetroleum.no / Norwegian Offshore Directorate FactPages) to orient a production, resource-accounting, field-inventory, emission-reduction, or production-forecast screening before a validated NeqSim reservoir/process study."
 last_verified: "2026-07-13"
 requires:
   python_packages: []
@@ -43,6 +43,10 @@ simulator — quantitative production forecasting must use the validated NeqSim
   screening of an emission-abatement measure (power-from-shore, waste-heat
   recovery, compressor upgrade, flaring reduction) before a validated NeqSim
   energy/combustion model and a qualified commercial review.
+- When a task needs a screening production forecast: fit an Arps decline
+  (exponential/hyperbolic/harmonic) to a produced-rate series and project a
+  forward rate profile, remaining volume, and EUR to an economic-limit rate,
+  before a validated NeqSim reservoir forecast.
 
 ## Inputs
 
@@ -67,6 +71,11 @@ simulator — quantitative production forecasting must use the validated NeqSim
   gas_price_nok_per_sm3=0.0, horizon_years=15, discount_rate=0.08)`: NPV, simple
   payback, and breakeven CO2 price of an emission-reduction measure.
 - `combustion_co2_tonnes(fuel_gas_sm3_per_year)` / `emission_source_split(2024)`.
+- `fit_arps_decline(series, from_peak=True)`: fit an Arps decline model to a
+  `(time, rate)` produced-rate series (best of exponential/hyperbolic/harmonic).
+- `forecast_production(fit, economic_limit_rate=..., start_time=None,
+  max_years=50.0, timestep_years=1.0, cumulative_to_date=None)`: forward rate
+  profile, remaining volume, years-to-limit, and EUR.
 - `sodir_download_plan()` / `refresh_instructions()`: offline refresh helper
   (returns official download URLs + ingestion routing; no network access).
 - `resource_remaining(total_billion_sm3_oe, produced_fraction, latest_annual_oe_mill_sm3=None)`.
@@ -100,6 +109,11 @@ simulator — quantitative production forecasting must use the validated NeqSim
   discounted NPV, breakeven CO2 price, a verdict, and stated assumptions.
 - `POWER_FROM_SHORE_FIELDS`, `CO2_SOURCE_SPLIT_2024`, `GAS_CO2_FACTOR_KG_PER_SM3`:
   bundled public context constants.
+- `fit_arps_decline(...)`: an `ArpsFit` with the model name, b-exponent, initial
+  rate, nominal decline rate (1/year), R-squared, and peak time.
+- `forecast_production(...)`: a `ProductionForecast` with the forward `(time,
+  rate)` profile, remaining volume, years-to-economic-limit, cumulative-to-date,
+  and estimated ultimate recovery (EUR), with stated assumptions.
 
 ## Engineering Method
 
@@ -174,6 +188,18 @@ screen = abatement_screening(
 )
 print(screen.co2_avoided_tonnes_per_year, screen.simple_payback_years,
       screen.npv_nok, screen.verdict)
+
+# Screening production forecast: fit an Arps decline and project forward
+from norwegian_continental_shelf_data import (
+    fit_arps_decline, forecast_production,
+)
+series = [(0.0, 100.0), (1.0, 86.0), (2.0, 74.0), (3.0, 63.5), (4.0, 54.6)]
+fit = fit_arps_decline(series)                    # exponential/hyperbolic/harmonic
+fc = forecast_production(
+    fit, economic_limit_rate=10.0, max_years=40.0, cumulative_to_date=500.0,
+)
+print(fit.model, fit.decline_rate_per_year, fit.r_squared)
+print(fc.years_to_limit, fc.remaining_volume, fc.estimated_ultimate_recovery)
 ```
 
 ## Data Refresh
@@ -241,6 +267,10 @@ quantitative NCS production analysis use:
   a certified emission inventory, a marginal-abatement-cost curve, or a validated
   energy model. It does not replace, and human review is required before, any
   investment or emission-reduction decision.
+- The Arps decline forecast is a transparent empirical curve fit to a produced
+  -rate series; it is not a reservoir simulator or a material-balance model and
+  does not capture drive mechanism, aquifer, or infill effects. Use validated
+  NeqSim `SimpleReservoir` / `runReservoir` for quantitative forecasting.
 
 ## Related NeqSim Functionality
 

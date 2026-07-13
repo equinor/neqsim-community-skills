@@ -37,6 +37,12 @@ from .dataset import (
     NcsField,
     load_dataset,
 )
+from .decline import (
+    ArpsFit,
+    ProductionForecast,
+    fit_arps_decline,
+    forecast_production,
+)
 from .sources import (
     DownloadTarget,
     NORSKPETROLEUM_QUICK_DOWNLOADS,
@@ -50,6 +56,10 @@ __all__ = [
     "NcsDataset",
     "NcsField",
     "load_dataset",
+    "ArpsFit",
+    "ProductionForecast",
+    "fit_arps_decline",
+    "forecast_production",
     "ProductionShare",
     "ProductionTrend",
     "ResourceRemaining",

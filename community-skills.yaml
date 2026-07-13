@@ -281,8 +281,8 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-norwegian-continental-shelf-data
-    version: "0.2.0"
-    description: "Public Norwegian Continental Shelf (NCS) reference-facts database and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, and field facts (from norskpetroleum.no / Norwegian Offshore Directorate FactPages) to orient a production, resource-accounting, or field-inventory analysis before a validated NeqSim reservoir/process study."
+    version: "0.3.0"
+    description: "Public Norwegian Continental Shelf (NCS) reference-facts database, carbon-cost basis, and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, field, and carbon-cost/emission-abatement facts (from norskpetroleum.no / Norwegian Offshore Directorate FactPages) to orient a production, resource-accounting, field-inventory, or emission-reduction screening before a validated NeqSim reservoir/process study."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/field-development/norwegian-continental-shelf-data/SKILL.md"

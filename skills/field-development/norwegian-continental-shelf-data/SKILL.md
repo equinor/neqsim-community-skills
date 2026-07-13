@@ -1,7 +1,7 @@
 ---
 name: neqsim-norwegian-continental-shelf-data
-version: "0.2.0"
-description: "Public Norwegian Continental Shelf (NCS) reference-facts database and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, and field facts (from norskpetroleum.no / Norwegian Offshore Directorate FactPages) to orient a production, resource-accounting, or field-inventory analysis before a validated NeqSim reservoir/process study."
+version: "0.3.0"
+description: "Public Norwegian Continental Shelf (NCS) reference-facts database, carbon-cost basis, and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, field, and carbon-cost/emission-abatement facts (from norskpetroleum.no / Norwegian Offshore Directorate FactPages) to orient a production, resource-accounting, field-inventory, or emission-reduction screening before a validated NeqSim reservoir/process study."
 last_verified: "2026-07-13"
 requires:
   python_packages: []
@@ -38,6 +38,11 @@ simulator — quantitative production forecasting must use the validated NeqSim
   for the official Sodir/norskpetroleum.no tables.
 - When an agent needs an upstream "NCS context" feed before a validated NeqSim
   reservoir-depletion, production-routing, or asset-economics screening.
+- When a task needs the public Norwegian carbon-cost basis (CO2 Tax Act rates,
+  EU ETS allowance cost, NOx Fund contribution) or a first-pass economic
+  screening of an emission-abatement measure (power-from-shore, waste-heat
+  recovery, compressor upgrade, flaring reduction) before a validated NeqSim
+  energy/combustion model and a qualified commercial review.
 
 ## Inputs
 
@@ -53,6 +58,15 @@ simulator — quantitative production forecasting must use the validated NeqSim
   overlay per-field recoverable/remaining/produced oil-equivalent volumes from
   parsed rows or a local Sodir field-reserves CSV export.
 - `NcsDataset.ngl_tonne_to_sm3_oe(tonnes)`: NGL mass to o.e. (1 tonne = 1.9 Sm3 o.e.).
+- `carbon_cost_basis(year=None)`: public Norwegian carbon-cost rates for a year
+  (default: latest known); falls back to the most recent earlier published year.
+- `annual_carbon_cost(co2_tonnes_per_year=..., nox_tonnes_per_year=0.0, year=None,
+  use_combined_co2_cost=True)`: screening annual carbon cost (NOK/year).
+- `abatement_screening(measure=..., fuel_gas_avoided_sm3_per_year=... OR
+  co2_avoided_tonnes_per_year=..., capex_nok=..., added_energy_cost_nok_per_year=0.0,
+  gas_price_nok_per_sm3=0.0, horizon_years=15, discount_rate=0.08)`: NPV, simple
+  payback, and breakeven CO2 price of an emission-reduction measure.
+- `combustion_co2_tonnes(fuel_gas_sm3_per_year)` / `emission_source_split(2024)`.
 - `sodir_download_plan()` / `refresh_instructions()`: offline refresh helper
   (returns official download URLs + ingestion routing; no network access).
 - `resource_remaining(total_billion_sm3_oe, produced_fraction, latest_annual_oe_mill_sm3=None)`.
@@ -75,6 +89,17 @@ simulator — quantitative production forecasting must use the validated NeqSim
 - `production_share(record)`: oil/gas/NGL/condensate share of total o.e.
 - `production_trend(series)`: first-to-last change, CAGR, and rising/falling/flat.
 - `fields_started_by_decade(fields)`: field starts grouped by decade.
+- `carbon_cost_basis(year)`: a `CarbonCostBasis` with the CO2 tax (per Sm3 gas,
+  per litre oil, per tonne CO2), gas-venting tax, EU ETS allowance cost, combined
+  effective CO2 cost, NOx Fund rate, and the public gas combustion factor, each
+  with `source_url` and attribution.
+- `annual_carbon_cost(...)`: a `CarbonCost` with the CO2 tax, EU ETS, combined,
+  and NOx components plus the total NOK/year.
+- `abatement_screening(...)`: an `AbatementScreening` with avoided carbon cost,
+  avoided fuel value, added energy cost, net annual saving, simple payback,
+  discounted NPV, breakeven CO2 price, a verdict, and stated assumptions.
+- `POWER_FROM_SHORE_FIELDS`, `CO2_SOURCE_SPLIT_2024`, `GAS_CO2_FACTOR_KG_PER_SM3`:
+  bundled public context constants.
 
 ## Engineering Method
 
@@ -130,6 +155,25 @@ print(ds.field_counts())
 from norwegian_continental_shelf_data import sodir_download_plan
 for target in sodir_download_plan():
     print(target.dataset, target.factpages_page_url, target.ingest_with)
+
+# Norwegian carbon-cost basis and an emission-abatement screening
+from norwegian_continental_shelf_data import (
+    carbon_cost_basis, abatement_screening,
+)
+basis = carbon_cost_basis(2025)
+print(basis.co2_tax_nok_per_tonne_co2, basis.combined_co2_nok_per_tonne)  # 944, 1825
+
+screen = abatement_screening(
+    measure="Waste-heat recovery on GT exhaust",
+    fuel_gas_avoided_sm3_per_year=20_000_000.0,   # fuel gas no longer burnt
+    capex_nok=300_000_000.0,
+    gas_price_nok_per_sm3=2.0,
+    horizon_years=15,
+    discount_rate=0.08,
+    year=2025,
+)
+print(screen.co2_avoided_tonnes_per_year, screen.simple_payback_years,
+      screen.npv_nok, screen.verdict)
 ```
 
 ## Data Refresh
@@ -169,6 +213,10 @@ quantitative NCS production analysis use:
 - [ ] Full production series is ingested from official exports for any analysis
       beyond the headline seed.
 - [ ] Quantitative production/forecasting is escalated to validated NeqSim models.
+- [ ] Carbon-cost rates (CO2 tax, EU ETS, NOx Fund) are re-verified against the
+      norskpetroleum.no "Emissions to air" page for the current year before use.
+- [ ] Abatement screening is treated as indicative only and escalated to a
+      validated NeqSim energy/combustion model and a commercial review.
 
 ## Common Mistakes
 
@@ -188,6 +236,11 @@ quantitative NCS production analysis use:
 - No reservoir, PVT, hydraulic, or economic physics is performed.
 - No confidential or proprietary data is included; attribution to
   norskpetroleum.no / the Norwegian Offshore Directorate is required for reuse.
+- The carbon-cost basis carries a small set of published annual rates; the
+  abatement screening is a transparent single-measure cash-flow calculation, not
+  a certified emission inventory, a marginal-abatement-cost curve, or a validated
+  energy model. It does not replace, and human review is required before, any
+  investment or emission-reduction decision.
 
 ## Related NeqSim Functionality
 
@@ -212,6 +265,8 @@ workflows rather than running calculations itself:
 - Norwegian Petroleum — Historical production: https://www.norskpetroleum.no/en/facts/historical-production/
 - Norwegian Petroleum — Petroleum resources: https://www.norskpetroleum.no/en/petroleum-resources/
 - Norwegian Petroleum — Quick downloads: https://www.norskpetroleum.no/en/interactive-map-quick-downloads/quick-downloads/
+- Norwegian Petroleum — Emissions to air (CO2 tax, EU ETS, NOx Fund, power from shore): https://www.norskpetroleum.no/en/environment-and-technology/emissions-to-air/
+- Norwegian Offshore Directorate — Resource accounts: https://www.sodir.no/en/facts/resource-accounts/
 - Norwegian Offshore Directorate FactPages: https://factpages.sodir.no/
 - NeqSim repository: https://github.com/equinor/neqsim
 - NeqSim Skills Guide: https://github.com/equinor/neqsim/blob/master/docs/integration/skills_guide.md

@@ -46,6 +46,33 @@ skills:
     tags: [pvt, e300, fluid, water, io]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-pseudocomponent-split-characterization
+    version: "0.1.0"
+    description: "Public plus-fraction (C7+) characterization by a controllable split factor: a Whitson three-parameter gamma molar split, a lumping split factor, and delumping reconstruction. USE WHEN: a task needs to divide a heavy end into pseudocomponents with one adjustable characterization/split factor, compute a delumping split factor from a reference fluid, or reconstruct a detailed composition from a lumped one, before rigorous NeqSim characterization."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/pvt/pseudocomponent-split-characterization/SKILL.md"
+    tags: [pvt, characterization, plus-fraction, split-factor, lumping, delumping]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-reference-fluid-synthetic-generation
+    version: "0.1.0"
+    description: "Public helpers to generate representative or synthetic fluid cases from a common reference fluid by adjusting a split/characterization factor, match that factor to measured PVT/separator data, and blend well/fluid compositions into a field composition by molar-rate allocation. USE WHEN: a task must calibrate a heavy-end split factor against measurements, produce field-level or per-case representative fluids from a reference model, or combine several wells/fluids into one allocated field fluid, before rigorous NeqSim characterization."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/pvt/reference-fluid-synthetic-generation/SKILL.md"
+    tags: [pvt, characterization, reference-fluid, synthetic-fluid, allocation, blending]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-pvt-regression-characterization-factor
+    version: "0.1.0"
+    description: "Public weighted multi-target regression of a split/characterization factor against measured PVT and separator data (saturation pressure, GOR, stock-tank-oil density, formation volume factor). USE WHEN: a task must calibrate one heavy-end characterization factor so a fluid model reproduces several measured PVT/separator quantities at once, with per-target weights and residual reporting, before rigorous NeqSim EOS regression."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/pvt/pvt-regression-characterization-factor/SKILL.md"
+    tags: [pvt, regression, characterization, split-factor, calibration]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-hydrate-screening
     version: "0.1.0"
     description: "Educational hydrate risk screening placeholder with public assumptions. USE WHEN: a task needs a quick hydrate risk triage and should be directed to validated NeqSim methods for real calculations."

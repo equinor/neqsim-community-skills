@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-pseudocomponent-split-characterization"
+version = "0.1.0"
+description = "Public plus-fraction gamma split, lumping split factor, and delumping helpers for NeqSim community fluid characterization."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+neqsim = ["neqsim"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

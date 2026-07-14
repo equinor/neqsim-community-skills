@@ -1,7 +1,7 @@
 ---
 name: neqsim-pseudocomponent-split-characterization
 version: "0.1.0"
-description: "Public plus-fraction (C7+) characterization by a controllable split factor: a Whitson three-parameter gamma molar split, a lumping split factor, and delumping reconstruction. USE WHEN: a task needs to divide a heavy end into pseudocomponents with one adjustable characterization/split factor, compute a delumping split factor from a reference fluid, or reconstruct a detailed composition from a lumped one, before rigorous NeqSim characterization."
+description: "Public plus-fraction (C7+) characterization by a controllable split factor: a Whitson three-parameter gamma molar split, a lumping split factor, delumping reconstruction, and the universal Paraffinic-Aromatic (P/A) heavy-lump split factor S (Uleberg 2026). USE WHEN: a task needs to divide a heavy end into pseudocomponents with one adjustable characterization/split factor, compute a delumping split factor from a reference fluid, reconstruct a detailed composition from a lumped one, or split heavy lumps into paraffinic/aromatic copies on a universal P/A set, before rigorous NeqSim characterization."
 last_verified: "2026-07-14"
 requires:
   python_packages: []
@@ -36,6 +36,10 @@ NeqSim `neqsim.thermo.characterization` Java classes described below.
   detailed composition using the internal distribution of a reference fluid.
 - When you need a transparent, reproducible split before running the rigorous
   NeqSim characterization for design-grade work.
+- When a fluid is represented on a **universal Paraffinic-Aromatic (P/A)** set
+  (fixed 10 light + N paraffinic + N aromatic heavy lumps) and its heavy-end
+  character is carried by a single **split factor S** (the paraffinic fraction
+  of each heavy lump), per the Uleberg (2026) universal characterisation.
 
 ## Inputs
 
@@ -75,6 +79,25 @@ divided by the lump total (each lump's factors sum to 1). A lumped composition
 is delumped by multiplying each lump value by its component split factors. This
 mirrors FluidMagic's `EOSConverter.calculate_split_factor` / `_delump`.
 
+### Universal Paraffinic-Aromatic (P/A) split factor S
+
+The universal characterisation of Uleberg (2026) keeps one fixed component set
+(10 light + N paraffinic + N aromatic heavy lumps) and carries each feed's
+heavy-end character in a single split factor. For heavy lump `i` with total mole
+fraction `Z_i`, the split factor `S_i` (the paraffinic fraction) divides it into
+a paraffinic copy `P_i = S_i Z_i` and an aromatic copy `A_i = (1 - S_i) Z_i`, so
+moles are conserved. The recommended operational form is a **single constant
+`S`** applied to every heavy lump; a general two-endpoint form interpolates `S_i`
+linearly in molecular weight between `S1` (lightest heavy lump) and `Sn`
+(heaviest), clipped to `[eps, 1-eps]`. For a feed with no separator calibration,
+`S` is assigned provisionally from the screening correlation
+`S ~= 1.3298 - 0.003531 * MW_C7+` (MW in g/mol; clipped). `S` calibrates the
+heavy-end **stock-tank-oil density** (and only weakly GOR); the light/heavy
+molar ratio — hence the GOR — is set by the feed's own composition (its ZI),
+not by `S`. The fixed critical properties, acentric factors, volume shifts and
+BIPs of the paraffinic and aromatic families live in the universal EOS; this
+skill only performs the molar split.
+
 ## Python Usage Pattern
 
 ```python
@@ -101,6 +124,49 @@ scheme = [[0], [1, 2], [3, 4, 5]]
 sf = calculate_split_factor(full, scheme)
 detailed = delump_composition(list(sf.lump_totals), sf.split_factors, scheme)
 ```
+
+### Universal P/A split factor S
+
+```python
+from pseudocomponent_split import (
+    c7plus_split_correlation,
+    constant_pa_split,
+    apply_constant_split_to_vector,
+)
+
+# Provisional constant S when a feed has no separator calibration.
+S = c7plus_split_correlation(mw_c7plus=210.0)   # ~0.588, clipped to [0.02, 0.98]
+
+# Split heavy-lump totals into paraffinic / aromatic copies (P_i, A_i).
+core_totals = [0.02, 0.015, 0.01, 0.005]
+paraffinic, aromatic = constant_pa_split(core_totals, S)
+
+# Re-split a fluid already on a universal P/A set (names end in P / A) with a
+# new constant S; light components pass through unchanged, moles conserved.
+names = ["N2", "C1", "C7P", "C7A", "C8P", "C8A"]
+zi = [0.02, 0.90, 0.03, 0.01, 0.03, 0.01]
+zi_new = apply_constant_split_to_vector(names, zi, split_factor=0.5)
+```
+
+Map a feed's **own** composition (its ZI) onto the universal P/A cores by
+nearest molecular weight (paper Section 2.2), so the light/heavy ratio — hence
+the GOR — comes from the feed, not from a template:
+
+```python
+from pseudocomponent_split import map_source_to_pa_core_totals
+
+m = map_source_to_pa_core_totals(
+    source_names=["C1", "CO2", "C7", "C10", "C30"],
+    source_fractions=[0.80, 0.02, 0.10, 0.05, 0.03],
+    source_molecular_weights=[16.0, 44.0, 96.0, 140.0, 400.0],
+    light_names=["N2", "CO2", "C1", "C2", "C3"],
+    core_labels=["C7", "C10-14", "C31-50"],
+    core_molecular_weights=[96.0, 150.0, 500.0],
+)
+# m.light_fractions -> light slots; m.core_totals -> heavy-lump Z_i to split by S
+```
+
+
 
 ## Related NeqSim Functionality
 
@@ -151,6 +217,9 @@ In Python these are reachable through the `neqsim` package (for example
 
 ## References
 
+- Uleberg, K. (2026). *Legacy Common-Slate vs. Universal Paraffinic-Aromatic
+  Fluid Characterisation in Process Simulation: A Sleipner A Multi-Feed Case
+  Study*, Equinor ASA (universal P/A split factor S, Eqs. 3-4, Section 2.2).
 - Whitson, C.H., Brulé, M.R. (2000). *Phase Behavior*, SPE Monograph 20.
 - Pedersen, K.S., Christensen, P.L., Shaikh, J.A. (2015). *Phase Behavior of
   Petroleum Reservoir Fluids*, 2nd ed.

@@ -417,7 +417,12 @@ throttling, or inlet guide vanes — never by moving speed. Inlet guide vanes ar
 `comp.setInletGuideVaneOpening(f)` (`f=1` fully open) or `comp.setGuideVaneAngle(deg)`
 closes the vanes to reduce head and efficiency **and** lower the surge flow (via a
 configurable `InletGuideVaneModel`), so `getDistanceToSurge()` reflects the shifted
-surge line — distinct from moving speed.
+surge line — distinct from moving speed. If you have vendor **IGV-position** maps
+(a full chart per vane position), attach a `CompressorChartIGV` family with
+`comp.setInletGuideVaneChart(family)`; it interpolates the positions into the active
+chart at each opening (and bypasses the parametric model). Use the parametric
+`InletGuideVaneModel` for screening / fixed-speed discharge control, and
+`CompressorChartIGV` to supply real per-position vendor maps.
 
 **Single body.** A `CompressorShaft` with one compressor also works: `solveSpeed`
 just finds that one machine's speed for its discharge target. So export /

@@ -365,8 +365,75 @@ a certified machinery-protection package.
 - It does not replace API 617 / API 692 rotating-equipment design and review.
 - Results require qualified human review before any design or operating use.
 
+## Multi-Body Compressor Trains on One Shaft (common speed)
+
+When several compressor bodies sit on **one driver shaft** (a single gas turbine
+or motor, often through a gearbox) they must all turn at the **same speed**. A
+2- or 3-body recompression string is the classic case. Model it with
+`neqsim.process.equipment.compressor.CompressorShaft`, NOT by letting each body
+solve its own speed.
+
+**Degrees of freedom.** A shared shaft has exactly **one** mechanical degree of
+freedom — the common speed — and exactly **one** controlled target: the string's
+**final discharge pressure**. Every intermediate inter-body pressure is a
+*result*, not a spec, and must be allowed to **float** off the charts.
+
+| Approach | DOF accounting | Verdict |
+|---|---|---|
+| Fix every stage outlet pressure **and** set a common speed | over-constrained | ❌ non-physical |
+| Adjust ONE common speed → hit the final discharge; intermediates float | 1 variable, 1 target | ✅ correct |
+
+**Pattern.** Put each body in fixed-speed, chart-forward mode and iterate the one
+common speed until the reference (last) body hits the target discharge:
+
+```python
+CompressorShaft = jneqsim.process.equipment.compressor.CompressorShaft
+shaft = CompressorShaft("recompression shaft (single GT)")
+shaft.addCompressor(body1)   # LP body (lowest suction)
+shaft.addCompressor(body2)
+shaft.addCompressor(body3)   # HP body = reference
+shaft.setSpeedBounds(8000.0, 16000.0)
+# re-run the whole flowsheet between speed guesses so inter-body streams,
+# scrubbers and mixers update:
+run_proxy = jpype.JProxy("java.lang.Runnable", dict(run=lambda: process.run()))
+shaft.solveSpeed(body3, 49.0, "bara", run_proxy)   # one speed -> 49 bara at HP discharge
+rpm = shaft.getSpeed()
+mw = shaft.getTotalPower() / 1e6
+```
+
+**Shared pressure nodes.** Where another unit ties into an interstage (e.g. a
+2nd-stage separator gas that joins the recompressor between bodies), model it as
+a **pressure equality**, not a second spec: slave that unit's pressure to the
+floating interstage discharge (a setter each iteration) or drop a small adapting
+valve there. This removes a DOF rather than adding one. A `Mixer` at the join
+already resolves to the lowest inlet pressure, so a small let-down is automatic.
+
+**Fixed-/single-speed drivers.** If the driver is a constant-speed motor (no
+variable-speed drive) speed is **not** a DOF — do **not** iterate it. Use
+`shaft.runAtFixedSpeed(rpm, run_proxy)`: the discharge floats off the chart at
+the locked speed and any pressure spec is met by anti-surge recycle, suction
+throttling, or IGVs — never by moving speed.
+
+**Single body.** A `CompressorShaft` with one compressor also works: `solveSpeed`
+just finds that one machine's speed for its discharge target. So export /
+re-injection / gas-lift machines (one body each on their own shaft) use the same
+API — separate shafts keep separate speeds.
+
+**Anti-surge coexists.** The per-body anti-surge loops (recycle splitter, valve,
+`Recycle`, `AntiSurgeCalculator`) stay attached and keep protecting each body;
+they adjust *recycle flow*, while the shaft sets *speed*. Apply the shaft solve
+**after** the charts and anti-surge are active. Bisection on speed is smooth and
+monotonic (higher speed → higher discharge); a secant/Newton step converges
+faster if flowsheet re-runs are expensive.
+
 ## Related NeqSim Functionality
 
+- `neqsim.process.equipment.compressor.CompressorShaft` — groups several
+  compressor bodies on one shaft at a single common speed;
+  `addCompressor(...)`, `solveSpeed(reference, targetP, unit, runnable)` (iterate
+  one speed to the final discharge, intermediates float),
+  `runAtFixedSpeed(rpm, runnable)` (constant-speed drivers), `setSpeed(...)`,
+  `setSpeedBounds(...)`, `getSpeed()`, `getTotalPower()`.
 - `neqsim.process.equipment.compressor.Compressor` —
   `generateCompressorChart(...)`, `getCompressorChart()`,
   `getSurgeFlowRate()`, `getDistanceToSurge()`, `setSpeed(...)`.

@@ -412,7 +412,12 @@ already resolves to the lowest inlet pressure, so a small let-down is automatic.
 variable-speed drive) speed is **not** a DOF — do **not** iterate it. Use
 `shaft.runAtFixedSpeed(rpm, run_proxy)`: the discharge floats off the chart at
 the locked speed and any pressure spec is met by anti-surge recycle, suction
-throttling, or IGVs — never by moving speed.
+throttling, or inlet guide vanes — never by moving speed. Inlet guide vanes are a
+**first-class** fixed-speed control on `Compressor`:
+`comp.setInletGuideVaneOpening(f)` (`f=1` fully open) or `comp.setGuideVaneAngle(deg)`
+closes the vanes to reduce head and efficiency **and** lower the surge flow (via a
+configurable `InletGuideVaneModel`), so `getDistanceToSurge()` reflects the shifted
+surge line — distinct from moving speed.
 
 **Single body.** A `CompressorShaft` with one compressor also works: `solveSpeed`
 just finds that one machine's speed for its discharge target. So export /
@@ -436,6 +441,50 @@ one body drops to ~80 % on two). For a multi-stage duty (e.g. re-injection),
 commingle the parallel 1st-stage discharges then feed a common 2nd stage at an
 interstage pressure. Route a recompression train's HP discharge back to the gas
 header, not straight into the export suction.
+
+**Process-integrated control (`CompressorShaftCalculator`).** Instead of the
+external `solveSpeed` callback, add a `CompressorShaftCalculator` to the
+`ProcessSystem`; it converges the one common speed **inside** `process.run()`
+(one damped secant step per pass, like `AntiSurgeCalculator`) so the shaft speed
+converges together with the recycles in a single run — no separate full-field
+solves. Add it **after** the compressor bodies / anti-surge.
+
+```python
+CompressorShaftCalculator = jneqsim.process.equipment.util.CompressorShaftCalculator
+shaft = CompressorShaft("recompression shaft (single GT)")
+shaft.addCompressor(body1); shaft.addCompressor(body2); shaft.addCompressor(body3)
+shaftCalc = CompressorShaftCalculator("shaft speed", shaft, body3, 49.0, "bara")
+shaftCalc.setSpeedBounds(8000.0, 16000.0)
+process.add(shaftCalc)
+process.run()          # shaft speed converges with the recycles
+rpm = shaftCalc.getSpeed()
+```
+
+**Feasibility result + pressure control (eCalc-style).** A single-speed string
+cannot make an arbitrary pressure — the max-speed curve is a ceiling and the
+min-speed curve is a floor. Both solvers **saturate and flag** instead of
+crashing, and expose a `CompressorShaft.SolveResult` (read with
+`getLastSolveResult()`, or the shortcut `isFeasible()`). The two speed-bound
+bracket evaluations give the **min-/max-achievable** discharge pressures for free.
+
+```python
+shaft.solveSpeed(body3, 49.0, "bara", run_proxy)
+r = shaft.getLastSolveResult()
+if not r.isFeasible():
+    # r.getStatus(): PRESSURE_ABOVE_MAX_SPEED / PRESSURE_BELOW_MIN_SPEED / OVER_POWER / STONEWALL / SURGE
+    ceiling = r.getMaxAchievablePressure()   # most the string can make
+# too-low target -> shed the surplus head instead of flagging infeasible:
+PressureControl = jneqsim.process.equipment.compressor.CompressorShaft.PressureControl
+shaft.setPressureControl(PressureControl.DOWNSTREAM_CHOKE)   # or UPSTREAM_CHOKE / ASV_RECYCLE
+```
+
+`CompressorShaftCalculator` carries the same `getLastSolveResult()` /
+`isFeasible()` / `setPressureControl(...)`, so an optimizer or `evaluate()` loop
+can gate on `shaftCalc.isFeasible()` directly. Downstream, `Mixer.isPressureMismatch()`
+flags where an unmet pressure collapses a commingling node to the lowest inlet —
+the signal that an upstream machine missed spec. A worked end-to-end example
+(three-stage separation + shared-shaft recompression + control) is in the NeqSim
+repo notebook `examples/notebooks/CompressorShaft_ThreeStageSeparation.ipynb`.
 
 ## Related NeqSim Functionality
 

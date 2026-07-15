@@ -422,9 +422,20 @@ API — separate shafts keep separate speeds.
 **Anti-surge coexists.** The per-body anti-surge loops (recycle splitter, valve,
 `Recycle`, `AntiSurgeCalculator`) stay attached and keep protecting each body;
 they adjust *recycle flow*, while the shaft sets *speed*. Apply the shaft solve
-**after** the charts and anti-surge are active. Bisection on speed is smooth and
-monotonic (higher speed → higher discharge); a secant/Newton step converges
-faster if flowsheet re-runs are expensive.
+**after** the charts and anti-surge are active. `solveSpeed` uses a bracketed
+false-position (Illinois) secant — the speed↔discharge map is smooth and
+monotonic (higher speed → higher discharge), so it converges superlinearly. Each
+iteration re-solves the whole flowsheet, so on a large multi-train plant make the
+shaft solve **opt-in** and solve each train's shaft in turn.
+
+**Parallel machines and multi-stage strings.** Real duties often use two parallel
+bodies (A/B) rather than one machine: split the feed 50/50, give each body its own
+anti-surge loop, and commingle with a `Mixer`. Splitting one large machine into two
+halves the per-machine gas load (a suction scrubber that reads ~168 % of design on
+one body drops to ~80 % on two). For a multi-stage duty (e.g. re-injection),
+commingle the parallel 1st-stage discharges then feed a common 2nd stage at an
+interstage pressure. Route a recompression train's HP discharge back to the gas
+header, not straight into the export suction.
 
 ## Related NeqSim Functionality
 

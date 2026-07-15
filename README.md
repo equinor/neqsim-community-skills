@@ -1,5 +1,7 @@
 # NeqSim Community Skills
 
+> **Related repositories:** [NeqSim](https://github.com/equinor/neqsim) &nbsp;·&nbsp; You are here: **NeqSim Community Skills** &nbsp;·&nbsp; [NeqSim Community Agents](https://github.com/equinor/neqsim-community-agents) (agents that combine these skills)
+
 NeqSim Community Skills is a public, open-source starting point for community-contributed skills that support [NeqSim](https://github.com/equinor/neqsim) users, AI agents, students, researchers, and engineers.
 
 A skill is a small, self-contained knowledge package. It can contain:

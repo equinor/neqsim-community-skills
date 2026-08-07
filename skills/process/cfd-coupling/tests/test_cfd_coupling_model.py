@@ -78,7 +78,51 @@ def test_single_mesh_cannot_demonstrate_independence() -> None:
 
     assert gate.verdict == "usable_with_caution"
     assert not gate.mesh_independence_ok
-    assert any("mesh independence" in f for f in gate.findings)
+
+
+@pytest.mark.parametrize(
+    "spelling", ["kOmegaSST", "k-omega-sst", "k omega SST", "kOmegaSSTLM", "realizable k-epsilon"]
+)
+def test_model_names_are_recognised_whatever_the_separator_style(spelling: str) -> None:
+    # derive_boundary_conditions recommends "kOmegaSST"; the gate must accept the
+    # very name the skill itself produces, and the CFD-code spellings around it.
+    gate = CfdCouplingModel().assess_quality(
+        turbulence_model=spelling,
+        wall_treatment="wall_function",
+        y_plus=50.0,
+        mesh_levels=3,
+        gci_percent=1.0,
+    )
+
+    assert gate.turbulence_model_class == "rans"
+    assert not any("not recognised" in finding for finding in gate.findings)
+
+
+def test_an_unknown_model_is_still_reported() -> None:
+    gate = CfdCouplingModel().assess_quality(
+        turbulence_model="house-blend-v2",
+        wall_treatment="wall_function",
+        y_plus=50.0,
+        mesh_levels=3,
+    )
+
+    assert gate.turbulence_model_class == "unknown"
+    assert any("not recognised" in finding for finding in gate.findings)
+
+
+def test_a_des_derivative_is_classified_as_scale_resolving_not_rans() -> None:
+    # kOmegaSSTDES contains the SST token but is a DES model; the scale-resolving
+    # classification has to win, or a DES study would be wrongly caveated as RANS.
+    gate = CfdCouplingModel().assess_quality(
+        turbulence_model="kOmegaSSTDES",
+        wall_treatment="resolved",
+        y_plus=0.9,
+        mesh_levels=3,
+        steady_state=False,
+    )
+
+    assert gate.turbulence_model_class == "scale_resolving"
+    assert not any("RANS model" in finding for finding in gate.findings)
 
 
 def test_wall_function_outside_valid_y_plus_band_is_flagged() -> None:

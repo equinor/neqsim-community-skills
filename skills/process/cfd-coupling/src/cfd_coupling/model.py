@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite, sqrt
@@ -15,10 +16,38 @@ _WALL_FUNCTION_MAX_YPLUS = 300.0
 _RESOLVED_GOOD_YPLUS = 1.0
 _RESOLVED_CAUTION_YPLUS = 5.0
 
-_SCALE_RESOLVING_MODELS = frozenset({"les", "des", "ddes", "sas", "sbes", "dns"})
-_RANS_MODELS = frozenset(
-    {"k-epsilon", "k-omega", "sst", "k-omega-sst", "rsm", "spalart-allmaras", "rng"}
+# Models are classified by the tokens their names contain, with case and
+# separators stripped, because the same family is written kOmegaSST,
+# k-omega-sst and "k omega SST" by different codes and has many derivatives.
+# Scale-resolving tokens are tested first: kOmegaSSTDES is a DES model, not RANS.
+_SCALE_RESOLVING_TOKENS = ("les", "des", "sas", "sbes", "dns")
+_RANS_TOKENS = (
+    "kepsilon",
+    "komega",
+    "sst",
+    "rsm",
+    "reynoldsstress",
+    "spalartallmaras",
+    "v2f",
+    "rng",
 )
+
+
+def _normalise_model(name: str) -> str:
+    """Strip case, spaces and separators so model spellings compare equal."""
+    return re.sub(r"[^0-9a-z]+", "", (name or "").lower())
+
+
+def _classify_model(name: str) -> str:
+    """Return 'scale_resolving', 'rans' or 'unknown' for a turbulence model name."""
+    key = _normalise_model(name)
+    if not key:
+        return "unknown"
+    if any(token in key for token in _SCALE_RESOLVING_TOKENS):
+        return "scale_resolving"
+    if any(token in key for token in _RANS_TOKENS):
+        return "rans"
+    return "unknown"
 
 
 @dataclass(frozen=True)
@@ -151,23 +180,20 @@ class CfdCouplingModel:
         steady_state: bool = True,
     ) -> CfdQualityResult:
         """Decide whether a CFD study is fit to feed an engineering model."""
-        model_key = (turbulence_model or "").strip().lower()
+        model_key = _normalise_model(turbulence_model)
         treatment_key = (wall_treatment or "").strip().lower()
         if treatment_key not in {"wall_function", "resolved"}:
             raise ValueError("wall_treatment must be 'wall_function' or 'resolved'")
 
         findings: list[str] = []
 
-        if model_key in _SCALE_RESOLVING_MODELS:
-            model_class = "scale_resolving"
-        elif model_key in _RANS_MODELS:
-            model_class = "rans"
+        model_class = _classify_model(turbulence_model)
+        if model_class == "rans":
             findings.append(
                 f"'{turbulence_model}' is a RANS model; peak local values in separated or "
                 "strongly unsteady flow are typically under-predicted."
             )
-        else:
-            model_class = "unknown"
+        elif model_class == "unknown":
             findings.append(
                 f"Turbulence model '{turbulence_model}' not recognised; classify it before "
                 "relying on local peaks."

@@ -30,6 +30,9 @@ Seven layers, usable together or separately:
     Gate the study on discretisation, mesh independence, energy balance and
     boundary placement, and reduce it to the U-value, U-multiplier and hot-spot
     factor a one-dimensional NeqSim model consumes.
+``visualise``
+    Render the mesh and the solved field off-screen with PyVista, including the
+    surface, cut-plane and clipped views a three-dimensional result needs.
 """
 
 from .conduction import (
@@ -98,6 +101,7 @@ from .thermal import (
     hydraulic_diameter_annulus,
     surface_area_per_length,
 )
+from .visualise import RenderOutcome, detect_pyvista, render_field, render_mesh
 
 __all__ = [
     "BACKENDS",
@@ -125,6 +129,7 @@ __all__ = [
     "MeshSegment",
     "PressureStressResult",
     "RadialConductionModel",
+    "RenderOutcome",
     "RunOutcome",
     "RunStep",
     "SOURCE_PRECEDENCE",
@@ -141,6 +146,7 @@ __all__ = [
     "derive_thermal_conditions",
     "detect_backends",
     "detect_gmsh",
+    "detect_pyvista",
     "effective_diffusivity",
     "evaluate_wall_stress",
     "film_coefficient",
@@ -151,6 +157,8 @@ __all__ = [
     "pressure_stress",
     "read_case_results",
     "recommend_backend",
+    "render_field",
+    "render_mesh",
     "required_fields",
     "surface_area_per_length",
     "thermal_stress",

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-fem-coupling"
-version = "0.1.0"
-description = "Link NeqSim process simulations and engineering documents to finite-element models: traceable design basis, NeqSim-derived film coefficients and discretisation targets, a dependency-free one-dimensional multilayer conduction solver, structured Gmsh meshing, scikit-fem and FEniCSx case generation, thermal and pressure stress, study quality gating, and U-value handoff."
+version = "0.2.0"
+description = "Link NeqSim process simulations and engineering documents to finite-element models: traceable design basis, NeqSim-derived film coefficients and discretisation targets, a dependency-free one-dimensional multilayer conduction solver, structured Gmsh meshing in two or three dimensions, scikit-fem and FEniCSx case generation, off-screen PyVista rendering, thermal and pressure stress, study quality gating, and U-value handoff."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
@@ -15,6 +15,7 @@ dependencies = []
 test = ["pytest>=7.4"]
 neqsim = ["neqsim"]
 fem = ["scikit-fem>=8", "meshio>=5", "gmsh>=4.11"]
+viz = ["pyvista>=0.43"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

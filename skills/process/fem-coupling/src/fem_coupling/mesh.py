@@ -23,7 +23,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass, field
 from importlib.util import find_spec
-from math import isfinite
+from math import isfinite, radians
 from pathlib import Path
 from typing import Mapping, Sequence
 
@@ -78,13 +78,30 @@ class MeshSegment:
 
 @dataclass(frozen=True)
 class FemMeshSpec:
-    """A layered, structured two-dimensional mesh definition.
+    """A layered, structured mesh definition, two- or three-dimensional.
 
     ``kind`` is ``axisymmetric_section`` (an r-z slice of a pipe, vessel or
     wellbore, with ``inner_radius_m`` as the bore radius), ``plane_section`` (a
     through-thickness slice of a flat wall) or ``block`` (a rectangular domain such
     as a porous rock sample). ``element_order`` 2 gives quadratic elements, which
     resolve a curved thermal profile with far fewer elements.
+
+    The mesh is two-dimensional unless a third dimension is asked for:
+
+    ``revolve_deg``
+        Sweep the section about the axis to produce a three-dimensional pipe or
+        vessel wall. 360 gives the full annulus; a smaller angle gives a wedge
+        with two symmetry planes, which is what to use when the loading is
+        axisymmetric and the mesh only exists to be looked at or to carry a
+        circumferential feature.
+    ``extrude_m``
+        Sweep the section a distance out of plane, for a flat wall or a block.
+
+    Do not reach for three dimensions by default. An axisymmetric problem solved on
+    a revolved mesh costs an order of magnitude more and returns the same answer as
+    the r-z section; the reasons to revolve are a genuinely circumferential feature
+    (a support, a nozzle, a weld that does not run all the way round) and
+    presentation.
     """
 
     kind: str
@@ -94,6 +111,9 @@ class FemMeshSpec:
     element_order: int = 1
     recombine: bool = True
     name: str = "fem-model"
+    revolve_deg: float | None = None
+    extrude_m: float | None = None
+    circumferential_cells: int = 24
 
     def __post_init__(self) -> None:
         if self.kind not in _KINDS:
@@ -106,6 +126,21 @@ class FemMeshSpec:
             raise ValueError("element_order must be 1 or 2")
         if self.kind == "axisymmetric_section":
             _require_positive("inner_radius_m", self.inner_radius_m)
+        if self.revolve_deg is not None and self.extrude_m is not None:
+            raise ValueError("give revolve_deg or extrude_m, not both")
+        if self.revolve_deg is not None:
+            if self.kind != "axisymmetric_section":
+                raise ValueError(
+                    "revolve_deg only applies to an axisymmetric_section; use "
+                    "extrude_m for a plane section or a block"
+                )
+            if not 0.0 < self.revolve_deg <= 360.0:
+                raise ValueError("revolve_deg must be greater than 0 and at most 360")
+        if self.extrude_m is not None:
+            _require_positive("extrude_m", self.extrude_m)
+        if self.revolve_deg is not None or self.extrude_m is not None:
+            if self.circumferential_cells < 1:
+                raise ValueError("circumferential_cells must be at least one")
         names = [layer.name for layer in self.layers]
         if len(set(names)) != len(names):
             raise ValueError("layer names must be unique")
@@ -117,6 +152,14 @@ class FemMeshSpec:
                     f"segment '{segment.name}' overrides unknown layer(s): "
                     + ", ".join(sorted(unknown))
                 )
+
+    @property
+    def is_three_dimensional(self) -> bool:
+        return self.revolve_deg is not None or self.extrude_m is not None
+
+    @property
+    def dimension(self) -> int:
+        return 3 if self.is_three_dimensional else 2
 
     # ------------------------------------------------------------- geometry
 
@@ -147,9 +190,10 @@ class FemMeshSpec:
 
     @property
     def element_count(self) -> int:
-        return sum(segment.cells for segment in self.segments) * sum(
+        planar = sum(segment.cells for segment in self.segments) * sum(
             layer.cells for layer in self.layers
         )
+        return planar * self.circumferential_cells if self.is_three_dimensional else planar
 
     def material_of(self, segment: MeshSegment, layer: MeshLayer) -> str:
         """Material assigned to one grid cell, honouring the segment override."""
@@ -166,8 +210,16 @@ class FemMeshSpec:
         return tuple(seen)
 
     def boundary_names(self) -> tuple[str, ...]:
-        """Physical curve names written into the ``.geo``."""
-        return ("inner", "outer", "west", "east")
+        """Physical group names written into the ``.geo``.
+
+        A partial revolve or an extrusion adds the two cut planes, which are
+        symmetry planes rather than real boundaries and normally carry an
+        adiabatic condition.
+        """
+        faces = ("inner", "outer", "west", "east")
+        if self.is_three_dimensional and self.revolve_deg != 360.0:
+            faces += ("symmetry_start", "symmetry_end")
+        return faces
 
     def material_ids(self) -> dict[str, int]:
         """Physical surface id per material, numbered from 1 in appearance order.
@@ -327,37 +379,124 @@ class FemMeshSpec:
         lines.append("")
 
         material_ids = self.material_ids()
-        for material in self.materials():
-            members = [
-                str(surface_id[(i, j)])
-                for i, segment in enumerate(self.segments)
-                for j, layer in enumerate(self.layers)
-                if self.material_of(segment, layer) == material
-            ]
-            lines.append(
-                'Physical Surface("{}", {}) = {{{}}};'.format(
-                    material, material_ids[material], ", ".join(members)
-                )
-            )
-
         boundary_ids = self.boundary_ids()
-        faces = {
-            "inner": [horizontal[(i, 0)] for i in range(nx)],
-            "outer": [horizontal[(i, ny)] for i in range(nx)],
-            "west": [vertical[(0, j)] for j in range(ny)],
-            "east": [vertical[(nx, j)] for j in range(ny)],
-        }
-        for face, members in faces.items():
-            lines.append(
-                'Physical Curve("{}", {}) = {{{}}};'.format(
-                    face, boundary_ids[face], ", ".join(str(m) for m in members)
-                )
+
+        if self.is_three_dimensional:
+            lines.extend(
+                self._sweep_script(surface_id, nx, ny, material_ids, boundary_ids)
             )
+        else:
+            for material in self.materials():
+                members = [
+                    str(surface_id[(i, j)])
+                    for i, segment in enumerate(self.segments)
+                    for j, layer in enumerate(self.layers)
+                    if self.material_of(segment, layer) == material
+                ]
+                lines.append(
+                    'Physical Surface("{}", {}) = {{{}}};'.format(
+                        material, material_ids[material], ", ".join(members)
+                    )
+                )
+
+            faces = {
+                "inner": [horizontal[(i, 0)] for i in range(nx)],
+                "outer": [horizontal[(i, ny)] for i in range(nx)],
+                "west": [vertical[(0, j)] for j in range(ny)],
+                "east": [vertical[(nx, j)] for j in range(ny)],
+            }
+            for face, members in faces.items():
+                lines.append(
+                    'Physical Curve("{}", {}) = {{{}}};'.format(
+                        face, boundary_ids[face], ", ".join(str(m) for m in members)
+                    )
+                )
+
         lines.append("")
         lines.append(f"Mesh.ElementOrder = {self.element_order};")
         lines.append("Mesh.MshFileVersion = 2.2;")
         lines.append("")
         return "\n".join(lines)
+
+    def _sweep_script(
+        self,
+        surface_id: dict[tuple[int, int], int],
+        nx: int,
+        ny: int,
+        material_ids: Mapping[str, int],
+        boundary_ids: Mapping[str, int],
+    ) -> list[str]:
+        """Revolve or extrude the section, and tag the swept volumes and faces.
+
+        Gmsh returns a sweep of a plane surface in a fixed order: the end surface,
+        then the volume, then one lateral surface per curve of the loop in loop
+        order. The loop is written here as (inner, east, outer, west), so the
+        lateral faces come back in that order and can be tagged without any
+        geometric search.
+        """
+        lines: list[str] = []
+        if self.revolve_deg is not None:
+            angle = radians(self.revolve_deg)
+            prefix = f"Extrude {{ {{1, 0, 0}}, {{0, 0, 0}}, {angle:.12g} }}"
+            lines.append(
+                f"// Revolved {self.revolve_deg:g} deg about the x axis into "
+                f"{self.circumferential_cells} circumferential layers."
+            )
+        else:
+            prefix = f"Extrude {{0, 0, {self.extrude_m:.10g}}}"
+            lines.append(
+                f"// Extruded {self.extrude_m:g} m out of plane into "
+                f"{self.circumferential_cells} layers."
+            )
+
+        def sweep(surface: int) -> str:
+            return (
+                f"{prefix} {{ Surface{{{surface}}}; "
+                f"Layers{{{self.circumferential_cells}}}; Recombine; }}"
+            )
+
+        handles: dict[tuple[int, int], str] = {}
+        for i in range(nx):
+            for j in range(ny):
+                handle = f"sweep_{i}_{j}"
+                handles[(i, j)] = handle
+                lines.append(f"{handle}[] = {sweep(surface_id[(i, j)])};")
+        lines.append("")
+
+        for material in self.materials():
+            members = [
+                f"{handles[(i, j)]}[1]"
+                for i, segment in enumerate(self.segments)
+                for j, layer in enumerate(self.layers)
+                if self.material_of(segment, layer) == material
+            ]
+            lines.append(
+                'Physical Volume("{}", {}) = {{{}}};'.format(
+                    material, material_ids[material], ", ".join(members)
+                )
+            )
+
+        # Lateral-face indices follow the curve-loop order (inner, east, outer, west).
+        faces: dict[str, list[str]] = {
+            "inner": [f"{handles[(i, 0)]}[2]" for i in range(nx)],
+            "outer": [f"{handles[(i, ny - 1)]}[4]" for i in range(nx)],
+            "west": [f"{handles[(0, j)]}[5]" for j in range(ny)],
+            "east": [f"{handles[(nx - 1, j)]}[3]" for j in range(ny)],
+        }
+        if self.revolve_deg != 360.0:
+            faces["symmetry_start"] = [
+                str(surface_id[(i, j)]) for i in range(nx) for j in range(ny)
+            ]
+            faces["symmetry_end"] = [
+                f"{handles[(i, j)]}[0]" for i in range(nx) for j in range(ny)
+            ]
+        for face, members in faces.items():
+            lines.append(
+                'Physical Surface("{}", {}) = {{{}}};'.format(
+                    face, boundary_ids[face], ", ".join(members)
+                )
+            )
+        return lines
 
     def write(self, directory: str | Path) -> Path:
         """Write ``mesh.geo`` into ``directory`` and return its path."""
@@ -377,7 +516,11 @@ class FemMeshSpec:
         target = Path(directory)
         geo_path = self.write(target)
         msh_path = target / "mesh.msh"
-        command = f"gmsh -2 -order {self.element_order} {geo_path.name} -o {msh_path.name}"
+        dimension = self.dimension
+        command = (
+            f"gmsh -{dimension} -order {self.element_order} {geo_path.name} "
+            f"-o {msh_path.name}"
+        )
 
         if find_spec("gmsh") is not None:
             try:
@@ -387,7 +530,7 @@ class FemMeshSpec:
                 try:
                     gmsh.option.setNumber("General.Terminal", 0)
                     gmsh.open(str(geo_path))
-                    gmsh.model.mesh.generate(2)
+                    gmsh.model.mesh.generate(dimension)
                     gmsh.write(str(msh_path))
                 finally:
                     gmsh.finalize()
@@ -410,8 +553,8 @@ class FemMeshSpec:
         if shutil.which("gmsh"):
             try:
                 completed = subprocess.run(  # noqa: S603 - fixed command shape
-                    ["gmsh", "-2", "-order", str(self.element_order), geo_path.name,
-                     "-o", msh_path.name],
+                    ["gmsh", f"-{dimension}", "-order", str(self.element_order),
+                     geo_path.name, "-o", msh_path.name],
                     cwd=str(target),
                     capture_output=True,
                     text=True,

@@ -1,8 +1,8 @@
 ---
 name: neqsim-fem-coupling
-version: "0.1.0"
-description: "Link a NeqSim process simulation and engineering documents to a finite-element model of the solid: heat conduction through a layered wall, transient cooldown, species diffusion in porous rock, and the thermal and pressure stress that follow. Merges P&ID, STID, datasheet, insulation-specification and inspection inputs into a traceable design basis, converts a flashed NeqSim fluid into a film coefficient, a Biot and Fourier number and a mesh and time-step target, solves the layered one-dimensional problem with a dependency-free finite-element solver verified against the closed-form resistance, generates a structured Gmsh mesh and a runnable scikit-fem or FEniCSx case for two-dimensional geometry, screens which backend is defensible (scikit-fem, FEniCSx, SfePy, MFEM, OpenSeesPy, PyNite), gates the study on discretisation, mesh independence, energy balance and boundary placement, and reduces the field to the U-value, U-multiplier, hot-spot factor and no-touch time a one-dimensional NeqSim model consumes. USE WHEN: a task needs a temperature or stress field inside a solid that a one-dimensional heat-transfer coefficient cannot produce - a local insulation defect, a support or clamp short-circuit, a buried or non-radial soil path, a nozzle or wall discontinuity, a cooldown or thermal-shock transient, diffusion through a porous medium - or when an existing thermal or stress finite-element report must be qualified before its numbers are trusted."
-last_verified: "2026-08-07"
+version: "0.2.0"
+description: "Link a NeqSim process simulation and engineering documents to a finite-element model of the solid: heat conduction through a layered wall, transient cooldown, species diffusion in porous rock, and the thermal and pressure stress that follow. Merges P&ID, STID, datasheet, insulation-specification and inspection inputs into a traceable design basis, converts a flashed NeqSim fluid into a film coefficient, a Biot and Fourier number and a mesh and time-step target, solves the layered one-dimensional problem with a dependency-free finite-element solver verified against the closed-form resistance, generates a structured Gmsh mesh in two dimensions or swept into three (revolved pipe or vessel wall, extruded plate or block) and a runnable scikit-fem or FEniCSx case, screens which backend is defensible (scikit-fem, FEniCSx, SfePy, MFEM, OpenSeesPy, PyNite), renders the mesh and the solved field off-screen with PyVista including surface, cut-plane and clipped three-dimensional views, gates the study on discretisation, mesh independence, energy balance and boundary placement, and reduces the field to the U-value, U-multiplier, hot-spot factor and no-touch time a one-dimensional NeqSim model consumes. USE WHEN: a task needs a temperature or stress field inside a solid that a one-dimensional heat-transfer coefficient cannot produce - a local insulation defect, a support or clamp short-circuit, a buried or non-radial soil path, a nozzle or wall discontinuity, a cooldown or thermal-shock transient, diffusion through a porous medium - when a three-dimensional geometry or a rendered field is needed, or when an existing thermal or stress finite-element report must be qualified before its numbers are trusted."
+last_verified: "2026-08-08"
 requires:
   python_packages: []
   java_packages: []
@@ -77,6 +77,7 @@ to run them elsewhere.
 | `RadialConductionModel` | `ConductionLayer` stack, `inner_radius_m`, `geometry` | `cylindrical` or `planar`; each layer carries its material, thickness and element count |
 | `solve_transient` | initial profile, duration, time step, both boundaries | Optional `inner_fluid_capacity` (`rho cp A_bore`) to make it a cooldown rather than a thermal-shock model |
 | `FemMeshSpec` | `kind`, `layers`, `segments`, `inner_radius_m`, `element_order` | A structured layered grid; a `MeshSegment` override assigns a different material over part of the length |
+| `FemMeshSpec` (three-dimensional) | `revolve_deg` or `extrude_m`, `circumferential_cells` | Sweeps the same section into a solid: a revolved pipe or vessel wall, or an extruded plate or block |
 | `recommend_backend` | `dimension`, `physics`, `coupled`, `nonlinear`, `structural_frame`, `estimated_dof` | Which finite-element package is defensible, and why |
 | `ConductionProblem` / `FemCase` | mesh, `MaterialAssignment` list, `BoundaryCondition` list, optional `TransientSettings` | Boundary kinds are `robin`, `dirichlet`, `flux`, `adiabatic` |
 | `assess_quality` | element order, elements across the controlling layer, mesh levels, energy balance, far-field ratio | Applies to a generated case or an existing report |
@@ -92,8 +93,9 @@ to run them elsewhere.
 | `FemThermalConditions` | Biot, lumped-capacitance verdict, thermal penetration depth, maximum element size, recommended time step, Fourier number, warnings |
 | `SteadyConductionResult` | Node temperatures, per-layer interface temperatures, inner heat flux, heat flow per unit length, overall U, thermal resistance, and the deviation from the closed-form composite resistance |
 | `TransientConductionResult` | Temperature history through the wall, bore-fluid history, and `time_to_reach` for a no-touch or cooldown time |
-| `FemMeshSpec.geo_script` / `generate` | A structured Gmsh geometry and mesh with a physical group per material and per face, and explicit deterministic tags |
+| `FemMeshSpec.geo_script` / `generate` | A structured Gmsh geometry and mesh, two-dimensional or swept into three, with a physical group per material and per face and explicit deterministic tags |
 | `FemMeshSpec.mesh_warnings` | Layers with too few elements, excessive aspect ratio, elements coarser than the penetration depth |
+| `render_mesh` / `render_field` | Off-screen PyVista PNGs: the mesh before it is solved, and the solved field as a surface, a cut plane and a clipped view |
 | `BackendRecommendation` | The defensible backend with its rationale, the alternatives, and whether this skill can generate the case |
 | `FemCase.write` / `run` | A self-contained case: `inputs.json`, `case.py`, the mesh, a README; run outcome or the command to run it elsewhere |
 | `FemResults` | Degrees of freedom, element count, temperature range, per-boundary heat flow and mean temperature, transient history, energy-balance error |
@@ -185,6 +187,33 @@ the choice is stated rather than defaulted:
 properties and the boundary conditions; `case.py` is a fixed script that reads it.
 The same `inputs.json` drives the scikit-fem and the FEniCSx script, so a model is
 promoted from the light backend to the heavy one without being rebuilt.
+
+**Three dimensions, and when not to use them.** `revolve_deg` sweeps the r-z
+section about the axis into a pipe or vessel wall; `extrude_m` sweeps a plane
+section or a block out of plane. Gmsh returns a sweep in a fixed order - end
+surface, volume, then one lateral face per curve of the loop - and the loop is
+written as (inner, east, outer, west), so the volumes and the six faces are tagged
+without any geometric search and the same physical names carry through. A partial
+revolve adds `symmetry_start` and `symmetry_end`, which are cut planes and take an
+adiabatic condition. `ConductionProblem.from_mesh_spec` switches the axisymmetric
+weighting **off** for a swept mesh, because a revolved model already contains the
+circumference and weighting it again counts it twice.
+
+Do not revolve by default. An axisymmetric problem on a revolved mesh costs an
+order of magnitude more and returns the same answer as the r-z section. The
+reasons to go to three dimensions are a genuinely circumferential feature - a
+support, a nozzle, a weld that does not run all the way round, a partial-thickness
+defect - and presentation.
+
+**Rendering.** `render_field` reads whatever field file the case recorded
+(`field.vtu` from scikit-fem, `field.xdmf` from FEniCSx) and produces off-screen
+PNGs. A two-dimensional mesh gets one surface view; a three-dimensional mesh gets
+the surface, a cut plane and a clipped view, because the outside of a solid says
+almost nothing about the gradient inside it. The camera defaults to the plane of
+the two largest extents - an isometric view of a 3.5 mm wall on a 1 m tube wastes
+the frame - and `scale` stretches the thin direction so the layers are legible.
+Both are presentation devices and are labelled as such in the returned message. A
+picture is not evidence: render after the quality gate, not instead of it.
 
 **Quality gate.** Four things decide whether a finite-element number means anything.
 
@@ -380,6 +409,36 @@ stress = evaluate_wall_stress(
 print(stress.verdict, stress.utilisation, stress.stress_category)
 ```
 
+### Three dimensions, and rendering the result
+
+```python
+from fem_coupling import render_field, render_mesh
+
+# The same layered section, revolved into a 90 degree wedge with two symmetry planes.
+solid = FemMeshSpec(
+    kind="axisymmetric_section", inner_radius_m=0.127,
+    layers=[MeshLayer("steel", "carbon-steel", 0.0127, 6),
+            MeshLayer("insulation", "insulation", 0.05, 20)],
+    segments=[MeshSegment("upstream", 1.5, 60),
+              MeshSegment("defect", 0.4, 32, {"insulation": "flooded-insulation"}),
+              MeshSegment("downstream", 1.5, 60)],
+    revolve_deg=90.0, circumferential_cells=12, name="20-P-001-3d",
+)
+mesh = solid.generate("cases/20-P-001-3d/mesh")
+render_mesh(mesh.mesh_path)          # look at the geometry before solving it
+
+# The cut planes are symmetry planes, not real boundaries.
+boundaries += [BoundaryCondition("symmetry_start", "adiabatic"),
+               BoundaryCondition("symmetry_end", "adiabatic")]
+
+# ... write and run the case as above, then:
+view = render_field(
+    "cases/20-P-001-3d",
+    scale=(1.0, 8.0, 8.0),   # a 12.7 mm wall on a 3.4 m tube needs stretching to be read
+)
+print(view.status, view.images)      # field_surface.png, field_slice.png, field_clip.png
+```
+
 ## Validation Checklist
 
 - [ ] `basis.ready_for_meshing` is true, or every missing field and conflict is
@@ -405,6 +464,11 @@ print(stress.verdict, stress.utilisation, stress.stress_category)
       the process-to-ambient difference.
 - [ ] Thermal stress was assessed against a range allowable, and pressure stress
       separately against the primary membrane allowable.
+- [ ] A three-dimensional sweep was justified by a circumferential feature or by
+      presentation, not chosen by default over the r-z section.
+- [ ] The cut planes of a partial sweep carry an adiabatic condition, and the
+      axisymmetric weighting is off for a swept mesh.
+- [ ] Any exaggerated scale or warp in a rendered figure is stated in its caption.
 - [ ] The quality-gate verdict and all findings are carried into the receiving
       report's assumptions register.
 
@@ -426,6 +490,9 @@ print(stress.verdict, stress.utilisation, stress.stress_category)
 | A library material value used as if it were certified | Insulation conductivity in particular varies by a factor of two between products and with water ingress |
 | Perfect thermal contact assumed between layers | Air gaps, delamination and water ingress at an interface can dominate the whole build-up |
 | A two-dimensional result quoted without the one-dimensional check | The one-dimensional answer can be verified against a closed form; the two-dimensional one cannot |
+| A three-dimensional sweep used for an axisymmetric problem | An order of magnitude more cost for the same answer the r-z section already gave |
+| The axisymmetric weighting left on for a swept mesh | A revolved model already contains the circumference; weighting it again counts it twice |
+| A rendered figure at exaggerated scale presented without saying so | A stretched wall and a warped surface are presentation devices, not geometry |
 
 ## Limitations
 
@@ -433,22 +500,26 @@ Linear heat conduction and species diffusion are what this skill solves, with
 temperature-dependent conductivity handled by Picard iteration. Radiation,
 convection inside the solid domain, phase change, latent heat, freezing, curing and
 moisture transport are outside scope. The built-in solver is one-dimensional
-cylindrical or planar; two-dimensional axisymmetric and plane geometry is delegated
-to scikit-fem or FEniCSx, and three-dimensional geometry needs an externally
-generated mesh. The structured mesh generator expresses a local defect as a
-material change over a segment, not as a change of thickness. The stress layer is
-linear elastic and produces membrane and gradient stresses with a category
-attached; it does not perform a code assessment, a fatigue evaluation or a local
-stress-concentration analysis, and geometry discontinuities such as nozzles,
-supports and welds need a local model. The thermal and mechanical problems are
-solved one way - a temperature field produces a stress, and the deformation does
-not feed back into the thermal problem. The quality gate is a screening filter, not
-a verification-and-validation review: a `usable_with_caution` verdict means any
-derived factor must carry an explicit uncertainty band, and a converged solve of
-the wrong boundary condition passes every one of its checks. Human review by a
-qualified thermal or stress analyst is required before a finite-element-derived
-number is used in a design decision. The generated scikit-fem script targets
-scikit-fem 8 and later and the FEniCSx script targets DOLFINx 0.8 and later.
+cylindrical or planar; two-dimensional axisymmetric and plane geometry, and the
+three-dimensional solids swept from them, are delegated to scikit-fem or FEniCSx.
+The structured mesh generator produces layered sections and their sweeps only - a
+geometry that is not a swept layered section (a branch, a nozzle intersection, a
+saddle) needs an externally generated mesh, which both backends accept. A local
+defect is expressed as a material change over a segment, not as a change of
+thickness. The stress layer is linear elastic and produces membrane and gradient
+stresses with a category attached; it does not perform a code assessment, a fatigue
+evaluation or a local stress-concentration analysis, and geometry discontinuities
+such as nozzles, supports and welds need a local model. The thermal and mechanical
+problems are solved one way - a temperature field produces a stress, and the
+deformation does not feed back into the thermal problem. Rendering is a
+presentation layer with no bearing on validity: the quality gate is a screening
+filter, not a verification-and-validation review, a `usable_with_caution` verdict
+means any derived factor must carry an explicit uncertainty band, and a converged
+solve of the wrong boundary condition passes every one of its checks and still
+renders beautifully. Human review by a qualified thermal or stress analyst is
+required before a finite-element-derived number is used in a design decision. The
+generated scikit-fem script targets scikit-fem 8 and later, the FEniCSx script
+targets DOLFINx 0.8 and later, and rendering targets PyVista 0.43 and later.
 
 ## Related NeqSim Functionality
 

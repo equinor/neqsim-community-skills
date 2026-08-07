@@ -171,6 +171,7 @@ class ConductionProblem:
     transient: TransientSettings | None = None
     material_tags: Mapping[str, int] | None = None
     boundary_tags: Mapping[str, int] | None = None
+    dimension: int = 2
 
     def __post_init__(self) -> None:
         if not self.materials:
@@ -206,6 +207,7 @@ class ConductionProblem:
             "transient": None if self.transient is None else self.transient.as_dict(),
             "material_tags": dict(self.material_tags or {}),
             "boundary_tags": dict(self.boundary_tags or {}),
+            "dimension": int(self.dimension),
         }
 
     @classmethod
@@ -224,16 +226,23 @@ class ConductionProblem:
         The physical-group tags are taken straight from the mesh specification, so
         the FEniCSx script (which addresses groups by integer tag) and the
         scikit-fem script (which addresses them by name) see the same partition.
+        A swept mesh is already three-dimensional, so the axisymmetric weighting is
+        switched off for it - applying it to a revolved model would count the
+        circumference twice.
         """
+        axisymmetric = getattr(spec, "kind", "") == "axisymmetric_section" and not getattr(
+            spec, "is_three_dimensional", False
+        )
         return cls(
             name=name,
             mesh_file=mesh_file,
             materials=materials,
             boundaries=boundaries,
-            axisymmetric=getattr(spec, "kind", "") == "axisymmetric_section",
+            axisymmetric=axisymmetric,
             transient=transient,
             material_tags=spec.material_ids(),
             boundary_tags=spec.boundary_ids(),
+            dimension=getattr(spec, "dimension", 2),
         )
 
 
@@ -785,12 +794,15 @@ def main():
             "modelled section, integrated over 2*pi radians."
         )
 
-    (HERE / "results.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
     np.savez(HERE / "field.npz", points=mesh.p, temperature=temperature)
     try:
         mesh.save(str(HERE / "field.vtu"), point_data={"temperature": temperature})
-    except Exception:
-        pass
+        results["field_file"] = "field.vtu"
+    except Exception as error:
+        results["field_file"] = None
+        results["findings"].append("field.vtu could not be written: " + str(error))
+
+    (HERE / "results.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
     print("solved:", results["name"], "dofs", results["degrees_of_freedom"])
 
 
@@ -818,7 +830,7 @@ import numpy as np
 import ufl
 from dolfinx import fem
 from dolfinx.fem.petsc import LinearProblem
-from dolfinx.io import gmshio
+from dolfinx.io import XDMFFile, gmshio
 from mpi4py import MPI
 from petsc4py import PETSc
 
@@ -827,11 +839,12 @@ CONFIG = json.loads((HERE / "inputs.json").read_text(encoding="utf-8"))
 AXISYMMETRIC = bool(CONFIG["axisymmetric"])
 MATERIAL_TAGS = CONFIG["material_tags"]
 BOUNDARY_TAGS = CONFIG["boundary_tags"]
+GEOMETRIC_DIMENSION = int(CONFIG.get("dimension", 2))
 
 
 def main():
     domain, cell_tags, facet_tags = gmshio.read_from_msh(
-        str(HERE / CONFIG["mesh_file"]), MPI.COMM_WORLD, gdim=2
+        str(HERE / CONFIG["mesh_file"]), MPI.COMM_WORLD, gdim=GEOMETRIC_DIMENSION
     )
     space = fem.functionspace(domain, ("Lagrange", 1))
     trial = ufl.TrialFunction(space)
@@ -947,6 +960,16 @@ def main():
             "Axisymmetric model: boundary heat flow is per unit axial length of the "
             "modelled section, integrated over 2*pi radians."
         )
+
+    solution.name = "temperature"
+    results["field_file"] = None
+    try:
+        with XDMFFile(domain.comm, str(HERE / "field.xdmf"), "w") as stream:
+            stream.write_mesh(domain)
+            stream.write_function(solution)
+        results["field_file"] = "field.xdmf"
+    except Exception as error:
+        results["findings"].append("field.xdmf could not be written: " + str(error))
 
     if domain.comm.rank == 0:
         (HERE / "results.json").write_text(json.dumps(results, indent=2), encoding="utf-8")

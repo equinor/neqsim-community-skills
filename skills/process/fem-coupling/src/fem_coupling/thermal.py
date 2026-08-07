@@ -118,7 +118,7 @@ class FemThermalConditions:
 def fluid_state_from_neqsim(
     system: Any,
     *,
-    phase: str = "gas",
+    phase: str = "auto",
     velocity_m_per_s: float | None = None,
     diffusing_components: tuple[str, ...] | list[str] | None = None,
     diffusion_model: str = "Fuller-Schettler-Giddings",
@@ -130,6 +130,11 @@ def fluid_state_from_neqsim(
     here because thermal conductivity and viscosity are otherwise returned as zero,
     which is the single most common cause of a nonsensical film coefficient.
 
+    ``phase`` defaults to ``auto``, which takes the only phase when the flash
+    produced one and refuses to choose when it produced several. Naming the phase
+    explicitly is otherwise required, and the name is NeqSim's own - a glycol or
+    water loop comes back as ``aqueous``, not as ``liquid`` or ``oil``.
+
     When ``diffusing_components`` is given, the effective diffusion coefficients are
     read as well, which is what a species-transport finite-element model needs.
     """
@@ -140,20 +145,30 @@ def fluid_state_from_neqsim(
             continue
 
     wanted = (phase or "").strip().lower()
-    selected = None
-    available: list[str] = []
+    phases: list[tuple[str, Any]] = []
     for index in range(int(system.getNumberOfPhases())):
         candidate = system.getPhase(index)
-        name = str(candidate.getPhaseTypeName()).lower()
-        available.append(name)
-        if name == wanted:
-            selected = candidate
-            break
-    if selected is None:
-        raise ValueError(
-            f"phase '{phase}' not present after the flash; available phases: "
-            f"{', '.join(available) or 'none'}"
-        )
+        phases.append((str(candidate.getPhaseTypeName()).lower(), candidate))
+    available = [name for name, _ in phases]
+
+    if wanted == "auto":
+        if len(phases) == 1:
+            wanted, selected = phases[0][0], phases[0][1]
+        else:
+            raise ValueError(
+                "the flash produced "
+                + str(len(phases))
+                + " phases ("
+                + ", ".join(available)
+                + "); name the one that wets the surface rather than using 'auto'"
+            )
+    else:
+        selected = next((item for name, item in phases if name == wanted), None)
+        if selected is None:
+            raise ValueError(
+                f"phase '{phase}' not present after the flash; available phases: "
+                f"{', '.join(available) or 'none'}"
+            )
 
     diffusivities: list[tuple[str, float]] = []
     if diffusing_components:

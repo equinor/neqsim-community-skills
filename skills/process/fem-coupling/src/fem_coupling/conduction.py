@@ -279,8 +279,73 @@ class RadialConductionModel:
             ),
         )
 
-    # --------------------------------------------------------------- transient
+    # ------------------------------------------------------------- calibration
 
+    def calibrate_outer_bulk_temperature(
+        self,
+        *,
+        target_inner_surface_temperature_c: float,
+        inner_film_coefficient_w_per_m2k: float,
+        inner_bulk_temperature_c: float,
+        outer_film_coefficient_w_per_m2k: float,
+        tolerance_k: float = 1.0e-6,
+        max_iterations: int = 12,
+    ) -> float:
+        """Outer bulk temperature that produces a known inner-surface temperature.
+
+        The far-side condition is often the one nobody measured - the flue gas
+        outside a tube, the soil around a buried line, the ambient behind a wall -
+        while the near-side metal or film temperature is stated on a data sheet.
+        This inverts the steady solve so the unmeasured boundary is calibrated to
+        the number that *is* known, rather than assumed and then found to disagree.
+
+        The relationship is linear for constant conductivity, so two solves are
+        exact there; the iteration only earns its keep when conductivity depends on
+        temperature. Sanity-check the result: an implied far-side temperature that
+        is not physically credible means the assumed outer film coefficient, not
+        the calibration, is wrong.
+        """
+        _require_positive(
+            "inner_film_coefficient_w_per_m2k", inner_film_coefficient_w_per_m2k
+        )
+        _require_positive(
+            "outer_film_coefficient_w_per_m2k", outer_film_coefficient_w_per_m2k
+        )
+
+        def inner_surface(outer_bulk_c: float) -> float:
+            return self.solve_steady(
+                inner_film_coefficient_w_per_m2k=inner_film_coefficient_w_per_m2k,
+                inner_bulk_temperature_c=inner_bulk_temperature_c,
+                outer_film_coefficient_w_per_m2k=outer_film_coefficient_w_per_m2k,
+                outer_bulk_temperature_c=outer_bulk_c,
+            ).inner_surface_temperature_c
+
+        low = inner_bulk_temperature_c
+        high = inner_bulk_temperature_c + 100.0
+        surface_low, surface_high = inner_surface(low), inner_surface(high)
+
+        for _ in range(max_iterations):
+            slope = surface_high - surface_low
+            if abs(slope) < 1.0e-12:
+                raise ValueError(
+                    "the inner surface temperature does not respond to the outer "
+                    "bulk temperature; check the film coefficients"
+                )
+            guess = low + (high - low) * (
+                target_inner_surface_temperature_c - surface_low
+            ) / slope
+            surface = inner_surface(guess)
+            if abs(surface - target_inner_surface_temperature_c) < tolerance_k:
+                return guess
+            low, surface_low = high, surface_high
+            high, surface_high = guess, surface
+
+        raise ValueError(
+            "outer bulk temperature calibration did not converge; check that the "
+            "target inner surface temperature is reachable with these coefficients"
+        )
+
+    # --------------------------------------------------------------- transient
     def solve_transient(
         self,
         *,

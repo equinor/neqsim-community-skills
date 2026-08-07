@@ -186,3 +186,48 @@ def test_geometry_and_layer_inputs_are_validated():
         RadialConductionModel(_layers(), inner_radius_m=0.1, geometry="toroidal")
     with pytest.raises(ValueError, match="inner_radius_m"):
         RadialConductionModel(_layers())
+
+
+def test_outer_bulk_temperature_is_calibrated_to_a_known_metal_temperature():
+    steel = custom_material(
+        "carbon-steel", conductivity_w_per_mk=45.0, conductivity_temp_coeff_w_per_mk2=0.0
+    )
+    wall = RadialConductionModel(
+        [ConductionLayer("tube wall", steel, 0.00356, 12)], inner_radius_m=0.01752
+    )
+    gas_c = wall.calibrate_outer_bulk_temperature(
+        target_inner_surface_temperature_c=165.0,
+        inner_film_coefficient_w_per_m2k=10056.0,
+        inner_bulk_temperature_c=150.0,
+        outer_film_coefficient_w_per_m2k=400.0,
+    )
+    solved = wall.solve_steady(
+        inner_film_coefficient_w_per_m2k=10056.0,
+        inner_bulk_temperature_c=150.0,
+        outer_film_coefficient_w_per_m2k=400.0,
+        outer_bulk_temperature_c=gas_c,
+    )
+    assert solved.inner_surface_temperature_c == pytest.approx(165.0, abs=1e-4)
+    # A waste-heat recovery tube at these coefficients implies a turbine-exhaust
+    # gas temperature, which is the sanity check the calibration exists to enable.
+    assert 400.0 < gas_c < 600.0
+
+
+def test_calibration_survives_temperature_dependent_conductivity():
+    wall = RadialConductionModel(
+        [ConductionLayer("tube wall", material("carbon-steel"), 0.00356, 12)],
+        inner_radius_m=0.01752,
+    )
+    gas_c = wall.calibrate_outer_bulk_temperature(
+        target_inner_surface_temperature_c=165.0,
+        inner_film_coefficient_w_per_m2k=10056.0,
+        inner_bulk_temperature_c=150.0,
+        outer_film_coefficient_w_per_m2k=400.0,
+    )
+    solved = wall.solve_steady(
+        inner_film_coefficient_w_per_m2k=10056.0,
+        inner_bulk_temperature_c=150.0,
+        outer_film_coefficient_w_per_m2k=400.0,
+        outer_bulk_temperature_c=gas_c,
+    )
+    assert solved.inner_surface_temperature_c == pytest.approx(165.0, abs=1e-3)

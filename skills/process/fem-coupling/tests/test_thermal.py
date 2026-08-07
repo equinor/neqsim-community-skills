@@ -5,6 +5,7 @@ from fem_coupling import (
     derive_thermal_conditions,
     effective_diffusivity,
     film_coefficient,
+    fluid_state_from_neqsim,
     material,
 )
 
@@ -146,3 +147,59 @@ def test_effective_diffusivity_scales_with_porosity_over_tortuosity():
 def test_porosity_must_be_a_fraction():
     with pytest.raises(ValueError, match="porosity"):
         effective_diffusivity(2.0e-6, porosity=22.0)
+
+
+class _FakePhase:
+    """Stands in for a NeqSim phase so the accessor contract is tested without a JVM."""
+
+    def __init__(self, name):
+        self._name = name
+
+    def getPhaseTypeName(self):
+        return self._name
+
+    def getTemperature(self):
+        return 423.15
+
+    def getPressure(self):
+        return 19.6
+
+    def getDensity(self, _unit):
+        return 931.1
+
+    def getViscosity(self, _unit):
+        return 4.87e-4
+
+    def getThermalConductivity(self, _unit):
+        return 0.35
+
+    def getCp(self, _unit):
+        return 3400.0
+
+
+class _FakeSystem:
+    def __init__(self, *names):
+        self._phases = [_FakePhase(name) for name in names]
+
+    def getNumberOfPhases(self):
+        return len(self._phases)
+
+    def getPhase(self, index):
+        return self._phases[index]
+
+
+def test_auto_takes_the_only_phase():
+    state = fluid_state_from_neqsim(_FakeSystem("aqueous"), velocity_m_per_s=2.5)
+    assert state.phase == "aqueous"
+    assert state.density_kg_per_m3 == pytest.approx(931.1)
+    assert state.temperature_c == pytest.approx(150.0)
+
+
+def test_auto_refuses_to_choose_between_phases():
+    with pytest.raises(ValueError, match="name the one that wets the surface"):
+        fluid_state_from_neqsim(_FakeSystem("gas", "aqueous"))
+
+
+def test_a_wrong_phase_name_lists_what_is_available():
+    with pytest.raises(ValueError, match="available phases: aqueous"):
+        fluid_state_from_neqsim(_FakeSystem("aqueous"), phase="oil")

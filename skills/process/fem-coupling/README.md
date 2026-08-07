@@ -3,25 +3,27 @@
 Link a NeqSim process simulation and engineering documents to a finite-element
 model of the solid.
 
-The skill has eight layers, each usable on its own:
+The skill has nine layers, each usable on its own:
 
 | Module | Purpose |
 |---|---|
 | `design_basis` | Merge P&ID, STID, datasheet, insulation-specification, inspection and plant-data inputs into one traceable design basis; report conflicts and missing fields before meshing |
 | `materials` | Solid-side properties - conductivity, heat capacity, modulus, expansion, allowable - with the basis recorded, because NeqSim supplies only the fluid side |
 | `thermal` | Turn a flashed NeqSim fluid into a film coefficient, a Biot and Fourier number, a thermal penetration depth, and the element size and time step that follow |
-| `conduction` | A dependency-free one-dimensional multilayer finite-element solver, steady and transient, verified against the closed-form composite resistance; includes the cooldown model with a lumped bore inventory |
-| `mesh` | A structured Gmsh mesh for layered geometry, every layer interface on an element boundary, a physical group per material and per face |
+| `conduction` | A dependency-free one-dimensional multilayer finite-element solver, steady and transient, verified against the closed-form composite resistance; includes the cooldown model with a lumped bore inventory, and calibration of an unmeasured far boundary |
+| `mesh` | A structured Gmsh mesh for layered geometry - two-dimensional, or swept into three by revolving a pipe wall or extruding a plate - every layer interface on an element boundary, a physical group per material and per face |
 | `solver` | Screen which finite-element backend is defensible, then write, run and read back a scikit-fem or FEniCSx case driven by one shared `inputs.json` |
+| `visualise` | Render the mesh and the solved field off-screen with PyVista: one surface view in two dimensions, and surface, cut-plane and clipped views in three |
 | `stress` | Convert the temperature field into thermal and pressure stress with the right stress category attached |
 | `model` | Gate the study on discretisation, mesh independence, energy balance and boundary placement, and reduce it to the U-value, U-multiplier and hot-spot factor a one-dimensional NeqSim model consumes |
 
 This is the solid-side companion to `neqsim-cfd-coupling`. CFD resolves the fluid
 and produces a film coefficient; FEM consumes it and resolves the solid.
 
-NeqSim, Gmsh, scikit-fem and FEniCSx are all optional. Without NeqSim the fluid
-state is supplied directly; without a mesher or a solver the geometry and the case
-are still written, and the commands needed to run them elsewhere are returned.
+NeqSim, Gmsh, scikit-fem, FEniCSx and PyVista are all optional. Without NeqSim the
+fluid state is supplied directly; without a mesher, a solver or a renderer the
+geometry, the case and the field file are still written, and the commands needed to
+run them elsewhere are returned.
 
 ## Install and test
 
@@ -29,8 +31,11 @@ are still written, and the commands needed to run them elsewhere are returned.
 pip install -e ".[test]"
 pytest
 
-# optional, to actually mesh and solve two-dimensional cases:
+# optional, to actually mesh and solve two- and three-dimensional cases:
 pip install -e ".[fem]"
+
+# optional, to render the mesh and the solved field:
+pip install -e ".[viz]"
 ```
 
 ## Run the examples

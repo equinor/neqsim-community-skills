@@ -351,8 +351,11 @@ tested against every intermediate version.
   NeqSim-based screening models.
 
 ## Related Skills
-
-- `neqsim-flow-accelerated-corrosion` — consumes the mass-transfer enhancement factor
+- `neqsim-fem-coupling` - the solid-side companion. This skill resolves the fluid
+  and the boundary layer; that one consumes the resulting film coefficient and
+  resolves the temperature and stress field inside the wall. Hand it the film
+  coefficient and the near-wall heat-flux distribution; take back an effective
+  U-value, a U-multiplier and a metal temperature.- `neqsim-flow-accelerated-corrosion` — consumes the mass-transfer enhancement factor
 - `neqsim-two-phase-flow-regime-screening`,
   `neqsim-multiphase-flow-slug-screening` — supply the `flow_regime` that drives
   the multiphase model choice

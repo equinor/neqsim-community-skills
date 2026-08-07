@@ -575,3 +575,11 @@ skills:
     path: "skills/process/cfd-coupling/SKILL.md"
     tags: [process, cfd, openfoam, multiphase, vof, design-basis, stid, p-and-id, mass-transfer, wall-shear, mesh-quality, y-plus, coupling]
     min_neqsim_version: "3.7.0"
+  - name: neqsim-fem-coupling
+    version: "0.1.0"
+    description: "Link a NeqSim process simulation and engineering documents to a finite-element model of the solid: heat conduction through a layered wall, transient cooldown, species diffusion in porous rock, and the thermal and pressure stress that follow. Merges P&ID, STID, datasheet, insulation-specification and inspection inputs into a traceable design basis, converts a flashed NeqSim fluid into a film coefficient, a Biot and Fourier number and a mesh and time-step target, solves the layered one-dimensional problem with a dependency-free finite-element solver verified against the closed-form resistance, generates a structured Gmsh mesh and a runnable scikit-fem or FEniCSx case for two-dimensional geometry, screens which backend is defensible (scikit-fem, FEniCSx, SfePy, MFEM, OpenSeesPy, PyNite), gates the study on discretisation, mesh independence, energy balance and boundary placement, and reduces the field to the U-value, U-multiplier, hot-spot factor and no-touch time a one-dimensional NeqSim model consumes. USE WHEN: a task needs a temperature or stress field inside a solid that a one-dimensional heat-transfer coefficient cannot produce - a local insulation defect, a support or clamp short-circuit, a buried or non-radial soil path, a nozzle or wall discontinuity, a cooldown or thermal-shock transient, diffusion through a porous medium - or when an existing thermal or stress finite-element report must be qualified before its numbers are trusted."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/fem-coupling/SKILL.md"
+    tags: [process, fem, finite-element, scikit-fem, fenicsx, gmsh, heat-transfer, conduction, cooldown, thermal-stress, insulation, diffusion, mesh-quality, coupling]
+    min_neqsim_version: "3.7.0"

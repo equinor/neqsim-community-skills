@@ -156,6 +156,15 @@ class MeshSpec:
             return 2.0 * self.height_m * self.width_m / (self.height_m + self.width_m)
         return None
 
+    @property
+    def inlet_axis(self) -> str | None:
+        """Flow direction the geometry forces at the inlet, when it fixes one.
+
+        A bend is swept from an inlet tangent along +x, so an inlet velocity set
+        along any other axis would lie in the inlet plane and drive no flow.
+        """
+        return "x" if self.kind == "bend" else None
+
 
 @dataclass(frozen=True)
 class RunStep:
@@ -225,6 +234,13 @@ class _FoamCaseBase:
             raise ValueError("wall_treatment must be 'wall_function' or 'resolved'")
         if self.axis not in {"x", "y", "z"}:
             raise ValueError("axis must be 'x', 'y' or 'z'")
+        required_axis = self.mesh.inlet_axis
+        if required_axis is not None and self.axis != required_axis:
+            raise ValueError(
+                f"a '{self.mesh.kind}' mesh has its inlet normal along {required_axis}, so "
+                f"axis must be '{required_axis}'. With axis='{self.axis}' the inlet velocity "
+                "would lie in the inlet plane and drive almost no flow."
+            )
         if not self.wall_patches:
             raise ValueError("at least one wall patch is required")
 
@@ -568,6 +584,18 @@ functions
         writeControl    writeTime;
         executeControl  writeTime;
     }}""",
+            # Wall shear is a vector, and surfaceFieldValue's max operation on a
+            # vector is component-wise. Reduce it to a magnitude first, or the
+            # reported peak is not a peak at all.
+            """    magWallShearStress
+    {
+        type            mag;
+        libs            ("libfieldFunctionObjects.so");
+        field           wallShearStress;
+        result          magWallShearStress;
+        writeControl    writeTime;
+        executeControl  writeTime;
+    }""",
             """    yPlus
     {
         type            yPlus;
@@ -575,12 +603,12 @@ functions
         writeControl    writeTime;
         executeControl  writeTime;
     }""",
-            """    residuals
+            """    yPlus
     {
-        type            residuals;
-        libs            ("libutilityFunctionObjects.so");
-        writeControl    timeStep;
-        writeInterval   1;
+        type            yPlus;
+        libs            ("libfieldFunctionObjects.so");
+        writeControl    writeTime;
+        executeControl  writeTime;
     }""",
             self._surface_field_value("inletFlux", self.inlet_patch, "sum", "phi"),
             self._surface_field_value("outletFlux", self.outlet_patch, "sum", "phi"),
@@ -590,12 +618,12 @@ functions
         for patch in self.wall_patches:
             blocks.append(
                 self._surface_field_value(
-                    f"peakWallShear_{patch}", patch, "max", "wallShearStress"
+                    f"peakWallShear_{patch}", patch, "max", "magWallShearStress"
                 )
             )
             blocks.append(
                 self._surface_field_value(
-                    f"meanWallShear_{patch}", patch, "areaAverage", "wallShearStress"
+                    f"meanWallShear_{patch}", patch, "areaAverage", "magWallShearStress"
                 )
             )
         return "\n\n".join(blocks)

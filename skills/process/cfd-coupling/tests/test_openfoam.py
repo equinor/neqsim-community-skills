@@ -143,6 +143,83 @@ def test_a_well_proportioned_near_wall_mesh_produces_no_warning(boundary) -> Non
     assert case.mesh_warnings() == ()
 
 
+def bend_mesh(**overrides) -> MeshSpec:
+    settings = dict(
+        kind="bend",
+        diameter_m=0.03504,
+        bend_radius_m=1.5 * 0.03504,
+        bend_angle_deg=90.0,
+        inlet_length_m=10 * 0.03504,
+        outlet_length_m=15 * 0.03504,
+        axial_cells=40,
+    )
+    settings.update(overrides)
+    return MeshSpec(**settings)
+
+
+def test_bend_mesh_sweeps_three_segments_of_the_o_grid(tmp_path, boundary) -> None:
+    case_dir = tmp_path / "bend"
+    build_case(boundary, mesh=bend_mesh(), axis="x").write(case_dir)
+
+    text = (case_dir / "system" / "blockMeshDict").read_text()
+    # Three segments (lead-in, bend, lead-out) of five O-grid blocks each.
+    assert text.count("hex (") == 15
+    # Four cross-section arcs at each of four stations, plus eight through the bend.
+    assert text.count("arc ") == 24
+    assert text.count("(") == text.count(")")
+
+
+def test_bend_inlet_plane_is_normal_to_x_and_outlet_to_z(tmp_path, boundary) -> None:
+    case_dir = tmp_path / "bend"
+    build_case(boundary, mesh=bend_mesh(), axis="x").write(case_dir)
+
+    text = (case_dir / "system" / "blockMeshDict").read_text()
+    vertices = [
+        tuple(float(v) for v in line.strip().strip("()").split())
+        for line in text.split("vertices")[1].split(");")[0].splitlines()
+        if line.startswith("    (")
+    ]
+    inlet_ring, outlet_ring = vertices[:8], vertices[24:32]
+    # The inlet station is a plane at constant x, the outlet at constant z.
+    assert len({round(p[0], 9) for p in inlet_ring}) == 1
+    assert len({round(p[2], 9) for p in outlet_ring}) == 1
+
+
+def test_bend_forces_the_inlet_velocity_onto_its_own_axis(boundary) -> None:
+    # A bend inlet plane is normal to x; the default z axis would put the inlet
+    # velocity in the plane of the inlet and drive essentially no flow.
+    with pytest.raises(ValueError, match="inlet normal along x"):
+        build_case(boundary, mesh=bend_mesh())
+
+    case = build_case(boundary, mesh=bend_mesh(), axis="x")
+    assert case.commands()[0] == "blockMesh"
+
+
+def test_bend_geometry_is_validated() -> None:
+    with pytest.raises(ValueError, match="bend_radius_m"):
+        MeshSpec(kind="bend", diameter_m=0.1, inlet_length_m=1.0, outlet_length_m=1.0)
+    with pytest.raises(ValueError, match="folds the mesh"):
+        bend_mesh(bend_radius_m=0.4 * 0.03504)
+    with pytest.raises(ValueError, match="bend_angle_deg"):
+        bend_mesh(bend_angle_deg=200.0)
+
+
+def test_wall_shear_is_reduced_to_a_magnitude_before_it_is_sampled(tmp_path, boundary) -> None:
+    # surfaceFieldValue's max on a vector is component-wise, so sampling
+    # wallShearStress directly returns a peak that can be below the mean.
+    case_dir = tmp_path / "case"
+    build_case(boundary).write(case_dir)
+
+    control = (case_dir / "system" / "controlDict").read_text()
+    assert "result          magWallShearStress;" in control
+    assert "fields          (magWallShearStress);" in control
+    assert "fields          (wallShearStress);" not in control
+    # The magnitude must be computed after the field it reduces.
+    assert control.index("type            wallShearStress;") < control.index(
+        "result          magWallShearStress;"
+    )
+
+
 def test_channel_mesh_grades_towards_both_walls(tmp_path, boundary) -> None:
     case_dir = tmp_path / "channel"
     build_case(

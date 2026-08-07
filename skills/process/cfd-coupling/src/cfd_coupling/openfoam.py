@@ -94,8 +94,9 @@ _MAX_CELL_EXPANSION = 1.3
 class MeshSpec:
     """Geometry and cell counts for the CFD mesh.
 
-    ``kind`` is one of ``pipe`` (O-grid round duct), ``channel`` (rectangular duct)
-    or ``external`` (import a mesh produced elsewhere). Lengths are metres. When
+    ``kind`` is one of ``pipe`` (O-grid round duct), ``bend`` (O-grid elbow with
+    straight lead-in and lead-out), ``channel`` (rectangular duct) or ``external``
+    (import a mesh produced elsewhere). Lengths are metres. When
     ``first_cell_height_m`` is given, the near-wall grading is solved so the first
     cell matches it, which is how a y+ target from the fluid state reaches the mesh.
     """
@@ -105,6 +106,10 @@ class MeshSpec:
     length_m: float | None = None
     height_m: float | None = None
     width_m: float | None = None
+    bend_radius_m: float | None = None
+    bend_angle_deg: float = 90.0
+    inlet_length_m: float | None = None
+    outlet_length_m: float | None = None
     axial_cells: int = 60
     radial_cells: int = 12
     tangential_cells: int = 12
@@ -116,19 +121,28 @@ class MeshSpec:
 
     def __post_init__(self) -> None:
         kind = self.kind.strip().lower()
-        if kind not in {"pipe", "channel", "external"}:
-            raise ValueError("kind must be 'pipe', 'channel' or 'external'")
+        if kind not in {"pipe", "bend", "channel", "external"}:
+            raise ValueError("kind must be 'pipe', 'bend', 'channel' or 'external'")
         if kind == "pipe":
             _require_positive("diameter_m", self.diameter_m)
             _require_positive("length_m", self.length_m)
-            if not 0.1 <= self.core_fraction <= 0.8:
-                raise ValueError("core_fraction must lie between 0.1 and 0.8")
+        elif kind == "bend":
+            _require_positive("diameter_m", self.diameter_m)
+            _require_positive("bend_radius_m", self.bend_radius_m)
+            _require_positive("inlet_length_m", self.inlet_length_m)
+            _require_positive("outlet_length_m", self.outlet_length_m)
+            if not 0.0 < self.bend_angle_deg <= 180.0:
+                raise ValueError("bend_angle_deg must lie between 0 and 180")
+            if self.bend_radius_m < 0.5 * self.diameter_m:
+                raise ValueError("bend_radius_m below half the diameter folds the mesh")
         elif kind == "channel":
             _require_positive("height_m", self.height_m)
             _require_positive("width_m", self.width_m)
             _require_positive("length_m", self.length_m)
         elif not self.mesh_file:
             raise ValueError("an external mesh requires mesh_file")
+        if kind in {"pipe", "bend"} and not 0.1 <= self.core_fraction <= 0.8:
+            raise ValueError("core_fraction must lie between 0.1 and 0.8")
         for name in ("axial_cells", "radial_cells", "tangential_cells"):
             if int(getattr(self, name)) < 1:
                 raise ValueError(f"{name} must be at least 1")
@@ -136,7 +150,7 @@ class MeshSpec:
     @property
     def hydraulic_diameter_m(self) -> float | None:
         """Hydraulic diameter implied by the geometry, when it is known."""
-        if self.kind == "pipe":
+        if self.kind in {"pipe", "bend"}:
             return self.diameter_m
         if self.kind == "channel":
             return 2.0 * self.height_m * self.width_m / (self.height_m + self.width_m)
@@ -293,6 +307,10 @@ class _FoamCaseBase:
             thickness = (self.mesh.diameter_m / 2.0) * (1.0 - self.mesh.core_fraction)
             cells = self.mesh.radial_cells
             direction = "radial"
+        elif self.mesh.kind == "bend":
+            thickness = (self.mesh.diameter_m / 2.0) * (1.0 - self.mesh.core_fraction)
+            cells = self.mesh.radial_cells
+            direction = "radial"
         else:
             thickness = self.mesh.height_m / 2.0
             cells = max(1, self.mesh.radial_cells // 2)
@@ -324,6 +342,10 @@ class _FoamCaseBase:
     def _block_mesh_dict(self) -> str:
         if self.mesh.kind == "pipe":
             body = _pipe_block_mesh(
+                self.mesh, self.inlet_patch, self.outlet_patch, self.wall_patches[0]
+            )
+        elif self.mesh.kind == "bend":
+            body = _bend_block_mesh(
                 self.mesh, self.inlet_patch, self.outlet_patch, self.wall_patches[0]
             )
         else:
@@ -1261,6 +1283,179 @@ def _pipe_block_mesh(mesh: MeshSpec, inlet: str, outlet: str, wall: str) -> str:
 
     return f"""
 // O-grid round duct: diameter {mesh.diameter_m:g} m, length {mesh.length_m:g} m.
+// Radial grading {grading:.4g} (cell-to-cell ratio {cell_ratio:.3f}) clusters cells at the wall.
+scale   1;
+
+vertices
+(
+{chr(10).join(vertices)}
+);
+
+blocks
+(
+{chr(10).join(blocks)}
+);
+
+edges
+(
+{chr(10).join(edges)}
+);
+
+boundary
+(
+    {inlet}
+    {{
+        type patch;
+        faces
+        (
+{chr(10).join(inlet_faces)}
+        );
+    }}
+
+    {outlet}
+    {{
+        type patch;
+        faces
+        (
+{chr(10).join(outlet_faces)}
+        );
+    }}
+
+    {wall}
+    {{
+        type wall;
+        faces
+        (
+{chr(10).join(wall_faces)}
+        );
+    }}
+);
+"""
+
+
+def _bend_block_mesh(mesh: MeshSpec, inlet: str, outlet: str, wall: str) -> str:
+    """Swept O-grid elbow with a straight lead-in and lead-out.
+
+    The bend is the canonical local geometry for flow-accelerated corrosion and
+    erosion: the outer wall carries the wall-shear peak that a one-dimensional
+    model replaces with a textbook multiplier. The cross-section is swept along
+    the centreline arc, so every longitudinal edge is a true circular arc about
+    the bend axis and the mesh follows the curvature exactly.
+    """
+    radius = mesh.diameter_m / 2.0
+    core_radius = mesh.core_fraction * radius
+    bend_radius = mesh.bend_radius_m
+    sweep = radians(mesh.bend_angle_deg)
+    angles = [radians(45.0 + 90.0 * k) for k in range(4)]
+
+    # Centreline frame: e1 stays out of plane, e2 = t x e1, t = dc/dphi.
+    def frame(phi: float):
+        centre = (bend_radius * sin(phi), 0.0, bend_radius * (1.0 - cos(phi)))
+        tangent = (cos(phi), 0.0, sin(phi))
+        return centre, tangent, (0.0, 1.0, 0.0), (-sin(phi), 0.0, cos(phi))
+
+    def offset(base, direction, distance):
+        return tuple(base[i] + direction[i] * distance for i in range(3))
+
+    def ring(centre, e1, e2, r):
+        points = []
+        for angle in angles:
+            points.append(
+                tuple(
+                    centre[i] + r * (cos(angle) * e1[i] + sin(angle) * e2[i]) for i in range(3)
+                )
+            )
+        return points
+
+    start_centre, start_tangent, e1_start, e2_start = frame(0.0)
+    end_centre, end_tangent, e1_end, e2_end = frame(sweep)
+    mid_centre, _, e1_mid, e2_mid = frame(0.5 * sweep)
+
+    stations = [
+        (offset(start_centre, start_tangent, -mesh.inlet_length_m), e1_start, e2_start),
+        (start_centre, e1_start, e2_start),
+        (end_centre, e1_end, e2_end),
+        (offset(end_centre, end_tangent, mesh.outlet_length_m), e1_end, e2_end),
+    ]
+
+    vertices: list[str] = []
+    for centre, e1, e2 in stations:
+        for point in ring(centre, e1, e2, core_radius):
+            vertices.append("    ({:.8g} {:.8g} {:.8g})".format(*point))
+        for point in ring(centre, e1, e2, radius):
+            vertices.append("    ({:.8g} {:.8g} {:.8g})".format(*point))
+
+    grading, cell_ratio = _wall_grading(
+        radius - core_radius, mesh.radial_cells, mesh.first_cell_height_m
+    )
+
+    arc_length = bend_radius * sweep
+    bend_cells = max(4, mesh.axial_cells)
+    inlet_cells = max(4, round(bend_cells * mesh.inlet_length_m / arc_length))
+    outlet_cells = max(4, round(bend_cells * mesh.outlet_length_m / arc_length))
+    segment_cells = [inlet_cells, bend_cells, outlet_cells]
+
+    blocks: list[str] = []
+    edges: list[str] = []
+    wall_faces: list[str] = []
+
+    for segment in range(3):
+        base = 8 * segment
+        far = base + 8
+        cells = segment_cells[segment]
+        blocks.append(
+            f"    hex ({base} {base + 1} {base + 2} {base + 3} "
+            f"{far} {far + 1} {far + 2} {far + 3}) "
+            f"({mesh.tangential_cells} {mesh.tangential_cells} {cells}) simpleGrading (1 1 1)"
+        )
+        for k in range(4):
+            nxt = (k + 1) % 4
+            o0, o1 = base + 4 + k, base + 4 + nxt
+            i0, i1 = base + k, base + nxt
+            blocks.append(
+                f"    hex ({o0} {o1} {i1} {i0} {o0 + 8} {o1 + 8} {i1 + 8} {i0 + 8}) "
+                f"({mesh.tangential_cells} {mesh.radial_cells} {cells}) "
+                f"simpleGrading (1 {grading:.6g} 1)"
+            )
+            wall_faces.append(f"        ({o0} {o1} {o1 + 8} {o0 + 8})")
+
+    # Cross-section arcs on the outer circle at every station.
+    for station, (centre, e1, e2) in enumerate(stations):
+        base = 8 * station
+        for k in range(4):
+            nxt = (k + 1) % 4
+            mid = radians(90.0 + 90.0 * k)
+            point = tuple(
+                centre[i] + radius * (cos(mid) * e1[i] + sin(mid) * e2[i]) for i in range(3)
+            )
+            edges.append(
+                "    arc {} {} ({:.8g} {:.8g} {:.8g})".format(
+                    base + 4 + k, base + 4 + nxt, *point
+                )
+            )
+
+    # Longitudinal edges through the bend are arcs about the bend axis.
+    for k in range(4):
+        for local, r in ((k, core_radius), (4 + k, radius)):
+            point = tuple(
+                mid_centre[i] + r * (cos(angles[k]) * e1_mid[i] + sin(angles[k]) * e2_mid[i])
+                for i in range(3)
+            )
+            edges.append(
+                "    arc {} {} ({:.8g} {:.8g} {:.8g})".format(8 + local, 16 + local, *point)
+            )
+
+    inlet_faces = ["        (3 2 1 0)"]
+    outlet_faces = ["        (24 25 26 27)"]
+    for k in range(4):
+        nxt = (k + 1) % 4
+        inlet_faces.append(f"        ({k} {nxt} {4 + nxt} {4 + k})")
+        outlet_faces.append(f"        ({28 + k} {28 + nxt} {24 + nxt} {24 + k})")
+
+    return f"""
+// O-grid elbow: diameter {mesh.diameter_m:g} m, bend radius {bend_radius:g} m
+// (R/D = {bend_radius / mesh.diameter_m:.2f}), sweep {mesh.bend_angle_deg:g} deg,
+// lead-in {mesh.inlet_length_m:g} m, lead-out {mesh.outlet_length_m:g} m.
 // Radial grading {grading:.4g} (cell-to-cell ratio {cell_ratio:.3f}) clusters cells at the wall.
 scale   1;
 

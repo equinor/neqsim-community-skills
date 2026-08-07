@@ -567,3 +567,11 @@ skills:
     path: "skills/field-development/artificial-lift-screening/SKILL.md"
     tags: [field-development, artificial-lift, gas-lift, esp, ipr, screening, education]
     min_neqsim_version: "3.7.0"
+  - name: neqsim-cfd-coupling
+    version: "0.3.0"
+    description: "Link a NeqSim process simulation and engineering documents to a CFD study, single-phase or multiphase. Merges P&ID, STID, datasheet and plant-data inputs into a traceable design basis, converts a flashed NeqSim fluid into CFD boundary conditions, takes both phases and the interfacial tension from a multiphase flash and screens which multiphase model is defensible, writes and runs a complete OpenFOAM case (steady single-phase RANS or transient volume of fluid) for arbitrary geometry, reads the solved fields back, gates the study on wall treatment / mesh independence / turbulence model, and converts local-versus-bulk results into enhancement factors for one-dimensional models. USE WHEN: a task needs local flow detail a one-dimensional model cannot generate - velocity or shear peaks at bends, welds, restrictions, tees, headers or tube bundles, flow maldistribution across a bundle or manifold, stratified or slug two-phase behaviour in a line, or a pressure-drop check on real geometry - or when an existing CFD report must be qualified before its numbers are trusted."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/cfd-coupling/SKILL.md"
+    tags: [process, cfd, openfoam, multiphase, vof, design-basis, stid, p-and-id, mass-transfer, wall-shear, mesh-quality, y-plus, coupling]
+    min_neqsim_version: "3.7.0"

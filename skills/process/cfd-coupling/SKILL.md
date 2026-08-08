@@ -273,6 +273,73 @@ if conditions.recommended_model == "vof":
     # results.outlet_dispersed_fraction vs state.dispersed_volume_fraction
 ```
 
+## Near-wall resolution: let the library solve it, and verify what you got
+
+`MeshSpec.first_cell_height_m` exists so a y+ target from the fluid state reaches the
+mesh. The grading is solved by `_wall_grading`, which brackets the root properly and
+is reported through `mesh_warnings()`. **Use it. Do not hand-roll the grading maths.**
+
+The arithmetic is easy to get wrong in a way that produces a *valid-looking* mesh.
+Solving for a fixed **last** cell is ill-posed: if the cell count cannot span the
+thickness there is no root, the bisection returns an endpoint, and the endpoint is
+an expansion ratio of 1 — a perfectly clean uniform mesh. In one case that put the
+first cell at y+ 27 instead of the requested 0.15, so a 10 um concentration boundary
+layer sat inside a single 219 um cell and the wall gradient was meaningless. Posed
+from the wall outwards the sum is monotonic in the expansion ratio and the bisection
+is well conditioned.
+
+**Rules:**
+
+- Call `mesh_warnings()` and **print it**, every case. Treat *"no grading was applied
+and the y+ target will not be met"* as a stop, not a note.
+- A mesh helper that cannot satisfy its target must **raise**, not silently degrade.
+  Guard both ends: expansion ratio above about 1.25, and a wall cell too coarse for
+  the layer being resolved.
+- **Verify the achieved resolution from the solution, not from the request.** Write
+  the `yPlus` field and read it back. A requested y+ and an achieved y+ are different
+  numbers, and only one of them is evidence.
+- Where the answer depends on the near-wall layer, **validate against a correlation on
+  the same mesh before quoting a local value** — the developed run upstream of the
+  feature should reproduce the analytical wall shear, and for a scalar the textbook
+  Sherwood number. A validation that fails by two orders of magnitude is a good
+  validation; one that is never run lets a plausible wrong number through.
+
+## Running the case in a container
+
+OpenFOAM is usually run from an image rather than a host install. **Everything the
+case writes lives inside the container filesystem unless it is on a bind mount**, so
+the case root must be mounted before the solver starts, not after it finishes.
+
+```bash
+docker run --rm \
+  -v "$TASK:/task" \
+  -v "$SKILL_SRC:/skill:ro" \
+  -v "$HOST_WORK:/work" \
+  -e PYTHONPATH=/skill:/task/step2_analysis \
+  <cfd-image> bash -lc "cd /task/step2_analysis && python3 my_case.py"
+```
+
+The third mount is the one that gets forgotten: it is the case root.
+
+**Rule: mount the case root, or drop `--rm`.** `--rm` deletes the container
+filesystem the moment the process exits. If `CASE_ROOT` (commonly `/work/cases`) is
+not bind-mounted, then on exit you lose the mesh, the solved fields and every time
+directory — leaving only whatever JSON was written to a mounted path. The summary
+numbers survive; **the fields do not**, so any later step that samples the solution
+(surface samples, section planes, figures, a mass-transfer post-solve) forces a full
+re-solve. On a several-hundred-thousand-cell bend that is tens of minutes thrown away
+for a missing `-v`.
+
+Two practical consequences:
+
+- **Sample in the same container run that solves.** Chain the solve and the sampling
+  in one `bash -lc "... && ..."` so the fields are guaranteed to still exist, even when
+  the case root is mounted.
+- **Make the case subset selectable.** Expose the geometry variants and mesh levels
+  through environment variables so one case can be re-solved for sampling without
+  repeating the whole matrix, and so the summary JSON can be written to a scratch path
+  rather than overwriting a good result.
+
 ## Validation Checklist
 
 - [ ] `basis.ready_for_meshing` is true
@@ -284,10 +351,16 @@ if conditions.recommended_model == "vof":
 - [ ] Mach number is below 0.3, or a compressible solver is used.
 - [ ] `checkMesh` reported no failed mesh checks.
 - [ ] `mesh_warnings()` is empty, or the near-wall expansion has been accepted.
+- [ ] `mesh_warnings()` was printed, and it does not report that no grading was
+      applied.
+- [ ] The **achieved** y+ was read back from the solved `yPlus` field, not assumed
+      from the requested first-cell height.
 - [ ] Inlet and outlet volumetric flow agree to better than 1 %.
 - [ ] y⁺ lies inside the band for the wall treatment actually used.
 - [ ] At least two mesh levels were run before a local peak is quoted.
 - [ ] Wall shear and pressure were converted from kinematic units to Pa.
+- [ ] The case root is a bind mount, or the container is not run with `--rm`, so the
+      solved fields survive for sampling and figures.
 - [ ] The quality-gate verdict and all findings are carried into the receiving
       report's assumptions register.
 
@@ -319,6 +392,12 @@ Multiphase, additionally:
 | A single flash used along the whole geometry | Phase split, density and interfacial tension change with pressure and temperature; the case fixes them at the inlet |
 | A VOF result read before the interface develops | The first residence times are start-up transient, not the flow pattern |
 | A forced-convection film coefficient carried into a stagnant or dead-leg region | With no through-flow the inside coefficient collapses from forced-convection to natural-convection values, so the same wall heat flux produces a film temperature rise one to two orders of magnitude larger. Solve it as a buoyancy problem, not by rescaling velocity |
+| `docker run --rm` with the case root inside the container | The mesh and solved fields are destroyed on exit. Only files written to a bind mount survive, so sampling, section planes and figures all need a full re-solve. Mount the case root, or drop `--rm` |
+| A geometry constant hard-coded under a block comment claiming document provenance | The comment can be true for one constant and false for the next. A bend angle assumed as 90° where the drawings said 180° moved the computed geometry factor by 9 %. Source each geometry constant individually |
+| Hand-rolled near-wall grading instead of `MeshSpec.first_cell_height_m` | Solved for a fixed last cell the problem has no root when the cell count cannot span the thickness, and the bisection returns an expansion ratio of 1 — a clean-looking uniform mesh that misses the y+ target by two orders of magnitude |
+| `mesh_warnings()` collected but not printed | It already reports "no grading was applied and the y+ target will not be met". That is the one warning that invalidates every local value in the case |
+| A requested y+ quoted as the achieved y+ | Only the solved `yPlus` field is evidence. Write it and read it back |
+| Wall shear converted to a mass-transfer coefficient at a separated feature | `k_m ~ sqrt(tau_w)` holds for an attached boundary layer. At a weld root, orifice or sudden expansion the flow reattaches, and `tau_w` passes through zero where mass transfer peaks — so the shear map puts its minimum near the worst metal loss. Solve a passive scalar instead |
 
 ## Limitations
 

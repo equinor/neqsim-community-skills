@@ -603,13 +603,6 @@ functions
         writeControl    writeTime;
         executeControl  writeTime;
     }""",
-            """    yPlus
-    {
-        type            yPlus;
-        libs            ("libfieldFunctionObjects.so");
-        writeControl    writeTime;
-        executeControl  writeTime;
-    }""",
             self._surface_field_value("inletFlux", self.inlet_patch, "sum", "phi"),
             self._surface_field_value("outletFlux", self.outlet_patch, "sum", "phi"),
             self._surface_field_value("inletPressure", self.inlet_patch, "areaAverage", "p"),

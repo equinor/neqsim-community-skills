@@ -304,6 +304,31 @@ and the y+ target will not be met"* as a stop, not a note.
   Sherwood number. A validation that fails by two orders of magnitude is a good
   validation; one that is never run lets a plausible wrong number through.
 
+## A point peak at a sharp corner is not a converged quantity
+
+Run the mesh study on the quantity you intend to **report**, not on a convenient one.
+A convex corner — a square-shouldered weld bead, a sharp step, an unrounded orifice
+edge — is a singularity in shear and in mass transfer. The gradient there is limited
+by the cell size, so the point peak **grows with refinement instead of converging**,
+and no amount of refinement settles it.
+
+Measured on a weld root protrusion, refining 80 → 110 radial cells gave:
+
+| Quantity | Change between levels |
+|---|---|
+| Developed reference | +0.4 % |
+| **Point peak at the corner** | **+24.5 %** |
+| Mean over the crest | +1.3 % |
+| Mean at reattachment | +0.7 % |
+
+Everything integral is converged; only the point value runs. **Report the
+area-averaged enhancement over a physically meaningful length and state the averaging
+window.** If a local peak is genuinely needed, put the real fillet or root radius into
+the geometry first — that removes the singularity and makes a point value mean
+something. Quoting the corner value would be the same error as reading a single-cell
+maximum out of any CFD, which this skill already warns about; it is just harder to see
+because the mesh study on the *reference* quantity looks perfect.
+
 ## Running the case in a container
 
 OpenFOAM is usually run from an image rather than a host install. **Everything the

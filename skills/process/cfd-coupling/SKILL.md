@@ -49,6 +49,13 @@ written and can be transferred and run elsewhere.
 - For droplet break-up statistics, separation efficiency or a dense dispersed
   phase. The multiphase screening will say `lagrangian` or `euler_euler`; those
   cases are recommended with a reason but not generated here.
+- For a temperature field. The generated cases solve momentum only, with the
+  fluid properties frozen at the inlet flash. A stagnant or dead-leg region, a
+  buoyancy-driven or thermally stratified region, or any wall-temperature
+  question needs a buoyant conjugate solver (`buoyantSimpleFoam`,
+  `buoyantPimpleFoam`, `chtMultiRegionFoam`) that this skill does not write.
+  Use `fem-coupling` for the wall and near-wall temperature, and hand-build the
+  buoyant case if the fluid-side field itself is the deliverable.
 
 ## Inputs
 
@@ -311,6 +318,7 @@ Multiphase, additionally:
 | Volume of fluid used on a dilute droplet mist | The interface is far below cell size, so the solve is expensive and wrong. The screening says `lagrangian` for a reason |
 | A single flash used along the whole geometry | Phase split, density and interfacial tension change with pressure and temperature; the case fixes them at the inlet |
 | A VOF result read before the interface develops | The first residence times are start-up transient, not the flow pattern |
+| A forced-convection film coefficient carried into a stagnant or dead-leg region | With no through-flow the inside coefficient collapses from forced-convection to natural-convection values, so the same wall heat flux produces a film temperature rise one to two orders of magnitude larger. Solve it as a buoyancy problem, not by rescaling velocity |
 
 ## Limitations
 

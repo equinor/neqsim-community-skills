@@ -55,6 +55,15 @@ skills:
     tags: [pvt, benchmark, validation, reference-data, coolprop, uncertainty]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-uncertainty-quantification
+    version: "0.1.0"
+    description: "Monte Carlo uncertainty quantification, tornado sensitivity and global sensitivity analysis for NeqSim tasks: inverse-CDF marginals, Latin hypercube and Halton samplers, a technical/economic model split that caches the expensive flowsheet stage, ascending p10<=p50<=p90 percentiles with a scale-invariant convergence check, a swing-ranked tornado, optional SALib Saltelli/Sobol' and Morris backends that expose the interactions a tornado is blind to, an optional chaospy polynomial-chaos surrogate, and emission of the uncertainty block for results.json. USE WHEN: a task must report P10/P50/P90, a tornado diagram or a probability of a negative outcome, a Monte Carlo loop wraps an expensive NeqSim simulation, parameters must be ranked before a sensitivity budget is committed, or an existing uncertainty block must be audited."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/uncertainty-quantification/SKILL.md"
+    tags: [process, uncertainty, monte-carlo, sensitivity, tornado, salib, chaospy]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-pseudocomponent-split-characterization
     version: "0.1.0"
     description: "Public plus-fraction (C7+) characterization by a controllable split factor: a Whitson three-parameter gamma molar split, a lumping split factor, and delumping reconstruction. USE WHEN: a task needs to divide a heavy end into pseudocomponents with one adjustable characterization/split factor, compute a delumping split factor from a reference fluid, or reconstruct a detailed composition from a lumped one, before rigorous NeqSim characterization."

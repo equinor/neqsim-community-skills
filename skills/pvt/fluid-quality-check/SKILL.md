@@ -96,6 +96,14 @@ This educational screening corresponds to validated, rigorous functionality in t
 
 In Python the same classes are reachable through the `neqsim` package (for example `from neqsim import jneqsim`).
 
+## Related Skills
+
+- `neqsim-benchmark-reference-data` — run after this check. A composition that
+  fails the quality check makes any benchmark meaningless, so this skill gates
+  the benchmark; the benchmark skill then compares the resulting properties
+  against independent reference sources and emits the `benchmark_validation`
+  block.
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

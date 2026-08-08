@@ -46,6 +46,15 @@ skills:
     tags: [pvt, e300, fluid, water, io]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-benchmark-reference-data
+    version: "0.1.0"
+    description: "Turn the mandatory benchmark-validation step of a NeqSim task into a reproducible, source-traceable comparison: a registry of independent reference sources with authority tiers, validated ranges and stated uncertainties (IAPWS-95, Span-Wagner CO2, Setzmann-Wagner methane, GERG-2008, CoolProp HEOS, NIST WebBook), an offline anchor table that runs with no optional dependency, an optional CoolProp backend, and PASS/WARN/FAIL grading that rejects a reference which does not outrank the model basis and emits the benchmark_validation block for results.json. USE WHEN: a task must validate NeqSim output against independent reference data, a benchmark notebook is being written, a benchmark_validation block must be produced, or an existing benchmark claim must be audited for independence and resolution."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/pvt/benchmark-reference-data/SKILL.md"
+    tags: [pvt, benchmark, validation, reference-data, coolprop, uncertainty]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-pseudocomponent-split-characterization
     version: "0.1.0"
     description: "Public plus-fraction (C7+) characterization by a controllable split factor: a Whitson three-parameter gamma molar split, a lumping split factor, and delumping reconstruction. USE WHEN: a task needs to divide a heavy end into pseudocomponents with one adjustable characterization/split factor, compute a delumping split factor from a reference fluid, or reconstruct a detailed composition from a lumped one, before rigorous NeqSim characterization."

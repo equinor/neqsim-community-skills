@@ -106,4 +106,7 @@ In Python the NeqSim classes are reachable through the `neqsim` package (for exa
 - NeqSim: https://github.com/equinor/neqsim
 - NeqSim Community Skills: https://github.com/equinor/neqsim-community-skills
 - Related community skills: `pipe-route-profile`, `subsea-layout-geometry`, `step-out-screening`
+- Use `pipeline-survey-processing` instead when the depths come from an as-built pipeline
+  survey rather than seabed soundings, and a processing log and erroneous-point flagging
+  are needed.
 - Linear interpolation and slope from `atan2` are standard public numerical relations.

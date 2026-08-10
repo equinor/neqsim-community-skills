@@ -109,4 +109,7 @@ In Python these classes are reachable through the `neqsim` package (for example 
 - NeqSim: https://github.com/equinor/neqsim
 - NeqSim Community Skills: https://github.com/equinor/neqsim-community-skills
 - Related community skills: `subsea-layout-geometry`, `bathymetry-profile-screening`, `pressure-drop-screening`, `step-out-screening`
+- Use `pipeline-survey-processing` instead when the profile comes from an as-built survey
+  export rather than planned waypoints; it adds sign normalisation, resolution filtering,
+  erroneous-point flagging, span and cover candidates, and a processing log.
 - Great-circle (haversine) distance on a spherical Earth is a standard public geodesy relation.

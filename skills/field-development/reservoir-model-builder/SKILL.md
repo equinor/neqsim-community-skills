@@ -209,6 +209,61 @@ Sm3/day/bar index. The skill emits both:
 `wellModel.neqsimWellProductionIndex_MSm3_per_day_bar2` for the NeqSim call,
 matched at the design drawdown.
 
+### Turning the compositional fluid into a black-oil description
+
+When the model must produce a rate profile rather than only volumes, convert the
+compositional fluid to a black-oil table with
+`neqsim.blackoil.BlackOilConverter.convert(fluid, Tref_K, pGrid_bara, Pstd_bara,
+Tstd_K)`. Three things go wrong routinely:
+
+- **Volume shift.** `Phase.getDensity()` and `Phase.getVolume()` return the *raw
+  EOS* values; `Phase.getDensity("kg/m3")` and `Phase.getCorrectedVolume()` apply
+  the Peneloux volume translation. Any tuned reservoir fluid has a volume shift,
+  so mixing the two conventions in one balance biases the stock-tank density, Bo
+  and Rs by the size of the shift (a few percent). Use the corrected accessors
+  everywhere, including in your own separator-test and GOR scripts.
+- **Bubble point on the grid.** The converter snaps the bubble point to the
+  highest grid pressure that still shows free gas and clamps Rs above it. Put a
+  point immediately below the EOS saturation pressure (for example
+  `psat - 0.02` bar) in `pGrid`, or Rs at and above the bubble point comes out
+  low.
+- **Sm3 convention.** The converter uses the real EOS gas volume at standard
+  conditions. Scripts that define Sm3 with the ideal-gas molar volume
+  (`R T / P = 0.023645` Sm3/mol) read roughly half a percent higher GOR.
+
+Export the result with
+`neqsim.blackoil.io.EclipseEOSExporter.toFile(pvt, rhoOilSc, rhoGasSc,
+rhoWaterSc, path)` for a PVTO/PVTG/PVTW/DENSITY include file.
+
+### Driving the tank with injection
+
+`SimpleReservoir` takes `addOilProducer`, `addWaterProducer`, `addGasInjector`
+and `addWaterInjector`. Two practical points:
+
+- The injector stream is cloned from a *reservoir* phase, so for an
+  undersaturated oil the gas-injection stream is meaningless until you set it
+  explicitly: flash the reservoir fluid to standard conditions, take the gas
+  phase and `stream.setFluid(...)` with the same component set as the tank.
+- Set every rate in `kg/day` using the black-oil stock-tank densities. The
+  reservoir-oil mass rate that yields `q_o` Sm3/day of stock-tank oil is
+  `q_o * (rho_o_sc + Rs * rho_g_sc)`; volumetric `Sm3/day` on a liquid stream is
+  ambiguous and should be avoided.
+- For a voidage-replacement concept, size the water injection from what the
+  reinjected gas does not cover:
+  `q_wi = (VRR * (q_o Bo + q_w Bw) - q_gi Bg) / Bw`.
+- `SimpleReservoir` closes its own balance on the **raw** EOS volume
+  (`setReservoirFluid` scales phases with `getVolume()`, `runTransient` calls
+  `TVflash(reservoirVolume, "m3")`), while the black-oil factors above are
+  volume-shift corrected. For a translated fluid the two bases differ by the
+  size of the shift, so an open-loop voidage balance drifts and the tank
+  pressure runs away. Scale the feed-forward by
+  `raw_volume / sum(phase.getCorrectedVolume())` and put the water injection on
+  a velocity-form PI controller on reservoir pressure. Rate-limit the oil rate
+  as well, or the deliverability constraint chatters against the pressure loop.
+- Every producer and injector needs a non-zero flow rate; a zero-flow stream
+  makes `runTransient` throw `setMolarComposition - Input totalFlow must be
+  larger than 0`.
+
 ## Validation Checklist
 
 - [ ] The sizing basis is stated: geometry, in-place volume, or a back-calculated
@@ -237,6 +292,8 @@ matched at the design drawdown.
 | Well count is 1 for a large field | No productivity index and no permeability | Supply a well-test PI, or a permeability with net pay |
 | Implied recovery factor is far below the assumed one | The mapped area or net pay is too generous for the reported recoverable volume | Reconcile geometry, reported volume and recovery factor |
 | Temperature looks too high for a shallow Barents Sea reservoir | Default geothermal gradient applied from sea level rather than the seabed | Supply `water_depth_m` so the gradient starts at the seabed |
+| Stock-tank oil density is a few percent off the PVT report | Raw EOS `getVolume()`/`getDensity()` used instead of the volume-shift corrected accessors | Use `getCorrectedVolume()` and `getDensity("kg/m3")` |
+| Design drawdown puts the flowing bottomhole pressure below the bubble point | The plateau was set from facility capacity, not from the undersaturation | Limit drawdown to the undersaturation, or add producers |
 
 ## Limitations
 

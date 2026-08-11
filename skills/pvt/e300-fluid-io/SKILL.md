@@ -176,6 +176,12 @@ Python package is not installed. The pure-Python functions always work.
 | NeqSim properties return zero | Mixing rule not set | Call `fluid.setMixingRule("classic")` after reading |
 | Vector length mismatch on write | A section was edited inconsistently | Run `E300Fluid.validate()` before writing |
 | Wrong reservoir temperature in output | RTEMP defaulted to 100 °C | Pass `reservoir_temp_c` explicitly |
+| Tuned kij lost after reading a written file | `setMixingRule()` was called after `EclipseFluidReadWrite.read()` | `read()` already installs the mixing rule *and* the file `BIC` block; do not call `setMixingRule()` afterwards |
+| Saturation pressure shifts a few percent on round trip | The PR variant changed: `PRCORR` means PR-1978, plain `EOS PR` means PR-1976 | Build Eclipse-bound fluids with `SystemPrEos1978`, and check `imported.getClass().getSimpleName()` after reading |
+
+Per-component EOS tuning survives the export: `TCRIT`, `PCRIT`, `ACF`, `SSHIFT`
+and `BIC` are all written and read back, so regressed critical-property
+multipliers, volume shifts and binary interaction parameters transfer.
 
 ## Limitations
 

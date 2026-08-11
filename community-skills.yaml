@@ -325,6 +325,15 @@ skills:
     tags: [field-development, reservoir, depletion, production-profile, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-reservoir-model-builder
+    version: "0.1.0"
+    description: "Set up a screening-level reservoir model from whatever data exists, on a data-maturity ladder from a single public headline volume up to a full static-model parameter set, and refine it as data arrives. USE WHEN: a task needs a reservoir model for a field where only open data is available (for example an NCS field on public resource pages), needs volumetrics from area/net pay/porosity/Sw, needs hydrostatic pressure and geothermal temperature defaults from depth, needs a recovery factor and drive mechanism from analogues, needs a well count and productivity index from permeability, or needs a NeqSim SimpleReservoir/WellFlow specification with a provenance trail and a ranked data-acquisition plan."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/reservoir-model-builder/SKILL.md"
+    tags: [field-development, reservoir, volumetrics, material-balance, provenance, data-maturity, screening, education]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-norwegian-continental-shelf-data
     version: "0.4.0"
     description: "Public Norwegian Continental Shelf (NCS) reference-facts database, carbon-cost basis, decline-curve forecasting, and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, field, carbon-cost/emission-abatement, or Arps decline-forecast facts (from norskpetroleum.no / Norwegian Offshore Directorate FactPages) to orient a production, resource-accounting, field-inventory, emission-reduction, or production-forecast screening before a validated NeqSim reservoir/process study."

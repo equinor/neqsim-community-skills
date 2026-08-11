@@ -361,6 +361,15 @@ skills:
     tags: [subsea, field-development, layout, step-out, illustration, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-surf-field-layout-design
+    version: "0.1.0"
+    description: "Design a screening subsea (SURF) field layout and place the host from open map, bathymetry and licence-block data: group wells into drill centres, place Xmas trees, templates, manifolds, PLEMs and riser bases, position an FPSO or fixed host, route and size every production, injection, service, umbilical and riser line, and export the result as georeferenced GeoJSON and a map. USE WHEN: a task needs a field layout designed rather than an existing one screened - deciding how many drill centres and templates are needed, where the host should sit, which flowline architecture to use, what size the flowlines and risers should be, or a georeferenced layout to hand to flow assurance, cost estimation or a NeqSim production-network model."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/surf-field-layout-design/SKILL.md"
+    tags: [subsea, surf, field-development, layout, design, fpso, geojson, open-data, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-pipe-route-profile
     version: "0.1.0"
     description: "Educational pipe-route length and elevation-profile screening from supplied waypoints. USE WHEN: a task needs a public, screening-level flowline or riser route length, segment list, and seabed elevation profile from a subsea map before detailed pressure-drop and flow assurance design."

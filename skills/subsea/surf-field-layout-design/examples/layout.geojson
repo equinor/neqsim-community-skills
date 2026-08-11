@@ -1,0 +1,1202 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9669765,
+          73.3586352
+        ]
+      },
+      "properties": {
+        "tag": "P-DC01",
+        "name": "production drill centre 1",
+        "kind": "template",
+        "water_depth_m": 400.0,
+        "parent": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9677314,
+          73.3584192
+        ]
+      },
+      "properties": {
+        "tag": "P-DC01-PLEM",
+        "name": "P-DC01 flowline PLEM",
+        "kind": "plem",
+        "water_depth_m": 400.0,
+        "parent": "P-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9664104,
+          73.3586352
+        ]
+      },
+      "properties": {
+        "tag": "P-01",
+        "name": "production well P-01",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "P-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9664104,
+          73.3586352
+        ]
+      },
+      "properties": {
+        "tag": "P-01-XT",
+        "name": "Xmas tree P-01",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "P-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9667878,
+          73.3586352
+        ]
+      },
+      "properties": {
+        "tag": "P-02",
+        "name": "production well P-02",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "P-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9667878,
+          73.3586352
+        ]
+      },
+      "properties": {
+        "tag": "P-02-XT",
+        "name": "Xmas tree P-02",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "P-02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9671653,
+          73.3586352
+        ]
+      },
+      "properties": {
+        "tag": "P-03",
+        "name": "production well P-03",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "P-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9671653,
+          73.3586352
+        ]
+      },
+      "properties": {
+        "tag": "P-03-XT",
+        "name": "Xmas tree P-03",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "P-03"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9675427,
+          73.3586352
+        ]
+      },
+      "properties": {
+        "tag": "P-04",
+        "name": "production well P-04",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "P-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9675427,
+          73.3586352
+        ]
+      },
+      "properties": {
+        "tag": "P-04-XT",
+        "name": "Xmas tree P-04",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "P-04"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0330235,
+          73.3913648
+        ]
+      },
+      "properties": {
+        "tag": "P-DC02",
+        "name": "production drill centre 2",
+        "kind": "template",
+        "water_depth_m": 400.0,
+        "parent": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0337783,
+          73.3911488
+        ]
+      },
+      "properties": {
+        "tag": "P-DC02-PLEM",
+        "name": "P-DC02 flowline PLEM",
+        "kind": "plem",
+        "water_depth_m": 400.0,
+        "parent": "P-DC02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0324573,
+          73.3913648
+        ]
+      },
+      "properties": {
+        "tag": "P-05",
+        "name": "production well P-05",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "P-DC02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0324573,
+          73.3913648
+        ]
+      },
+      "properties": {
+        "tag": "P-05-XT",
+        "name": "Xmas tree P-05",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "P-05"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0328347,
+          73.3913648
+        ]
+      },
+      "properties": {
+        "tag": "P-06",
+        "name": "production well P-06",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "P-DC02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0328347,
+          73.3913648
+        ]
+      },
+      "properties": {
+        "tag": "P-06-XT",
+        "name": "Xmas tree P-06",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "P-06"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0332122,
+          73.3913648
+        ]
+      },
+      "properties": {
+        "tag": "P-07",
+        "name": "production well P-07",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "P-DC02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0332122,
+          73.3913648
+        ]
+      },
+      "properties": {
+        "tag": "P-07-XT",
+        "name": "Xmas tree P-07",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "P-07"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0335896,
+          73.3913648
+        ]
+      },
+      "properties": {
+        "tag": "P-08",
+        "name": "production well P-08",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "P-DC02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0335896,
+          73.3913648
+        ]
+      },
+      "properties": {
+        "tag": "P-08-XT",
+        "name": "Xmas tree P-08",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "P-08"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9342918,
+          73.3640342
+        ]
+      },
+      "properties": {
+        "tag": "WI-DC01",
+        "name": "water injection drill centre 1",
+        "kind": "template",
+        "water_depth_m": 400.0,
+        "parent": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9350466,
+          73.3638182
+        ]
+      },
+      "properties": {
+        "tag": "WI-DC01-PLEM",
+        "name": "WI-DC01 flowline PLEM",
+        "kind": "plem",
+        "water_depth_m": 400.0,
+        "parent": "WI-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9337257,
+          73.3640342
+        ]
+      },
+      "properties": {
+        "tag": "WI-01",
+        "name": "water injection well WI-01",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "WI-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9337257,
+          73.3640342
+        ]
+      },
+      "properties": {
+        "tag": "WI-01-XT",
+        "name": "Xmas tree WI-01",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "WI-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9341031,
+          73.3640342
+        ]
+      },
+      "properties": {
+        "tag": "WI-02",
+        "name": "water injection well WI-02",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "WI-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9341031,
+          73.3640342
+        ]
+      },
+      "properties": {
+        "tag": "WI-02-XT",
+        "name": "Xmas tree WI-02",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "WI-02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9344805,
+          73.3640342
+        ]
+      },
+      "properties": {
+        "tag": "WI-03",
+        "name": "water injection well WI-03",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "WI-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9344805,
+          73.3640342
+        ]
+      },
+      "properties": {
+        "tag": "WI-03-XT",
+        "name": "Xmas tree WI-03",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "WI-03"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9348579,
+          73.3640342
+        ]
+      },
+      "properties": {
+        "tag": "WI-04",
+        "name": "water injection well WI-04",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "WI-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9348579,
+          73.3640342
+        ]
+      },
+      "properties": {
+        "tag": "WI-04-XT",
+        "name": "Xmas tree WI-04",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "WI-04"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0003387,
+          73.3967638
+        ]
+      },
+      "properties": {
+        "tag": "WI-DC02",
+        "name": "water injection drill centre 2",
+        "kind": "template",
+        "water_depth_m": 400.0,
+        "parent": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0010935,
+          73.3965478
+        ]
+      },
+      "properties": {
+        "tag": "WI-DC02-PLEM",
+        "name": "WI-DC02 flowline PLEM",
+        "kind": "plem",
+        "water_depth_m": 400.0,
+        "parent": "WI-DC02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9997726,
+          73.3967638
+        ]
+      },
+      "properties": {
+        "tag": "WI-05",
+        "name": "water injection well WI-05",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "WI-DC02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9997726,
+          73.3967638
+        ]
+      },
+      "properties": {
+        "tag": "WI-05-XT",
+        "name": "Xmas tree WI-05",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "WI-05"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.00015,
+          73.3967638
+        ]
+      },
+      "properties": {
+        "tag": "WI-06",
+        "name": "water injection well WI-06",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "WI-DC02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.00015,
+          73.3967638
+        ]
+      },
+      "properties": {
+        "tag": "WI-06-XT",
+        "name": "Xmas tree WI-06",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "WI-06"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0326847,
+          73.369601
+        ]
+      },
+      "properties": {
+        "tag": "GI-DC01",
+        "name": "gas injection drill centre 1",
+        "kind": "template",
+        "water_depth_m": 400.0,
+        "parent": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0334396,
+          73.3693851
+        ]
+      },
+      "properties": {
+        "tag": "GI-DC01-PLEM",
+        "name": "GI-DC01 flowline PLEM",
+        "kind": "plem",
+        "water_depth_m": 400.0,
+        "parent": "GI-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0321186,
+          73.369601
+        ]
+      },
+      "properties": {
+        "tag": "GI-01",
+        "name": "gas injection well GI-01",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "GI-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.0321186,
+          73.369601
+        ]
+      },
+      "properties": {
+        "tag": "GI-01-XT",
+        "name": "Xmas tree GI-01",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "GI-01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.032496,
+          73.369601
+        ]
+      },
+      "properties": {
+        "tag": "GI-02",
+        "name": "gas injection well GI-02",
+        "kind": "well",
+        "water_depth_m": 400.0,
+        "parent": "GI-DC01"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.032496,
+          73.369601
+        ]
+      },
+      "properties": {
+        "tag": "GI-02-XT",
+        "name": "Xmas tree GI-02",
+        "kind": "xmas_tree",
+        "water_depth_m": 400.0,
+        "parent": "GI-02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9213727,
+          73.375
+        ]
+      },
+      "properties": {
+        "tag": "HOST",
+        "name": "Barents-style oil field FPSO",
+        "kind": "host",
+        "water_depth_m": 400.0,
+        "parent": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.9323806,
+          73.375
+        ]
+      },
+      "properties": {
+        "tag": "RB-PLEM",
+        "name": "riser base PLEM",
+        "kind": "plem",
+        "water_depth_m": 400.0,
+        "parent": "HOST"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9323806,
+            73.375
+          ],
+          [
+            24.9677314,
+            73.3584192
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "FL-PROD-A-P-DC01",
+        "service": "production",
+        "type": "insulated rigid flowline",
+        "length_km": 2.158,
+        "nominal_inch": 12.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9677314,
+            73.3584192
+          ],
+          [
+            25.0337783,
+            73.3911488
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "FL-PROD-A-P-DC02",
+        "service": "production",
+        "type": "insulated rigid flowline",
+        "length_km": 4.2,
+        "nominal_inch": 12.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9323806,
+            73.375
+          ],
+          [
+            25.0337783,
+            73.3911488
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "FL-PROD-B-P-DC02",
+        "service": "production",
+        "type": "insulated rigid flowline",
+        "length_km": 3.69,
+        "nominal_inch": 12.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            25.0337783,
+            73.3911488
+          ],
+          [
+            24.9677314,
+            73.3584192
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "FL-PROD-B-P-DC01",
+        "service": "production",
+        "type": "insulated rigid flowline",
+        "length_km": 4.2,
+        "nominal_inch": 12.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9323806,
+            73.375
+          ],
+          [
+            24.9350466,
+            73.3638182
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "FL-WI-WI-DC01",
+        "service": "water_injection",
+        "type": "carbon steel injection flowline",
+        "length_km": 1.246,
+        "nominal_inch": 10.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9323806,
+            73.375
+          ],
+          [
+            25.0010935,
+            73.3965478
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "FL-WI-WI-DC02",
+        "service": "water_injection",
+        "type": "carbon steel injection flowline",
+        "length_km": 3.242,
+        "nominal_inch": 10.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9323806,
+            73.375
+          ],
+          [
+            25.0334396,
+            73.3693851
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "FL-GI-GI-DC01",
+        "service": "gas_injection",
+        "type": "carbon steel injection flowline",
+        "length_km": 3.273,
+        "nominal_inch": 6.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9213727,
+            73.375
+          ],
+          [
+            24.9669765,
+            73.3586352
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "UMB-P-DC01",
+        "service": "umbilical",
+        "type": "steel tube umbilical",
+        "length_km": 2.326,
+        "nominal_inch": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9213727,
+            73.375
+          ],
+          [
+            25.0330235,
+            73.3913648
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "UMB-P-DC02",
+        "service": "umbilical",
+        "type": "steel tube umbilical",
+        "length_km": 3.989,
+        "nominal_inch": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9213727,
+            73.375
+          ],
+          [
+            24.9342918,
+            73.3640342
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "UMB-WI-DC01",
+        "service": "umbilical",
+        "type": "steel tube umbilical",
+        "length_km": 1.286,
+        "nominal_inch": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9213727,
+            73.375
+          ],
+          [
+            25.0003387,
+            73.3967638
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "UMB-WI-DC02",
+        "service": "umbilical",
+        "type": "steel tube umbilical",
+        "length_km": 3.486,
+        "nominal_inch": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9213727,
+            73.375
+          ],
+          [
+            25.0326847,
+            73.369601
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "UMB-GI-DC01",
+        "service": "umbilical",
+        "type": "steel tube umbilical",
+        "length_km": 3.59,
+        "nominal_inch": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9323806,
+            73.375
+          ],
+          [
+            24.9213727,
+            73.375
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "PR-01",
+        "service": "production",
+        "type": "flexible riser, lazy-wave configuration",
+        "length_km": 0.664,
+        "nominal_inch": 12.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9323806,
+            73.375
+          ],
+          [
+            24.9213727,
+            73.375
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "PR-02",
+        "service": "production",
+        "type": "flexible riser, lazy-wave configuration",
+        "length_km": 0.664,
+        "nominal_inch": 12.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9323806,
+            73.375
+          ],
+          [
+            24.9213727,
+            73.375
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "PR-03",
+        "service": "production",
+        "type": "flexible riser, lazy-wave configuration",
+        "length_km": 0.664,
+        "nominal_inch": 12.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9323806,
+            73.375
+          ],
+          [
+            24.9213727,
+            73.375
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "PR-04",
+        "service": "production",
+        "type": "flexible riser, lazy-wave configuration",
+        "length_km": 0.664,
+        "nominal_inch": 12.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9323806,
+            73.375
+          ],
+          [
+            24.9213727,
+            73.375
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "WIR-01",
+        "service": "water_injection",
+        "type": "flexible riser, lazy-wave configuration",
+        "length_km": 0.664,
+        "nominal_inch": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.9323806,
+            73.375
+          ],
+          [
+            24.9213727,
+            73.375
+          ]
+        ]
+      },
+      "properties": {
+        "tag": "GIR-01",
+        "service": "gas_injection",
+        "type": "flexible riser, lazy-wave configuration",
+        "length_km": 0.664,
+        "nominal_inch": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              25.0893941,
+              73.3914046
+            ],
+            [
+              25.0049586,
+              73.405352
+            ],
+            [
+              24.9106059,
+              73.3585954
+            ],
+            [
+              24.9950414,
+              73.344648
+            ],
+            [
+              25.0893941,
+              73.3914046
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Barents-style oil field reservoir outline",
+        "kind": "reservoir_outline"
+      }
+    }
+  ],
+  "name": "Barents-style oil field SURF layout"
+}

@@ -629,10 +629,10 @@ skills:
     tags: [process, fem, finite-element, scikit-fem, fenicsx, gmsh, pyvista, visualization, 3d, heat-transfer, conduction, cooldown, thermal-stress, insulation, diffusion, mesh-quality, coupling]
     min_neqsim_version: "3.7.0"
   - name: neqsim-near-well-and-injectivity
-    version: "0.1.0"
-    description: "Simulate the rock around a well to answer what it will give or take, using the open-source Python subsurface stack: open-DARTS for near-well reservoir simulation, pyscal for the relative-permeability basis, resdata for Eclipse output, welltestpy for well-test interpretation, and opm/ResSimPy for deck handling. Produces productivity and injectivity indices, their evolution as saturation fronts develop, and the skin and completion sensitivities behind them. USE WHEN: a task needs a productivity or injectivity index derived rather than assumed, asks whether injectors can take the voidage water, asks how productivity decays as gas breaks out or water encroaches, needs a SCAL basis made explicit, or needs to hand a defensible inflow relationship to a NeqSim wellbore or process model."
+    version: "0.2.0"
+    description: "Derive what the rock will give and take and hand it to NeqSim: productivity and injectivity indices, their evolution as saturation fronts develop, and the SCAL basis behind them. Standardises on OPM Flow as the reservoir simulator, pyscal for relative permeability and resdata for output, and covers converting a NeqSim compositional fluid into a black-oil PVT table that OPM Flow will actually accept. USE WHEN: a productivity or injectivity index is about to be assumed, injectors must be checked against a voidage requirement, productivity decay through the bubble point matters, a NeqSim fluid must become a PVTO/PVDG/PVTW deck section, or an Eclipse-format reservoir model must be built and run."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/subsurface/near-well-and-injectivity/SKILL.md"
-    tags: [subsurface, wells, injectivity, productivity, relative-permeability, open-darts, pyscal, welltestpy, scal]
+    tags: [subsurface, wells, injectivity, productivity, relative-permeability, opm-flow, reservoir-simulation, black-oil, pyscal, resdata]
     min_neqsim_version: "3.7.0"

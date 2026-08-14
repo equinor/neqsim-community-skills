@@ -20,6 +20,7 @@ from .discovery import (
 from .genkey import (
     GenkeyStatement,
     apply_parameters,
+    ensure_statement,
     get_parameter,
     iter_statements,
     list_keywords,
@@ -55,6 +56,7 @@ __all__ = [
     "TrendData",
     "apply_parameters",
     "describe_exit_code",
+    "ensure_statement",
     "find_olga",
     "find_olga_installations",
     "get_parameter",

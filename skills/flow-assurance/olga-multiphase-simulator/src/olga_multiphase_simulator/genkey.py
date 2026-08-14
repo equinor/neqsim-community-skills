@@ -31,6 +31,7 @@ __all__ = [
     "get_parameter",
     "set_parameter",
     "apply_parameters",
+    "ensure_statement",
     "parameter_overview",
     "write_variant",
 ]
@@ -204,6 +205,43 @@ def apply_parameters(text: str, updates: Mapping[str, Mapping[str, str]]) -> str
         for parameter, value in parameters.items():
             result = set_parameter(result, keyword, parameter, value)
     return result
+
+
+def ensure_statement(
+    text: str,
+    statement: str,
+    after_keyword: Optional[str] = None,
+) -> str:
+    """Add a global statement if its keyword is not already in the case.
+
+    Needed for output keywords: a case that declares ``TRENDDATA`` /
+    ``PROFILEDATA`` inside its network components still writes no ``.tpl`` or
+    ``.ppl`` file unless the global ``TREND`` / ``PROFILE`` keywords set a
+    ``DTPLOT``.
+
+    Args:
+        text: Full genkey file content.
+        statement: The statement to add, e.g. ``"TREND DTPLOT=10 s"``.
+        after_keyword: Insert after the last statement with this keyword;
+            appended at the end of the file when absent or not found.
+
+    Returns:
+        The genkey content, unchanged if the keyword already occurs.
+    """
+    keyword = statement.strip().split()[0].upper()
+    statements = list(iter_statements(text))
+    if any(s.keyword == keyword for s in statements):
+        return text
+
+    anchor = None
+    if after_keyword is not None:
+        wanted = after_keyword.upper()
+        for existing in statements:
+            if existing.keyword == wanted:
+                anchor = existing
+    if anchor is None:
+        return text.rstrip("\n") + "\n" + statement.rstrip("\n") + "\n"
+    return text[: anchor.end] + "\n" + statement.rstrip("\n") + text[anchor.end :]
 
 
 def write_variant(

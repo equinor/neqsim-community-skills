@@ -6,6 +6,7 @@ import pytest
 
 from olga_multiphase_simulator import (
     apply_parameters,
+    ensure_statement,
     get_parameter,
     list_keywords,
     parameter_overview,
@@ -83,3 +84,20 @@ def test_unknown_keyword_or_parameter_raises(genkey_text: str) -> None:
         get_parameter(genkey_text, "NOSUCHKEYWORD", "X")
     with pytest.raises(KeyError):
         get_parameter(genkey_text, "INTEGRATION", "NOSUCHPARAM")
+
+
+def test_ensure_statement_inserts_missing_keyword(genkey_text: str) -> None:
+    edited = ensure_statement(genkey_text, "PROFILE DTPLOT=30 s", after_keyword="INTEGRATION")
+    assert get_parameter(edited, "PROFILE", "DTPLOT") == "30 s"
+    lines = edited.splitlines()
+    integration_index = next(i for i, line in enumerate(lines) if line.startswith("INTEGRATION"))
+    assert lines[integration_index + 1] == "PROFILE DTPLOT=30 s"
+
+
+def test_ensure_statement_is_a_no_op_when_keyword_exists(genkey_text: str) -> None:
+    assert ensure_statement(genkey_text, "TREND DTPLOT=99 s") == genkey_text
+
+
+def test_ensure_statement_appends_without_anchor(genkey_text: str) -> None:
+    edited = ensure_statement(genkey_text, "PROFILE DTPLOT=30 s")
+    assert edited.splitlines()[-1] == "PROFILE DTPLOT=30 s"

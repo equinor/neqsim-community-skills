@@ -81,6 +81,8 @@ For validated multiphase flow behaviour, redirect to existing NeqSim classes:
 
 This skill is a public flow-regime triage layer that decides when to invoke those validated pipe-flow classes.
 
+When the regime is transient rather than steady — terrain slugging, ramp-up surge, shut-in and restart — escalate instead to the `neqsim-olga-multiphase-simulator` skill (or the `olga-simulation-agent`), which runs an OLGA transient case and reads its trend and profile results.
+
 ## Validation Checklist
 
 - [ ] Either superficial velocities or full flow/density/diameter data are supplied.

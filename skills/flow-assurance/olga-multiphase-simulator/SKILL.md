@@ -508,7 +508,8 @@ NeqSim. On the 74 km line above:
 | | OLGA | TwoFluidPipe | Beggs & Brill | Darcy check |
 | --- | --- | --- | --- | --- |
 | pressure drop, bar | 78.5 | **81.2 (+3.4%)** | 125.0 (+59.2%) | 77.7 |
-| max liquid holdup | 0.023 | 0.055 | ~0 | – |
+| arrival temperature, °C | 8.4 | 6.8 | −6.7 | – |
+| max liquid holdup | 0.023 | 0.064 | ~0 | – |
 
 Two mechanistic codes and a hand calculation agree; the correlation is the
 outlier. That settled the question.
@@ -542,9 +543,11 @@ dp_bar = (profile[0] - profile[-1]) / 1e5
   `getFlowRegimeProfile()`. There is no `getMixtureVelocityProfile()`. The model
   is correctly insensitive to the elevation datum, so absolute seabed depths may
   be passed directly.
-- Arrival **temperature** still differs from OLGA (20.4 °C against 8.4 °C on this
-  line) even where the pressure drop agrees, so treat the thermal result as
-  unvalidated and check it against a measured arrival temperature.
+- Arrival **temperature** agrees with OLGA to about 1.6 °C on this line (6.8 °C
+  against 8.4 °C). If you see a much warmer arrival temperature, you are on an
+  older NeqSim in which the Joule-Thomson term was silently dropped — check it
+  with an adiabatic run (`setHeatTransferCoefficient(0)`) against an isenthalpic
+  PH flash to the same outlet pressure, which is the exact reference.
 
 ## Validation Checklist
 
@@ -601,7 +604,7 @@ dp_bar = (profile[0] - profile[-1]) / 1e5
 | Liquid-property terms disagree by ~20% for no visible reason | `phase.getDensity()` and `phase.getDensity("kg/m3")` differ when volume correction is on | Use the explicit-unit accessor everywhere; never mix the two in one formula |
 | `TwoFluidPipe` ΔP is several times below a Darcy hand check on a long line | The steady-state loop ran out of iterations and returned the last iterate | Assert `isSteadyStateConverged()`; raise `setSteadyStateMaxIterations(int)` |
 | `TwoFluidPipe` liquid holdup pins near 0.85, or ΔP jumps for a tiny elevation change | Fixed in NeqSim: the initializer and the refinement loop integrated different discrete momentum balances, so terrain hydrostatics stopped telescoping | Rebuild against current NeqSim; both call sites now share `marchPressure` |
-| `TwoFluidPipe` arrival temperature is far warmer than OLGA | The heat-transfer / JT path is not validated against OLGA | Check the thermal result against a measured arrival temperature |
+| `TwoFluidPipe` arrival temperature is far warmer than OLGA | Fixed in NeqSim: the Joule-Thomson term was gated behind the heat-transfer coefficient and zeroed by a `1<Cp/Cv<2` guard that a two-phase mixture never satisfies | Rebuild against current NeqSim; verify with an adiabatic run against an isenthalpic PH flash |
 
 ## Limitations
 

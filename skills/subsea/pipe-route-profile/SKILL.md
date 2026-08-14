@@ -26,6 +26,33 @@ Use this skill for a quick, public route geometry screening of a subsea flowline
 - `coordinate_system`: `cartesian` (x, y in metres) or `geographic` (x = longitude, y = latitude in degrees).
 - `max_slope_deg`: configurable public seabed-slope guideline (constructor, default 15 degrees).
 
+## Sourcing Waypoints and Depths From Open Data
+
+The skill takes waypoints and depths as given. When a route has to be built for a
+real field with no survey in hand, both can come from public sources:
+
+- **End points.** For the Norwegian Continental Shelf the Norwegian Offshore
+  Directorate FactPages publish CSV exports of every exploration wellbore
+  (`wellbore_exploration_all`: `wlbNsDecDeg`, `wlbEwDecDeg`, `wlbWaterDepth`) and
+  every fixed facility (`facility_fixed`: degree/minute/second columns plus
+  `fclWaterDepth`). Export URL pattern:
+  `https://factpages.sodir.no/public?/Factpages/external/tableview/<table>&rs:Command=Render&rs:Format=CSV&Top100=false`.
+  GOTCHA: the wellbore table has decimal-degree columns but the facility table
+  only has DMS, so convert. Both are ED50, which differs from WGS84 by of order
+  100 m on the NCS -- negligible for screening lengths, not for a survey route.
+- **Seabed depth.** The EMODnet Bathymetry DTM has a public point REST API,
+  `https://rest.emodnet-bathymetry.eu/depth_sample?geom=POINT(<lon> <lat>)`,
+  which returns `avg`/`min`/`max` **elevation** in metres, negative downwards;
+  negate it to get the depth this skill expects. Cache responses to disk -- a
+  500 m-spaced profile over a 70 km route is around 150 calls.
+- **Intermediate waypoints.** With only two end points, interpolate along the
+  great circle (spherical slerp) at a fixed spacing and sample the DTM at each
+  point. That yields a straight-corridor screening profile; it is not a routed
+  corridor and carries no obstacle avoidance.
+- **Sanity check.** Compare the DTM depth at each end point against the water
+  depth reported for the well or facility. Agreement to a few metres is the
+  cheapest available validation that the coordinates and the datum are right.
+
 ## Outputs
 
 - `segments`: per-segment horizontal length, 3D length, depth change, and slope.
@@ -113,3 +140,5 @@ In Python these classes are reachable through the `neqsim` package (for example 
   export rather than planned waypoints; it adds sign normalisation, resolution filtering,
   erroneous-point flagging, span and cover candidates, and a processing log.
 - Great-circle (haversine) distance on a spherical Earth is a standard public geodesy relation.
+- Norwegian Offshore Directorate FactPages (open data): https://factpages.sodir.no/
+- EMODnet Bathymetry DTM and REST API (open data): https://emodnet.ec.europa.eu/en/bathymetry

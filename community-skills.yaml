@@ -541,6 +541,15 @@ skills:
     tags: [flow-assurance, multiphase, slug, slug-catcher, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-olga-multiphase-simulator
+    version: "0.1.0"
+    description: "Run the OLGA transient multiphase flow simulator from Python: locate the installation, validate a genkey case with a rule check, launch the batch engine with the right flags, decode the engine exit code, and read .tpl trend and .ppl profile results. USE WHEN: a task must execute an OLGA case, batch or sweep OLGA runs, diagnose an OLGA failure or licence error, or turn OLGA output into engineering numbers that pair with NeqSim thermodynamics and pipeline screening."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/flow-assurance/olga-multiphase-simulator/SKILL.md"
+    tags: [flow-assurance, olga, multiphase, transient, simulator, batch, slugging]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-reciprocating-compressor-screening
     version: "0.1.0"
     description: "Educational reciprocating compressor staging, volumetric-efficiency, discharge-temperature, and rod-load screening. USE WHEN: a task needs a public, screening-level check of reciprocating compressor staging, volumetric efficiency, discharge temperature, and rod load before detailed machine selection per API 618/619."

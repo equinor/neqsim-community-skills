@@ -55,15 +55,37 @@ class OlgaResultError(ValueError):
 
 @dataclass(frozen=True)
 class OlgaBranch:
-    """A branch (flow path) described in a result-file header."""
+    """A branch (flow path) described in a result-file header.
+
+    Attributes:
+        name: Branch label.
+        nsections: Number of sections; there are ``nsections + 1`` boundaries.
+        x: Distance along the branch at each section boundary, in metres.
+        y: Elevation at each section boundary, in metres (negative below datum).
+    """
 
     name: str
     nsections: int
+    x: Tuple[float, ...] = ()
+    y: Tuple[float, ...] = ()
 
     @property
     def nboundaries(self) -> int:
         """Number of section boundaries, i.e. ``nsections + 1``."""
         return self.nsections + 1
+
+    @property
+    def length(self) -> float:
+        """Total length of the branch in metres, or ``nan`` without geometry."""
+        return self.x[-1] - self.x[0] if self.x else float("nan")
+
+    def section_centres(self) -> Tuple[float, ...]:
+        """Mid-point distance of each section, for plotting ``SECTION:`` variables."""
+        return tuple((self.x[i] + self.x[i + 1]) / 2.0 for i in range(len(self.x) - 1))
+
+    def positions(self, boundary: bool) -> Tuple[float, ...]:
+        """Return the abscissa matching a profile: boundaries or section centres."""
+        return self.x if boundary else self.section_centres()
 
 
 @dataclass(frozen=True)
@@ -176,6 +198,19 @@ class ProfileData:
             branch: Restrict to a branch when the variable appears on several.
         """
         return self.profiles[time_index][self.index_of(name, branch)]
+
+    def positions(self, name: str, branch: Optional[str] = None) -> Tuple[float, ...]:
+        """Return the distance abscissa matching :meth:`profile` for one variable.
+
+        ``BOUNDARY:`` variables are reported at the section boundaries and
+        ``SECTION:`` variables at the section centres, so the two have different
+        lengths. Empty when the file carried no geometry.
+        """
+        variable = self.variables[self.index_of(name, branch)]
+        for candidate in self.branches:
+            if candidate.name.upper() == variable.branch.upper():
+                return candidate.positions(variable.is_boundary)
+        return ()
 
 
 def read_tpl(path: str | os.PathLike[str], encoding: str = "utf-8") -> TrendData:
@@ -322,18 +357,34 @@ def _parse_branches(header_lines: Sequence[str]) -> Tuple[OlgaBranch, ...]:
     branches: List[OlgaBranch] = []
     index = 0
     while index < len(header_lines):
-        if header_lines[index].strip().upper() == "BRANCH":
-            name = header_lines[index + 1].strip().strip("'") if index + 1 < len(header_lines) else ""
-            nsections = 0
-            if index + 2 < len(header_lines):
-                try:
-                    nsections = int(header_lines[index + 2].strip())
-                except ValueError:
-                    nsections = 0
-            branches.append(OlgaBranch(name=name, nsections=nsections))
-            index += 3
+        if header_lines[index].strip().upper() != "BRANCH":
+            index += 1
             continue
-        index += 1
+        name = header_lines[index + 1].strip().strip("'") if index + 1 < len(header_lines) else ""
+        nsections = 0
+        if index + 2 < len(header_lines):
+            try:
+                nsections = int(header_lines[index + 2].strip())
+            except ValueError:
+                nsections = 0
+        index += 3
+        # The coordinates follow as a free-flowing number stream: all x values for
+        # the section boundaries, then all y values, wrapped over as many lines as
+        # the writer chose.
+        wanted = 2 * (nsections + 1)
+        coordinates: List[float] = []
+        while index < len(header_lines) and len(coordinates) < wanted:
+            values = _NUMBER_RE.findall(header_lines[index])
+            if not values or header_lines[index].strip().upper() == "BRANCH":
+                break
+            coordinates.extend(float(v) for v in values)
+            index += 1
+        x: Tuple[float, ...] = ()
+        y: Tuple[float, ...] = ()
+        if len(coordinates) >= wanted and wanted > 0:
+            x = tuple(coordinates[: nsections + 1])
+            y = tuple(coordinates[nsections + 1 : wanted])
+        branches.append(OlgaBranch(name=name, nsections=nsections, x=x, y=y))
     return tuple(branches)
 
 

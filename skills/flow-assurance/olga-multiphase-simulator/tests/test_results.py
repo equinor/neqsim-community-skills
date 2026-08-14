@@ -61,6 +61,20 @@ def test_ppl_profile_lengths_follow_boundary_or_section(ppl_file: Path) -> None:
     assert len(profile.profile("HOL", 0)) == 2  # nsections
 
 
+def test_branch_geometry_is_parsed(ppl_file: Path) -> None:
+    branch = read_ppl(ppl_file).branches[0]
+    assert branch.x == (0.0, 500.0, 1000.0)
+    assert branch.y == (0.0, 0.0, 0.0)
+    assert branch.length == pytest.approx(1000.0)
+    assert branch.section_centres() == (250.0, 750.0)
+
+
+def test_positions_match_profile_length(ppl_file: Path) -> None:
+    profile = read_ppl(ppl_file)
+    for name in ("PT", "HOL"):
+        assert len(profile.positions(name)) == len(profile.profile(name, 0))
+
+
 def test_ppl_profile_values(ppl_file: Path) -> None:
     profile = read_ppl(ppl_file)
     assert profile.profile("PT", 0) == (1.0e7, 9.0e6, 8.0e6)

@@ -173,8 +173,18 @@ TIME SERIES  ' (S)  '
 Values wrap across lines freely, so parse the data block as one number stream and
 consume it with the counts above — that is what `read_tpl` / `read_ppl` do.
 
-Units are whatever the file declares (`(PA)`, `(KG/S)`, `(C)`, `(-)`); they are
-**not** normalised. Read `OlgaVariable.unit` and convert explicitly.
+The header also carries each branch's geometry: the distance along the branch and
+the elevation at every section boundary. `OlgaBranch.x` / `.y` expose them, and
+`ProfileData.positions(name)` returns the abscissa that matches a given profile
+(boundaries for a `BOUNDARY:` variable, section centres for a `SECTION:` one).
+Without it a profile is just a list of numbers — you cannot plot it, and you
+cannot tell which end is the wellhead. Check the sign of `branch.y` rather than
+assuming index 0 is the inlet.
+
+**Units are per variable, and they are not one consistent system.** In the same
+file OLGA reports `PT` in `PA` but `TM` in `C`. Always read `OlgaVariable.unit`
+and convert from that; assuming SI throughout turns a 16.8 °C fluid into
+−256 °C.
 
 ## Python Usage Pattern
 
@@ -205,6 +215,20 @@ print(trend.final("PT"), trend.variables[0].unit)
 
 profile = read_ppl(result.outputs["ppl"])
 pressure = profile.profile("PT", time_index=-1, branch="PIPELINE")
+distance = profile.positions("PT", branch="PIPELINE")   # matching abscissa, m
+```
+
+Enable output on a case that has none. `TRENDDATA` / `PROFILEDATA` inside the
+network components is not enough — without the global keywords OLGA writes no
+`.tpl` / `.ppl` at all:
+
+```python
+from olga_multiphase_simulator import apply_parameters, ensure_statement
+
+text = Path("case.genkey").read_text()
+text = apply_parameters(text, {"INTEGRATION": {"ENDTIME": "120 s"}})
+for statement in ("TREND DTPLOT=20 s", "PROFILE DTPLOT=60 s"):
+    text = ensure_statement(text, statement, after_keyword="INTEGRATION")
 ```
 
 Parametric sweep — write a variant **next to the original** so its relative `.tab`
@@ -222,8 +246,14 @@ for endtime in ("1 h", "6 h", "24 h"):
 
 `genkey.get_parameter` / `set_parameter` edit exactly one value and leave every
 other byte untouched, handle `\`-continuation lines, skip `!` comments, and
-support repeated keywords through `occurrence=`. They do **not** validate physics
-— always `rule_check` the variant before running it.
+support repeated keywords through `occurrence=`. `ensure_statement` adds a
+missing global statement. None of them validate physics — always `rule_check`
+the variant before running it.
+
+The bundled sample library under `Data/OPG Files` is a good end-to-end test, but
+most samples ship only as `.opi` GUI projects. `Well/Well-CleanUp_T` includes a
+generated `.key`, so it is the one case that runs in batch without opening the
+GUI first.
 
 For large designed experiments, OLGA also ships its own parameter-study module
 (`Modules/RmoParameterStudy`), which is the right tool when the study must be
@@ -254,6 +284,8 @@ OLGA only when the transient actually matters.
 - [ ] Exit code is 0 **and** the `.out` file ends with `NORMAL STOP IN EXECUTION`.
 - [ ] The engine version and case file name are recorded with the results.
 - [ ] Result units were read from the catalog, not assumed.
+- [ ] Profiles were reported against `positions(...)`, and the shallow end was
+      identified from `OlgaBranch.y` rather than assumed to be section 0.
 - [ ] Reported values are at output times that exist in the file, not interpolated silently.
 - [ ] A qualified flow-assurance engineer reviewed the interpretation.
 
@@ -264,7 +296,10 @@ OLGA only when the transient actually matters.
 | Exit 26 `LICENSE_FAIL` | Licence server unset or unreachable | Check `LM_LICENSE_FILE`; use `license_environment()` to see what is set |
 | Exit 23/34 fluid failure | PVT `.tab` not found, or state outside the table | Run from the case directory; widen the table P/T range |
 | Exit 17 `CMDLINE_FAILED` | Case file not last, or a mistyped flag | Build the command with `OlgaRunner.build_command` |
-| No `.tpl` or `.ppl` produced | No global `TREND` / `PROFILE` `DTPLOT` keyword in the case | Add `TREND DTPLOT=...` and `PROFILE DTPLOT=...`; `TRENDDATA`/`PROFILEDATA` alone is not enough |
+| No `.tpl` or `.ppl` produced | No global `TREND` / `PROFILE` `DTPLOT` keyword in the case | Add them with `ensure_statement`; `TRENDDATA`/`PROFILEDATA` alone is not enough |
+| Temperatures come out near −256 °C | `TM` is already in `C`, but the code subtracted 273.15 | Convert from `OlgaVariable.unit`; units differ per variable in one file |
+| Profile plotted against index | The abscissa was never read | Use `ProfileData.positions(name)`; it matches the profile length |
+| "Wellhead" pressure looks like a downhole one | Section 0 is not always the top | Check `OlgaBranch.y` to find which end is shallow |
 | Exit 65–73 | Numerical divergence, not bad input | Reduce `MAXDT`, shorten `ENDTIME` to bracket the failure, check boundaries |
 | Parser reports trailing values | The run was killed mid-write | Re-run to completion; a partial `.ppl` has an incomplete final time block |
 | Editing the `.opi` has no effect | The engine reads the generated `.genkey` | Automate the `.genkey`; regenerate it from the GUI when the topology changes |
@@ -277,6 +312,7 @@ OLGA only when the transient actually matters.
   add keywords, change topology, or check units.
 - Only ASCII `.tpl`/`.ppl` are read; binary `.plt` and `.h5` are not parsed here
   (use OLGA Viewer or the vendor API).
+- Result units are reported as declared; no unit system is imposed.
 - No physics is interpreted, checked or corrected by this skill.
 - Results depend on the OLGA version and licensed modules; both must be reported.
 

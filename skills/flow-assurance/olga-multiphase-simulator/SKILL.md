@@ -259,6 +259,174 @@ For large designed experiments, OLGA also ships its own parameter-study module
 (`Modules/RmoParameterStudy`), which is the right tool when the study must be
 reproduced inside the GUI.
 
+## Authoring a Case From Scratch
+
+A hand-written `genkey` must use OLGA's network structure. A flat list of
+`NODE` / `BRANCH` / `PIPE` statements is rejected with *"No network components
+found in the input file"*. The minimum viable single-line case is:
+
+```
+CASE AUTHOR="...", TITLE="..."
+OPTIONS TEMPERATURE=WALL, COMPOSITIONAL=OFF, STEADYSTATE=ON
+FILES PVTFILE="fluid.tab"
+INTEGRATION ENDTIME=12 h, STARTTIME=0 s, MINDT=0.001 s, MAXDT=10 s, DTSTART=0.001 s
+OUTPUT DTOUT=12 h
+TREND DTPLOT=1800 s
+PROFILE DTPLOT=1800 s
+MATERIAL LABEL="STEEL", TYPE=SOLID, CAPACITY=500 J/kg-C, CONDUCTIVITY=45 W/m-C, DENSITY=7850 kg/m3
+WALL LABEL="PIPEWALL", THICKNESS=(0.02) m, MATERIAL=("STEEL")
+
+NETWORKCOMPONENT TYPE=FLOWPATH, TAG=FLOWPATH_1
+ PARAMETERS LABEL="EXPORTLINE"
+ BRANCH FLUID="NewFluid"
+ GEOMETRY LABEL="ROUTE", XSTART=0 m, YSTART=-307 m, ZSTART=0 m
+ PIPE LABEL=PIPE_01, ROUGHNESS=4.5e-05 m, DIAMETER=0.355 m, WALL="PIPEWALL", \
+      NSEGMENT=5, LSEGMENT=(738.45, 738.45, 738.45, 738.45, 738.45) m, \
+      XEND=3692.26 m, YEND=-294.8 m, ZEND=0 m
+ HEATTRANSFER LABEL="SEABED", PIPE=ALL, HOUTEROPTION=HGIVEN, \
+              HAMBIENT=3.2 W/m2-C, TAMBIENT=4 C, HMININNERWALL=10 W/m2-C
+ SOURCE LABEL="FEED", PIPE=PIPE_01, SECTION=1, TIME=0 s, \
+        MASSFLOW=101.1 kg/s, TEMPERATURE=40 C, GASFRACTION=1 -
+ INITIALCONDITIONS PRESSURE=70 bara, TEMPERATURE=40 C, VOIDFRACTION=1 -
+ OUTPUTDATA VARIABLE=(PT, TM, HOL, ID, USG, USL)
+ PROFILEDATA VARIABLE=(PT, TM, HOL, ID, USG, USL, ROG, ROHL)
+ TRENDDATA PIPE=PIPE_01, SECTION=5, VARIABLE=(PT, TM, HOL, USG, USL)
+ENDNETWORKCOMPONENT
+
+NETWORKCOMPONENT TYPE=NODE, TAG=NODE_INLET
+ PARAMETERS LABEL="INLET", TYPE=CLOSED, X=0 m, Y=-307 m, Z=0 m
+ENDNETWORKCOMPONENT
+
+NETWORKCOMPONENT TYPE=NODE, TAG=NODE_OUTLET
+ PARAMETERS LABEL="OUTLET", TYPE=PRESSURE, X=73845 m, Y=-300 m, Z=0 m, \
+            PRESSURE=70 bara, TEMPERATURE=4 C, GASFRACTION=1 -, FLUID="NewFluid"
+ENDNETWORKCOMPONENT
+
+CONNECTION TERMINALS = (NODE_INLET FLOWTERM_1, FLOWPATH_1 INLET)
+CONNECTION TERMINALS = (NODE_OUTLET FLOWTERM_1, FLOWPATH_1 OUTLET)
+
+ENDCASE
+```
+
+Rules learned the hard way (each one was a rules-engine rejection):
+
+- Keyword names are **singular** on `WALL`: `THICKNESS=`, `MATERIAL=` — not
+  `THICKNESSES`/`MATERIALS`. `MATERIAL` needs `TYPE=SOLID` and `W/m-C`.
+- `SOURCE` has no `FLUID=` key. The fluid comes from the `BRANCH FLUID=` label.
+- `INTEGRATION` has no `NSLUG` key in 2025.1.
+- Global statements (`OPTIONS`, `FILES`, `INTEGRATION`, `OUTPUT`, `TREND`,
+  `PROFILE`, `MATERIAL`, `WALL`) go before the network components;
+  `CONNECTION` statements go after them.
+- **Iterate against `-exitRC`.** The rules engine names the offending key and its
+  owner, e.g. `1019: Key not found. (FLUID for SOURCE EXPORTFEED in FLOWPATH
+  EXPORTLINE)`. Treat it as the authority rather than guessing from documentation.
+
+### Posing the boundary conditions
+
+OLGA cannot fix inlet pressure, inlet temperature and flow rate at the same
+boundary the way a steady-state marching model such as `PipeBeggsAndBrills` can.
+To reproduce a NeqSim case that specifies all three, use a `SOURCE` for mass flow
+and temperature plus a `TYPE=PRESSURE` outlet node, then iterate the outlet
+pressure until OLGA's computed inlet pressure matches the NeqSim specification.
+A secant iteration converges in three or four runs. Do not compare an OLGA run
+against a NeqSim run at a different pressure level: gas friction scales roughly
+as `G²/ρ`, so the pressure level materially changes the answer.
+
+**The `SOURCE` phase split is an input, and it is easy to get wrong.**
+`GASFRACTION` on a `SOURCE` is a **mass** fraction and it *overrides* the table
+equilibrium. Writing `GASFRACTION=1` feeds OLGA dry gas. If the compositional
+model flashes two phases at the inlet, the two cases are then not comparable —
+a rich gas at 200 bara / 40 °C can be 99.5 % gas by mole but only 97.4 % by mass,
+so `GASFRACTION=1` silently deletes 2.6 % of the mass as condensate. Always take
+the gas **mass** fraction from a NeqSim flash at the source conditions:
+
+```python
+fluid.setTemperature(313.15); fluid.setPressure(200.0)
+ThermodynamicOperations(fluid).TPflash(); fluid.initProperties()
+total = sum(fluid.getPhase(i).getNumberOfMolesInPhase()
+            * fluid.getPhase(i).getMolarMass()
+            for i in range(fluid.getNumberOfPhases()))
+gas_mass_fraction = (fluid.getPhase(0).getNumberOfMolesInPhase()
+                     * fluid.getPhase(0).getMolarMass()) / total
+```
+
+### Proving the two models see the same input
+
+Before reporting any OLGA-versus-other-simulator comparison, verify each item
+below with a number rather than by inspection of the input files:
+
+| Input | How to prove it |
+| --- | --- |
+| Composition | Same source file (hash it), and the PVT table reproduces a direct flash density at the inlet, mid-line and arrival states |
+| Mass rate | `SOURCE MASSFLOW` equals the other model's mass rate, not just the same volumetric rate — a standard-volume rate depends on the molar mass |
+| Inlet phase split | `GASFRACTION` equals the flashed gas **mass** fraction |
+| Diameter and roughness | The set of `DIAMETER=` and `ROUGHNESS=` values in the genkey is a single value matching the other model |
+| Length | Sum of pipe lengths equals the other model's total, including elevation |
+| Pressure level | Inlet pressures agree after the outlet-pressure iteration |
+| Ambient | `TAMBIENT` and the `U`-to-`HAMBIENT` mapping stated explicitly |
+
+A 0.01 % density agreement between the table and a direct flash is the check that
+turns "same fluid file" into "same fluid".
+
+### Generating the PVT table from NeqSim
+
+```python
+generator = jneqsim.thermodynamicoperations.propertygenerator \
+    .OLGApropertyTableGeneratorKeywordFormat(fluid)
+generator.setPressureRange(5.0, 260.0, 41)          # bara
+generator.setTemperatureRange(233.15, 353.15, 31)   # K
+generator.run()
+generator.writeOLGAinpFile("linnorm.tab")
+```
+
+- Use `OLGApropertyTableGeneratorKeywordFormat` (emits `PHASE = TWO`) for a dry
+  line. `OLGApropertyTableGeneratorWaterKeywordFormat` emits `PHASE = THREE` and
+  throws a `NullPointerException` unless the fluid contains a `water` component.
+- Cover the whole P/T range the line will visit, including Joule-Thomson cooling
+  at the arrival end; an out-of-table state gives exit 23/34.
+- Always check the file exists and spot-check `ROG`/`ROHL`/`VISG` for NaNs before
+  handing it to OLGA. At single-phase grid points the generator still reads
+  `getPhase(1)`, so the "liquid" columns there are extrapolations.
+- Requires NeqSim with the 2026-08 fixes to these generators (honouring the
+  `filename` argument and writing paired `BUBBLEPRESSURES`/`BUBBLETEMPERATURES`).
+
+### Discretising the geometry
+
+**OLGA's batch engine does not discretise.** It consumes a `PIPE` list that already
+carries `NSEGMENT` and `LSEGMENT`. OLGA's own "discretize geometry" lives in the
+Geometry editor and `Tools/ProfileGenerator/ProfileGeneratorTool.exe`, both of
+which are GUI-only — the tool has no command line and simply opens a window if you
+pass it arguments. So an automated workflow has to produce the section list itself.
+
+Use `discretize_route` rather than hand-picking `NSEGMENT`:
+
+```python
+from olga_multiphase_simulator.geometry import discretize_route
+
+mesh = discretize_route(
+    kp, elevation,                      # route waypoints, m
+    target_section_length=500.0,
+    boundary_section_length=100.0,      # grade toward inlet and outlet
+    max_adjacent_ratio=1.5,             # limit the jump between neighbours
+    refine_low_points=True,             # refine where liquid accumulates
+)
+print(mesh.summary())
+genkey_pipes = mesh.to_genkey(diameter_m=0.355, roughness_m=4.5e-5,
+                              wall_label="PIPEWALL")
+```
+
+`summary()` returns the numbers to record with the run: `total_sections`,
+`min_section_length_m`, `max_section_length_m` and `max_adjacent_ratio`. The
+ratio is enforced across pipe boundaries as well as inside a pipe, because a step
+change in section length is a numerical error source, and pipe lengths follow the
+route including elevation change, not the horizontal distance.
+
+A uniform "N sections per leg" mesh is the usual shortcut and the usual mistake:
+on a survey-derived route the legs are unequal, so a fixed count produces a
+section-length jump at every leg boundary. Always report the mesh statistics, and
+demonstrate grid independence by halving the target section length and confirming
+the answer moves less than the accuracy being claimed.
+
 ## Working With NeqSim
 
 OLGA and NeqSim are complementary; use each for what it is good at.
@@ -276,6 +444,60 @@ wax envelopes, OLGA transports it transiently, and the OLGA arrival trends
 model. Screen first with the community flow-regime and slug skills; escalate to
 OLGA only when the transient actually matters.
 
+### When the two models disagree, audit the correlation term by term
+
+A headline gap in ΔP or holdup is not evidence of a bug in either code, and it
+is not evidence of a modelling limitation either — until the intermediate terms
+have been compared. Do this before writing either conclusion:
+
+1. Reimplement the steady-state correlation from the **published equations** in
+   a few dozen lines of Python, driven from the *same* flashed NeqSim fluid
+   object so composition and properties cannot differ.
+2. Run the simulator on a **short, single-increment** pipe (1 m, one segment).
+   A long segment lets the pressure change within the increment shift the state
+   at which the correlation is evaluated; a 10% holdup deviation seen over a
+   100 m segment vanished entirely at 1 m.
+3. Compare every intermediate, not just the answer: no-slip liquid fraction,
+   Froude number, the regime-boundary numbers, the horizontal holdup, the
+   velocity number, the inclination factor, the two-phase friction multiplier,
+   the no-slip friction factor, then ΔP.
+4. Sweep the **inclination** as well as the horizontal case. Terms that only
+   appear in the inclination correction are invisible in a horizontal test, and
+   they are raised to powers as high as 3.8, so a small input error becomes a
+   large output error.
+
+This procedure found four real defects in `PipeBeggsAndBrills` that a
+horizontal end-to-end comparison had hidden: a pipe angle converted from
+degrees to radians twice, a distributed-regime boundary tested against the
+wrong limit, gravity counted twice in the liquid velocity number, and a
+volume-corrected density mixed with an uncorrected one inside a single formula.
+
+Two residual differences are expected and are *not* defects:
+
+- Beggs & Brill was calibrated on small-bore air/water loops, for no-slip liquid
+  fractions down to roughly 0.01–0.02. A large-bore high-pressure gas line
+  carrying a few mass per cent of condensate runs *below* that range, so the
+  two-phase friction multiplier is being extrapolated. On a 74 km 14-inch line
+  at a mean no-slip liquid fraction of 0.009 the multiplier reached 1.42, which
+  accounted for the **entire** difference against the transient two-fluid model:
+  removing it brought the correlation from 124 bar to 87 bar against OLGA's
+  78 bar and a single-phase Darcy check of 84 bar.
+- A mechanistic two-fluid code computes an interfacial friction close to
+  single-phase in this regime, because the condensate rides as a thin film
+  rather than loading the gas core.
+
+Do **not** reach for the Payne et al. (1979) holdup correction to explain such a
+gap without checking the numbers. The Beggs & Brill `S` factor is monotonically
+*increasing* in `y = λ_L / H_L²` over this range, so reducing the holdup
+*raises* the friction multiplier: 0.0795 gave 1.42, the Payne-corrected value
+gave 1.51, and the two-fluid code's own holdup of 0.023 would give 2.43. The
+defect is in the multiplier's applicability at low liquid loading, not in the
+holdup value.
+
+Always run an independent single-phase Darcy–Weisbach hand check at the same
+pressure level as a third opinion; it tells you which of the two simulators the
+discrepancy belongs to.
+
 ## Validation Checklist
 
 - [ ] The engine used is `OlgaExecutables/Olga-<version>.exe`, not an `OLGA-S` path.
@@ -287,6 +509,17 @@ OLGA only when the transient actually matters.
 - [ ] Profiles were reported against `positions(...)`, and the shallow end was
       identified from `OlgaBranch.y` rather than assumed to be section 0.
 - [ ] Reported values are at output times that exist in the file, not interpolated silently.
+- [ ] The PVT table covers the full P/T range reached, and its density and
+      viscosity columns were spot-checked for NaNs before the run.
+- [ ] The mesh came from `discretize_route`, its `summary()` was recorded, and
+      grid independence was demonstrated by halving the target section length.
+- [ ] When benchmarking against another model, every row of the input-equivalence
+      table was proved with a number: composition, mass rate, inlet phase split,
+      diameter, roughness, length, pressure level and ambient conditions.
+- [ ] Any headline disagreement was audited term by term against the published
+      correlation on a short single-increment segment, over a range of
+      inclinations, and cross-checked against a single-phase Darcy hand
+      calculation before being attributed to either code.
 - [ ] A qualified flow-assurance engineer reviewed the interpretation.
 
 ## Common Mistakes
@@ -304,6 +537,17 @@ OLGA only when the transient actually matters.
 | Parser reports trailing values | The run was killed mid-write | Re-run to completion; a partial `.ppl` has an incomplete final time block |
 | Editing the `.opi` has no effect | The engine reads the generated `.genkey` | Automate the `.genkey`; regenerate it from the GUI when the topology changes |
 | Results changed after a version upgrade | Different flow-model build | Record `-version all` output alongside the results |
+| `No network components found in the input file` | Flat `NODE`/`BRANCH`/`PIPE` list | Wrap them in `NETWORKCOMPONENT ... ENDNETWORKCOMPONENT` and add `CONNECTION` statements |
+| `1019: Key not found` | Keyword name or owner is wrong for this OLGA version | Read the owner named in the message; fix and re-run `-exitRC` |
+| `BUBBLETEMPERATURES and BUBBLEPRESSURES need to have the same size` | PVT table saturation arrays are not paired | Regenerate with a NeqSim build that writes equal-length paired arrays |
+| NeqSim wrote no `.tab` and raised nothing | Older NeqSim ignored the `filename` argument and swallowed the write error | Verify the file exists after `writeOLGAinpFile`; upgrade NeqSim |
+| OLGA and a steady-state model disagree on ΔP | Often a different pressure level, not a model difference | Match the inlet pressure by iterating the outlet boundary before comparing |
+| OLGA carries far less liquid than the compositional model | `SOURCE GASFRACTION=1` fed dry gas and overrode the table equilibrium | Set `GASFRACTION` to the flashed gas **mass** fraction |
+| Looking for a batch "discretize geometry" command | OLGA's discretiser is GUI-only | Build the section list with `discretize_route` |
+| Section length jumps at every leg boundary | A fixed `NSEGMENT` per leg on unequal legs | Use a target section length and the neighbour-ratio limit |
+| Steady-state holdup barely changes when the pipe is inclined | The correlation's inclination correction is being suppressed | Sweep the angle and compare against the published correction; a near-constant holdup means the term is broken, not small |
+| A correlation audit shows a few per cent deviation that will not close | The reference was evaluated at the inlet but the simulator evaluated it after the pressure change across the increment | Shrink the test segment to ~1 m with one increment |
+| Liquid-property terms disagree by ~20% for no visible reason | `phase.getDensity()` and `phase.getDensity("kg/m3")` differ when volume correction is on | Use the explicit-unit accessor everywhere; never mix the two in one formula |
 
 ## Limitations
 

@@ -498,6 +498,54 @@ Always run an independent single-phase Darcy–Weisbach hand check at the same
 pressure level as a third opinion; it tells you which of the two simulators the
 discrepancy belongs to.
 
+### Use NeqSim's own two-fluid model as the fourth opinion
+
+`neqsim.process.equipment.pipeline.TwoFluidPipe` is a mechanistic two-fluid
+model — the same modelling class as OLGA — so it discriminates between "the
+correlation is being extrapolated" and "NeqSim has a bug" without leaving
+NeqSim. On the 74 km line above:
+
+| | OLGA | TwoFluidPipe | Beggs & Brill | Darcy check |
+| --- | --- | --- | --- | --- |
+| pressure drop, bar | 78.5 | **81.2 (+3.4%)** | 125.0 (+59.2%) | 77.7 |
+| max liquid holdup | 0.023 | 0.055 | ~0 | – |
+
+Two mechanistic codes and a hand calculation agree; the correlation is the
+outlier. That settled the question.
+
+```python
+pipe = jneqsim.process.equipment.pipeline.TwoFluidPipe("line", inlet_stream)
+pipe.setLength(length_m)
+pipe.setDiameter(id_m)
+pipe.setRoughness(4.5e-5)
+pipe.setNumberOfSections(320)
+pipe.setElevationProfile(elevations)          # needs numberOfSections + 1 values
+pipe.setIncludeEnergyEquation(True)
+pipe.setHeatTransferCoefficient(3.0)          # W/m2K
+pipe.setSurfaceTemperature(4.0, "C")
+pipe.run()
+assert pipe.isSteadyStateConverged()          # ALWAYS check this
+profile = pipe.getPressureProfile()           # Pa
+dp_bar = (profile[0] - profile[-1]) / 1e5
+```
+
+- **Always assert `isSteadyStateConverged()`.** The steady-state refinement loop
+  is an under-relaxed fixed-point sweep; if it runs out of iterations it returns
+  the last iterate, which can be an order of magnitude wrong. Raise the budget
+  with `setSteadyStateMaxIterations(int)` if needed. The default budget scales
+  with the section count.
+- **Demonstrate grid independence.** A 74 km line gave 80.39 / 80.93 / 81.20 bar
+  at 80 / 160 / 320 sections — Richardson-extrapolates to about 81.5 bar. It
+  solves in under a second, so there is no excuse for a single-mesh answer.
+- Profiles available: `getPressureProfile()` (Pa), `getLiquidHoldupProfile()`,
+  `getGasVelocityProfile()`, `getLiquidVelocityProfile()`,
+  `getFlowRegimeProfile()`. There is no `getMixtureVelocityProfile()`. The model
+  is correctly insensitive to the elevation datum, so absolute seabed depths may
+  be passed directly.
+- Arrival **temperature** still differs from OLGA (20.4 °C against 8.4 °C on this
+  line) even where the pressure drop agrees, so treat the thermal result as
+  unvalidated and check it against a measured arrival temperature.
+
 ## Validation Checklist
 
 - [ ] The engine used is `OlgaExecutables/Olga-<version>.exe`, not an `OLGA-S` path.
@@ -520,6 +568,9 @@ discrepancy belongs to.
       correlation on a short single-increment segment, over a range of
       inclinations, and cross-checked against a single-phase Darcy hand
       calculation before being attributed to either code.
+- [ ] If a `TwoFluidPipe` result was used as a cross-check, `isSteadyStateConverged()`
+      returned true and the answer was shown to be grid-independent over at least
+      two mesh refinements.
 - [ ] A qualified flow-assurance engineer reviewed the interpretation.
 
 ## Common Mistakes
@@ -548,6 +599,9 @@ discrepancy belongs to.
 | Steady-state holdup barely changes when the pipe is inclined | The correlation's inclination correction is being suppressed | Sweep the angle and compare against the published correction; a near-constant holdup means the term is broken, not small |
 | A correlation audit shows a few per cent deviation that will not close | The reference was evaluated at the inlet but the simulator evaluated it after the pressure change across the increment | Shrink the test segment to ~1 m with one increment |
 | Liquid-property terms disagree by ~20% for no visible reason | `phase.getDensity()` and `phase.getDensity("kg/m3")` differ when volume correction is on | Use the explicit-unit accessor everywhere; never mix the two in one formula |
+| `TwoFluidPipe` ΔP is several times below a Darcy hand check on a long line | The steady-state loop ran out of iterations and returned the last iterate | Assert `isSteadyStateConverged()`; raise `setSteadyStateMaxIterations(int)` |
+| `TwoFluidPipe` liquid holdup pins near 0.85, or ΔP jumps for a tiny elevation change | Fixed in NeqSim: the initializer and the refinement loop integrated different discrete momentum balances, so terrain hydrostatics stopped telescoping | Rebuild against current NeqSim; both call sites now share `marchPressure` |
+| `TwoFluidPipe` arrival temperature is far warmer than OLGA | The heat-transfer / JT path is not validated against OLGA | Check the thermal result against a measured arrival temperature |
 
 ## Limitations
 

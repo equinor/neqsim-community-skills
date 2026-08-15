@@ -44,6 +44,83 @@ valid installation and licence; it only drives what is installed locally.
 Do **not** use this skill to invent a case from scratch, to guess PVT tables, or
 to interpret a transient result without a flow-assurance engineer in the loop.
 
+## Inputs
+
+- `case`: path to the `.genkey` / `.key` keyword file the batch engine reads. The
+  GUI `.opi` project is **not** an engine input — generate the `genkey` from it first.
+- `pvt_file`: the `.tab` PVT table referenced by `FILES PVTFILE=`, resolved
+  relative to the working directory. Generated from a NeqSim fluid (two- or
+  three-phase) so OLGA and NeqSim share one fluid.
+- `hydrate_curve`: optional hydrate equilibrium curve for `HYDRATECHECK`, also
+  generated from the same NeqSim fluid.
+- `restart_file`: optional `.rsw` snapshot for a restart (`RESTART READFILE=ON`).
+- `parameters`: mapping of `{KEYWORD: {ATTRIBUTE: value}}` overrides applied by
+  `apply_parameters` / `set_parameter` / `write_variant` for sweeps, e.g.
+  `{"INTEGRATION": {"ENDTIME": "6 h"}}`.
+- `out_dir`: output directory for the run (`-outDir`); defaults to the case directory.
+- `nthreads`: thread count for parallel execution (`-nthreads`).
+- `timeout`: wall-clock limit in seconds after which the run is terminated.
+- `olga_home` / `olga_engine`: optional explicit installation or engine path;
+  otherwise `OLGA_HOME` / `OLGA_ENGINE` or installation discovery is used.
+- Licence environment: `LM_LICENSE_FILE` or `SLBSLS_LICENSE_FILE`, plus a
+  reachable licence server when the licence is served rather than node-locked.
+
+## Outputs
+
+- `installations`: `OlgaInstallation` records from `find_olga_installations()` —
+  version, root and batch-engine path for every OLGA found on the machine.
+- `rule_check`: `OlgaRunResult` from the `-exitRC` input-rule pass, with
+  `succeeded` and the engine stdout.
+- `run_result`: `OlgaRunResult` with `case`, `out_dir`, `command`, `returncode`,
+  `category`, `code_name`, `description`, `duration_s`, `stdout`, `timed_out`,
+  and `outputs` (the `.out`, `.tpl`, `.ppl`, `.plt`, `.h5` files produced).
+  `summary()` returns a JSON-ready dict for `results.json`.
+- `trend`: `TrendData` from `read_tpl` — time vector, `time_unit`, and one
+  `OlgaVariable` per catalog entry with its own `unit`; `final(name)` gives the
+  end-of-run value.
+- `profile`: `ProfileData` from `read_ppl` — spatial profiles per variable and
+  time step, with `positions(name)` giving the matching abscissa in m.
+- `branches`: `OlgaBranch` geometry (`x` distance along the branch, `y`
+  elevation) read from the result header, needed to plot or orient a profile.
+- `exit_code_decoding`: `describe_exit_code(code)` → `(category, name,
+  description)`, resolved offline from the embedded `EXIT_CODES` table.
+
+## Engineering Method
+
+OLGA solves the transient one-dimensional two-fluid (three-phase) conservation
+equations along a discretized pipe network. This skill does **not** reimplement
+that physics — it drives the licensed engine and decodes what it produced:
+
+- **Discovery.** Installations are located from `OLGA_HOME` / `OLGA_ENGINE`, then
+  from the standard install roots, and the newest version is used by default. The
+  `OLGA-S` point model (`OLGAS_SLB_x64`) is deliberately excluded: it is the
+  steady-state model other hosts link against, not the transient engine.
+- **Cheap validation before expensive runs.** Every case is first run with
+  `-exitRC`, which parses keywords, units and topology in seconds. It does not
+  open the PVT file and does not validate `TRENDDATA` / `PROFILEDATA` variable
+  names, so the result-file `CATALOG` is read back afterwards to confirm every
+  requested variable actually exists.
+- **Execution.** The engine is launched with the working directory set to the
+  case directory, so relative `FILES PVTFILE=` references resolve, with the case
+  file last on the command line as the engine requires.
+- **Outcome classification.** The process exit code is mapped through the table
+  transcribed from `exit_code_lookup.exe` into a category, name and first action —
+  separating input errors (17, 20–22), licence failures (26), PVT problems
+  (23/34) and numerical divergence (65–73), which need different responses.
+- **Discretization.** `discretize_route` turns a surveyed route into OLGA pipes
+  and sections using a target section length with graded first-section lengths, a
+  neighbour length-ratio limit, and refinement at local elevation minima where
+  terrain slugging accumulates liquid.
+- **Result decoding.** `.tpl` and `.ppl` share one ASCII header, geometry block
+  and `CATALOG`; the data block is consumed as a single number stream using the
+  catalog counts (`nsections + 1` values for a `BOUNDARY:` variable, `nsections`
+  for a `SECTION:` one). Units are taken per variable from the catalog, because
+  OLGA mixes systems in one file (`PT` in Pa, `TM` in °C).
+
+The engine result is only as good as the case and its PVT table. This skill
+gives a reproducible, decodable run — it is not a flow-assurance method and does
+not replace a qualified flow-assurance review.
+
 ## Installed Layout (Windows)
 
 A standard installation looks like this — several versions can coexist:

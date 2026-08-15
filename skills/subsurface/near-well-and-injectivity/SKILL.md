@@ -20,6 +20,80 @@ Use this skill when a number like `productivityIndex = 200 Sm3/(day·bar)` or
 `injectivity = 450 Sm3/(day·bar)` is about to be typed into a model, and nobody
 can say where it came from.
 
+## When to Use
+
+- A productivity or injectivity index is about to be assumed rather than derived.
+- Injectors must be checked against a **voidage** requirement, not a rate target.
+- Productivity decay through the bubble point, or injectivity change as a water
+  bank develops, affects the answer.
+- A NeqSim compositional fluid must become a black-oil `PVTO` / `PVDG` / `PVTW`
+  deck section.
+- An Eclipse-format reservoir model must be built and run in OPM Flow, and its
+  inflow relationship handed back to a NeqSim wellbore or process model.
+
+Do **not** use this skill for CFD (see `neqsim-cfd-coupling`), for full-field
+development planning, or to publish a reserves number without a qualified
+reservoir-engineering review.
+
+## Inputs
+
+- `fluid`: the NeqSim compositional fluid to convert to black-oil PVT.
+- `pressure_grid`, `reservoir_temperature`: pressure nodes and temperature for
+  the `BlackOilConverter.convert` call; standard conditions default to
+  1.01325 bara and 288.15 K.
+- `scal_basis`: `pyscal` `WaterOil` / `GasOil` endpoints and Corey exponents —
+  `swirr`, `swl`, `sorw`, `sgcr`, `sorg`, `nw`, `now`, `ng`, `nog`, `krwend`,
+  `kroend`, `krgend`.
+- `rock_and_geometry`: permeability, net pay, porosity, wellbore radius `rw`,
+  drainage radius `re`, drain length and completion geometry.
+- `grid_definition`: for a radial model, `INRAD`, `DRV`, `DTHETAV`, `DZV`/`DZ`
+  and `TOPS` (vector forms only).
+- `well_controls`: `WCONPROD` / `WCONINJE` targets and limits, and the group
+  controls (`GCONPROD`, `GCONINJE ... 'VREP'`) that set voidage replacement.
+- `measured_pvt`: optional laboratory Rs and Bo at initial pressure, used to
+  validate the converted table.
+- `assumed_index`: the productivity or injectivity index currently in the model,
+  for comparison against the derived value.
+
+## Outputs
+
+- `black_oil_table`: `PVTO`, `PVDG`, `PVTW` sections that satisfy Flow's
+  monotonicity rules, plus the validation verdict on Rs and Bo.
+- `scal_tables`: `SWOF` and `SGOF` written from the `pyscal` tables, with the
+  water endpoint reported at `Sw = 1 - Sorw` (not the table maximum).
+- `productivity_index`: `WPI` from the Flow SUMMARY section, with `CWPI` per
+  connection, read back with `resdata`.
+- `injectivity_index`: the **developed** index once the water bank has grown,
+  alongside the initial value and the endpoint mobility ratio $M$.
+- `voidage_check`: injected volume versus the reservoir voidage requirement.
+- `fidelity_statement`: which level (analytic, radial/sector, full field) was
+  used and why.
+- `neqsim_handoff`: the inflow relationship passed to `InflowPerformance` for the
+  NeqSim wellbore and process model.
+
+## Engineering Method
+
+The chain is fixed, and each link is checkable:
+
+1. **Choose the fidelity first** — analytic (Joshi, Peaceman/Darcy radial,
+   two-region Buckley-Leverett), OPM Flow radial or sector model, or full field.
+   Most near-well questions never need a grid.
+2. **Convert the fluid** — `BlackOilConverter` turns the NeqSim EOS fluid into
+   Rs, Bo and Bg tables, which are then validated for monotonicity, continuity
+   and agreement with measured PVT before they reach the deck.
+3. **Build the SCAL basis explicitly** with `pyscal`, because the water
+   relative-permeability endpoint governs injectivity far more strongly than
+   absolute permeability.
+4. **Grid logarithmically** in the near-well region, since half the drawdown in a
+   radial system occurs within a few metres of the wellbore.
+5. **Run OPM Flow** on the Eclipse-format deck and read `WPI` / `CWPI` and the
+   rates back with `resdata`.
+6. **Evaluate injectivity on the endpoint mobility ratio**
+   $M = [k_{rw}(S_{or})/\mu_w] / [k_{ro}(S_{wi})/\mu_o]$, at the **injected-water**
+   temperature, and size injectors on the developed index.
+7. **Hand the inflow relationship to NeqSim** rather than duplicating the
+   reservoir physics in the process model.
+
 ## One simulator: OPM Flow
 
 Reservoir simulation in this stack is **OPM Flow**. Do not mix in a second
@@ -139,7 +213,9 @@ RSVD
   738.3 47.47901 /
 ```
 
-## Deck traps that cost a run each
+## Common Mistakes
+
+Deck traps that cost a run each:
 
 | Symptom | Cause | Fix |
 |---|---|---|
@@ -234,12 +310,36 @@ its own. Evaluate at the **injected-water** temperature, not the reservoir
 temperature. Size injectors on the **developed** index either way — sizing on the
 initial value is how a waterflood ends up short of injectors five years in.
 
-## Hand the result to NeqSim, do not duplicate it
+## Python Usage Pattern
 
-The near-well model produces the inflow relationship; NeqSim consumes it.
+End to end: NeqSim fluid → black-oil table → deck → Flow → index → NeqSim.
 
 ```python
-# near-well study -> productivity index -> NeqSim inflow model
+import numpy as np, math
+from pyscal import WaterOil
+from resdata.summary import Summary
+
+# 1. Compositional fluid -> black-oil PVT, then validate before it reaches the deck.
+pressure_grid = np.linspace(400.0, 10.0, 40)
+table = jneqsim.blackoil.BlackOilConverter.convert(
+    fluid, 273.15 + 82.0, pressure_grid, 1.01325, 288.15)
+
+# 2. SCAL basis - the water endpoint, not the table maximum.
+wo = WaterOil(swirr=0.20, swl=0.20, sorw=0.25, h=0.02)
+wo.add_corey_water(nw=2.5, krwend=0.35)
+wo.add_corey_oil(now=3.0, kroend=0.90)
+krw_end = float(wo.table.loc[wo.table["SW"] <= 1.0 - 0.25, "KRW"].iloc[-1])
+
+# 3. Logarithmic near-well grid from rw to re.
+edges = np.logspace(math.log10(0.108), math.log10(800.0), 41)
+drv = np.diff(edges)
+
+# 4. Run Flow on the deck (Linux / WSL2 / container), then read the index back.
+#    docker run --rm -v "${PWD}/deck:/data" opm-flow:2026.04 CASE.DATA --output-dir=/data/out
+summary = Summary("out/CASE.SMSPEC")
+productivity_index = summary["WPI:P1"].values[-1]      # Sm3/(day*bar)
+
+# 5. Hand the inflow relationship to NeqSim - do not duplicate it there.
 from neqsim.process.equipment.reservoir import InflowPerformance
 ipr = InflowPerformance.composite(productivity_index, reservoir_pressure, bubble_point)
 ```
@@ -249,7 +349,7 @@ question and `radialProductivityIndex(...)` as a sanity check on any assumed
 index. If the two differ by more than a factor of two, one of them describes a
 different well.
 
-## Checks that catch real errors
+## Validation Checklist
 
 - **Compare against the assumed index.** A derived index more than 2× the
   assumed one means the wells are not the constraint, and adding producers buys
@@ -265,6 +365,42 @@ different well.
   `0.00708` with net pay in feet.
 - **Never read an injectivity index off a producer's PI.** Different fluid,
   different mobility, different direction.
+
+## Limitations
+
+- OPM Flow is a **black-oil** simulator here. Compositional effects — gas
+  injection with condensate dropout, miscible displacement, CO2 solubility in
+  brine — are outside what this chain represents.
+- The black-oil conversion is only as good as the EOS fluid behind it. Without
+  measured PVT to check Rs and Bo against, every derived index is an analogue.
+- `pyscal` Corey curves are a parameterisation, not measured SCAL. Endpoints
+  drive injectivity, so an unmeasured `krwend` is the dominant uncertainty.
+- Flow's cylindrical-grid support is narrower than the Eclipse specification
+  (vector keyword forms only, `TOPS` of exactly `NX*NY`, angles summing to no
+  more than 360°).
+- Flow is Linux software; on Windows it needs WSL2 or a container, and it aborts
+  silently under a non-English locale.
+- Near-well models say nothing about aquifer support, pattern interference or
+  field-wide voidage once the question outgrows the drainage region.
+- Screening and engineering support only — not a substitute for a qualified
+  reservoir-engineering review or a formal reserves estimate.
+
+## References
+
+- OPM Flow (Open Porous Media), reservoir simulator, version 2026.04 —
+  https://opm-project.org
+- `pyscal` 0.17.0, relative permeability and capillary pressure —
+  https://equinor.github.io/pyscal
+- `resdata` 6.3.2, Eclipse-format output reader —
+  https://github.com/equinor/resdata
+- Joshi, S. D. (1988). *Augmentation of Well Productivity With Slant and
+  Horizontal Wells.* JPT 40(6), 729-739.
+- Peaceman, D. W. (1978). *Interpretation of Well-Block Pressures in Numerical
+  Reservoir Simulation.* SPE Journal 18(3), 183-194.
+- Buckley, S. E. and Leverett, M. C. (1942). *Mechanism of Fluid Displacement in
+  Sands.* Transactions of the AIME 146(1), 107-116.
+- NeqSim `BlackOilConverter` 3.17.0 (PR #2976) —
+  https://github.com/equinor/neqsim
 
 ## Chain to
 

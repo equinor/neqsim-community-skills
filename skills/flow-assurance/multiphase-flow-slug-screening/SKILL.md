@@ -105,6 +105,10 @@ This educational screening corresponds to validated, rigorous functionality in t
 
 In Python the same classes are reachable through the `neqsim` package (for example `from neqsim import jneqsim`).
 
+## Escalating to a Transient Simulator
+
+This screening cannot produce a slug frequency, a slug length distribution, or the liquid surge that arrives at a receiving facility after a ramp-up or a shut-in and restart. When those govern the answer, escalate to the `neqsim-olga-multiphase-simulator` skill (or the `olga-simulation-agent`), which runs an OLGA transient case with slug tracking and returns the arrival trends. Use this screening first to decide whether that cost is justified.
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

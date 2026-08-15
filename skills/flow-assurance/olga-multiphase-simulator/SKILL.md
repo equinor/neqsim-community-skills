@@ -1,8 +1,8 @@
 ---
 name: neqsim-olga-multiphase-simulator
 version: "0.1.0"
-description: "Run the OLGA transient multiphase flow simulator from Python: locate the installation, validate a genkey case with a rule check, launch the batch engine with the right flags, decode the engine exit code, and read .tpl trend and .ppl profile results. USE WHEN: a task must execute an OLGA case, batch or sweep OLGA runs, diagnose an OLGA failure or licence error, or turn OLGA output into engineering numbers that pair with NeqSim thermodynamics and pipeline screening."
-last_verified: "2026-08-14"
+description: "Run the OLGA transient multiphase flow simulator from Python: locate the installation, generate its PVT table and hydrate equilibrium curve from a NeqSim fluid, validate a genkey case with a rule check, launch the batch engine with the right flags, decode the engine exit code, and read .tpl trend and .ppl profile results. USE WHEN: a task must execute an OLGA case, batch or sweep OLGA runs, build a two- or three-phase OLGA PVT table or a HYDRATECURVE for HYDRATECHECK, diagnose an OLGA failure or licence error, or benchmark OLGA against the NeqSim pipeline models (TwoFluidPipe, PipeBeggsAndBrills) so that a multiphase flow result can be quoted with a known accuracy."
+last_verified: "2026-08-15"
 requires:
   python_packages: []
   java_packages: []
@@ -34,6 +34,8 @@ valid installation and licence; it only drives what is installed locally.
 ## When to Use
 
 - A task must run an existing OLGA case and extract numbers from the results.
+- An OLGA case needs a PVT table or a hydrate equilibrium curve generated from a
+  NeqSim fluid, so that OLGA and NeqSim share one fluid and one hydrate boundary.
 - A parametric or sensitivity sweep must be run reproducibly rather than by hand
   in the GUI.
 - An OLGA run failed and the exit code, log or licence state must be diagnosed.
@@ -112,6 +114,19 @@ The case file must be **last**. The options that matter for automation:
 
 A successful run ends with `****  NORMAL STOP IN EXECUTION  ****` in the `.out`
 file and console, and exit code `0`.
+
+**What `-exitRC` does not check.** The rule check validates keywords, units and
+topology — nothing else. Verified on OLGA 2025.1:
+
+- It never opens the PVT file, so a broken or missing `.tab` still passes.
+- It does not validate `PROFILEDATA` / `TRENDDATA` variable names at all. A
+  deliberately invented name passes with `RuleCheck: OK`, exit 0 and **no
+  message**, and is then silently dropped from the results. The only authority on
+  which variables exist is the `CATALOG` block of the `.ppl` / `.tpl` after a real
+  run — read it back and confirm every variable you asked for is there.
+- It does not check that the physics is posed sensibly.
+
+Treat a passing rule check as "the file parses", never as "the case is right".
 
 **Run with the working directory set to the case directory.** OLGA resolves
 relative references such as `FILES PVTFILE=(./fluid.tab)` against the current
@@ -350,6 +365,36 @@ gas_mass_fraction = (fluid.getPhase(0).getNumberOfMolesInPhase()
                      * fluid.getPhase(0).getMolarMass()) / total
 ```
 
+Resolve the gas phase by **type** (`fluid.getPhaseOfType("gas")`) rather than by
+index whenever the fluid may contain water — a flash returns only the phases that
+exist, so index 0 is not reliably the gas.
+
+**Three-phase sources: `GASFRACTION` and `WATERFRACTION` are on different bases.**
+This is the single most expensive input error in this skill. When a `SOURCE`
+carries both keys:
+
+- `WATERFRACTION` is the aqueous mass fraction of the **total** stream;
+- `GASFRACTION` is the gas mass fraction of the **hydrocarbon** part only, i.e.
+  of what is left after the water is removed — *not* of the total.
+
+Feeding the total-stream gas mass fraction alongside a `WATERFRACTION` runs
+without any error or warning and produces a plausible-looking result. On a wet
+gas line with 80.3 % water by mass, writing the total-basis 0.19147 next to
+`WATERFRACTION=0.80333` gave `GAS 19.37 / OIL 81.79 kg/s` where the fluid should
+have delivered `98.49 / 2.67` — a **30×** condensate error that still converged.
+
+```python
+# masses from a NeqSim TPflash at the source conditions
+w_water = m_aqueous / m_total                       # -> WATERFRACTION
+w_gas_hc = m_gas / (m_gas + m_oil)                  # -> GASFRACTION (HC basis)
+```
+
+**Always read the split back from the `.out` file before believing any
+three-phase number.** OLGA echoes what it actually injected in a
+`MASS SOURCE INFORMATION:` block giving `GAS / OIL / WATER` in kg/s per source;
+check those three numbers against the NeqSim flash to within a per cent. A run
+that passed `-exitRC` and exited 0 proves nothing about the phase split.
+
 ### Proving the two models see the same input
 
 Before reporting any OLGA-versus-other-simulator comparison, verify each item
@@ -359,7 +404,8 @@ below with a number rather than by inspection of the input files:
 | --- | --- |
 | Composition | Same source file (hash it), and the PVT table reproduces a direct flash density at the inlet, mid-line and arrival states |
 | Mass rate | `SOURCE MASSFLOW` equals the other model's mass rate, not just the same volumetric rate — a standard-volume rate depends on the molar mass |
-| Inlet phase split | `GASFRACTION` equals the flashed gas **mass** fraction |
+| Inlet phase split | `GASFRACTION` equals the flashed gas **mass** fraction (of the hydrocarbons only when `WATERFRACTION` is also set) |
+| Injected phase rates | The `MASS SOURCE INFORMATION:` block in the `.out` file matches the NeqSim flash in kg/s for gas, oil and water |
 | Diameter and roughness | The set of `DIAMETER=` and `ROUGHNESS=` values in the genkey is a single value matching the other model |
 | Length | Sum of pipe lengths equals the other model's total, including elevation |
 | Pressure level | Inlet pressures agree after the outlet-pressure iteration |
@@ -373,32 +419,161 @@ turns "same fluid file" into "same fluid".
 ```python
 generator = jneqsim.thermodynamicoperations.propertygenerator \
     .OLGApropertyTableGeneratorKeywordFormat(fluid)
+generator.setFluidLabel("NewFluid")                 # must equal BRANCH FLUID=
 generator.setPressureRange(5.0, 260.0, 41)          # bara
 generator.setTemperatureRange(233.15, 353.15, 31)   # K
 generator.run()
 generator.writeOLGAinpFile("linnorm.tab")
 ```
 
-- Use `OLGApropertyTableGeneratorKeywordFormat` (emits `PHASE = TWO`) for a dry
-  line. `OLGApropertyTableGeneratorWaterKeywordFormat` emits `PHASE = THREE` and
-  throws a `NullPointerException` unless the fluid contains a `water` component.
-  It is the **only** water generator that works end to end with the plain
-  `run()` + `writeOLGAinpFile()` sequence; `OLGApropertyTableGeneratorWaterEven`
-  throws `NullPointerException` on `bubPLOG` unless `calcPhaseEnvelope()` is
-  called first, and its `run()` then throws
-  `IsNaNException: molarVolumeAnalytical - compressibility factor is NaN`.
-- For a `PHASE = THREE` table set `OPTIONS COMPOSITIONAL=OFF` and give the source
-  only `MASSFLOW=` and `TEMPERATURE=` — do **not** set `GASFRACTION`, the table
-  supplies the phase split. The water profile variables are `HOLWT` (water
-  holdup) and `HOLHL` (hydrocarbon-liquid holdup); `UHL` and `UWT` are not valid
-  `PROFILEDATA` names and are silently dropped with a warning.
+- `OLGApropertyTableGeneratorKeywordFormat` emits `PHASE = TWO` and works for any
+  fluid, with or without a water component.
+  `OLGApropertyTableGeneratorWaterKeywordFormat` emits `PHASE = THREE` and
+  requires a `water` component. It is the **only** water generator that works end
+  to end with the plain `run()` + `writeOLGAinpFile()` sequence;
+  `OLGApropertyTableGeneratorWaterEven` throws `NullPointerException` on
+  `bubPLOG` unless `calcPhaseEnvelope()` is called first, and its `run()` then
+  throws `IsNaNException: molarVolumeAnalytical - compressibility factor is NaN`.
+- **`setFluidLabel` must match the genkey.** The label written into the table has
+  to equal the `BRANCH FLUID=` (and outlet-node `FLUID=`) string, or OLGA cannot
+  bind the table to the flowpath.
+- For a `PHASE = THREE` table set `OPTIONS COMPOSITIONAL=OFF`. The water profile
+  variables are `HOLWT` (water holdup) and `HOLHL` (hydrocarbon-liquid holdup);
+  `UHL` and `UWT` are not valid `PROFILEDATA` names and are silently dropped with
+  a warning.
 - Cover the whole P/T range the line will visit, including Joule-Thomson cooling
-  at the arrival end; an out-of-table state gives exit 23/34.
-- Always check the file exists and spot-check `ROG`/`ROHL`/`VISG` for NaNs before
-  handing it to OLGA. At single-phase grid points the generator still reads
-  `getPhase(1)`, so the "liquid" columns there are extrapolations.
-- Requires NeqSim with the 2026-08 fixes to these generators (honouring the
-  `filename` argument and writing paired `BUBBLEPRESSURES`/`BUBBLETEMPERATURES`).
+  at the arrival end; an out-of-table state gives exit 23/34 (or 68 `TM_BELOW`
+  when an iteration walks off the cold edge).
+- Requires NeqSim with the 2026-08 generator fixes. Older builds ignored the
+  `filename` argument (writing to a hardcoded path and swallowing the error),
+  wrote `BUBBLEPRESSURES` and `BUBBLETEMPERATURES` with different lengths, and
+  — the defect that made them unusable beyond a always-two-phase fluid — indexed
+  phases by **array position** (0 = gas, 1 = oil, 2 = water) assuming all three
+  existed. Because a flash returns only the phases that are present, every
+  single-phase grid node wrote **zero** for the absent phase and OLGA refused the
+  file with `ERROR IN THE INPUT FILE: OIL DENSITY IS ZERO AT: PRES.=... AND
+  TEMP.=...`. Dry gas, dead oil and dense-phase CO₂ all failed to load, and a
+  two-phase fluid failed at any grid corner outside its envelope. Current builds
+  resolve phases by type, mark absent phases, and nearest-neighbour fill in
+  grid-index space; mass fractions (`RS`, `RSW`) are deliberately left at zero
+  where the phase is absent.
+
+**A generated table is only validated when OLGA has actually loaded it.**
+`-exitRC` does **not** read the PVT file, so a rule check passing says nothing
+about the table. The two-stage harness that works:
+
+1. Scan the written file for `NaN`, `Inf` and zero density/viscosity columns.
+2. Run a throwaway minimal case — one flowpath, a `SOURCE`, a `TYPE=PRESSURE`
+   outlet node, a few minutes of `ENDTIME` — against the table and require exit 0
+   plus `NORMAL STOP IN EXECUTION`.
+
+Exercise the fluid types the study will actually meet: dry gas, gas condensate,
+black oil, dead oil, CO₂-rich, three-phase, gas+water without oil, oil+water
+without gas, and a fluid with no water component at all.
+
+#### Designing the P/T grid
+
+The grid is the model. OLGA interpolates it, so a state the grid does not bracket
+is either an extrapolation or a hard stop (exit 23/34 `FLUID_FAILED`/`PVT_FAIL`,
+or 65–73 when an iteration walks off an edge).
+
+- **Bracket the whole excursion, not the design point.** Include Joule-Thomson
+  cooling at the arrival end, the seabed temperature, and any blowdown or
+  shut-in the case will simulate. A line entering at 200 bara / 40 °C can arrive
+  at 60 bara / −11 °C at high rate.
+- **Give the pressure axis headroom above the inlet.** When the arrival boundary
+  is iterated to match a target inlet, intermediate iterates overshoot; a table
+  topping out at the design inlet aborts with `PRESSURE ABOVE TABLE VALUES`.
+- **Use an asymmetric grid when testing a generator.** A square nP × nT grid
+  hides transposed-index bugs.
+- A 41 × 31 grid over 5–260 bara and 233–353 K is a workable starting point for a
+  subsea gas export line.
+
+### Hydrate input to OLGA
+
+**OLGA does not compute hydrate thermodynamics.** It interpolates a tabulated
+equilibrium curve that the case supplies, or falls back to the Hammerschmidt
+correlation — a crude inhibitor shift. If the NeqSim side of a study uses a
+rigorous CPA hydrate model and OLGA is left on its own default, the two halves of
+the study disagree about where the hydrate boundary is, and the disagreement is
+invisible in both sets of output.
+
+Export the curve from the same fluid that produced the PVT table
+(`neqsim.thermodynamicoperations.propertygenerator.OLGAhydrateCurveGenerator`):
+
+```python
+gen = jneqsim.thermodynamicoperations.propertygenerator \
+    .OLGAhydrateCurveGenerator(fluid)          # fluid must contain water
+gen.setCurveLabel("HYD")
+gen.setPressureRange(10.0, 200.0, 21)          # bara, linear spacing
+gen.run()
+gen.writeOLGAinpFile("hydrate_curve.inp")
+print(gen.getHydrateCheckKeyword())            # line to paste into the flowpath
+```
+
+It works on a clone, so the caller's fluid keeps its state, and it **drops**
+pressures where the hydrate flash does not converge rather than writing a zero —
+a zero temperature would silently move the boundary instead of failing. Check
+`len(getCurvePressures())` against the number requested; a curve that lost points
+has a chord across the gap.
+
+The generated block goes at **library level**, before the first
+`NETWORKCOMPONENT`, and the flowpath refers to it by label. Verified against the
+OLGA 2025.1 rules engine (`-exitRC` → `RuleCheck: OK`):
+
+```
+HYDRATECURVE LABEL="HYD", PRESSURE=(10,30,60,100,150,200) bara, \
+             TEMPERATURE=(4.5,12.1,17.3,20.6,23.1,24.9) C
+
+NETWORKCOMPONENT TYPE=FLOWPATH, TAG=FLOWPATH_1
+ ...
+ HYDRATECHECK HYDRATECURVE="HYD"
+ENDNETWORKCOMPONENT
+```
+
+**The output variable is `DTHYD`, and its sign is the opposite of a margin.**
+It is a `SECTION` variable in `C`, described in the catalog as *"Difference
+between hydrate and section temperature"*, and it is `T_hydrate(P) − T_fluid`:
+
+| section | P, bara | `TM`, °C | curve `T_hyd`, °C | `DTHYD`, °C | meaning |
+| --- | --- | --- | --- | --- | --- |
+| inlet | 200.1 | 40.0 | 24.9 | **−15.1** | 15.1 K of margin, safe |
+| mid | 161.6 | 22.6 | 23.5 | **+1.0** | 1.0 K *inside* the hydrate region |
+| arrival | 121.5 | 8.4 | 21.7 | **+13.4** | 13.4 K of subcooling, hydrate risk |
+
+So **positive `DTHYD` is subcooling into the hydrate region and negative is the
+safe margin** — reading it as a margin inverts every conclusion. Those numbers
+also reproduce a linear interpolation of the supplied curve to about 0.1 K, which
+is the proof that OLGA is interpolating the exported curve and not modelling
+hydrates itself.
+
+Because the interpolation is linear, curve resolution is an accuracy choice, and
+the error concentrates where the curve is steepest — the low-pressure end.
+Measured against a 39-point reference for a wet gas over 10–200 bara:
+
+| curve points | max error over 10–200 bara | max error within a 120–200 bara band |
+| --- | --- | --- |
+| 4 | 4.11 K | – |
+| 6 | 2.55 K | 0.05 K |
+| 10 | 1.31 K | – |
+| 20 | 0.48 K | 0.01 K |
+| 30 | 0.17 K | – |
+
+A steady high-pressure line is nearly straight on this curve, so six points are
+enough. A case that depressurises — blowdown, shut-in, restart, or a rate sweep
+that walks the arrival down — spends its time in the steep part, where four
+points cost 4 K of hydrate temperature. Span the pressures the case will actually
+visit and use **at least 20 points whenever the range extends below about
+50 bara**.
+
+Two further rules:
+
+- **Inhibited curves must be exported, not assumed.** OLGA's Hammerschmidt
+  fallback is a correlation shift; a MEG or methanol curve from the NeqSim fluid
+  with the inhibitor present is the whole point of exporting.
+- **State the curve on every hydrate result.** The label, the pressure range, the
+  point count and the fluid it came from. A `DTHYD` number without them is not
+  reproducible.
 
 ### Discretising the geometry
 
@@ -444,9 +619,23 @@ OLGA and NeqSim are complementary; use each for what it is good at.
 | Question | Tool |
 | --- | --- |
 | Transient liquid surge, terrain slugging, shut-in/restart, blowdown dynamics | OLGA |
-| Steady-state pressure drop and holdup screening | NeqSim `PipeBeggsAndBrills`, `AdiabaticTwoPhasePipe` |
+| Steady-state ΔP and holdup on a **gas-dominated** line | NeqSim `TwoFluidPipe` (mechanistic; ΔP within ~3 % of OLGA) |
+| Steady-state ΔP screening, single-phase or moderately liquid-loaded | NeqSim `PipeBeggsAndBrills` (single-phase within 0.1–0.3 % of OLGA) |
+| Line pack, rate ramp, shut-in on a **gas-dominated** line | NeqSim `TwoFluidPipe.runTransient` (within 0.13 % of OLGA on a line-pack step) |
+| Transport delay / arrival lag inside a flowsheet | NeqSim `PipeBeggsAndBrills.runTransient` — a relaxation lag only, **no mass storage** |
+| Valve slam, surge | NeqSim `WaterHammerPipe` |
 | Phase envelope, hydrate curve, wax appearance temperature, fluid properties | NeqSim thermodynamics |
 | Topside process response to an arriving slug | NeqSim `ProcessSystem` / `runTransient` |
+
+**Choose the NeqSim model against the liquid loading, not by habit.** Beggs &
+Brill is calibrated for no-slip liquid fractions down to about 0.01–0.02; below
+that its two-phase friction multiplier is extrapolated and ΔP is over-predicted
+by 30–60 % on a large-bore high-pressure gas line. Above that it is a reasonable
+conservative bound. `TwoFluidPipe` is mechanistic and matches OLGA on ΔP for
+gas-dominated flow, but its holdup runs 2–4× OLGA and its transient is not usable
+for liquid-rich lines. The authority on which NeqSim model applies, and on its
+current measured accuracy and open defects, is the `neqsim-flow-assurance`
+skill — read it before quoting a NeqSim pipeline number.
 
 Typical composition: NeqSim characterises the fluid and produces the hydrate and
 wax envelopes, OLGA transports it transiently, and the OLGA arrival trends
@@ -529,25 +718,46 @@ pipe = jneqsim.process.equipment.pipeline.TwoFluidPipe("line", inlet_stream)
 pipe.setLength(length_m)
 pipe.setDiameter(id_m)
 pipe.setRoughness(4.5e-5)
-pipe.setNumberOfSections(320)
+pipe.setNumberOfSections(160)                 # ~450 m sections on a long line
 pipe.setElevationProfile(elevations)          # needs numberOfSections + 1 values
 pipe.setIncludeEnergyEquation(True)
 pipe.setHeatTransferCoefficient(3.0)          # W/m2K
 pipe.setSurfaceTemperature(4.0, "C")
 pipe.run()
-assert pipe.isSteadyStateConverged()          # ALWAYS check this
+
+assert pipe.isSteadyStateConverged()                    # ALWAYS
+assert pipe.getSteadyStateIterationsUsed() > 1          # ALWAYS
+assert not pipe.isSteadyStatePressureFloorLimited()     # ALWAYS
 profile = pipe.getPressureProfile()           # Pa
 dp_bar = (profile[0] - profile[-1]) / 1e5
 ```
 
-- **Always assert `isSteadyStateConverged()`.** The steady-state refinement loop
-  is an under-relaxed fixed-point sweep; if it runs out of iterations it returns
-  the last iterate, which can be an order of magnitude wrong. Raise the budget
-  with `setSteadyStateMaxIterations(int)` if needed. The default budget scales
-  with the section count.
+Three gates, not one — each catches a different silent failure:
+
+- **`isSteadyStateConverged()`.** The refinement loop is an under-relaxed
+  fixed-point sweep; out of iterations it returns the last iterate, which can be
+  an order of magnitude wrong. Raise the budget with
+  `setSteadyStateMaxIterations(int)` (default scales with the section count) or
+  `setSteadyStateMaxWallClockTime(...)` (default 300 s) and check
+  `isSteadyStateWallClockLimited()` before blaming the model.
+- **`getSteadyStateIterationsUsed() > 1`.** A profile reported after a single
+  sweep still carries the densities the sections were *initialised* with, and
+  understates the pressure drop of a gas line by roughly ten per cent. A real
+  solve on a 74 km line takes a few hundred sweeps.
+- **`isSteadyStatePressureFloorLimited()`.** Section pressures are clamped at a
+  1 bara floor, and that clamp is a fixed point of itself, so a line with no
+  deliverability would otherwise report success on a profile that does not exist.
+  When it is true, discard the profile and report a deliverability limit.
+  `PipeBeggsAndBrills` throws `Outlet pressure is negative` and OLGA aborts with
+  `PRESSURE ABOVE TABLE VALUES` on the same case — three independent confirmations
+  that the infeasibility is physical.
+
+Further usage notes:
+
 - **Demonstrate grid independence.** A 74 km line gave 80.39 / 80.93 / 81.20 bar
-  at 80 / 160 / 320 sections — Richardson-extrapolates to about 81.5 bar. It
-  solves in under a second, so there is no excuse for a single-mesh answer.
+  at 80 / 160 / 320 sections. Budget for it: an honest solve costs roughly 16 s
+  at 160 sections and 48 s at 320, not the sub-second the model used to return
+  when it converged prematurely.
 - Profiles available: `getPressureProfile()` (Pa), `getLiquidHoldupProfile()`,
   `getGasVelocityProfile()`, `getLiquidVelocityProfile()`,
   `getFlowRegimeProfile()`. There is no `getMixtureVelocityProfile()`. The model
@@ -558,6 +768,44 @@ dp_bar = (profile[0] - profile[-1]) / 1e5
   older NeqSim in which the Joule-Thomson term was silently dropped — check it
   with an adiabatic run (`setHeatTransferCoefficient(0)`) against an isenthalpic
   PH flash to the same outlet pressure, which is the exact reference.
+- **Do not quote its holdup or inventory as a design number.** Holdup runs 2–4×
+  OLGA (0.064 vs 0.023 dry; 0.119 vs 0.034 with 15 m³/hr free water), with a slip
+  ratio near 10 against OLGA's ~3. The phase bookkeeping is clean — gas, oil and
+  water sum to the liquid holdup exactly — so this is a slip-closure gap, not an
+  accounting error.
+- **Its ΔP can be blind to the temperature field.** Adding 10 MW of DEH raised
+  arrival temperature 22 K and left ΔP unchanged to five figures, where OLGA moved
+  +12.3 % and Beggs & Brill +23.4 %. Warmer gas at fixed mass rate is less dense
+  and ΔP ~ G²/ρ, so ΔP *must* rise — an unchanged ΔP is the signature of a
+  pressure march that is not seeing the updated densities. Treat ΔP from any case
+  whose temperature field changes as indicative until it moves in the right
+  direction.
+- **The transient is not usable on liquid-rich lines**, including severe slugging:
+  with every boundary held constant it leaves its own steady state, and the liquid
+  outlet flux collapses to zero because the phase momentum equations develop
+  sustained backflow. Gas-dominated lines are unaffected (0.00 bar null-test
+  drift). Use OLGA for liquid-rich transients.
+
+### Reference benchmark — what "good accuracy" looks like
+
+Measured on a 73.8 km × ID 0.355 m wet-gas export line, matched fluid, rate,
+phase split, roughness, U and ambient, with OLGA's arrival boundary
+secant-iterated to a 200 bara inlet. Use it to sanity-check a new comparison:
+a deviation far outside these bands means the *inputs* differ, not the models.
+
+| Case | OLGA ΔP, bar | `TwoFluidPipe` | `PipeBeggsAndBrills` | Darcy hand check |
+| --- | --- | --- | --- | --- |
+| dry, 10 MSm³/d | 78.51 | 81.20 (+3.4 %) | 125.00 (+59 %) | 77.72 |
+| dry, 4 MSm³/d | 10.15 | 13.52 (+33 %) | 13.59 (+34 %) | 10.61 |
+| dry, 7 MSm³/d | 33.60 | 40.23 (+20 %) | 43.87 (+31 %) | 34.45 |
+| + 10 MW DEH | 88.19 | 81.20 (ΔP blind) | 154.19 | – |
+| + 15 m³/hr free water | 104.06 | 91.31 (−12 %) | 143.94 (+38 %) | – |
+
+Compare the **rate exponent** `n` in `ΔP ~ rate^n`, not just the level at one
+point: OLGA gives 2.14 / 2.38 / 3.12 across the sweep and Darcy 2.10 / 2.28 /
+2.41. `n` must exceed 2 because the gas density falls along the line. A model
+returning a flat `n` ≈ 2 reproduces one operating point while having the wrong
+sensitivity — which a single-rate benchmark cannot detect.
 
 ## Validation Checklist
 
@@ -572,6 +820,21 @@ dp_bar = (profile[0] - profile[-1]) / 1e5
 - [ ] Reported values are at output times that exist in the file, not interpolated silently.
 - [ ] The PVT table covers the full P/T range reached, and its density and
       viscosity columns were spot-checked for NaNs before the run.
+- [ ] A **generated** PVT table was validated by an actual OLGA run, not by
+      `-exitRC` — the rule check never opens the table — and its fluid label
+      matches the `BRANCH FLUID=` string.
+- [ ] For a three-phase case, `GASFRACTION` was given on the **hydrocarbon**
+      basis and the `MASS SOURCE INFORMATION:` block in the `.out` file was read
+      back and reconciled against the NeqSim flash in kg/s.
+- [ ] Every requested `PROFILEDATA` / `TRENDDATA` variable was confirmed present
+      in the result `CATALOG`, because the rule check does not validate variable
+      names and silently drops unknown ones.
+- [ ] If hydrates matter, a `HYDRATECURVE` was exported from the same fluid as
+      the PVT table and referenced with `HYDRATECHECK` — OLGA was not left on its
+      Hammerschmidt fallback — and the curve spans the pressures the case
+      actually visits with enough points for its steep low-pressure end.
+- [ ] `DTHYD` was interpreted with the right sign: **positive is inside the
+      hydrate region**, negative is the safe margin.
 - [ ] The mesh came from `discretize_route`, its `summary()` was recorded, and
       grid independence was demonstrated by halving the target section length.
 - [ ] When benchmarking against another model, every row of the input-equivalence
@@ -581,9 +844,13 @@ dp_bar = (profile[0] - profile[-1]) / 1e5
       correlation on a short single-increment segment, over a range of
       inclinations, and cross-checked against a single-phase Darcy hand
       calculation before being attributed to either code.
-- [ ] If a `TwoFluidPipe` result was used as a cross-check, `isSteadyStateConverged()`
-      returned true and the answer was shown to be grid-independent over at least
-      two mesh refinements.
+- [ ] If a `TwoFluidPipe` result was used as a cross-check, all three gates
+      passed — `isSteadyStateConverged()` true, `getSteadyStateIterationsUsed() > 1`,
+      `isSteadyStatePressureFloorLimited()` false — and the answer was shown to be
+      grid-independent over at least two mesh refinements.
+- [ ] No `TwoFluidPipe` holdup, slip ratio or liquid inventory was quoted as a
+      design number (it runs 2–4× OLGA), and any ΔP from a case whose temperature
+      field changed was checked to move in the right direction.
 - [ ] The comparison covers **more than one rate**, and the rate exponent `n` in
       `dP ~ rate^n` was compared as well as the level. A model that reproduces one
       operating point can still have the wrong sensitivity.
@@ -615,12 +882,24 @@ dp_bar = (profile[0] - profile[-1]) / 1e5
 | NeqSim wrote no `.tab` and raised nothing | Older NeqSim ignored the `filename` argument and swallowed the write error | Verify the file exists after `writeOLGAinpFile`; upgrade NeqSim |
 | OLGA and a steady-state model disagree on ΔP | Often a different pressure level, not a model difference | Match the inlet pressure by iterating the outlet boundary before comparing |
 | OLGA carries far less liquid than the compositional model | `SOURCE GASFRACTION=1` fed dry gas and overrode the table equilibrium | Set `GASFRACTION` to the flashed gas **mass** fraction |
+| A three-phase run gives condensate an order of magnitude wrong, but converges and looks plausible | `GASFRACTION` was given on the total-stream basis while `WATERFRACTION` was also set. With water present, `GASFRACTION` is the gas mass fraction of the **hydrocarbons only** | Recompute as `m_gas / (m_gas + m_oil)`, and reconcile the `MASS SOURCE INFORMATION:` GAS/OIL/WATER kg/s in the `.out` against the NeqSim flash before believing any number |
+| `ERROR IN THE INPUT FILE: OIL DENSITY IS ZERO AT: PRES.=... AND TEMP.=...` | A NeqSim-generated table indexed phases by array position, so single-phase grid nodes wrote zero for the absent phase | Regenerate with a NeqSim build that resolves phases by type and fills absent-phase columns; dry gas, dead oil and dense-phase CO₂ all failed on the old generator |
+| OLGA cannot bind a generated table to the flowpath | The table's fluid label does not equal the `BRANCH FLUID=` string | Call `setFluidLabel(...)` with the same label used in the genkey |
+| A generated PVT table passed `-exitRC` and then failed the real run | `-exitRC` does not open the PVT file at all | Validate every generated table with a throwaway minimal run (source + pressure node) and require exit 0 |
+| A requested output variable is missing from the results | The rule check does not validate variable names — an unknown one passes silently and is dropped | Read the `CATALOG` block of the `.ppl`/`.tpl` back and confirm every variable is present. `UHL` and `UWT` are not valid names; the water and hydrocarbon-liquid holdups are `HOLWT` and `HOLHL` |
+| OLGA and NeqSim disagree about where hydrates form | No `HYDRATECURVE` in the case, so OLGA used its Hammerschmidt fallback instead of the NeqSim hydrate model | Export the curve with `OLGAhydrateCurveGenerator` from the same fluid as the PVT table and reference it with `HYDRATECHECK HYDRATECURVE="..."` |
+| A hydrate conclusion is exactly inverted | `DTHYD` is `T_hydrate − T_fluid`, so **positive means inside the hydrate region**, not safe margin | Re-read the sign; cross-check one section against the curve by hand |
+| Hydrate margin is a few kelvin out at low pressure | OLGA interpolates the supplied curve **linearly**, and the curve is steepest below ~50 bara | Export at least 20 points when the case visits low pressure; 4 points over 10–200 bara costs 4.1 K |
+| The hydrate curve has fewer points than requested | The generator drops pressures where the hydrate flash did not converge rather than writing a zero | Check the returned point count; a dropped point leaves a straight chord across the gap |
 | Looking for a batch "discretize geometry" command | OLGA's discretiser is GUI-only | Build the section list with `discretize_route` |
 | Section length jumps at every leg boundary | A fixed `NSEGMENT` per leg on unequal legs | Use a target section length and the neighbour-ratio limit |
 | Steady-state holdup barely changes when the pipe is inclined | The correlation's inclination correction is being suppressed | Sweep the angle and compare against the published correction; a near-constant holdup means the term is broken, not small |
 | A correlation audit shows a few per cent deviation that will not close | The reference was evaluated at the inlet but the simulator evaluated it after the pressure change across the increment | Shrink the test segment to ~1 m with one increment |
 | Liquid-property terms disagree by ~20% for no visible reason | `phase.getDensity()` and `phase.getDensity("kg/m3")` differ when volume correction is on | Use the explicit-unit accessor everywhere; never mix the two in one formula |
 | `TwoFluidPipe` ΔP is several times below a Darcy hand check on a long line | The steady-state loop ran out of iterations and returned the last iterate | Assert `isSteadyStateConverged()`; raise `setSteadyStateMaxIterations(int)` |
+| `TwoFluidPipe` returns instantly, claims convergence, and understates ΔP by ~10 % | It converged after a single sweep, so the pressure march still carries the densities the sections were initialised with | Also assert `getSteadyStateIterationsUsed() > 1`. An honest solve on a 74 km line takes a few hundred sweeps and tens of seconds |
+| `TwoFluidPipe` reports "converged" with the arrival pinned at exactly 1.000 bara | Every section hit the 1 bara pressure-floor clamp, which is a fixed point of itself, so the per-section change fell below tolerance | Check `isSteadyStatePressureFloorLimited()`; the line has no deliverability at that rate — report the limit rather than the profile |
+| `TwoFluidPipe` ΔP does not move when heating or cooling is added | The pressure march is not seeing the updated densities | ΔP ~ G²/ρ must rise with temperature at fixed mass rate; an unchanged ΔP invalidates that case, not just the heating term |
 | `TwoFluidPipe` liquid holdup pins near 0.85, or ΔP jumps for a tiny elevation change | Fixed in NeqSim: the initializer and the refinement loop integrated different discrete momentum balances, so terrain hydrostatics stopped telescoping | Rebuild against current NeqSim; both call sites now share `marchPressure` |
 | `TwoFluidPipe` arrival temperature is far warmer than OLGA | Fixed in NeqSim: the Joule-Thomson term was gated behind the heat-transfer coefficient and zeroed by a `1<Cp/Cv<2` guard that a two-phase mixture never satisfies | Rebuild against current NeqSim; verify with an adiabatic run against an isenthalpic PH flash |
 | The outlet-pressure secant runs away and OLGA exits 68 `TM_BELOW` | The requested rate is beyond the line's deliverability, so no arrival pressure reproduces the target inlet; the secant then drives the arrival down until Joule-Thomson cooling leaves the PVT table | Bound the secant to a physically sensible arrival pressure and report the deliverability limit instead. The tell is that a large step in the arrival boundary moves the inlet only slightly (8 bar out, 2 bar in) |

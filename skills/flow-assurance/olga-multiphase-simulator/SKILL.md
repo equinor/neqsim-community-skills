@@ -382,6 +382,16 @@ generator.writeOLGAinpFile("linnorm.tab")
 - Use `OLGApropertyTableGeneratorKeywordFormat` (emits `PHASE = TWO`) for a dry
   line. `OLGApropertyTableGeneratorWaterKeywordFormat` emits `PHASE = THREE` and
   throws a `NullPointerException` unless the fluid contains a `water` component.
+  It is the **only** water generator that works end to end with the plain
+  `run()` + `writeOLGAinpFile()` sequence; `OLGApropertyTableGeneratorWaterEven`
+  throws `NullPointerException` on `bubPLOG` unless `calcPhaseEnvelope()` is
+  called first, and its `run()` then throws
+  `IsNaNException: molarVolumeAnalytical - compressibility factor is NaN`.
+- For a `PHASE = THREE` table set `OPTIONS COMPOSITIONAL=OFF` and give the source
+  only `MASSFLOW=` and `TEMPERATURE=` — do **not** set `GASFRACTION`, the table
+  supplies the phase split. The water profile variables are `HOLWT` (water
+  holdup) and `HOLHL` (hydrocarbon-liquid holdup); `UHL` and `UWT` are not valid
+  `PROFILEDATA` names and are silently dropped with a warning.
 - Cover the whole P/T range the line will visit, including Joule-Thomson cooling
   at the arrival end; an out-of-table state gives exit 23/34.
 - Always check the file exists and spot-check `ROG`/`ROHL`/`VISG` for NaNs before
@@ -574,6 +584,14 @@ dp_bar = (profile[0] - profile[-1]) / 1e5
 - [ ] If a `TwoFluidPipe` result was used as a cross-check, `isSteadyStateConverged()`
       returned true and the answer was shown to be grid-independent over at least
       two mesh refinements.
+- [ ] The comparison covers **more than one rate**, and the rate exponent `n` in
+      `dP ~ rate^n` was compared as well as the level. A model that reproduces one
+      operating point can still have the wrong sensitivity.
+- [ ] A **single-phase** variant of the case was run first, so that friction and the
+      energy equation were validated before any two-phase closure was judged.
+- [ ] Any rate that failed to converge was shown to be a deliverability limit
+      (a large change in the arrival boundary barely moves the inlet) rather than
+      a solver problem.
 - [ ] A qualified flow-assurance engineer reviewed the interpretation.
 
 ## Common Mistakes
@@ -605,6 +623,14 @@ dp_bar = (profile[0] - profile[-1]) / 1e5
 | `TwoFluidPipe` ΔP is several times below a Darcy hand check on a long line | The steady-state loop ran out of iterations and returned the last iterate | Assert `isSteadyStateConverged()`; raise `setSteadyStateMaxIterations(int)` |
 | `TwoFluidPipe` liquid holdup pins near 0.85, or ΔP jumps for a tiny elevation change | Fixed in NeqSim: the initializer and the refinement loop integrated different discrete momentum balances, so terrain hydrostatics stopped telescoping | Rebuild against current NeqSim; both call sites now share `marchPressure` |
 | `TwoFluidPipe` arrival temperature is far warmer than OLGA | Fixed in NeqSim: the Joule-Thomson term was gated behind the heat-transfer coefficient and zeroed by a `1<Cp/Cv<2` guard that a two-phase mixture never satisfies | Rebuild against current NeqSim; verify with an adiabatic run against an isenthalpic PH flash |
+| The outlet-pressure secant runs away and OLGA exits 68 `TM_BELOW` | The requested rate is beyond the line's deliverability, so no arrival pressure reproduces the target inlet; the secant then drives the arrival down until Joule-Thomson cooling leaves the PVT table | Bound the secant to a physically sensible arrival pressure and report the deliverability limit instead. The tell is that a large step in the arrival boundary moves the inlet only slightly (8 bar out, 2 bar in) |
+| Two models agree at one rate and are compared no further | A single operating point cannot separate a friction-model error from a hold-up error | Run a rate sweep and compare the **exponent** `n` in `dP ~ rate^n`, not just the level. For a real gas line `n > 2`, because the density falls as the pressure drops along the line |
+| A steady-state model's hold-up is several times OLGA's but the pressure drops agree | On a near-horizontal, friction-dominated line the hold-up barely enters the pressure balance | Do not treat pressure-drop agreement as hold-up validation. Report the slip ratio `u_g/u_l = ((1-lambda)/(1-H))*(H/lambda)` alongside; wet-gas values around 3 are typical, 10 indicates a closure problem |
+| A hold-up maximum looks alarming but the mean is fine | One terrain-trap section, not a global bias | Compare mean, median and p90, and re-run with terrain tracking off; if the median is unchanged the maximum is a single trap |
+| `SOURCE: The following keys must have equal list length` | A transient `SOURCE` was given `TIME=(0, t)` but scalar `TEMPERATURE`/`GASFRACTION` | Every list-valued key on that `SOURCE` must have the same length as `TIME`; repeat the constant ones, e.g. `TEMPERATURE=(40, 40) C` |
+| A two-phase benchmark disagrees and every closure is suspect at once | The comparison mixes friction, hold-up, slip and the energy equation | Build a **single-phase** version of the same case first (strip the heavy ends so the fluid stays one phase over the whole P/T window, and set `SOURCE GASFRACTION=1`). Any deviation is then friction or energy alone. Confirm the table really is single phase by checking that the OLGA `HOL` profile is ~1e-16 |
+| A steady-state model's deviation does not shrink with mesh refinement | It is a model or closure error, not truncation | Stop refining. Recompute the pressure drop from the model's OWN reported profile (pressure, temperature, velocity, with density from a flash at each section state). If that disagrees with what the model reports, the model's state and its pressure are mutually inconsistent |
+| Need to know which property a marching solver actually used | Invert the reported step | `rho_used = f * G^2 * dx / (2 D dP_i)` for a single-phase gas line. A value that is constant along the pipe and equal to the inlet density means the properties were never fed back into the momentum balance |
 
 ## Limitations
 

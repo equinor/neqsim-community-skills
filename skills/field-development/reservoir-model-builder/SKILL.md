@@ -209,6 +209,24 @@ Sm3/day/bar index. The skill emits both:
 `wellModel.neqsimWellProductionIndex_MSm3_per_day_bar2` for the NeqSim call,
 matched at the design drawdown.
 
+### Handing the model to OPM Flow on Windows
+
+When a tank model must become a gridded reservoir simulation, chain to
+`neqsim-near-well-and-injectivity`. OPM Flow is a Linux simulator; on Windows the
+verified local pattern is the Docker image `opm-flow:2026.04`, not a host
+`flow.exe`:
+
+```powershell
+docker run --rm opm-flow:2026.04 --version
+docker run --rm -v "${PWD}/deck:/data" opm-flow:2026.04 `
+  CASE.DATA --output-dir=/data/out
+```
+
+The image uses `LANG=C.UTF-8` and `LC_ALL=C.UTF-8`; Flow can otherwise abort
+silently under a non-English locale. Treat a missing host `flow` command as
+expected when Docker is available. Record the image tag with the results and
+keep the deck directory mounted at `/data` so include files resolve.
+
 ### Turning the compositional fluid into a black-oil description
 
 When the model must produce a rate profile rather than only volumes, convert the

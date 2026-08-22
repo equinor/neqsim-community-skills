@@ -1,6 +1,6 @@
 ---
 name: neqsim-compressor-antisurge-recycle
-version: 0.1.0
+version: 0.2.0
 description: "Set up anti-surge recycle control for a centrifugal compressor in NeqSim, including compressor-chart generation, steady-state AntiSurgeRecycleCalculator use, dynamic AntiSurgeController PI control, and CompressorAntiSurgeApplication topology binding for hot/cold recycle valves and speed runback. USE WHEN: a task needs to protect a NeqSim compressor from surge with a recycle (spill-back) loop and a compressor performance chart is either supplied or must be generated."
 last_verified: "2026-07-02"
 requires:
@@ -315,6 +315,83 @@ certification status remains `NOT_CERTIFIED_FOR_PROTECTION`; use it for
 engineering studies, training, digital twins, and commissioning evidence, not as
 a certified machinery-protection package.
 
+## MCP `runProcess` Physical Topology Contract
+
+Use two distinct JSON surfaces deliberately:
+
+- Compressor property `antiSurge` configures the compressor's embedded
+  screening control. It does not create or certify a physical recycle path.
+- Root-level `antiSurgeSystems` binds
+  `CompressorAntiSurgeApplication` to named units that already exist in the
+  submitted `process` topology. It never synthesizes hidden valves, coolers,
+  mixers, or recycle blocks.
+
+A single-area cold-recycle declaration has this shape:
+
+```json
+{
+  "autoSizing": {"enabled": true},
+  "antiSurgeSystems": [
+    {
+      "name": "Export anti-surge",
+      "stages": [
+        {
+          "name": "Stage 1",
+          "compressor": "Comp",
+          "suctionMixer": "Suction Mixer",
+          "aftercooler": "Aftercooler",
+          "coldRecycleValve": "Cold ASV",
+          "coldRecycle": "Cold Recycle",
+          "recycleDesign": {
+            "controlMargin": 0.10,
+            "valvePressureDrop": 10.0,
+            "pipingVolume": 1.0,
+            "requiredResponseTime": 5.0
+          },
+          "speedControl": {
+            "dischargePressureSetPoint": 40.0,
+            "minimumSpeed": 5000.0,
+            "maximumSpeed": 15000.0,
+            "speedGain": 40.0,
+            "recycleRunbackRate": 80.0
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+The referenced names must resolve to the expected concrete types:
+`Compressor`, `Mixer`, optional `Cooler`, `ThrottlingValve`, and `Recycle`.
+At least one complete hot or cold recycle path is required. For a multi-area
+`ProcessModel`, every system also requires an `area` matching a submitted area;
+unqualified and unknown-area definitions return bounded per-system failures.
+
+Every stage needs an active surge curve. Supply `properties.compressorChart`,
+enable `autoSizing`, or set `generateScreeningMap: true` on the stage. The
+response reports truthful map provenance:
+
+- `submitted`: chart was present in the submitted canonical process JSON.
+- `auto_sized_screening`: `autoSizing` generated the chart earlier in the run.
+- `stage_generated_screening`: the anti-surge stage generated the chart.
+
+The latter two set `screeningGradeMap: true`. They are estimates, not vendor
+maps. `generatedScreeningMapCount` counts all configured stages using a
+screening-grade map, regardless of which generation path created it.
+
+The response `antiSurgeSystems` object contains configured/failed counts,
+per-stage physical binding and map provenance, optional speed-control status,
+and `runCommissioningChecks()` evidence. Its certification status is always
+`NOT_CERTIFIED_FOR_PROTECTION`. The canonical `processDefinition` preserves the
+declaration, and the generated Python replays that canonical post-design JSON.
+
+When a canonical response is replayed, its exported compressor chart is now an
+explicitly submitted chart for that new request. Therefore its provenance is
+`submitted`; replay does not generate another map. This makes JSON round trips
+stable while preserving the original run's generation evidence in that run's
+response.
+
 ## Validation Checklist
 
 - The compressor has a chart with an active surge curve before the loop runs;
@@ -334,6 +411,10 @@ a certified machinery-protection package.
   are real `ThrottlingValve` units, speed-control limits are bounded, and
   `runDynamicStep(...)` is used only after the process has a converged initial
   state.
+- For MCP `runProcess`, use root-level `antiSurgeSystems` only after all named
+  physical units are present in `process`; require `area` for every multi-area
+  system and inspect `configuredCount`, `failedCount`, `mapProvenance`,
+  `screeningGradeMap`, commissioning checks, and certification status.
 
 ## Common Mistakes
 

@@ -15,7 +15,10 @@ def main() -> None:
     print("Resource classification screening result")
     print(f"resource_class={result.resource_class}")
     print(f"resource_category={result.resource_category}")
-    print(f"prms_class_range={result.prms_class_range}")
+    print(f"sodir_resource_class={result.sodir_resource_class}")
+    print(f"sodir_resource_category={result.sodir_resource_category}")
+    print(f"prms_category={result.prms_category}")
+    print(f"uncertainty_basis={result.uncertainty_basis}")
     print(f"maturity_warning={result.maturity_warning}")
     print(f"neqsim_available={result.neqsim_available}")
 

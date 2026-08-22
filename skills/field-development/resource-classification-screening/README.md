@@ -2,7 +2,7 @@
 
 Educational petroleum resource classification screening skill for public examples and agent guidance.
 
-This skill provides a simple Python `ResourceClassificationModel` that maps a project maturity stage to a reserves, contingent-resources, or prospective-resources category using the open SPE-PRMS framework and the public Norwegian Petroleum Directorate resource-class scheme. It is intended for learning and workflow scaffolding only.
+This skill provides a Python `ResourceClassificationModel` that reports public SODIR `RC0`-`RC9` project maturity separately from the corresponding SPE-PRMS category. Quantity uncertainty such as `1P/2P/3P` or `1C/2C/3C` is deliberately not inferred from maturity. It is intended for learning and workflow scaffolding only.
 
 ## Install
 
@@ -24,4 +24,4 @@ python -m pytest skills/field-development/resource-classification-screening/test
 
 ## Public Scope
 
-The model does not contain confidential volumes, reservoir data, or company estimates. For a formal resource estimate, use SPE-PRMS, the Norwegian Petroleum Directorate resource-class scheme, validated NeqSim field-development utilities, and qualified subsurface review.
+The model contains only public classification logic. It does not contain confidential volumes, reservoir data, company workflows, or corporate reporting rules. For a formal estimate, use SPE-PRMS, the SODIR resource-class scheme, validated NeqSim field-development utilities, and qualified subsurface review.

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-resource-classification-screening"
-version = "0.1.0"
-description = "Educational petroleum resource classification screening skill for NeqSim community examples."
+version = "0.2.0"
+description = "Public SODIR RC0-RC9 and SPE-PRMS category screening with independent uncertainty reporting."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }

@@ -308,12 +308,12 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-resource-classification-screening
-    version: "0.1.0"
-    description: "Educational petroleum resource classification screening using the public SPE-PRMS framework and the open Norwegian Petroleum Directorate resource-class scheme. USE WHEN: a task needs a public, screening-level mapping of a project maturity stage to a reserves, contingent-resources, or prospective-resources category before a formal resource estimate."
+    version: "0.2.0"
+    description: "Educational petroleum resource classification screening using public SODIR RC0-RC9 project maturity and SPE-PRMS categories as independent axes. USE WHEN: a task needs to classify historical production, reserves, contingent resources, or undiscovered/prospective resources without confusing maturity with 1P/2P/3P or 1C/2C/3C uncertainty."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/field-development/resource-classification-screening/SKILL.md"
-    tags: [field-development, reserves, resource-classification, screening, education]
+    tags: [field-development, sodir, prms, reserves, resource-classification, screening, education]
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reservoir-depletion-screening

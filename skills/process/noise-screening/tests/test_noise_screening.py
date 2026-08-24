@@ -14,7 +14,57 @@ def test_basic_noise_indicator():
     assert result.vena_contracta_velocity_m_s > 0.0
     assert result.mach_number > 0.0
     assert result.estimated_spl_1m_dba > 0.0
+    assert result.estimated_spl_at_distance_dba == result.estimated_spl_1m_dba
+    assert result.assessment_basis == "screening-model"
+    assert result.uncertainty_db == 10.0
+    assert any("IEC 60534-8-3" in item for item in result.standards_basis)
     assert result.noise_warning in {"ok", "action", "high"}
+
+
+def test_distance_correction_and_measurement_override():
+    model = ValveNoiseModel(action_level=80.0, high_level=85.0)
+    distant = model.evaluate(
+        mass_flow=5.0,
+        pressure_drop=10.0,
+        inlet_density=40.0,
+        sound_speed=400.0,
+        distance=10.0,
+    )
+    assert distant.estimated_spl_at_distance_dba == pytest.approx(
+        distant.estimated_spl_1m_dba - 20.0
+    )
+
+    measured = model.evaluate(
+        mass_flow=5.0,
+        pressure_drop=10.0,
+        inlet_density=40.0,
+        sound_speed=400.0,
+        distance=3.0,
+        measured_spl_at_distance=92.0,
+        measured_uncertainty_db=2.0,
+    )
+    assert measured.estimated_spl_at_distance_dba == 92.0
+    assert measured.assessment_basis == "measurement"
+    assert measured.uncertainty_db == 2.0
+    assert measured.noise_warning == "high"
+
+
+def test_thresholds_are_inclusive():
+    model = ValveNoiseModel(action_level=85.0, high_level=110.0)
+    common = {
+        "mass_flow": 5.0,
+        "pressure_drop": 10.0,
+        "inlet_density": 40.0,
+        "sound_speed": 400.0,
+    }
+    assert (
+        model.evaluate(**common, measured_spl_at_distance=85.0).noise_warning
+        == "action"
+    )
+    assert (
+        model.evaluate(**common, measured_spl_at_distance=110.0).noise_warning
+        == "high"
+    )
 
 
 def test_high_noise_warning():

@@ -1,6 +1,6 @@
 # Noise Screening
 
-Educational valve and line aerodynamic-noise indicator that estimates a screening sound-pressure level from gas mass flow, pressure drop, and density using a public IEC 60534-8 style energy approach. It routes real work to validated NeqSim valve modelling and full IEC 60534-8 prediction.
+Standards-based gas-valve and restriction noise screening at a stated receiver distance. It can use a representative current operating measurement or a conservative pressure-drop energy model, and it keeps source prediction, workplace assessment, and AIV as separate decisions.
 
 ## Install
 
@@ -22,4 +22,4 @@ python -m pytest skills/process/noise-screening/tests
 
 ## Public Scope
 
-This skill uses only a public energy-based aerodynamic-noise indicator. It is an educational screening placeholder and is not a full IEC 60534-8-3 noise prediction; it does not replace validated NeqSim valve modelling, vendor noise data, or qualified acoustic review.
+The model path is a triage calculation with explicit uncertainty, not a full IEC 60534-8-3 prediction. Measured levels retain their stated uncertainty and operating/receiver context. Detailed work routes to NeqSim `ControlValveNoise_IEC_60534_8_3`, ISO 3744/11201 measurement, ISO 9613-2 propagation, ISO 15664 open-plant design, and ISO 1999 exposure support. AIV remains a separate assessment.

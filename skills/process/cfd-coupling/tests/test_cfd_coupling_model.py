@@ -147,6 +147,40 @@ def test_missing_y_plus_and_single_mesh_is_not_usable() -> None:
     assert gate.verdict == "not_usable"
 
 
+def test_tonal_noise_case_fails_closed_without_source_evidence() -> None:
+    readiness = CfdCouplingModel().assess_aeroacoustic_readiness(
+        topology_verified=False,
+        internal_geometry_available=False,
+        synchronized_spectra_available=False,
+        operating_state_available=True,
+        acoustic_boundaries_available=False,
+        structural_boundaries_available=False,
+        moving_component=True,
+        structural_response_in_scope=True,
+    )
+
+    assert readiness.verdict == "not_ready"
+    assert "verified component tag and flow-path topology" in readiness.missing_inputs
+    assert any("transient compressible" in step for step in readiness.solver_sequence)
+    assert any("fluid-structure interaction" in step for step in readiness.solver_sequence)
+    assert any("Steady RANS" in finding for finding in readiness.findings)
+
+
+def test_complete_tonal_noise_basis_is_ready_for_coupled_study() -> None:
+    readiness = CfdCouplingModel().assess_aeroacoustic_readiness(
+        topology_verified=True,
+        internal_geometry_available=True,
+        synchronized_spectra_available=True,
+        operating_state_available=True,
+        acoustic_boundaries_available=True,
+        structural_boundaries_available=True,
+        structural_response_in_scope=True,
+    )
+
+    assert readiness.verdict == "ready_for_coupled_study"
+    assert readiness.missing_inputs == ()
+
+
 def test_scale_resolving_model_is_classified() -> None:
     gate = CfdCouplingModel().assess_quality(
         turbulence_model="SAS",

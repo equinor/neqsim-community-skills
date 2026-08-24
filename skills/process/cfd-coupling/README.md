@@ -10,11 +10,18 @@ The skill has five layers, each usable on its own:
 | `boundary` | Turn a flashed NeqSim fluid into single-phase CFD boundary conditions, turbulence inlet state, flow regime and solver class |
 | `multiphase` | Take both phases and the interfacial tension from one flash, derive the superficial and mixture quantities, and screen which multiphase model is defensible |
 | `openfoam` | Write, run and read back a complete OpenFOAM case - steady single-phase RANS or transient volume of fluid - on pipe, duct or arbitrary imported geometry |
-| `model` | Gate a CFD study on quality and convert local-versus-bulk results into enhancement factors |
+| `model` | Gate a CFD study on quality, fail closed on under-specified tonal aeroacoustic cases, and convert local-versus-bulk results into enhancement factors |
 
 NeqSim and OpenFOAM are both optional. Without NeqSim the fluid state is supplied
 directly; without OpenFOAM the case is still written, and the commands needed to
 run it elsewhere are returned.
+
+Tonal-noise requests first use `assess_aeroacoustic_readiness`. It rejects a
+diagnostic run when source topology, actual internal geometry, synchronized
+narrow-band spectra, event conditions, acoustic terminations, or required
+structural boundaries are missing. A ready verdict specifies a transient
+compressible LES/DES, acoustics, and optional structural workflow; the current
+case writer does not generate that solver chain.
 
 ## Install and test
 

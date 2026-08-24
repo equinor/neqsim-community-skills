@@ -1,7 +1,7 @@
 ---
 name: neqsim-cfd-coupling
-version: "0.3.0"
-description: "Link a NeqSim process simulation and engineering documents to a CFD study, single-phase or multiphase. Merges P&ID, STID, datasheet and plant-data inputs into a traceable design basis, converts a flashed NeqSim fluid into CFD boundary conditions, takes both phases and the interfacial tension from a multiphase flash and screens which multiphase model is defensible, writes and runs a complete OpenFOAM case (steady single-phase RANS or transient volume of fluid) for arbitrary geometry, reads the solved fields back, gates the study on wall treatment / mesh independence / turbulence model, and converts local-versus-bulk results into enhancement factors for one-dimensional models. USE WHEN: a task needs local flow detail a one-dimensional model cannot generate - velocity or shear peaks at bends, welds, restrictions, tees, headers or tube bundles, flow maldistribution across a bundle or manifold, stratified or slug two-phase behaviour in a line, or a pressure-drop check on real geometry - or when an existing CFD report must be qualified before its numbers are trusted."
+version: "0.4.0"
+description: "Link a NeqSim process simulation and engineering documents to a CFD study, single-phase or multiphase. Merges P&ID, STID, datasheet and plant-data inputs into a traceable design basis, converts a flashed NeqSim fluid into CFD boundary conditions, takes both phases and the interfacial tension from a multiphase flash and screens which multiphase model is defensible, writes and runs a complete OpenFOAM case (steady single-phase RANS or transient volume of fluid) for arbitrary geometry, reads the solved fields back, gates the study on wall treatment / mesh independence / turbulence model, and converts local-versus-bulk results into enhancement factors for one-dimensional models. Tonal-noise requests are first gated on source topology, internal geometry, synchronized spectra, event conditions, acoustic terminations, and structural boundaries; steady RANS is never presented as tonal-source diagnosis. USE WHEN: a task needs local flow detail a one-dimensional model cannot generate - velocity or shear peaks at bends, welds, restrictions, tees, headers or tube bundles, flow maldistribution across a bundle or manifold, stratified or slug two-phase behaviour in a line, a pressure-drop check on real geometry, a CFD/FEM report qualification, or a fail-closed readiness assessment for aeroacoustic or flow-induced tonal noise."
 last_verified: "2026-08-07"
 requires:
   python_packages: []
@@ -40,6 +40,8 @@ written and can be transferred and run elsewhere.
   equipment tag and must be qualified before its numbers are used.
 - A new CFD run must be specified and needs fluid properties, turbulence inlet
   values and near-wall mesh sizing.
+- A tonal noise or vibration observation needs a fail-closed readiness decision
+  before transient compressible CFD, acoustics, or structural coupling is scoped.
 
 ## When *Not* to Use
 
@@ -56,6 +58,11 @@ written and can be transferred and run elsewhere.
   `buoyantPimpleFoam`, `chtMultiRegionFoam`) that this skill does not write.
   Use `fem-coupling` for the wall and near-wall temperature, and hand-build the
   buoyant case if the fluid-side field itself is the deliverable.
+- To diagnose a tonal aeroacoustic source with the generated steady RANS or
+  incompressible VOF cases. Call `assess_aeroacoustic_readiness` first. A ready
+  case still requires a separately configured transient compressible LES/DES,
+  spectral pressure probes, acoustic propagation, and structural modal analysis
+  when vibration is in scope.
 
 ## Inputs
 
@@ -69,6 +76,7 @@ written and can be transferred and run elsewhere.
 | `MeshSpec` | `kind` (`pipe`, `channel`, `external`), dimensions, cell counts | Optional `first_cell_height_m` to drive near-wall grading from a y+ target |
 | `OpenFoamCase` | boundary conditions, mesh, `flavour`, `wall_treatment` | `flavour` is `org` (OpenFOAM v11+, `foamRun`) or `legacy` (`simpleFoam`) |
 | `assess_quality` | `turbulence_model`, `wall_treatment`, `y_plus`, `mesh_levels`, `gci_percent` | Applies to a generated case or an existing report |
+| `assess_aeroacoustic_readiness` | Verified topology, internal geometry, synchronized spectra, event operating state, acoustic boundaries, and optional structural/moving-part data | Fails closed before tonal-source CFD or FSI is attempted |
 | `evaluate_local_enhancement` | bulk and local peak velocity, and wall shear when available | Bulk values come from the one-dimensional model |
 
 ## Outputs
@@ -84,6 +92,7 @@ written and can be transferred and run elsewhere.
 | `RunOutcome` | `completed`, `failed` or `not_executed`, per-command output, and the commands needed to run the case elsewhere |
 | `OpenFoamResults` | Continuity error, pressure drop, peak and mean wall shear, y+ min/mean/max, outlet dispersed fraction, peak-to-mean shear enhancement |
 | `CfdQualityResult` | `usable`, `usable_with_caution` or `not_usable` with explicit findings |
+| `AeroacousticReadinessResult` | `not_ready`, `ready_for_transient_cfd`, or `ready_for_coupled_study`, with missing inputs and the required solver sequence |
 | `CfdEnhancementResult` | Velocity, shear and mass-transfer enhancement factors with their source |
 
 ## Engineering Method
@@ -139,6 +148,19 @@ $$\text{mass transfer enhancement} = \sqrt{\text{shear enhancement}}$$
 | Wall treatment | Wall functions need 30 ≤ y⁺ ≤ 300; a resolved low-Reynolds treatment needs y⁺ of order 1 |
 | Mesh independence | At least three mesh levels, or a grid-convergence index below about 5 % |
 | Turbulence model | RANS under-predicts local peaks in separated or unsteady flow; scale-resolving models (LES, DES, SAS) capture them |
+
+**Tonal aeroacoustic readiness.** Overall dBA and a steady mean-flow field do not
+identify a tonal source. Before meshing a diagnostic case, call
+`assess_aeroacoustic_readiness`. It requires the as-built flow path and candidate
+component to be verified, the actual internal geometry, synchronized narrow-band
+pressure/acoustic/vibration spectra, the event operating state, and acoustic
+lengths or termination impedances. Structural supports, clamps, damping, and
+moving-part properties become mandatory when vibration or valve motion is in
+scope. Missing evidence returns `not_ready`, never estimated incident geometry.
+The minimum ready-case sequence is steady RANS initialization, transient
+compressible LES/DES with spectral probes, acoustic propagation, and structural
+modal analysis when required. The method is a readiness gate only; this skill
+does not yet generate that transient compressible aeroacoustic solver chain.
 
 **Multiphase.** One flash gives both phases and the interfacial tension, so the
 superficial velocities follow from the phase volumetric flows and the mixture

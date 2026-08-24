@@ -75,6 +75,17 @@ class CfdQualityResult:
 
 
 @dataclass(frozen=True)
+class AeroacousticReadinessResult:
+    """Readiness verdict for tonal-flow-noise and fluid-structure CFD studies."""
+
+    verdict: str
+    missing_inputs: tuple[str, ...]
+    solver_sequence: tuple[str, ...]
+    findings: tuple[str, ...]
+    assumptions: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class CfdWallResolutionResult:
     """First-cell sizing needed to hit a target y+ in a CFD mesh."""
 
@@ -277,6 +288,100 @@ class CfdCouplingModel:
                 "explicit uncertainty band in the receiving engineering model.",
                 "Wall-function and resolved y+ bands follow standard practice and may be "
                 "tightened by a project CFD specification.",
+            ),
+        )
+
+    def assess_aeroacoustic_readiness(
+        self,
+        *,
+        topology_verified: bool,
+        internal_geometry_available: bool,
+        synchronized_spectra_available: bool,
+        operating_state_available: bool,
+        acoustic_boundaries_available: bool,
+        structural_boundaries_available: bool = False,
+        moving_component: bool = False,
+        structural_response_in_scope: bool = False,
+    ) -> AeroacousticReadinessResult:
+        """Gate a tonal-noise CFD study before geometry is meshed or causality is claimed.
+
+        Tonal noise cannot be diagnosed from a steady mean-flow solution. The minimum
+        fluid-side basis is verified topology, internal geometry, synchronized spectra,
+        an event operating state, and acoustic termination data. Structural boundary
+        conditions are additionally required when pipe/support response or moving valve
+        parts are part of the question.
+        """
+        required_inputs = {
+            "verified component tag and flow-path topology": topology_verified,
+            "as-built internal geometry for the candidate source region": (
+                internal_geometry_available
+            ),
+            "synchronized narrow-band pressure, acoustic, or vibration spectra": (
+                synchronized_spectra_available
+            ),
+            "event-matched pressure, temperature, composition, flow, and valve state": (
+                operating_state_available
+            ),
+            "upstream and downstream acoustic lengths or termination impedances": (
+                acoustic_boundaries_available
+            ),
+        }
+        needs_structural_basis = moving_component or structural_response_in_scope
+        if needs_structural_basis:
+            required_inputs[
+                "pipe, support, clamp, damping, and moving-part structural boundaries"
+            ] = structural_boundaries_available
+
+        missing_inputs = tuple(
+            name for name, available in required_inputs.items() if not available
+        )
+        findings: list[str] = [
+            "Steady RANS may establish the mean flow but cannot identify or validate a "
+            "tonal source."
+        ]
+        solver_sequence = [
+            "steady RANS mean-flow initialization",
+            "transient compressible LES or DES with pressure probes and spectral analysis",
+            "duct-acoustic propagation or acoustic analogy",
+        ]
+        if needs_structural_basis:
+            solver_sequence.append("structural modal analysis with one-way pressure coupling")
+        if moving_component:
+            solver_sequence.append(
+                "two-way fluid-structure interaction only if measured motion couples to flow"
+            )
+            findings.append(
+                "A moving check-valve or control-valve element requires validated mass, "
+                "stiffness, damping, travel, and contact data before FSI is defensible."
+            )
+        elif structural_response_in_scope:
+            findings.append(
+                "Pipe and support vibration requires a structural modal model in addition "
+                "to the fluid pressure spectrum."
+            )
+
+        if missing_inputs:
+            verdict = "not_ready"
+            findings.append(
+                "The case is not calculation-ready; acquire the missing evidence instead "
+                "of estimating incident geometry or boundary conditions."
+            )
+        elif needs_structural_basis:
+            verdict = "ready_for_coupled_study"
+        else:
+            verdict = "ready_for_transient_cfd"
+
+        return AeroacousticReadinessResult(
+            verdict=verdict,
+            missing_inputs=missing_inputs,
+            solver_sequence=tuple(solver_sequence),
+            findings=tuple(findings),
+            assumptions=(
+                "This is a readiness gate, not a source-identification calculation.",
+                "Agreement with overall dBA is insufficient; validation requires "
+                "frequency-resolved measurements at synchronized operating conditions.",
+                "Human review by qualified CFD, acoustics, and vibration specialists is "
+                "required before a design or integrity decision.",
             ),
         )
 

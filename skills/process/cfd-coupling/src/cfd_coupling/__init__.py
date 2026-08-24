@@ -39,6 +39,7 @@ from .design_basis import (
     required_fields,
 )
 from .model import (
+    AeroacousticReadinessResult,
     CfdCouplingModel,
     CfdEnhancementResult,
     CfdQualityResult,
@@ -63,6 +64,7 @@ from .openfoam import (
 )
 
 __all__ = [
+    "AeroacousticReadinessResult",
     "C_MU",
     "CfdBoundaryConditions",
     "CfdCouplingModel",

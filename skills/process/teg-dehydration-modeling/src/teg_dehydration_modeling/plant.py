@@ -329,7 +329,7 @@ def build_teg_plant(
         recycleStrippingMakeup = Recycle("stripping gas makeup recycle")
         recycleStrippingMakeup.addStream(recircHeater.getOutletStream())
         recycleStrippingMakeup.setOutletStream(strippingGas)
-        recycleStrippingMakeup.setPriority(150)
+        recycleStrippingMakeup.setPriority(recycleStripGas.getPriority())
         p.add(recycleStrippingMakeup)
 
     heatEx.setFeedStream(1, stripper.getLiquidOutStream())

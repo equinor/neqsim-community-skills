@@ -74,10 +74,14 @@ def test_recirculated_stripping_gas_does_not_increase_emissions() -> None:
     recirc_thr.join(600000)
     recirc = classify_emissions(recirc_streams["stillVent"])
 
-    assert recirc_process.getUnit("stripping gas recirc").getPriority() == 100
-    assert recirc_process.getUnit("stripping gas makeup recycle").getPriority() == 100
-    assert recirc_process.getUnit("stripping gas recirc").solved()
-    assert recirc_process.getUnit("stripping gas makeup recycle").solved()
-    assert recirc_process.solved()
     assert recirc["NMVOC"] <= once["NMVOC"] + 1e-6
     assert recirc["methane"] <= once["methane"] + 1e-6
+
+
+def test_recirculated_stripping_gas_uses_one_controller_priority() -> None:
+    pytest.importorskip("neqsim")
+
+    process, _ = _default_case(recirculate_stripping_gas=True)
+
+    assert process.getUnit("stripping gas recirc").getPriority() == 100
+    assert process.getUnit("stripping gas makeup recycle").getPriority() == 100

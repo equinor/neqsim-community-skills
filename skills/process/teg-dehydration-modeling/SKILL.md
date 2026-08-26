@@ -88,13 +88,18 @@ The flowsheet follows the standard TEG dehydration topology:
 6. **Recycles** — lean-TEG recycle (priority 200, `setDownstreamProperty('flow rate')`)
    closes the solvent loop; the internal stripping-gas recycle returns stripper
    overhead to the reboiler. With `recirculate_stripping_gas=True`, a second
-   makeup recycle (priority 150) recirculates dried overhead as stripping gas.
+  makeup recycle recirculates dried overhead as stripping gas. Keep both coupled
+  stripping-gas recycles at the same controller priority (currently 100); an
+  intermediate priority may be skipped by the current `RecycleController` sequence.
 7. **Makeup and energy coupling** — a `Calculator` sizes TEG makeup from TEG lost
    in the dry gas, flash gas, still vent, and water draws; the rich preheater is
    driven by the condenser energy stream:
    `richPreheat.setEnergyStream(column.getCondenser().getEnergyStream())`.
 8. **Run** — `process.runAsThread()` then `thr.join(...)` (worker thread avoids
-   blocking and tolerates the recycle iterations).
+  blocking and tolerates the recycle iterations). A completed worker thread or
+  successful unit statuses do not prove closed-loop convergence: require
+  `process.solved()` and inspect `process.getConvergenceDiagnostics()` before
+  accepting water or TEG closure.
 
 ## Python Usage Pattern
 
@@ -142,6 +147,9 @@ print(water_dew_C, lean_teg_wt, still_vent["NMVOC"])
       increase versus the once-through case.
 - [ ] The process is run on a worker thread and the join timeout is large enough
       for the recycles to converge.
+- [ ] `process.solved()` is true and every active recycle reports `solved() == True`;
+  record priority, iterations, and residuals for any unsolved recycle.
+- [ ] Water and TEG closure are interpreted only after the closed loop converges.
 - [ ] Example inputs are public and synthetic.
 
 ## Common Mistakes
@@ -151,10 +159,11 @@ print(water_dew_C, lean_teg_wt, still_vent["NMVOC"])
 | Regeneration column will not converge | Default tolerances too tight for glycol/water split | Loosen `setTemperatureTolerance(5e-2)`, `setMassBalanceTolerance(2e-1)`, `setEnthalpyBalanceTolerance(2e-1)` |
 | Lean TEG purity wrong / NaN | TEG not added last, or composition indices off | Add `water` then `TEG` last; set `leanComp[-1]=purity`, `leanComp[-2]=1-purity` |
 | Lean-TEG loop never closes | Recycle priority/property not set | Lean TEG recycle priority 200 with `setDownstreamProperty('flow rate')` |
+| Stripping-gas makeup recycle never executes | Coupled stripping-gas recycles use different priorities and an intermediate level is skipped | Assign the makeup recycle the same priority as the internal stripping-gas recycle; verify both with convergence diagnostics |
 | Class not found | Wrong CPA class name | Use `SystemSrkCPAstatoil` (lowercase `statoil`) |
 | Run blocks or stalls | Running inline instead of on a thread | Use `process.runAsThread()` + `thr.join(timeout_ms)` |
 | TEG inventory drifts | No makeup | Add the `Calculator` makeup sized from TEG in dry gas, flash gas, still vent, water draws |
-| Water balance looks ~1-2% open | Only counting still vent + regen water draw | Water removed from the gas leaves via **still vent + regen water/HC draw + degassing flash gas**; include the flash-gas water term and closure tightens to <0.1% |
+| Water balance looks open | Closed-loop convergence was not established, or a water outlet was omitted | First require `process.solved()` and all recycle diagnostics solved; then include **still vent + regen water/HC draw + degassing flash gas** in the water accounting |
 
 ## Limitations
 

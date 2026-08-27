@@ -1,5 +1,6 @@
 ---
 name: neqsim-reservoir-depletion-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational reservoir tank-depletion vs time screening with gas/oil and water-cut evolution. USE WHEN: a task needs a public, screening-level pressure-decline and production profile over time from a recoverable volume and offtake rate before detailed NeqSim SimpleReservoir or reservoir-engineering modelling."
 last_verified: "2026-06-24"

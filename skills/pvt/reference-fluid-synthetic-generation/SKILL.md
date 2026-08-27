@@ -1,5 +1,6 @@
 ---
 name: neqsim-reference-fluid-synthetic-generation
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Public helpers to generate representative or synthetic fluid cases from a common reference fluid by adjusting a split/characterization factor, match that factor to measured PVT/separator data, and blend well/fluid compositions into a field composition by molar-rate allocation. USE WHEN: a task must calibrate a heavy-end split factor against measurements, produce field-level or per-case representative fluids from a reference model, or combine several wells/fluids into one allocated field fluid, before rigorous NeqSim characterization."
 last_verified: "2026-07-14"

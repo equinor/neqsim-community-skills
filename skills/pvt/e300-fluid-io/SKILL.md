@@ -1,5 +1,6 @@
 ---
 name: neqsim-e300-fluid-io
+calculation_basis: "neqsim-java"
 version: "0.1.0"
 description: "Read, write, and add water to Eclipse E300 fluid files for NeqSim. USE WHEN: a task needs to load an E300 file into a NeqSim fluid, write a NeqSim fluid to E300, or add water to a fluid or E300 file with the public PVTsim water parameters (volume shift 0.084004, parachor 10.0, kij 0.5)."
 last_verified: "2026-06-01"

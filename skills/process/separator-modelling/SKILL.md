@@ -1,5 +1,6 @@
 ---
 name: neqsim-separator-modelling
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational separator screening indicators for gas load, residence time, and capacity warnings. USE WHEN: a task needs public separator capacity screening without proprietary design methods."
 last_verified: "2026-05-31"

@@ -1,5 +1,6 @@
 ---
 name: neqsim-flow-induced-vibration-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational flow-induced vibration (FIV) screening using a public fluid kinetic-energy (rho v^2) likelihood-of-failure index. USE WHEN: a task needs a public, screening-level check of whether a main-line flow velocity and density produce a kinetic-energy level that warrants a detailed Energy Institute style FIV assessment before piping vibration design."
 last_verified: "2026-06-18"

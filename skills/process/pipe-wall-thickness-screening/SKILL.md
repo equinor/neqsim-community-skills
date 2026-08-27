@@ -1,5 +1,6 @@
 ---
 name: neqsim-pipe-wall-thickness-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational process-pipe wall-thickness screening using the public ASME B31.3 hoop-stress (Barlow style) equation. USE WHEN: a task needs a public, screening-level minimum wall-thickness estimate and a check against a nominal schedule wall before detailed piping or pipeline mechanical design."
 last_verified: "2026-06-18"

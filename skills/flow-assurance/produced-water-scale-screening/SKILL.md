@@ -1,5 +1,6 @@
 ---
 name: neqsim-produced-water-scale-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Public produced-water brine builder and screening-level scale evaluation. USE WHEN: a task needs to turn an ion analysis, preset, or TDS value into a NeqSim-ready electrolyte ion mapping and a quick scale/mixing-incompatibility screening (BaSO4, SrSO4, CaSO4, CaCO3), and should be directed to validated NeqSim checkScalePotential methods for design-grade work."
 last_verified: "2026-06-02"

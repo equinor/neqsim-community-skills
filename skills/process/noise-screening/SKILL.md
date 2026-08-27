@@ -1,5 +1,6 @@
 ---
 name: neqsim-noise-screening
+calculation_basis: "screening"
 version: "0.2.0"
 description: "Standards-based gas-valve and restriction noise screening at a stated receiver distance using either a current measured A-weighted level or a conservative pressure-drop energy model. USE WHEN: a task needs noise triage, receiver/workplace assessment, or routing to detailed IEC 60534-8-3 prediction while keeping acoustic-induced-vibration assessment separate."
 last_verified: "2026-06-18"

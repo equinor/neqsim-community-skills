@@ -1,5 +1,6 @@
 ---
 name: neqsim-reliability-data-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational reliability and availability screening from an ISO 14224 / OREDA style failure rate and repair time, with simple parallel-redundancy and planned-downtime handling. USE WHEN: a task needs a public, screening-level estimate of MTBF, steady-state availability, mission reliability, and expected failures for an equipment item or a simple redundant system before detailed RAM analysis."
 last_verified: "2026-06-25"

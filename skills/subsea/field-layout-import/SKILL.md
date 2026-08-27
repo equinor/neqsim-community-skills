@@ -1,5 +1,6 @@
 ---
 name: neqsim-field-layout-import
+calculation_basis: "data-retrieval"
 version: "0.1.0"
 description: "Educational subsea field-layout import and normalization from supplied GeoJSON or tabular rows. USE WHEN: a task needs to turn an already-parsed subsea map (GeoJSON point features or CSV-like rows) into a clean, validated node list of wells, manifolds, and a host before geometry and routing screening."
 last_verified: "2026-05-31"

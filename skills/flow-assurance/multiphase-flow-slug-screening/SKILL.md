@@ -1,5 +1,6 @@
 ---
 name: neqsim-multiphase-flow-slug-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational multiphase slug-flow regime and slug-catcher volume screening. USE WHEN: a task needs a public, screening-level indicator of whether a multiphase line is in an intermittent/slug regime and a first-pass slug-catcher volume estimate before validated multiphase flow analysis."
 last_verified: "2026-06-19"

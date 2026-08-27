@@ -1,5 +1,6 @@
 ---
 name: neqsim-safety-function-coverage-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational process safety-function coverage screening using the public API RP 14C / ISO 10418 SAFE-chart concept. USE WHEN: a task needs a public, screening-level check of whether a process component has the typically required protective functions (PSH, PSL, PSV, LSH, LSL, etc.) before a formal SAFE-chart and safety analysis review."
 last_verified: "2026-06-18"

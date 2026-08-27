@@ -1,5 +1,6 @@
 ---
 name: neqsim-economy-basis-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational economy-basis assembly and range-check screening for prices, discount rate, currency, inflation, and tax regime. USE WHEN: a task needs a public, screening-level economic assumptions basis with sanity flags before an asset-value (NPV) screening or detailed NeqSim field-economics modelling."
 last_verified: "2026-06-24"

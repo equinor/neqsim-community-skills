@@ -1,5 +1,6 @@
 ---
 name: neqsim-two-phase-flow-regime-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational two-phase flow-regime screening that classifies a horizontal gas-liquid flow pattern from superficial velocities using a simplified public Mandhane-style map and flags slug risk. USE WHEN: a task needs a public, screening-level flow-regime flag (stratified, slug, annular, bubble) and slug-risk triage to pair with slug-flow and flow-induced-vibration work."
 last_verified: "2026-06-18"

@@ -1,5 +1,6 @@
 ---
 name: neqsim-teg-dehydration-modeling
+calculation_basis: "neqsim-java"
 version: "0.1.0"
 description: "Build a validated, closed-loop TEG (triethylene glycol) gas dehydration plant in NeqSim, including absorber, flash drum, regeneration column, stripper, lean-TEG recycle, and still-vent emission classification. USE WHEN: a task needs a runnable NeqSim TEG dehydration flowsheet (water dew point, lean-TEG purity, NMVOC/methane/benzene still-vent emissions) rather than a screening-level water-content estimate."
 last_verified: "2026-06-26"

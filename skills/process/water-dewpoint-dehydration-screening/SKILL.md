@@ -1,5 +1,6 @@
 ---
 name: neqsim-water-dewpoint-dehydration-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational gas water-content and dehydration screening using the public GPSA Bukacek saturated-water-content correlation. USE WHEN: a task needs a public, screening-level estimate of saturated water content in natural gas and a check against a sales-gas water spec before detailed dehydration design."
 last_verified: "2026-06-18"

@@ -1,5 +1,6 @@
 ---
 name: neqsim-bathymetry-profile-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational bathymetry profile screening from supplied soundings. USE WHEN: a task needs public, screening-level seabed depth interpolation along a route, slope screening, and steep-section flags from sounding points before detailed free-span and on-bottom-stability design."
 last_verified: "2026-05-31"

@@ -1,5 +1,6 @@
 ---
 name: neqsim-subsea-layout-geometry
+calculation_basis: "screening"
 version: "0.2.0"
 description: "Educational subsea field-layout geometry screening from supplied coordinates. USE WHEN: a task needs public, screening-level step-out distances, tie-back lengths, a node-to-node distance matrix, or a schematic plan-view illustration for wells, manifolds, templates, and a host from a subsea map before detailed routing and hydraulic design."
 last_verified: "2026-06-14"

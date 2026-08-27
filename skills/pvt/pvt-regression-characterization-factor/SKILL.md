@@ -1,5 +1,6 @@
 ---
 name: neqsim-pvt-regression-characterization-factor
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Public weighted multi-target regression of a split/characterization factor against measured PVT and separator data (saturation pressure, GOR, stock-tank-oil density, formation volume factor). USE WHEN: a task must calibrate one heavy-end characterization factor so a fluid model reproduces several measured PVT/separator quantities at once, with per-target weights and residual reporting, before rigorous NeqSim EOS regression."
 last_verified: "2026-07-14"

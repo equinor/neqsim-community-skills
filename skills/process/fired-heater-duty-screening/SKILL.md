@@ -1,5 +1,6 @@
 ---
 name: neqsim-fired-heater-duty-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational fired-heater duty and radiant-flux screening using public energy-balance relations (API 560 style). USE WHEN: a task needs a public, screening-level estimate of process duty, fired duty, fuel rate, and average radiant flux for a fired heater before detailed thermal design."
 last_verified: "2026-06-18"

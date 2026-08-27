@@ -1,5 +1,6 @@
 ---
 name: neqsim-gas-turbine-performance-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational gas-turbine performance screening using open ISO 3977 / GL1029 style derate factors. USE WHEN: a task needs a public, screening-level estimate of site-rated shaft power, site heat rate, thermal efficiency, fuel heat input, exhaust mass flow, and exhaust temperature for a gas-turbine driver before detailed package selection."
 last_verified: "2026-06-25"

@@ -1,5 +1,6 @@
 ---
 name: neqsim-dynamic-process-preparation
+calculation_basis: "neqsim-java"
 version: "0.1.0"
 description: "Prepare NeqSim ProcessSystem and ProcessModel flowsheets for dynamic simulation, including equipment holdup, mechanical-design, and volume-readiness checks. USE WHEN: a task needs to convert a steady-state NeqSim process into a dynamic-ready model before runTransient calculations."
 last_verified: "2026-06-25"

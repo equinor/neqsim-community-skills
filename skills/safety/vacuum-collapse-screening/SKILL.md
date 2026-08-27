@@ -1,5 +1,6 @@
 ---
 name: neqsim-vacuum-collapse-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational vacuum-collapse (implosion) screening for a blocked-in vessel that cools down, with vacuum-depth and external-rating flags. USE WHEN: a task needs a public, screening-level check of whether a closed vessel cooldown or steam/vapour condensation can pull a vacuum below the external pressure rating, without proprietary vacuum-collapse design methods."
 last_verified: "2026-05-31"

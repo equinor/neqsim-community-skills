@@ -1,5 +1,6 @@
 ---
 name: neqsim-step-out-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational subsea tie-back step-out and arrival-pressure screening with optional hydrate-margin input. USE WHEN: a task needs a public, screening-level check of whether a tie-back step-out distance and arrival pressure stay within simple guidelines before detailed flow-assurance and hydraulic design."
 last_verified: "2026-05-31"

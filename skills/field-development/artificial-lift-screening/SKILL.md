@@ -1,5 +1,6 @@
 ---
 name: neqsim-artificial-lift-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational artificial-lift screening that compares a simple straight-line IPR natural deliverability against a target rate and screens gas lift and ESP feasibility from a required bottomhole-pressure reduction. USE WHEN: a task needs a public, screening-level recommendation of natural flow, gas lift, or ESP for a well before detailed inflow/outflow (nodal) analysis and lift design."
 last_verified: "2026-06-25"

@@ -1,5 +1,6 @@
 ---
 name: neqsim-dry-gas-seal-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational dry gas seal supply and condensation screening for centrifugal compressors. USE WHEN: a task needs a public, screening-level estimate of seal-gas and separation-gas supply demand and a seal-gas condensation-margin check (cavity temperature versus hydrocarbon dew point) before detailed dry gas seal system design per API 692."
 last_verified: "2026-06-19"

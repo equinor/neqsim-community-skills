@@ -1,5 +1,6 @@
 ---
 name: neqsim-acoustic-induced-vibration-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational acoustic-induced-vibration (AIV) screening using the public Energy Institute likelihood-of-failure form for gas pressure-reducing devices. USE WHEN: a task needs a public, screening-level estimate of sound power level, pipe diameter-to-thickness ratio, allowable sound power level, and an AIV likelihood-of-failure index for a control valve, relief valve, or restriction orifice before detailed vibration assessment."
 last_verified: "2026-06-25"

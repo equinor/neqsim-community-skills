@@ -1,5 +1,6 @@
 ---
 name: neqsim-control-valve-cv-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational control-valve sizing screening that estimates the required flow coefficient (Kv/Cv) and flags choked flow per public IEC 60534-2-1 / ISA-75.01 equations for liquid and gas service. USE WHEN: a task needs a public, screening-level required Cv and a choked-flow flag before detailed control-valve selection."
 last_verified: "2026-06-18"

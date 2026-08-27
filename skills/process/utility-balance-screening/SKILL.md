@@ -1,5 +1,6 @@
 ---
 name: neqsim-utility-balance-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational utility-balance screening for instrument air demand, fuel gas Wobbe index, and cooling water duty/flow with a simple capacity margin roll-up (NORSOK U-001 / ISA-7.0.01 style). USE WHEN: a task needs a public, screening-level estimate of instrument air demand, cooling water flow, fuel gas Wobbe index compliance, and utility capacity utilisation before detailed utility-system design."
 last_verified: "2026-06-25"

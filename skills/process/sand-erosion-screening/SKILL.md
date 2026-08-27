@@ -1,5 +1,6 @@
 ---
 name: neqsim-sand-erosion-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational sand-erosion and remaining-wall-life screening for solids-bearing lines. USE WHEN: a task needs a public, screening-level estimate of sand erosion rate, cumulative wall loss, and remaining wall life from a sand production rate before detailed DNV RP O501 erosion analysis."
 last_verified: "2026-05-20"

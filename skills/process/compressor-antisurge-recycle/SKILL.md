@@ -1,5 +1,6 @@
 ---
 name: neqsim-compressor-antisurge-recycle
+calculation_basis: "neqsim-java"
 version: 0.2.0
 description: "Set up anti-surge recycle control for a centrifugal compressor in NeqSim, including compressor-chart generation, steady-state AntiSurgeRecycleCalculator use, dynamic AntiSurgeController PI control, and CompressorAntiSurgeApplication topology binding for hot/cold recycle valves and speed runback. USE WHEN: a task needs to protect a NeqSim compressor from surge with a recycle (spill-back) loop and a compressor performance chart is either supplied or must be generated."
 last_verified: "2026-07-02"

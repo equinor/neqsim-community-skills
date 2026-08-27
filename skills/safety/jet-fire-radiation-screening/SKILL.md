@@ -1,5 +1,6 @@
 ---
 name: neqsim-jet-fire-radiation-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational jet-fire thermal-radiation screening that estimates the radiative flux at a distance, or the distance to a target flux, using the public single-point-source flame radiation model. USE WHEN: a task needs a public, screening-level jet-fire radiation flux or a distance to a personnel/equipment thermal limit before detailed fire-consequence analysis."
 last_verified: "2026-06-18"

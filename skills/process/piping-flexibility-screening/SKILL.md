@@ -1,5 +1,6 @@
 ---
 name: neqsim-piping-flexibility-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational piping-flexibility screening using open ASME B31.3 / B16.5 style relations. USE WHEN: a task needs a public, screening-level check of hoop (sustained) stress, thermal expansion, displacement (expansion) stress range, and a flange-rating pressure check for a process pipe run before detailed pipe-stress analysis."
 last_verified: "2026-06-25"

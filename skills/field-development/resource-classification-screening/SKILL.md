@@ -1,5 +1,6 @@
 ---
 name: neqsim-resource-classification-screening
+calculation_basis: "screening"
 version: "0.2.0"
 description: "Educational petroleum resource classification screening using public SODIR RC0-RC9 project maturity and SPE-PRMS categories as independent axes. USE WHEN: a task needs to classify historical production, reserves, contingent resources, or undiscovered/prospective resources without confusing maturity with 1P/2P/3P or 1C/2C/3C uncertainty."
 last_verified: "2026-08-22"

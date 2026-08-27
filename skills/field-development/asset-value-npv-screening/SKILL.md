@@ -1,5 +1,6 @@
 ---
 name: neqsim-asset-value-npv-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational discounted-cash-flow (DCF) asset-value screening that builds a year-by-year net cash flow from revenue, OPEX, and a CAPEX schedule and returns NPV, IRR, and payback with a simple flat tax. USE WHEN: a task needs a public, screening-level NPV/IRR/payback before detailed NeqSim field-development economics or qualified commercial review."
 last_verified: "2026-06-24"

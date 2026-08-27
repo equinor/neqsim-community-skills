@@ -32,3 +32,9 @@ jobs:
 
       - name: Run catalog metadata tests
         run: python -m pytest skills/test_skill_metadata.py
+
+      - name: Consolidation pass (advisory — near-duplicate & orphan skills)
+        run: python scripts/find_skill_overlap.py --threshold 0.82
+
+      - name: Every skill declares calculation_basis
+        run: python scripts/classify_calculation_basis.py --check

@@ -1,5 +1,6 @@
 ---
 name: neqsim-gas-scrubber-sizing-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational gas-scrubber sizing screening using the public Souders-Brown / K-factor relation for vertical separators with a mist-eliminator gas-load check. USE WHEN: a task needs a public, screening-level estimate of the Souders-Brown velocity, required vessel diameter, velocity utilisation, and mist-eliminator load for a vertical gas scrubber before detailed separator design."
 last_verified: "2026-06-25"

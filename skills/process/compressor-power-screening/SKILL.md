@@ -1,5 +1,6 @@
 ---
 name: neqsim-compressor-power-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational centrifugal-compressor power screening using the public polytropic-head equation (API 617 / API 619 style). USE WHEN: a task needs a public, screening-level estimate of polytropic head, discharge temperature, and gas power for a single compression stage before detailed compressor selection."
 last_verified: "2026-06-18"

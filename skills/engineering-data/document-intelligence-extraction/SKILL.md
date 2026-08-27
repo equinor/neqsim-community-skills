@@ -1,5 +1,6 @@
 ---
 name: neqsim-document-intelligence-extraction
+calculation_basis: "data-retrieval"
 version: "0.1.0"
 description: "Classify mixed engineering documents and images, route native text/table, OCR, and vision extraction, and produce source-traceable evidence packages with confidence and human-review gates. USE WHEN: a NeqSim task receives PDFs, scans, Word/Excel files, drawings, charts, photographs, or multiple conflicting engineering sources."
 last_verified: "2026-07-11"

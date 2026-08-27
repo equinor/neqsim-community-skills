@@ -1,5 +1,6 @@
 ---
 name: neqsim-dynamic-instrument-controller-setup
+calculation_basis: "neqsim-java"
 version: "0.2.0"
 description: "Set up measurement devices and PID-style controllers for NeqSim dynamic process simulations. USE WHEN: a task needs to add transmitters, controller devices, valve manipulation, setpoints, controller action, and autotuning workflow guidance before runTransient calculations."
 last_verified: "2026-07-10"

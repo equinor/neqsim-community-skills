@@ -1,5 +1,6 @@
 ---
 name: neqsim-hydrate-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational hydrate risk screening placeholder with public assumptions. USE WHEN: a task needs a quick hydrate risk triage and should be directed to validated NeqSim methods for real calculations."
 last_verified: "2026-05-31"

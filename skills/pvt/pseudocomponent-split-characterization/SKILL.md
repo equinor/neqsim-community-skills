@@ -1,5 +1,6 @@
 ---
 name: neqsim-pseudocomponent-split-characterization
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Public plus-fraction (C7+) characterization by a controllable split factor: a Whitson three-parameter gamma molar split, a lumping split factor, delumping reconstruction, and the universal Paraffinic-Aromatic (P/A) heavy-lump split factor S (Uleberg 2026). USE WHEN: a task needs to divide a heavy end into pseudocomponents with one adjustable characterization/split factor, compute a delumping split factor from a reference fluid, reconstruct a detailed composition from a lumped one, or split heavy lumps into paraffinic/aromatic copies on a universal P/A set, before rigorous NeqSim characterization."
 last_verified: "2026-07-14"

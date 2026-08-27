@@ -1,5 +1,6 @@
 ---
 name: neqsim-surf-cooldown-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational SURF flowline/riser cooldown and no-touch-time screening placeholder with public assumptions. USE WHEN: a task needs a quick, public estimate of how long an insulated subsea flowline stays above its hydrate formation temperature after shutdown, and should be directed to validated NeqSim methods for real cooldown and hydrate calculations."
 last_verified: "2026-07-04"

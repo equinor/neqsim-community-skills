@@ -1,5 +1,6 @@
 ---
 name: neqsim-capex-opex-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational factored CAPEX/OPEX screening that turns a bare equipment cost into a total installed CAPEX (Lang/Hand-style installation factor + contingency), an annual OPEX, and a lifecycle total cost of ownership. USE WHEN: a task needs a public, screening-level CAPEX and OPEX magnitude before detailed NeqSim CostEstimationCalculator estimating or qualified cost-engineering review."
 last_verified: "2026-06-24"

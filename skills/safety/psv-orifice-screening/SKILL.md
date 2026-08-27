@@ -1,5 +1,6 @@
 ---
 name: neqsim-psv-orifice-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational pressure-safety-valve orifice screening using the public API 520 Part I critical gas-flow equation. USE WHEN: a task needs a public, screening-level required PSV orifice area and a mapped API orifice letter before detailed relief-valve sizing and selection."
 last_verified: "2026-06-18"

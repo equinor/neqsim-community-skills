@@ -1,5 +1,6 @@
 ---
 name: neqsim-reciprocating-compressor-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational reciprocating-compressor screening using the public clearance volumetric-efficiency relation (API 618 / API 619 style). USE WHEN: a task needs a public, screening-level estimate of volumetric efficiency, actual inlet capacity, staging, discharge temperature, and rod-load utilisation for a reciprocating compressor before detailed selection."
 last_verified: "2026-06-25"

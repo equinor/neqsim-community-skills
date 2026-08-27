@@ -1,5 +1,6 @@
 ---
 name: neqsim-co2-emissions-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational combustion-CO2 emission screening that estimates the CO2 mass rate from a fuel-gas flow and composition using public per-component carbon-count stoichiometry and the IPCC basis. USE WHEN: a task needs a public, screening-level CO2 emission rate (kg/s or tonnes/day) from burning a fuel-gas stream before detailed combustion or emission-factor reporting."
 last_verified: "2026-06-18"

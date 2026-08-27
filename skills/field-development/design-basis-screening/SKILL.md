@@ -1,5 +1,6 @@
 ---
 name: neqsim-design-basis-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational design-basis margin screening for flow, pressure, and temperature design margins versus operating conditions, with a standards-basis echo. USE WHEN: a task needs a public, screening-level check that proposed design capacities and conditions carry sensible margins over operating before detailed mechanical design and code rating."
 last_verified: "2026-06-24"

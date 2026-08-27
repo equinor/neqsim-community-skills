@@ -1,5 +1,6 @@
 ---
 name: neqsim-gas-dispersion-distance-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational Gaussian point-source gas-dispersion screening that estimates the downwind distance to a target concentration (LFL or toxic ppm) using the public Pasquill-Gifford / Briggs rural model. USE WHEN: a task needs a public, screening-level distance-to-LFL or distance-to-ppm estimate for a continuous gas release before detailed dispersion or consequence analysis."
 last_verified: "2026-06-18"

@@ -1,5 +1,6 @@
 ---
 name: neqsim-hydrate-margin-check
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational hydrate operating-margin screening placeholder with public assumptions. USE WHEN: a task needs a quick check of whether an operating point keeps a safe temperature margin above a hydrate equilibrium temperature and should be directed to validated NeqSim methods for real calculations."
 last_verified: "2026-05-31"

@@ -1,5 +1,6 @@
 ---
 name: neqsim-pump-hydraulics-screening
+calculation_basis: "screening"
 version: "0.1.0"
 description: "Educational centrifugal-pump hydraulics screening for hydraulic/shaft power, NPSH-available, and best-efficiency-point window using public pump relations and affinity laws. USE WHEN: a task needs a public, screening-level pump power, NPSH-available estimate, and BEP-window check before detailed pump selection."
 last_verified: "2026-06-18"

@@ -406,13 +406,29 @@ Rules learned the hard way (each one was a rules-engine rejection):
 - Keyword names are **singular** on `WALL`: `THICKNESS=`, `MATERIAL=` — not
   `THICKNESSES`/`MATERIALS`. `MATERIAL` needs `TYPE=SOLID` and `W/m-C`.
 - `SOURCE` has no `FLUID=` key. The fluid comes from the `BRANCH FLUID=` label.
-- `INTEGRATION` has no `NSLUG` key in 2025.1.
+- `SOURCE` **requires `TIME=`**, even for a steady source: omitting it gives
+  `SOURCE: Key TIME must be given.` Use `TIME=0 s`.
+- `HEATTRANSFER` is **mandatory** on a flowpath. Without it the rules engine
+  rejects the whole branch with `<TAG> Missing required keywords. HEATTRANSFER`,
+  even for a short isothermal line. `HOUTEROPTION=HGIVEN` with a nominal
+  `HAMBIENT`/`TAMBIENT` is enough when heat loss is irrelevant.
+- `PIPE` needs an explicit **`LENGTH=`**. Giving `NSEGMENT=n` with a scalar
+  `LSEGMENT` produces two errors at once — `PIPE: Key LENGTH must be given.` and
+  `Number of items mismatch between keys LSEGMENT (1) and NSEGMENT (n)` — because
+  `LSEGMENT` is a *list* with one entry per segment. Either give `LENGTH=` with
+  `NSEGMENT=` and let OLGA divide, or give the full `LSEGMENT=(...)` list.
+- `INTEGRATION` has no `NSLUG` key in 2025.1, and no `NSAVE` key either
+  (`1019: Key not found. (NSAVE for INTEGRATION in CASELEVEL CASELEVEL)`).
+- The inner keyword of a `NETWORKCOMPONENT TYPE=NODE` is **`PARAMETERS`**, not
+  `NODE`. Writing `NODE TYPE=PRESSURE, ...` gives the unhelpful
+  `Unknown keyword type NODE for NODE`.
 - Global statements (`OPTIONS`, `FILES`, `INTEGRATION`, `OUTPUT`, `TREND`,
   `PROFILE`, `MATERIAL`, `WALL`) go before the network components;
   `CONNECTION` statements go after them.
 - **Iterate against `-exitRC`.** The rules engine names the offending key and its
   owner, e.g. `1019: Key not found. (FLUID for SOURCE EXPORTFEED in FLOWPATH
   EXPORTLINE)`. Treat it as the authority rather than guessing from documentation.
+  It reports several errors per pass, so fix them in batches.
 
 ### Posing the boundary conditions
 
@@ -790,6 +806,30 @@ NeqSim. On the 74 km line above:
 
 Two mechanistic codes and a hand calculation agree; the correlation is the
 outlier. That settled the question.
+
+A second verified case, at the opposite end of the size range — a 60 m, 140 mm ID
+platform flowline, water-continuous (83 mol % water), 17 bara, v_sg 1.75 /
+v_sl 0.36 m/s, identical fluid and mass flow in both codes:
+
+| | OLGA 2025.1.0 | TwoFluidPipe | Beggs & Brill |
+| --- | --- | --- | --- |
+| liquid holdup | 0.4074 | **0.4066 (0.2%)** | 0.3253 (−20%) |
+| in-situ liquid velocity, m/s | 0.916 | **0.913 (0.3%)** | 1.141 (+25%) |
+| slip ratio | 3.32 | 3.24 | 2.28 |
+
+So `TwoFluidPipe` tracks OLGA on hold-up and phase velocities, not only on
+pressure drop. That matters for **sand transport**, which is driven by the
+in-situ *liquid* velocity: Beggs & Brill's low hold-up inflates `u_L` by a
+quarter and is therefore non-conservative for a deposition check.
+
+**Where TwoFluidPipe stops agreeing.** The same model failed to reach steady
+state (399 iterations) on the *same line* at a slower, more liquid-loaded
+condition (53 bara, v_sg 0.42 m/s, H_L ≈ 0.72, slug regime). Two lessons: gate
+every result on `isSteadyStateConverged()` and drop it if False, and do not
+over-constrain `setOutletPressure` with a measured pressure drop the modelled
+geometry cannot physically produce — that alone can prevent convergence. When
+the measured drop greatly exceeds the predicted pipe friction, the balance is
+manifold valves and fittings and does not belong in the pipe boundary condition.
 
 ```python
 pipe = jneqsim.process.equipment.pipeline.TwoFluidPipe("line", inlet_stream)

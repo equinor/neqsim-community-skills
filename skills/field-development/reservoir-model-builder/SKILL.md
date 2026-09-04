@@ -1,9 +1,9 @@
 ---
 name: neqsim-reservoir-model-builder
 calculation_basis: "screening"
-version: "0.1.0"
-description: "Set up a screening-level reservoir model from whatever data exists, on a data-maturity ladder from a single public headline volume up to a full static-model parameter set, and refine it as data arrives. USE WHEN: a task needs a reservoir model for a field where only open data is available (for example an NCS field on public resource pages), needs volumetrics from area/net pay/porosity/Sw, needs hydrostatic pressure and geothermal temperature defaults from depth, needs a recovery factor and drive mechanism from analogues, needs a well count and productivity index from permeability, or needs a NeqSim SimpleReservoir/WellFlow specification with a provenance trail and a ranked data-acquisition plan."
-last_verified: "2026-08-11"
+version: "0.2.0"
+description: "Set up a screening-level reservoir model from whatever data exists, on a data-maturity ladder from a single public headline volume up to a full static-model parameter set, and refine it as data arrives. USE WHEN: a task needs a reservoir model for a field where only open data is available (for example an NCS field on public resource pages), needs a best-guess structural model when there is NO seismic, log or contact data at all (assumed play-typical trap style, layered stratigraphy, fluid contact and culmination solved to honour published volumes, structure-aware well placement, and a full assumption register), needs volumetrics from area/net pay/porosity/Sw, needs hydrostatic pressure and geothermal temperature defaults from depth, needs a recovery factor and drive mechanism from analogues, needs a well count and productivity index from permeability, or needs a NeqSim SimpleReservoir/WellFlow specification with a provenance trail and a ranked data-acquisition plan."
+last_verified: "2026-09-04"
 requires:
   python_packages: []
   java_packages: []
@@ -41,6 +41,12 @@ a provenance label, so the model can always answer three questions:
   net pay before any well test exists.
 - An existing screening model must be refined with new logs, a well test or a
   PVT report, with an auditable record of what changed.
+- **There is no subsurface data at all** and a model still has to be built: no
+  seismic, no logs, no contacts, only a published resource number and a
+  development description. See "Building a model when there is no subsurface
+  data at all" below — assume the play-typical structure, solve the contact and
+  the compartment split against the published numbers, place the wells on the
+  structure, and publish the assumption register.
 - A NeqSim `SimpleReservoir` / `WellFlow` set-up or an MCP `runReservoir` payload
   is needed as the next step.
 
@@ -283,6 +289,153 @@ and `addWaterInjector`. Two practical points:
   makes `runTransient` throw `setMolarComposition - Input totalFlow must be
   larger than 0`.
 
+## Building a model when there is no subsurface data at all
+
+Sometimes there is no seismic, no log, no contact and no PVT sample — only a
+published resource number and a development description. The choice then is not
+between building a model and not building one; it is between an implicit guess
+buried in a spreadsheet and an explicit, labelled one. **Make the guess, then
+state it.** `reservoir_model_builder.structure` exists to do exactly that.
+
+The rule is: *assume the geology, derive everything that can be derived, and put
+every remaining assumption in a register that says what would replace it.*
+
+### 1. Assume the structural style from the play, not from nothing
+
+A rectangular tank is a guess too — just an unlabelled one that happens to be
+geologically impossible. Assume instead the trap style that dominates the play,
+so the guess is at least the most likely guess:
+
+```python
+from reservoir_model_builder import assume_structure, assumption_register
+
+structure = assume_structure(sea_area="north_sea", gross_thickness_m=60.0)
+print(structure.play)            # tampen_brent
+print(structure.style["trap"])   # three-way dip closure sealed against a N-S normal fault
+for row in assumption_register(structure):
+    print(row["element"], "|", row["value"], "|", row["provenance"])
+```
+
+`assume_structure` returns the dip, the structural relief, the bounding-fault
+throw and seal multiplier, a screening cell size, and a layered stratigraphy for
+the play. Every parameter comes back with provenance `analogue` or `default` —
+never `measured` — and every assumption records `would_be_replaced_by`, which
+becomes the data-acquisition request in the report.
+
+Pass `gross_thickness_m` and the register will additionally flag a bounding
+fault whose throw is smaller than the reservoir interval: such a fault is
+self-juxtaposed and cannot be assumed to seal, which silently invalidates any
+two-compartment story built on it.
+
+Available styles: `tampen_brent`, `north_sea_horst`, `north_sea_salt_dome`,
+`halten_terrace`, `barents_platform`, `generic_anticline`. Passing only a
+`sea_area` picks the dominant style for that area; passing nothing gives a
+generic anticline.
+
+### 2. Layer the reservoir, do not average it
+
+`STRATIGRAPHY` gives a per-formation porosity, net-to-gross, permeability and
+kv/kh for each play — Brent as Tarbert / Ness / Etive-Rannoch, Halten as Garn /
+Not / Ile / Tofte-Tilje, chalk as Tor / Hod. Use it even at screening level.
+
+A single-permeability tank cannot tell you whether a horizontal drain drains the
+whole interval or only the layer it sits in, and that is usually the question the
+model is being asked. The property *contrast* matters more than the absolute
+values, which is why the layering is worth carrying even when the numbers are
+analogues.
+
+Modulate the properties by structural position as well — crestal rock is
+normally better — because on a structural closure every well is crestal, so the
+trend and the well locations are correlated.
+
+### 3. Solve what can be solved instead of guessing it
+
+Two geometric numbers are usually free, and two constraints are usually public.
+Invert rather than assume:
+
+```python
+from reservoir_model_builder import (
+    solve_contact_for_volume,
+    solve_amplitude_for_split,
+)
+
+# Contact solved so the closure holds the reported in-place volume.
+gwc = solve_contact_for_volume(
+    volume_above=lambda depth: giip_above(depth),
+    target_volume=reported_giip_Sm3,
+    shallow_m=crest_depth, deep_m=deepest_top,
+)
+
+# Secondary culmination solved so the volume split matches the reported split.
+amplitude = solve_amplitude_for_split(
+    split_for_amplitude=lambda amp: secondary_fraction(amp),  # re-solves the contact
+    target_fraction=0.23, low_m=20.0, high_m=95.0,
+)
+```
+
+`solve_contact_for_volume` raises rather than returning a number when the
+assumed structure cannot hold the target volume. That is a **result**, not an
+error to suppress: it says the assumed relief, area or porosity is inconsistent
+with the published volume, and one of them has to move.
+
+`solve_amplitude_for_split` must be given a callable that **re-solves the fluid
+contact inside every trial**. Growing a culmination adds pore volume, which
+moves the contact, which changes the split. Holding the contact fixed is the
+most common reason this loop fails to converge or saturates at a bracket end.
+
+### 4. Place wells on the structure, not on the plan
+
+A nominal well position taken from a tank model is meaningless once there is a
+structure: the drain may sit partly or wholly in the water leg, and a gas well
+completed below the contact produces nothing. Do not fix this by hand — place
+each drain automatically:
+
+```python
+from reservoir_model_builder import longest_run_above_contact
+
+start, length = longest_run_above_contact(depths_along_track, gwc)
+if length == 0:
+    raise ValueError("track is entirely below the contact - move or drop the well")
+```
+
+Take the longest contiguous run above the contact and centre the completion on
+it. If the run is empty, the well as planned does not work — report that rather
+than perforating water.
+
+### 5. Write the assumption register into the deliverable
+
+`assumption_register(structure)` returns one row per assumed element with its
+value, provenance, rationale and the measurement that would replace it. Put that
+table in the report verbatim. A reader must be able to see, in one place, the
+difference between what was known and what was invented.
+
+Label every number in the report with a confidence tier:
+
+| Tier | Meaning |
+| --- | --- |
+| `Given` | Supplied directly in the task (a profile, a rate, a spec) |
+| `Published` | Stated in an operator or authority release |
+| `Strong inference` | Follows from a published fact with one clear step |
+| `Derived` | Calculated from the above by a stated equation |
+| `Analogue` | Taken from a play or field analogue, not from this field |
+| `Assumption` | Chosen by the builder; nothing measured touches it |
+
+And state the direction of the inversion explicitly. If the recoverable volume
+was an input and the geometry was sized to honour it, then **the model cannot be
+used to defend the volume** — only to test whether that volume is deliverable.
+Say so in the conclusions, not in a footnote.
+
+### What this does and does not buy you
+
+It buys a geologically coherent model that reproduces the public constraints,
+exposes failure modes a tank model hides (wells below the contact, a fault too
+small to seal, a closure too small to hold the reported volume), and produces
+figures an engineer can argue with.
+
+It does not buy a subsurface interpretation. Everything geometric is a
+hypothesis, and the sensitivity of the answer to that hypothesis should be
+quoted alongside the answer.
+
 ## Validation Checklist
 
 - [ ] The sizing basis is stated: geometry, in-place volume, or a back-calculated
@@ -299,6 +452,15 @@ and `addWaterInjector`. Two practical points:
 - [ ] The volume basis handed to NeqSim is reservoir m3, not Sm3.
 - [ ] The refinement plan is recorded and the top items are turned into data
       requests.
+- [ ] When the structure was assumed rather than mapped, the assumption register
+      is in the deliverable and every row states what would replace it.
+- [ ] Any number that was solved for rather than measured (a fluid contact, a
+      culmination height) is labelled as an inversion of a published number, and
+      the direction of the inversion is stated in the conclusions.
+- [ ] Every well drain has been checked against the contact, not just placed at
+      a nominal position.
+- [ ] A bounding fault relied on for compartmentalisation has a throw larger
+      than the reservoir interval.
 - [ ] A qualified reservoir engineer has reviewed the model before any decision.
 
 ## Common Mistakes
@@ -313,6 +475,11 @@ and `addWaterInjector`. Two practical points:
 | Temperature looks too high for a shallow Barents Sea reservoir | Default geothermal gradient applied from sea level rather than the seabed | Supply `water_depth_m` so the gradient starts at the seabed |
 | Stock-tank oil density is a few percent off the PVT report | Raw EOS `getVolume()`/`getDensity()` used instead of the volume-shift corrected accessors | Use `getCorrectedVolume()` and `getDensity("kg/m3")` |
 | Design drawdown puts the flowing bottomhole pressure below the bubble point | The plateau was set from facility capacity, not from the undersaturation | Limit drawdown to the undersaturation, or add producers |
+| A well produces nothing, or the solver reports singular well equations | The drain was placed at a nominal position from a tank model and sits below the fluid contact | Place it with `longest_run_above_contact`; if the run is empty, move or drop the well |
+| The culmination bisection saturates at a bracket end | The fluid contact was held fixed inside the split solve, so added pore volume never moved the contact | Re-solve the contact inside every amplitude trial |
+| The closure runs off the edge of the grid | A regional dip was applied to a block that shallows continuously in one direction, so it never turns over | Make the secondary closure a four-way culmination, or extend the grid past the spill point |
+| Two compartments deplete together despite a fault between them | The assumed throw is smaller than the reservoir interval, so the reservoir is self-juxtaposed | Raise the throw above the gross thickness, or model the compartments as connected |
+| The assumed structure cannot hold the reported volume | Relief, area or porosity is inconsistent with the published number | Treat the exception from `solve_contact_for_volume` as a result and move one of them |
 
 ## Limitations
 

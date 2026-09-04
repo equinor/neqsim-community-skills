@@ -17,6 +17,19 @@ from .parameters import (
     RECOVERY_FACTOR,
     Parameter,
 )
+from .structure import (
+    SEA_AREA_DEFAULT_PLAY,
+    STRATIGRAPHY,
+    STRUCTURAL_STYLE,
+    StructuralAssumption,
+    StructuralModel,
+    assume_structure,
+    assumption_register,
+    longest_run_above_contact,
+    resolve_play,
+    solve_amplitude_for_split,
+    solve_contact_for_volume,
+)
 
 __all__ = [
     "AQUIFER_VOLUME_MULTIPLE",
@@ -29,9 +42,20 @@ __all__ = [
     "ReservoirInputs",
     "ReservoirModel",
     "ReservoirModelBuilder",
+    "SEA_AREA_DEFAULT_PLAY",
+    "STRATIGRAPHY",
+    "STRUCTURAL_STYLE",
+    "StructuralAssumption",
+    "StructuralModel",
     "Volumetrics",
+    "assume_structure",
+    "assumption_register",
     "build_reservoir_model",
+    "longest_run_above_contact",
+    "resolve_play",
+    "solve_amplitude_for_split",
+    "solve_contact_for_volume",
     "summarize",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

@@ -15,6 +15,9 @@ Public entry points:
 ``build_well_paths`` / ``plot_reservoir_3d``
     screening well trajectories from each tree down to a reservoir target, and a
     three-dimensional illustration of the reservoir, the wells and the layout.
+``render_field_illustration`` / ``horizon_from_model_grid`` / ``KeyFact``
+    presentation-grade reservoir-to-host cutaway carrying the study's headline
+    numbers, so the picture on the slide and the calculation stay in step.
 """
 
 from .geo import (
@@ -47,6 +50,16 @@ from .layout import (
     erosional_velocity_m_per_s,
     inner_diameter_m,
     select_line_size,
+)
+from .illustration import (
+    SERVICE_COLOUR,
+    THEME,
+    Annotation,
+    Horizon,
+    KeyFact,
+    Seabed,
+    horizon_from_model_grid,
+    render_field_illustration,
 )
 from .plot import plot_layout_map
 from .plot3d import plot_reservoir_3d
@@ -85,10 +98,18 @@ __all__ = [
     "inner_diameter_m",
     "plot_layout_map",
     "plot_reservoir_3d",
+    "render_field_illustration",
+    "horizon_from_model_grid",
+    "KeyFact",
+    "Horizon",
+    "Seabed",
+    "Annotation",
+    "SERVICE_COLOUR",
+    "THEME",
     "WellPath",
     "build_well_paths",
     "trajectory_warnings",
     "MAX_SCREENING_DOGLEG_DEG_PER_30M",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

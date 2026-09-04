@@ -1,9 +1,9 @@
 ---
 name: neqsim-surf-field-layout-design
 calculation_basis: "screening"
-version: "0.1.0"
-description: "Design a screening subsea (SURF) field layout and place the host from open map, bathymetry and licence-block data: group wells into drill centres, place Xmas trees, templates, manifolds, PLEMs and riser bases, position an FPSO or fixed host, route and size every production, injection, service, umbilical and riser line, and export the result as georeferenced GeoJSON and a map. USE WHEN: a task needs a field layout designed rather than an existing one screened - deciding how many drill centres and templates are needed, where the host should sit, which flowline architecture to use (loop, single line or daisy chain), what size the flowlines and risers should be, how long the umbilicals are, or a georeferenced layout to hand to flow assurance, cost estimation or a NeqSim production-network model."
-last_verified: "2026-08-12"
+version: "0.2.0"
+description: "Design a screening subsea (SURF) field layout and place the host from open map, bathymetry and licence-block data: group wells into drill centres, place Xmas trees, templates, manifolds, PLEMs and riser bases, position an FPSO or fixed host, route and size every production, injection, service, umbilical and riser line, export the result as georeferenced GeoJSON and a map, and render a presentation-grade reservoir-to-host cutaway that carries the study's headline numbers. USE WHEN: a task needs a field layout designed rather than an existing one screened - deciding how many drill centres and templates are needed, where the host should sit, which flowline architecture to use (loop, single line or daisy chain), what size the flowlines and risers should be, how long the umbilicals are, a georeferenced layout to hand to flow assurance, cost estimation or a NeqSim production-network model, or a decision-gate illustration of the whole system from reservoir to host."
+last_verified: "2026-09-04"
 requires:
   python_packages: []
   java_packages: []
@@ -68,6 +68,62 @@ it in, or the sizing is wrong by that factor.
 - `to_geojson()` — a WGS84 FeatureCollection of points, lines and the reservoir
   outline, ready for any map or GIS.
 - `warnings` and `assumptions` — what was assumed and what a reviewer must check.
+- `render_field_illustration(...)` — a presentation-grade reservoir-to-host
+  cutaway carrying the study's headline numbers (see below).
+
+## Presentation Illustration
+
+`plot_reservoir_3d` is the engineering view — labelled axes, a schematic
+reservoir box. `render_field_illustration` is the **communication** view: the
+block diagram for a decision-gate slide. It draws the sea, the water column, the
+seabed, the subsurface, a real gridded structural horizon coloured by depth,
+every well from its tree to its drain, the flowlines, the host and its risers.
+
+The point of the function is that the picture and the analysis cannot drift
+apart. Headline numbers are passed as `KeyFact` objects, each carrying the
+calculation that produced it, and are rendered as a grouped callout column. If a
+number changes in the model it changes on the slide, and the slide says where it
+came from.
+
+```python
+from surf_field_layout_design import (
+    KeyFact, Seabed, horizon_from_model_grid, render_field_illustration,
+)
+
+horizon = horizon_from_model_grid(
+    top_surface_values,            # flattened reservoir grid, x fastest
+    nx=70, ny=30, dx_m=100.0, dy_m=100.0,
+    origin_east_m=-5650.0, origin_north_m=0.0,
+    axis_bearing_deg=78.2,         # true bearing of the model +x axis
+    contact_depth_m_tvdmsl=3054.8, # draws the hydrocarbon closure
+    attribution="OPM Flow structural model",
+)
+
+render_field_illustration(
+    layout, well_paths, "field.png",
+    horizon=horizon,
+    seabed=Seabed(east_m=e, north_m=n, depth_m=d, attribution="EMODnet DTM"),
+    key_facts=[
+        KeyFact("Gas initially in place", "6.12", "GSm3",
+                "OPM Flow structural model", "RESERVOIR"),
+        KeyFact("Flowline size", "8 in", "",
+                "46% of the API RP 14E limit", "SURF"),
+    ],
+    title="Brime / Nokken to Gullfaks C",
+)
+```
+
+`horizon_from_model_grid` rotates a reservoir model grid onto a true bearing
+using the **same axis convention as the layout**: for a field-axis bearing $b$,
+
+$$
+\text{east} = \ell \sin b + a \cos b, \qquad
+\text{north} = \ell \cos b - a \sin b
+$$
+
+with $\ell$ along-axis and $a$ across-axis. Getting this backwards silently
+mirrors the field; the unit tests assert the along-axis run reproduces the
+requested bearing.
 
 ## Open Map and Sea Data
 
@@ -192,6 +248,8 @@ open("layout.geojson", "w").write(json.dumps(layout.to_geojson()))
       route length or riser length is used for cost or hydraulics.
 - [ ] The host offset respects the safety zone and the drill-centre envelope.
 - [ ] Wall thickness has been replaced by a real pressure design.
+- [ ] Every number on a published illustration is a `KeyFact` with its source,
+      and matches the calculation it claims to come from.
 - [ ] A qualified subsea engineer has reviewed the layout.
 
 ## Common Mistakes
@@ -204,6 +262,8 @@ open("layout.geojson", "w").write(json.dumps(layout.to_geojson()))
 | Riser length equals the water depth | Riser configuration allowance ignored | The skill adds 25 % for a lazy wave; replace with a real riser analysis |
 | Umbilical length looks short | Umbilicals are routed host-to-drill-centre in a straight line | Add a routing allowance, or route via the real corridor |
 | The block box does not match the operator's map | The block numbering assumption | Take the position from the Sodir wellbore layer |
+| The illustrated field is mirrored about its axis | `axis_bearing_deg` sign or the east/north convention | East leads with $\sin$, north with $\cos$; check the along-axis run reproduces the bearing |
+| Numbers on the slide disagree with the report | Facts typed into the figure by hand | Pass them as `KeyFact` read from the results file |
 
 ## Limitations
 
@@ -217,15 +277,30 @@ open("layout.geojson", "w").write(json.dumps(layout.to_geojson()))
 - Line sizing is a velocity check only; no pressure-drop, slugging, erosion-rate
   or thermal calculation.
 - Met-ocean sources are registered but the host heading is not calculated.
+- The illustration is a communication aid: well trajectories are screening
+  geometry, the host is a glyph, and matplotlib's 3D engine does not depth-sort
+  intersecting surfaces, so read positions from the data, not off the picture.
 - No proprietary or confidential data is used.
 
 ## Related NeqSim Functionality
 
-- `neqsim.process.equipment.pipeline.PipeBeggsAndBrills` — flowline and riser
-  hydraulics on the routed segments.
+- `neqsim.process.equipment.pipeline.TwoFluidPipe` — mechanistic two-fluid
+  flowline and riser hydraulics on the routed segments. Prefer it over
+  `PipeBeggsAndBrills` for a wet-gas tie-back: the Beggs & Brill two-phase
+  friction multiplier is extrapolated well below its calibration floor at low
+  liquid fraction and over-predicts the pressure drop badly. Always assert
+  `isSteadyStateConverged()` **and** `getSteadyStateIterationsUsed() > 1`.
+- `neqsim.process.equipment.pipeline.PipeBeggsAndBrills` — quick correlation
+  check; note it solves from a fixed **inlet** pressure, so iterate the inlet to
+  hit a required arrival pressure.
 - `neqsim.process.equipment.reservoir.WellFlow` — well inflow at each tree.
 - `neqsim.process.equipment.subsea.SubseaWell`, `SubseaTree` — subsea equipment.
-- `neqsim.process.mechanicaldesign.subsea` — SURF mechanical design and cost.
+- `neqsim.process.mechanicaldesign.pipeline.DnvStF101PipelineDesignCalculator` —
+  replaces this skill's D/t screening geometry with a real pressure design.
+- `neqsim.process.mechanicaldesign.subsea.SURFCostEstimator` — turns the quantity
+  take-off into a CAPEX estimate.
+- `neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzer` — insulation
+  thickness against a no-touch-time requirement.
 - The NeqSim MCP `runPipeline` and `runFieldEconomics` tools.
 
 ## Related Skills

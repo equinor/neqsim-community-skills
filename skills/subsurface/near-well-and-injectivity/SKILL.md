@@ -1,9 +1,9 @@
 ---
 name: neqsim-near-well-and-injectivity
 calculation_basis: "neqsim-java"
-version: "0.2.0"
-description: "Derive what the rock will give and take, and hand it to NeqSim: productivity and injectivity indices, their evolution as saturation fronts develop, and the SCAL basis behind them. Standardises on OPM Flow as the reservoir simulator, pyscal for relative permeability and resdata for output, and covers converting a NeqSim compositional fluid into a black-oil PVT table that OPM Flow will actually accept. USE WHEN: a productivity or injectivity index is about to be assumed, injectors must be checked against a voidage requirement, productivity decay through the bubble point matters, a NeqSim fluid must become a PVTO/PVDG/PVTW deck section, or an Eclipse-format reservoir model must be built and run."
-last_verified: "2026-08-12"
+version: "0.3.0"
+description: "Derive what the rock will give and take, and hand it to NeqSim: productivity and injectivity indices, their evolution as saturation fronts develop, and the SCAL basis behind them. Standardises on OPM Flow as the reservoir simulator, pyscal for relative permeability and resdata for output, and covers converting a NeqSim compositional fluid into a black-oil (PVTO/PVDG) or gas-condensate (VAPOIL/PVTG/PVDO) PVT table that OPM Flow will actually accept. USE WHEN: a productivity or injectivity index is about to be assumed, injectors must be checked against a voidage requirement, productivity decay through the bubble point matters, a gas condensate needs retrograde dropout and condensate banking represented, a reservoir model must be sized backwards from a mandated production profile, a NeqSim fluid must become a PVTO/PVDG/PVTG/PVTW deck section, or an Eclipse-format reservoir model must be built and run."
+last_verified: "2026-09-04"
 requires:
   python_packages: [pyscal, resdata, numpy]
   java_packages: [neqsim]
@@ -213,6 +213,121 @@ RSVD
   653.3 47.47901
   738.3 47.47901 /
 ```
+
+## Gas condensates need vaporised oil, not black oil
+
+Before assuming black oil, **compute the dropout curve**: flash the fluid at
+reservoir temperature over a pressure sweep and read the retrograde liquid
+volume fraction. More than roughly 2–3 vol% peak dropout and a `PVDG` dry-gas
+model is indefensible — the liquid that banks up both removes hydrocarbon from
+the produced stream and cuts gas relative permeability.
+
+The lightest defensible formulation is **vaporised oil without dissolved gas**:
+
+```
+OIL  GAS  WATER  VAPOIL          -- note: no DISGAS
+PVTG   -- gas carrying condensate, Rv(p)
+PVDO   -- the dropped-out condensate as dead oil
+PVTW
+SWOF / SGOF
+```
+
+Treating the condensate as dead oil sidesteps the `PVTO` monotonicity minefield
+entirely while still capturing dropout and condensate banking.
+
+```
+PVTG
+--  Pgas      Rv           Bg          visc
+   350.00  0.00033481   0.0037600   0.043473
+           0.00000000   0.0037637   0.043430 /
+```
+
+Each record is a gas pressure followed by the saturated `Rv`, then continuation
+rows of decreasing `Rv` at that pressure, terminated by `/`.
+
+Validation that catches a bad table immediately:
+
+1. `Rv` at the top of the table must equal `1/GOR` of the wellstream.
+2. `Bg` strictly decreasing, `Rv` and viscosity strictly increasing with pressure.
+3. `PVDO` must span the **full** pressure range. Rows only exist where a liquid
+   phase exists, so above the dew point the table silently stops — and if the
+   reservoir starts above the dew point the initial state has no oil properties.
+   Extrapolate the trend over the missing nodes.
+
+### The EQUIL contact trap
+
+**The gas–oil contact must sit BELOW the reservoir base for an all-gas column.**
+Cells *below* a GOC are in the oil zone. Placing the GOC above the reservoir top
+— which feels right for a gas accumulation — initialises the entire column as
+oil, leaving the gas producers with no mobility. Flow then reports:
+
+```
+Error when inverting local well equations for well B-1
+Compute initial well solution for well B-1. Failed to converge in 30 iterations
+```
+
+That message means the **initial state** is invalid, not that the wells are
+wrong. Set the GOC equal to the water contact, below the model base. Note that a
+two-phase `GAS`+`WATER` run ignores the GOC completely, so if the same deck runs
+in two phases and fails in three, this is almost always why — it is the quickest
+isolation test available.
+
+### Unit trap in the NeqSim converter
+
+`BlackOilConverter` returns viscosity via `getViscosity()` with no unit
+argument, i.e. in **Pa·s**. Multiply by 1000 for the cP that decks expect.
+Likewise, water `Bw` must reference standard-condition density evaluated at
+15 °C on its own clone; reusing a reservoir-temperature system yields
+~935 kg/m³ instead of ~1000.
+
+## Matching a mandated production profile
+
+When the recoverable volume is an *input* — a planned profile that the model
+must reproduce — and no subsurface data exists, the usual workflow inverts:
+
+```
+recoverable gas
+  ÷ recovery factor achievable between Pi and the bottomhole-pressure floor
+  = gas initially in place
+  × Bgi  = hydrocarbon pore volume
+  ÷ (1 − Swc) = pore volume
+  ÷ (porosity × net-to-gross) = bulk volume  → choose the geometry
+```
+
+Leave net-to-gross as the closing free parameter. **State plainly in the report
+that the volume is an input and the model cannot defend it** — it can only test
+whether that volume is deliverable through the planned wells.
+
+Two further moves that make such a model defensible:
+
+- **Read the well count and phasing off the profile.** Step changes in the
+  reported annual rate are wells coming on. If the steps reproduce a published
+  development description, that is independent corroboration rather than a
+  fitted parameter.
+- **Model separate accumulations as separate compartments** joined by a `MULTX`
+  barrier. In full pressure communication a later drilling phase merely
+  accelerates the first accumulation and the profile step disappears.
+
+Use explicit per-well targets rather than group allocation:
+
+```
+WCONPROD
+  'B-1' 'OPEN' 'GRAT' 2* 234528.5 2* 100.0 /
+```
+
+A well that cannot deliver its share drops onto its pressure floor, which is
+precisely the deliverability signal the study is looking for. If you do use
+group control, the groups named in `WELSPECS` must be attached explicitly or a
+`FIELD` target never reaches the wells:
+
+```
+GRUPTREE
+  'BRIME' 'FIELD' /
+/
+```
+
+Symptom of the missing group tree:
+`Production group FIELD has no constraints active, setting control mode to NONE`.
 
 ## Common Mistakes
 

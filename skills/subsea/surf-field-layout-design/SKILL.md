@@ -264,6 +264,8 @@ open("layout.geojson", "w").write(json.dumps(layout.to_geojson()))
 | The block box does not match the operator's map | The block numbering assumption | Take the position from the Sodir wellbore layer |
 | The illustrated field is mirrored about its axis | `axis_bearing_deg` sign or the east/north convention | East leads with $\sin$, north with $\cos$; check the along-axis run reproduces the bearing |
 | Numbers on the slide disagree with the report | Facts typed into the figure by hand | Pass them as `KeyFact` read from the results file |
+| Hand-off hydraulics say the tie-back is infeasible | Beggs & Brill used on a low-liquid-fraction wet-gas line | Re-run with `TwoFluidPipe` before abandoning the concept |
+| Cooldown reports no hydrate risk on a wet line | The fluid file carries no water component | Check `isWaterPresent()`; load with `EclipseFluidReadWrite.read(file, true)` |
 
 ## Limitations
 
@@ -284,23 +286,44 @@ open("layout.geojson", "w").write(json.dumps(layout.to_geojson()))
 
 ## Related NeqSim Functionality
 
+The screening geometry this skill produces is meant to be replaced by real
+calculations. These are the classes that do it.
+
+- `neqsim.process.equipment.pipeline.RouteProfile` — turns a survey into the mesh
+  either pipe model wants. `fromDepths` handles the sign convention,
+  `withRiser` appends the riser, `resample` gives a uniform mesh, and
+  `getLowPointKp` returns the terrain-slug traps.
 - `neqsim.process.equipment.pipeline.TwoFluidPipe` — mechanistic two-fluid
-  flowline and riser hydraulics on the routed segments. Prefer it over
-  `PipeBeggsAndBrills` for a wet-gas tie-back: the Beggs & Brill two-phase
-  friction multiplier is extrapolated well below its calibration floor at low
-  liquid fraction and over-predicts the pressure drop badly. Always assert
-  `isSteadyStateConverged()` **and** `getSteadyStateIterationsUsed() > 1`.
-- `neqsim.process.equipment.pipeline.PipeBeggsAndBrills` — quick correlation
-  check; note it solves from a fixed **inlet** pressure, so iterate the inlet to
-  hit a required arrival pressure.
+  flowline and riser hydraulics. Prefer it over `PipeBeggsAndBrills` for a
+  wet-gas tie-back: the Beggs & Brill two-phase friction multiplier is
+  extrapolated well below its calibration floor at low liquid fraction and
+  over-predicts the pressure drop. Always assert `isSteadyStateConverged()`
+  **and** `getSteadyStateIterationsUsed() > 1`.
+- `neqsim.process.equipment.pipeline.PipeBeggsAndBrills` — correlation check.
+  `CalculationMode.CALCULATE_INLET_PRESSURE` with `setOutletPressure(...)` solves
+  the tie-back question directly: what inlet does the host's arrival pressure
+  demand? Read the answer from `getSolvedInletPressure()`.
+- `neqsim.process.mechanicaldesign.subsea.FlowlineSizeSelector` — replaces this
+  skill's velocity screen with a full API RP 14E candidate table. Evaluate it at
+  the **arrival** condition, where the mixture is least dense.
+- `neqsim.process.equipment.subsea.SubseaWell.calculateShutInWellheadPressure` —
+  the static-column pressure that sets the flowline design pressure.
 - `neqsim.process.equipment.reservoir.WellFlow` — well inflow at each tree.
-- `neqsim.process.equipment.subsea.SubseaWell`, `SubseaTree` — subsea equipment.
 - `neqsim.process.mechanicaldesign.pipeline.DnvStF101PipelineDesignCalculator` —
   replaces this skill's D/t screening geometry with a real pressure design.
+- `neqsim.process.mechanicaldesign.subsea.TiebackThermalDesign` — sweeps wall
+  thickness against insulation together, because the steel is part of the
+  cooldown thermal mass: a thinner wall needs more insulation for the same
+  no-touch time.
+- `neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzer` — no-touch time.
+  A fluid with **no water** reports `NO_HYDRATE_RISK` with an unbounded
+  no-touch time, which is right for a dry gas and indistinguishable from a wet
+  line whose file is missing water. Check `isWaterPresent()`, or
+  `setRequireWater(true)` to make it a gate. Add water with
+  `EclipseFluidReadWrite.read(file, true)`, and never call `setMixingRule` after
+  `read` (it wipes the file's BIC block).
 - `neqsim.process.mechanicaldesign.subsea.SURFCostEstimator` — turns the quantity
   take-off into a CAPEX estimate.
-- `neqsim.pvtsimulation.flowassurance.SurfCooldownAnalyzer` — insulation
-  thickness against a no-touch-time requirement.
 - The NeqSim MCP `runPipeline` and `runFieldEconomics` tools.
 
 ## Related Skills

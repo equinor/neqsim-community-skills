@@ -29,7 +29,14 @@ Community skills can be discovered and installed with the NeqSim CLI:
 neqsim skill list                    # browse the catalog
 neqsim skill install <skill-name>    # install a skill
 neqsim skill publish user/repo-name  # publish yours by creating a draft PR
+neqsim skill sync-packages           # install any deferred Python packages
+neqsim skill ensure <skill-name>     # install one skill's package on first use
 ```
+
+Skills that ship a Python package are installed editable, so re-running
+`neqsim skill install --all --force` only re-runs pip for a skill whose
+`pyproject.toml` changed. Add `--no-pip` to skip package installs entirely and
+run `neqsim skill sync-packages` afterwards.
 
 For this multi-skill repository, each skill is cataloged by a path such as `skills/process/separator-modelling/SKILL.md`.
 

@@ -124,16 +124,62 @@ $$W = W_0\exp\left[-\left(\frac{RT\ln(1/a)}{\beta E_0}\right)^2\right]$$
 (activated carbon, molecular sieve) treat the Kelvin number as an **upper bound**
 and expect the true tolerance to be lower.
 
+## Never specify two condensables independently
+
+Methanol and water are fully miscible and **co-condense**. A pore fills when their
+**combined** activity reaches the Kelvin onset, so a gas that is individually
+below saturation in both can still flood the sorbent. Screening them separately
+is the most common way to get this wrong.
+
+Use the activity sum:
+
+$$\sum_i \frac{y_i}{y_{sat,i}} \geq a_c(r) \quad\Rightarrow\quad \text{pore fills}$$
+
+so the allowance for the second contaminant is what the first leaves behind:
+
+```python
+a_water = y_water / y_sat_water
+a_methanol_allowed = onset - a_water          # onset from the Kelvin equation
+methanol_limit = max(0.0, a_methanol_allowed) * y_sat_methanol
+```
+
+A worked case at 115 bara and 1 °C over a 6 nm sorbent, where the gas holds only
+110 ppmv water in total:
+
+| Water | Methanol limit |
+|---|---|
+| 0 ppmv | 1 200 ppmv |
+| 25 ppmv | 890 ppmv |
+| 50 ppmv | 570 ppmv |
+| 100 ppmv | **0 — water alone fills the pore** |
+
+Cross-check the result with
+`ThermodynamicOperations.capillaryDewPointTemperatureFlash(poreRadiusM)` on the
+real multicomponent mixture: condensation is expected when the capillary dew
+point rises above the bed temperature. In the case above the two methods agree,
+and the capillary dew point sits 1.2–1.4 °C **above** the bulk dew point — which
+is precisely the margin a "no free liquids" specification fails to capture.
+
 ## Rigorous route in NeqSim
 
 For a multicomponent gas where several contaminants can co-condense (methanol
 **and** water is the usual case), do not add limits component by component. Use:
 
 - `neqsim.physicalproperties.interfaceproperties.solidadsorption.CapillaryCondensationModel`
-  with `setRelativeSaturationBasis(FUGACITY)` and
-  `getMaxAllowableMoleFraction(component, poreRadiusNm, phase)`, iterated to a
-  fixed point because an associating contaminant's fugacity coefficient depends
-  on its own concentration; or
+  with `setSaturationMoleFraction(component, ySat)` and
+  `setRelativeSaturationBasis(SATURATION_MOLE_FRACTION)` — the exact,
+  flash-grounded basis — then `getMaxAllowableMoleFraction(component, poreRadiusNm, phase)`.
+  The `FUGACITY` basis is also available but references a hypothetical *pure*
+  liquid, so it carries a bias of about 14 % at 70 bara and can report a limit
+  above bulk saturation unless the saturation mole fraction is supplied to cap it;
+- `CapillaryCondensationModel.microporeFillingFraction(a, T, betaE0, beta)` for
+  the micropore regime, and the constant `KELVIN_VALIDITY_RADIUS_NM`;
+- `neqsim.process.equipment.adsorber.MercuryRemovalBed.assessContaminant(name, ySat)`
+  to screen a contaminant against a guard bed directly. It picks Kelvin or
+  micropore filling from the sorbent pore radius, returns the relative saturation,
+  the Kelvin onset, the ppmv limit and the blocked pore fraction, and
+  `applyContaminantDegradation(...)` folds that blocked fraction into the bed's
+  capacity instead of a hand-picked degradation factor;
 - `ThermodynamicOperations.capillaryDewPointTemperatureFlash(poreRadiusM)` to get
   the pore dew-point temperature of the real mixture directly.
 

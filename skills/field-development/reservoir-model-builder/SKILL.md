@@ -1,9 +1,9 @@
 ---
 name: neqsim-reservoir-model-builder
 calculation_basis: "screening"
-version: "0.2.0"
-description: "Set up a screening-level reservoir model from whatever data exists, on a data-maturity ladder from a single public headline volume up to a full static-model parameter set, and refine it as data arrives. USE WHEN: a task needs a reservoir model for a field where only open data is available (for example an NCS field on public resource pages), needs a best-guess structural model when there is NO seismic, log or contact data at all (assumed play-typical trap style, layered stratigraphy, fluid contact and culmination solved to honour published volumes, structure-aware well placement, and a full assumption register), needs volumetrics from area/net pay/porosity/Sw, needs hydrostatic pressure and geothermal temperature defaults from depth, needs a recovery factor and drive mechanism from analogues, needs a well count and productivity index from permeability, or needs a NeqSim SimpleReservoir/WellFlow specification with a provenance trail and a ranked data-acquisition plan."
-last_verified: "2026-09-04"
+version: "0.3.0"
+description: "Set up a screening-level reservoir model from whatever data exists, on a data-maturity ladder from a single public headline volume up to a full static-model parameter set, and refine it as data arrives. USE WHEN: a task needs a reservoir model for a field where only open data is available (for example an NCS field on public resource pages), needs a best-guess structural model when there is NO seismic, log or contact data at all (assumed play-typical trap style, layered stratigraphy, fluid contact and culmination solved to honour published volumes, structure-aware well placement, and a full assumption register), needs volumetrics from area/net pay/porosity/Sw, needs hydrostatic pressure and geothermal temperature defaults from depth, needs a recovery factor and drive mechanism from analogues, needs a well count and productivity index from permeability, needs to turn an ALREADY-BUILT static model (retrieved grid dimensions plus PORO/PERMX/NTG/SATNUM/EQLNUM cell arrays) into validated OPM Flow GRID and PROPS include files while catching the failure modes that produce a deck which runs and is wrong (array length mismatch, zero-based region arrays, fractions stored in percent, PERMZ left equal to PERMX, undefined sentinels) and reconciling the rebuilt in-place volume against a reported P90/P50/P10, or needs a NeqSim SimpleReservoir/WellFlow specification with a provenance trail and a ranked data-acquisition plan."
+last_verified: "2026-09-10"
 requires:
   python_packages: []
   java_packages: []
@@ -435,6 +435,71 @@ figures an engineer can argue with.
 It does not buy a subsurface interpretation. Everything geometric is a
 hypothesis, and the sensitivity of the answer to that hypothesis should be
 quoted alongside the answer.
+
+## Reusing a static model somebody already built
+
+The opposite of the sections above: the grid, porosity, permeability and region
+arrays already exist — retrieved from a data platform, an RMS export or a CSV —
+and the task is to get them into an OPM Flow deck without corrupting them in
+transit.
+
+That is a validation problem, not a modelling one. A deck that fails to parse
+announces itself; the mistakes that matter here all produce a deck that **runs
+and is wrong**:
+
+| Mistake | Why it stays quiet |
+| --- | --- |
+| array length ≠ `nx*ny*nz` | padded or truncated, so every later cell holds a neighbour's value |
+| zero-based region array | Eclipse regions are one-based; a `0` silently falls into region 1 |
+| porosity or NTG in percent | initialises fine, pore volume ~100× too large |
+| `PERMZ` left equal to `PERMX` | removes the barrier to coning — optimistic, not broken |
+| sentinel (`-999`) in an inactive cell | harmless until `ACTNUM` is regenerated elsewhere |
+
+```python
+from reservoir_model_builder import (
+    GridDimensions, StaticModelArrays, build_static_model_deck_input,
+    reconcile_volume,
+)
+
+grid = GridDimensions(nx=120, ny=90, nz=24, source="published IJK grid")
+model = StaticModelArrays(grid=grid)
+model.add("PORO",  poro,  unit="fraction", source="geomodel: poro")
+model.add("PERMX", permx, unit="mD",       source="geomodel: KLOGH")
+model.add("NTG",   ntg,   unit="fraction", source="geomodel: NTG")
+model.add("SATNUM", satnum, unit="index",  source="geomodel: SATNUM")
+
+report = build_static_model_deck_input(model, kv_kh=0.1)
+report["deck_writable"], report["blocked_because"]
+report["validations"]      # per keyword: count, min, max, issues
+report["adjustments"]      # every correction applied, and why
+report["include_files"]    # poro.inc, permx.inc, ... only if writable
+```
+
+Three refusals are deliberate:
+
+- **No default kv/kh.** Without `kv_kh` the build is blocked rather than writing
+  `PERMZ = PERMX`. The assumption has to be stated, because it is the one that
+  most changes the recovery.
+- **No silent rebasing.** A zero-based region array blocks unless
+  `rebase_zero_based_regions=True`, and then the shift appears in `adjustments`
+  and in the include-file comment.
+- **No geometry invention.** `SPECGRID` carries the dimensions; `COORD` and
+  `ZCORN` must come from the source grid and cannot be rebuilt from cell arrays.
+
+Finish with the one check the array validation cannot do — every unit, ordering
+and contact error moves the volume:
+
+```python
+reconcile_volume(computed_stoiip_m3=stoiip, reported_p50_m3=19.3e6,
+                 reported_p90_m3=15.8e6, reported_p10_m3=22.9e6)
+# -> ratio, deviation_fraction, within_p90_p10, match, and a ranked diagnosis
+#    when it fails: percent vs fraction, m3 vs rm3, TVD vs TVDSS, NTG counted twice
+```
+
+Retrieval from a governed platform is a separate concern: on Equinor
+infrastructure the enterprise `enterprise-osdu-data-platform` skill resolves the
+model in the Reservoir DDMS, maps published property names to Eclipse keywords
+and reports dataspace access, then hands the arrays here.
 
 ## Validation Checklist
 

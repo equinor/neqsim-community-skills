@@ -622,6 +622,15 @@ skills:
     tags: [process, reliability, availability, iso14224, oreda, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-ageing-life-extension-screening
+    version: "0.1.0"
+    description: "Educational ageing-trend and remaining-life screening for a repairable equipment population from its corrective-failure history: Laplace centroid trend test, Crow-AMSAA / NHPP power-law intensity fit, projection of the failure load to a required end-of-life year, and a maintain-versus-replace economic crossover. USE WHEN: a task asks whether equipment is degrading with age, whether a failure history shows a worsening trend, how many failures to expect between now and a life-extension target year, or whether to keep repairing versus replace, before a qualified life-extension or technical-condition assessment."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/ageing-life-extension-screening/SKILL.md"
+    tags: [process, reliability, ageing, life-extension, remaining-life, crow-amsaa, laplace-trend, rocof, screening, education]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-artificial-lift-screening
     version: "0.1.0"
     description: "Educational artificial-lift feasibility screening of gas lift versus ESP against a simple IPR. USE WHEN: a task needs a public, screening-level check of whether a well meets a target rate by natural flow, gas lift, or ESP before detailed artificial-lift design."

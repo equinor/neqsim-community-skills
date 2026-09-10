@@ -1,9 +1,9 @@
 ---
 name: neqsim-reference-fluid-synthetic-generation
 calculation_basis: "screening"
-version: "0.1.0"
-description: "Public helpers to generate representative or synthetic fluid cases from a common reference fluid by adjusting a split/characterization factor, match that factor to measured PVT/separator data, and blend well/fluid compositions into a field composition by molar-rate allocation. USE WHEN: a task must calibrate a heavy-end split factor against measurements, produce field-level or per-case representative fluids from a reference model, or combine several wells/fluids into one allocated field fluid, before rigorous NeqSim characterization."
-last_verified: "2026-07-14"
+version: "0.2.0"
+description: "Public helpers to generate representative or synthetic fluid cases from a common reference fluid by adjusting a split/characterization factor, match that factor to measured PVT/separator data, blend well/fluid compositions into a field composition by molar-rate allocation, and — when there is NO PVT report and possibly no sample at all — build a declared best-guess fluid basis from fundamentals and named analogues: reservoir temperature from a provincial geothermal gradient, fluid type from GOR/degAPI bands, GOR and stock-tank gravity interpolated on an analogue depth trend with low/base/high cases, a seed light-ends + C7+ cut composition ready for a NeqSim EOS characterization, a per-parameter provenance and assumption register, and a ranked data-acquisition plan. USE WHEN: a task must calibrate a heavy-end split factor against measurements, produce field-level or per-case representative fluids from a reference model, combine several wells/fluids into one allocated field fluid, or establish a fluid for a discovery or prospect that has no laboratory PVT, before rigorous NeqSim characterization."
+last_verified: "2026-09-10"
 requires:
   python_packages: []
   java_packages: []
@@ -31,6 +31,8 @@ characterization call, so the same factor drives both the split and the match.
 
 ## When to Use
 
+- When there is **no PVT study at all** — a discovery, a prospect, an early
+  concept — and a reservoir model still needs a fluid. See *No PVT data* below.
 - When you have a **common reference EOS/fluid** and want field-specific or
   per-case fluids by adjusting one heavy-end split factor (the "common factor"
   idea: reuse one characterization method with field-specific calibration).
@@ -40,6 +42,99 @@ characterization call, so the same factor drives both the split and the match.
   one representative field composition.
 - When a complete PVT study is unavailable and you must generate a usable fluid
   from a reference plus available measurements.
+
+## No PVT data: build a best guess and say so
+
+A reservoir model needs a fluid long before a laboratory PVT study exists, and
+often before a sample has been taken. The alternative to guessing silently is
+to guess explicitly.
+
+```python
+from reference_fluid import build_analogue_fluid_basis
+
+basis = build_analogue_fluid_basis(
+    depth_tvdss_m=3590.0,
+    province="northern_north_sea",
+    formation="Brent",
+    water_depth_m=381.0,
+    measured_temperature_C=129.0,     # anything measured is used and labelled
+    measured_pressure_bara=542.0,     # ... and anything absent is derived
+)
+basis.targets["gor_sm3_sm3"]      # value + provenance + GOR DEFINITION
+basis.seed["c7_plus_cuts"]        # ready for addTBPfraction / addPlusFraction
+basis.assumptions                 # each with the measurement that retires it
+basis.acquisition_plan            # ranked by how much it reduces the answer
+```
+
+### Derive temperature. Do not derive pressure.
+
+This is the asymmetry that matters, and it is evidence-backed. On a Middle
+Jurassic northern North Sea reservoir at 3590 m TVDSS:
+
+| Quantity | From a gradient | Measured | Verdict |
+| --- | --- | --- | --- |
+| Temperature | 130.0 °C | 129 °C | trustworthy |
+| Pressure | 399 bara (hydrostatic) | **542 bara** | **wrong by 163 bar** |
+
+A seabed temperature and a provincial geothermal gradient reproduce reservoir
+temperature to about a degree. Overpressure cannot be predicted from depth at
+all, and 100–200 bar of it is routine in deep sections. So
+`estimate_conditions()` returns a derived temperature marked `derived` with a
+confidence note, and a derived pressure marked **`placeholder`** carrying a
+warning and the list of what it blocks: undersaturation, the depletion path,
+the well count, the drive mechanism.
+
+Never present a study built on a derived pressure as anything but conditional
+on an RFT/MDT measurement.
+
+### Fluid type before anything else
+
+`classify_fluid_type(gor, api)` places the fluid in the conventional GOR bands
+(heavy oil → black oil → volatile oil → gas condensate → wet/dry gas), reports
+whether a black-oil PVTO/PVDG table is adequate, and cross-checks the GOR
+against the stock-tank gravity. A GOR and a gravity that disagree mean one of
+them is wrong or the GOR is quoted on a different basis — which is the next
+trap.
+
+### The GOR definition trap
+
+An unqualified "GOR" is ambiguous, and the spread is not small. The same tuned
+volatile oil gave:
+
+| Definition | Value |
+| --- | --- |
+| single-stage flash from reservoir | 290 Sm3/Sm3 |
+| black-oil Rs at the bubble point (what the simulator uses) | 318 Sm3/Sm3 |
+| three-stage separator train (what a production test reports) | 259 Sm3/Sm3 |
+
+A spread of 58 Sm3/Sm3, about 20 % of the quoted number. `build_analogue_fluid_basis`
+takes a `gor_definition` argument and, when it is not supplied, records
+`"UNSTATED"` plus an assumption-register entry. `reconcile_gor_definitions()`
+reports the spread once several are known, so the size and direction of the
+correction stay visible.
+
+### Seed composition, and how to tune it
+
+`seed_composition()` returns a light-ends template for the classified fluid type
+plus a nine-cut C7+ set with molar masses and densities. Two rules travel with
+it because both were learned the hard way:
+
+- **Tune the C7+ mole fraction against GOR and a common density offset against
+  stock-tank density, each by bisection on a bracketed interval. Do not tune
+  molar masses.** A 2-D Newton step on (C7+ fraction, molar-mass multiplier)
+  runs to its bounds and produces a "C7" of 53 g/mol — a fluid that still
+  flashes and is not a C7.
+- **NeqSim `addTBPfraction`/`addPlusFraction` take kg/mol, not g/mol.** Passing
+  g/mol fails silently: critical temperatures in the thousands of kelvin, an
+  acentric factor near −1, and a standard-condition flash returning one phase
+  typed GAS with a liquid density.
+
+### Grade the result honestly
+
+`basis_confidence(basis)` counts how much of the basis is measured and returns
+`data-driven`, `partially data-driven`, `analogue`, or `conditional` when a
+placeholder is present. A production forecast inherits the grade of its fluid
+regardless of how good the static model is.
 
 ## Inputs
 

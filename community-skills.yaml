@@ -74,8 +74,8 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reference-fluid-synthetic-generation
-    version: "0.1.0"
-    description: "Public helpers to generate representative or synthetic fluid cases from a common reference fluid by adjusting a split/characterization factor, match that factor to measured PVT/separator data, and blend well/fluid compositions into a field composition by molar-rate allocation. USE WHEN: a task must calibrate a heavy-end split factor against measurements, produce field-level or per-case representative fluids from a reference model, or combine several wells/fluids into one allocated field fluid, before rigorous NeqSim characterization."
+    version: "0.2.0"
+    description: "Public helpers to generate representative or synthetic fluid cases from a common reference fluid by adjusting a split/characterization factor, match that factor to measured PVT/separator data, blend well/fluid compositions into a field composition by molar-rate allocation, and — when there is NO PVT report and possibly no sample at all — build a declared best-guess fluid basis from fundamentals and named analogues: reservoir temperature from a provincial geothermal gradient, fluid type from GOR/degAPI bands, GOR and stock-tank gravity interpolated on an analogue depth trend with low/base/high cases, a seed light-ends + C7+ cut composition ready for a NeqSim EOS characterization, a per-parameter provenance and assumption register, and a ranked data-acquisition plan. USE WHEN: a task must calibrate a heavy-end split factor against measurements, produce field-level or per-case representative fluids from a reference model, combine several wells/fluids into one allocated field fluid, or establish a fluid for a discovery or prospect that has no laboratory PVT, before rigorous NeqSim characterization."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/pvt/reference-fluid-synthetic-generation/SKILL.md"

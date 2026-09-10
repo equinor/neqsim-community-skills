@@ -1,8 +1,8 @@
 ---
 name: neqsim-reservoir-model-builder
 calculation_basis: "screening"
-version: "0.3.0"
-description: "Set up a screening-level reservoir model from whatever data exists, on a data-maturity ladder from a single public headline volume up to a full static-model parameter set, and refine it as data arrives. USE WHEN: a task needs a reservoir model for a field where only open data is available (for example an NCS field on public resource pages), needs a best-guess structural model when there is NO seismic, log or contact data at all (assumed play-typical trap style, layered stratigraphy, fluid contact and culmination solved to honour published volumes, structure-aware well placement, and a full assumption register), needs volumetrics from area/net pay/porosity/Sw, needs hydrostatic pressure and geothermal temperature defaults from depth, needs a recovery factor and drive mechanism from analogues, needs a well count and productivity index from permeability, needs to turn an ALREADY-BUILT static model (retrieved grid dimensions plus PORO/PERMX/NTG/SATNUM/EQLNUM cell arrays) into validated OPM Flow GRID and PROPS include files while catching the failure modes that produce a deck which runs and is wrong (array length mismatch, zero-based region arrays, fractions stored in percent, PERMZ left equal to PERMX, undefined sentinels) and reconciling the rebuilt in-place volume against a reported P90/P50/P10, or needs a NeqSim SimpleReservoir/WellFlow specification with a provenance trail and a ranked data-acquisition plan."
+version: "0.4.0"
+description: "Set up a screening-level reservoir model from whatever data exists, on a data-maturity ladder from a single public headline volume up to a full static-model parameter set, and refine it as data arrives. Enforces a data-first workflow: six modelling ingredients (geometry, petrophysics, fluid, SCAL, contacts, volumes) each have a ranked source ladder, every rung above the one in use must carry a recorded outcome of used/blocked/absent before the model may be built, a blocked source is reported as an access request rather than an acquisition programme, and any downgrade is surfaced with what it gave up so recovery factor can be decomposed into displacement times sweep. USE WHEN: a task needs a reservoir model for a field where only open data is available (for example an NCS field on public resource pages), needs a best-guess structural model when there is NO seismic, log or contact data at all (assumed play-typical trap style, layered stratigraphy, fluid contact and culmination solved to honour published volumes, structure-aware well placement, and a full assumption register), needs volumetrics from area/net pay/porosity/Sw, needs hydrostatic pressure and geothermal temperature defaults from depth, needs a recovery factor and drive mechanism from analogues, needs a well count and productivity index from permeability, needs to turn an ALREADY-BUILT static model (retrieved grid dimensions plus PORO/PERMX/NTG/SATNUM/EQLNUM cell arrays) into validated OPM Flow GRID and PROPS include files while catching the failure modes that produce a deck which runs and is wrong (array length mismatch, zero-based region arrays, fractions stored in percent, PERMZ left equal to PERMX, undefined sentinels) and reconciling the rebuilt in-place volume against a reported P90/P50/P10, or needs a NeqSim SimpleReservoir/WellFlow specification with a provenance trail and a ranked data-acquisition plan."
 last_verified: "2026-09-10"
 requires:
   python_packages: []
@@ -288,6 +288,71 @@ and `addWaterInjector`. Two practical points:
 - Every producer and injector needs a non-zero flow rate; a zero-flow stream
   makes `runTransient` throw `setMolarComposition - Input totalFlow must be
   larger than 0`.
+
+## Search for everything first — simplify only when it is recorded
+
+A screening model is allowed to be simple. It is not allowed to be simple *by
+accident*. Two studies produce the same deck:
+
+- legitimate: "the published grid is behind an entitlement we do not have, so
+  we built a play-typical block and the forecast is an upper bound"
+- illegitimate: "we built a play-typical block"
+
+Only the first is a study. On Omega Sør an assumed homogeneous block
+over-predicted recovery by **62 %** against the operator's own recoverable
+range — not because the fluid or the in-place volume was wrong (both were
+matched) but because a single unfaulted block cannot do worse than near-piston
+displacement. The geology was never checked for; it was simply replaced.
+
+`reservoir_model_builder.data_first` makes that impossible to do silently.
+
+```python
+from reservoir_model_builder import data_first_gate, acquisition_plan
+
+gate = data_first_gate({
+    "geometry": [
+        {"source": "published_grid",      "outcome": "blocked", "detail": "401"},
+        {"source": "horizons_and_faults", "outcome": "blocked"},
+        {"source": "structure_map",       "outcome": "absent"},
+        {"source": "well_tops",           "outcome": "absent"},
+        {"source": "assumed_block",       "outcome": "used"},
+    ],
+    "petrophysics": [...], "fluid": [...], "scal": [...],
+    "contacts": [...],     "volumes": [...],
+})
+# gate["decision"]     'proceed' | 'blocked'
+# gate["mustDisclose"] what the downgrade gave up, per ingredient
+# gate["downgraded"]   ingredients not built from their best source
+
+acquisition_plan(gate)
+# ranked by how much each gap is currently being guessed, and it separates
+#   "access request -- the data exists and is catalogued"   (an ACL)
+# from
+#   "acquisition -- nothing of this kind was found"          (a programme)
+```
+
+Six ingredients have a ladder: `geometry`, `petrophysics`, `fluid`, `scal`,
+`contacts`, `volumes`. Three rules:
+
+1. **Every rung above the one in use needs a recorded outcome** — `used`,
+   `blocked` or `absent`. `not_attempted` is a blocker, because an unattempted
+   rung and an absent one yield the same model and opposite recommendations.
+2. **`blocked` ≠ `absent`.** Blocked is an entitlement finding and the fix is an
+   access request. Reporting it as missing data invents an acquisition
+   programme that nobody needs.
+3. **Any downgrade must be disclosed**, not only the bottom rung. Dropping from
+   the published grid to well tops still discards the faults.
+
+When the gate reports a downgrade on `geometry` or `scal`, the report must
+decompose recovery factor into displacement × sweep, so the reader can see
+which half is assumed:
+
+```
+RF = E_d (displacement, set by SCAL endpoints) × E_v (sweep, set by geometry)
+```
+
+That decomposition is what localised the Omega Sør disagreement to sweep alone,
+and it is what turned "the benchmark failed" into an actionable finding.
 
 ## Building a model when there is no subsurface data at all
 

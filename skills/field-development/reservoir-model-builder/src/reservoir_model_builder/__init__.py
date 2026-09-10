@@ -10,6 +10,14 @@ from .builder import (
     build_reservoir_model,
     summarize,
 )
+from .data_first import (
+    ATTEMPT_OUTCOMES,
+    DATA_LADDER,
+    acquisition_plan,
+    best_available,
+    data_first_gate,
+    rank_of,
+)
 from .parameters import (
     AQUIFER_VOLUME_MULTIPLE,
     GENERIC_DEFAULTS,
@@ -48,7 +56,12 @@ from .structure import (
 )
 
 __all__ = [
+    "acquisition_plan",
     "AQUIFER_VOLUME_MULTIPLE",
+    "ATTEMPT_OUTCOMES",
+    "best_available",
+    "DATA_LADDER",
+    "data_first_gate",
     "DATA_TIERS",
     "GENERIC_DEFAULTS",
     "GRID_KEYWORDS",
@@ -56,6 +69,7 @@ __all__ = [
     "KEYWORD_BOUNDS",
     "PARAMETER_WEIGHTS",
     "Parameter",
+    "rank_of",
     "RECOVERY_FACTOR",
     "REGION_KEYWORDS",
     "REQUIRED_KEYWORDS",

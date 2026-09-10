@@ -100,6 +100,15 @@ skills:
     tags: [flow-assurance, hydrate, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-firewater-deluge-design
+    version: "0.1.0"
+    description: "Educational fire-water and deluge coverage screening: area versus dedicated object demand, deluge nozzle-net sizing from both the flow and the spacing criterion, and fire-monitor screening with wind drift. USE WHEN: a task asks whether a process area has adequate fire-water coverage, how many deluge nozzles are needed, or whether monitors or passive fire protection can substitute for a fixed system."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/firewater-deluge-design/SKILL.md"
+    tags: [safety, firewater, deluge, active-fire-protection, nozzle-layout, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-relief-load-screening
     version: "0.1.0"
     description: "Educational fire-case relief load screening placeholder with public assumptions. USE WHEN: a task needs a quick fire-zone relief load triage and should be directed to validated API 520/521 and NeqSim methods for real relief sizing."

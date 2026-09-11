@@ -65,6 +65,64 @@ The Python class `FireWaterCoverageModel` uses open, published relations only.
   coverage loss is taken as linear in the drift over the characteristic target dimension.
 - Shadowing is a flag, not a model: a monitor cannot wet a surface it cannot see.
 
+## Python Usage Pattern
+
+```python
+from firewater_deluge_design import FireWaterCoverageModel
+
+model = FireWaterCoverageModel()
+
+demand = model.demand(
+    protected_area_m2=420.0,
+    area_rate_lpm_per_m2=10.0,
+    objects=(("20-VA-001", model.horizontal_vessel_surface_m2(3.0, 9.0), 10.0),),
+    duration_min=30.0,
+)
+print(demand.total_demand_m3_per_h, demand.object_to_area_ratio)
+
+layout = model.deluge_layout(
+    protected_area_m2=420.0,
+    required_density_lpm_per_m2=10.0,
+    nozzle_k_lpm_per_sqrt_bar=57.0,
+    nozzle_min_pressure_barg=2.0,
+    max_spacing_m=3.7,
+    operating_pressure_barg=3.5,
+)
+print(layout.nozzle_count, layout.governing_criterion, layout.grid_spacing_m)
+
+monitors = model.monitor_screening(
+    target_area_m2=420.0,
+    required_density_lpm_per_m2=10.0,
+    monitor_count=2,
+    monitor_flow_lpm=2400.0,
+    wind_speed_m_s=12.0,
+    fall_height_m=12.0,
+)
+print(monitors.effective_density_lpm_per_m2, monitors.verdict)
+```
+
+## Validation Checklist
+
+- [ ] The application rate comes from the governing project standard, not from the
+      default: 10 (l/min)/m² for process areas, 20 for wellheads and riser balconies.
+- [ ] Object surfaces are exposed wetted surfaces, not plan footprints.
+- [ ] The nozzle count reports `governing_criterion`; a flow-governed count has been
+      cross-checked against the maximum permitted spacing.
+- [ ] `pressure_adequate` and `density_met` are both true, or the deficit is stated.
+- [ ] The duration used for `water_volume_m3` is traceable to the project basis.
+- [ ] Monitor results are reported with the wind speed they assume.
+- [ ] The result is presented as a screening input to a hydraulic network calculation.
+
+## Common Mistakes
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Nozzle count too low, dry patches in the area | Sized on the flow criterion alone | Take the larger of the flow and coverage counts; check `governing_criterion` |
+| Higher-K nozzles do not reduce the count | The layout is spacing-governed | Reduce the protected area or accept the grid; `K` cannot fix overlap |
+| Demand far below expectation | Object surfaces entered as footprints | Use exposed wetted surface, e.g. `horizontal_vessel_surface_m2()` |
+| Monitor concept looks adequate | Screened at zero wind | Re-run at the design wind speed and report `verdict` |
+| Passive fire protection reduced because deluge was added | Substitution applied in the wrong direction | Keep passive protection; the rule runs one way only |
+
 ## Interpretation
 
 - `object_to_area_ratio` well below 1 means selective protection of the hydrocarbon-bearing
@@ -90,3 +148,14 @@ The Python class `FireWaterCoverageModel` uses open, published relations only.
 - `neqsim-depressurization-screening` — inventory removal, the primary barrier for a
   pressurised system.
 - `neqsim-safety-function-coverage-screening` — whether the protective functions exist at all.
+
+## References
+
+- NORSOK S-001, Technical Safety — fire-water application rates and area coverage.
+- ISO 13702, Control and Mitigation of Fires and Explosions on Offshore Production
+  Installations.
+- NFPA 15, Standard for Water Spray Fixed Systems for Fire Protection — nozzle spacing
+  and density.
+- API RP 2030, Application of Fixed Water Spray Systems for Fire Protection in the
+  Petroleum and Petrochemical Industries.
+- NeqSim repository: https://github.com/equinor/neqsim

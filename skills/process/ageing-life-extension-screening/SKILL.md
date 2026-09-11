@@ -129,6 +129,30 @@ print(result.ageing_verdict, result.life_extension_verdict)
 
 A `replace` verdict is a *screening* signal. It has to be combined with the consequence side — for a safety-critical element, a barrier-performance and regulatory assessment governs, not the economics.
 
+## Validation Checklist
+
+- [ ] At least four usable corrective failure records, otherwise the verdict is
+      `insufficient-data-for-decision` and no rate is reported.
+- [ ] The data-quality gate above has been walked: migration date, mid-window tag
+      creation, yard stays, and campaign inspections all screened out.
+- [ ] The same trend has been computed on a plant-wide control population and both
+      are reported.
+- [ ] `observation_years` covers operating time only, with non-operating periods
+      subtracted.
+- [ ] Costs are on one basis (same currency, same year) and the discount rate is stated.
+- [ ] The verdict is presented as screening, with the consequence side handled
+      separately for safety-critical elements.
+
+## Common Mistakes
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Strong `improving` trend with no engineering reason | Legacy records stamped on the migration date | Truncate the series to start after the migration |
+| Strong `deteriorating` trend across a whole plant | Notification practice changed, not the equipment | Compare against the plant-wide control rate |
+| Rate jumps in one year | A campaign inspection raised a burst of notifications | Treat the campaign as one event or screen it out |
+| Availability looks worse than field experience | Non-operating periods counted as exposure | Subtract yard stays from `observation_years` |
+| `replace` on a protective function | Economics used alone | Add the barrier-performance and regulatory assessment |
+
 ## Related Skills and Agents
 
 - `neqsim-reliability-data-screening` — MTBF / availability once a failure rate is agreed. Use this skill first to establish whether that rate is *constant*; use that skill second to turn it into availability.
@@ -143,3 +167,13 @@ A `replace` verdict is a *screening* signal. It has to be combined with the cons
 - The NHPP assumes minimal repair; a genuinely as-good-as-new renewal is not represented.
 - Verdicts are driven by open thresholds, not by any operator's acceptance criteria.
 - No failure-mode resolution: the projection covers all corrective failures together. Split the series by failure mode when one mode dominates.
+
+## References
+
+- ISO 14224, Collection and Exchange of Reliability and Maintenance Data for Equipment.
+- NORSOK Z-008, Risk Based Maintenance and Consequence Classification.
+- Crow, L. H., Reliability Analysis for Complex, Repairable Systems, in Reliability and
+  Biometry, SIAM, 1974 — the Crow-AMSAA / NHPP power-law model.
+- Ascher, H., and Feingold, H., Repairable Systems Reliability, Marcel Dekker, 1984 —
+  the Laplace trend test and the minimal-repair assumption.
+- NeqSim repository: https://github.com/equinor/neqsim

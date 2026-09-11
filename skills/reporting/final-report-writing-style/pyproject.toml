@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-final-report-writing-style"
+version = "0.1.0"
+description = "Final-document routing for the NeqSim community writing styles."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[tool.setuptools]
+packages = []

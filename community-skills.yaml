@@ -6,10 +6,37 @@
 # To publish a skill, submit the corresponding entry to the main NeqSim repo.
 
 catalog_version: "1.0"
-last_updated: "2026-07-11"
+last_updated: "2026-09-11"
 trust: community
 
 skills:
+  - name: neqsim-final-report-writing-style
+    version: "0.1.0"
+    description: "Select and apply prose_english or standard_engineering_english only when generating a final engineering report or summary. USE WHEN: the reporting step is ready to compose final narrative content, or the user explicitly requests either writing style for a generated document. Do not activate during analysis, working notes, ordinary chat, code generation, or source extraction."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/reporting/final-report-writing-style/SKILL.md"
+    tags: [reporting, writing, style-selection, summaries, communication]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-prose-english
+    version: "0.1.0"
+    description: "Write direct, concrete, intellectually honest prose for final engineering reports and generated summaries while avoiding canned AI formatting. USE WHEN: the final reporting step needs an executive summary, discussion, conclusion, decision rationale, root-cause narrative, or other interpretive prose, or when the user requests prose_english. Do not activate during analysis, ordinary chat, code generation, or working notes."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/reporting/prose-english/SKILL.md"
+    tags: [reporting, writing, prose, summaries, communication]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-standard-engineering-english
+    version: "0.1.0"
+    description: "Apply a concise controlled-language house style inspired by ASD-STE100 to final engineering documents and generated summaries. USE WHEN: the final reporting step produces procedures, equipment descriptions, technical requirements, warnings, cautions, checklists, method summaries, or other text that readers must interpret consistently, or when the user requests standard_engineering_english. Do not claim ASD-STE100 compliance."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/reporting/standard-engineering-english/SKILL.md"
+    tags: [reporting, writing, controlled-language, procedures, communication]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-document-intelligence-extraction
     version: "0.1.0"
     description: "Classify mixed engineering documents and images, route native text/table, OCR, and vision extraction, and produce source-traceable evidence packages with confidence and human-review gates. USE WHEN: a NeqSim task receives PDFs, scans, Word/Excel files, drawings, charts, photographs, or multiple conflicting engineering sources."

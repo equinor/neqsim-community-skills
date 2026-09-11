@@ -43,6 +43,12 @@ def _layout():
 
 
 class HorizonFromModelGridTest(unittest.TestCase):
+    def setUp(self):
+        try:
+            import numpy  # noqa: F401
+        except ImportError:
+            self.skipTest("numpy is required")
+
     def test_shape_and_values_are_preserved(self):
         nx, ny = 6, 4
         values = [float(i + 10 * j) for j in range(ny) for i in range(nx)]

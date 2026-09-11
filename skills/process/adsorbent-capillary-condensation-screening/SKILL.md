@@ -64,6 +64,27 @@ For methanol at 20 °C, $2\gamma V_m/RT = 0.75$ nm, so a 1.5 nm pore floods at
 - `warning`: `ok`, `watch`, or `condensation-expected`.
 - `assumptions`: the public assumptions applied.
 
+## Engineering Method
+
+`CapillaryCondensationScreeningModel.evaluate()` applies the open Kelvin
+equation only, in four steps:
+
+1. Kelvin length `L = G * gamma * Vm * cos(theta) / (R T)`, reported in nm.
+2. Onset relative saturation `a_c = exp(-L / r)` for pore radius `r`.
+3. Contaminant limit `y_max = a_c * y_sat`, also reported as ppmv. `y_sat` is
+   supplied by the caller and is **never** derived inside the model.
+4. If a current concentration is given, `relative_saturation = y / y_sat` and
+   `margin_ratio = y / y_max` set the warning: `ok`, `watch` above
+   `watch_margin` (default 0.5), `condensation-expected` at or above 1.0.
+
+`kelvin_valid` is false below `KELVIN_VALIDITY_RADIUS_NM` (2 nm), where the
+continuum meniscus breaks down and the Kelvin limit is an upper bound only; use
+`micropore_filling_fraction()` (Dubinin-Radushkevich volume filling) there.
+
+This is educational, screening-only logic for a **single** condensable. It does
+not flash the mixture, does not model pore size distribution, and is not a
+substitute for the validated NeqSim route described below.
+
 ## Critical coupling — get `y_sat` from an EOS, on a fugacity basis
 
 The screening result is only as good as `y_sat`. Two traps:
@@ -183,6 +204,29 @@ For a multicomponent gas where several contaminants can co-condense (methanol
 - `ThermodynamicOperations.capillaryDewPointTemperatureFlash(poreRadiusM)` to get
   the pore dew-point temperature of the real mixture directly.
 
+## Validation Checklist
+
+- [ ] `y_sat` came from an EOS flash against excess contaminant liquid, not from
+      `P_sat / P`, and CPA was used for an associating contaminant.
+- [ ] Temperature, surface tension, molar volume and pore radius are positive and
+      `0 < y_sat <= 1`.
+- [ ] The pore radius is at or above 2 nm, or `kelvin_valid` being false is
+      reported and the micropore route is used.
+- [ ] Every condensable that can co-condense is included through the activity
+      sum, not screened component by component.
+- [ ] The result is described as an educational screening indicator, with real
+      assessment redirected to the NeqSim classes above.
+
+## Common Mistakes
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Limit two to three times too tight | `y_sat` taken as `P_sat / P` | Flash against excess liquid on a real EOS |
+| `P_sat` off by an order of magnitude | Lee-Kesler used for methanol/water/glycol | Use CPA (`SystemSrkCPAstatoil`, `setMixingRule(10)`) |
+| Bed floods although both contaminants pass | Condensables screened independently | Use the activity sum `sum(y_i / y_sat,i) >= a_c` |
+| Limit looks generous on a molecular sieve | Micropores below 2 nm, `kelvin_valid` false | Treat as an upper bound and use `micropore_filling_fraction()` |
+| Onset near 1.0 for every pore | `pore_radius_nm` entered in µm or Å | Enter the representative pore radius in nm |
+
 ## Limitations
 
 - Screening only. Contact angle, pore geometry and the pore size distribution are
@@ -193,6 +237,18 @@ For a multicomponent gas where several contaminants can co-condense (methanol
   either component alone.
 - Says nothing about chemical degradation routes (support hydration, sulphur
   mobilisation, pellet attrition from slugs).
+
+## References
+
+- Thomson, W. (Lord Kelvin), On the Equilibrium of Vapour at a Curved Surface of
+  Liquid, Philosophical Magazine, 42 (1871) 448-452.
+- Gregg, S. J., and Sing, K. S. W., Adsorption, Surface Area and Porosity, 2nd
+  Edition, Academic Press, 1982 — Kelvin equation validity and the micropore limit.
+- Dubinin, M. M., and Radushkevich, L. V., Equation of the Characteristic Curve
+  of Activated Charcoal, Proc. Acad. Sci. USSR, 55 (1947) 331-333.
+- Kontogeorgis, G. M., et al., An Equation of State for Associating Fluids (CPA),
+  Ind. Eng. Chem. Res., 35 (1996) 4310-4318.
+- NeqSim repository: https://github.com/equinor/neqsim
 
 ## Related skills
 

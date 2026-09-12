@@ -42,7 +42,7 @@ For this multi-skill repository, each skill is cataloged by a path such as `skil
 
 ## Skill Catalog
 
-The complete source of truth is [`community-skills.yaml`](community-skills.yaml). The catalog currently contains 57 community skills across these public domains:
+The complete source of truth is [`community-skills.yaml`](community-skills.yaml). The catalog currently contains 60 community skills across these public domains:
 
 | Domain | Folder | Skills |
 | --- | --- | ---: |
@@ -51,6 +51,7 @@ The complete source of truth is [`community-skills.yaml`](community-skills.yaml)
 | Flow assurance | [skills/flow-assurance](skills/flow-assurance) | 7 |
 | Process | [skills/process](skills/process) | 25 |
 | PVT | [skills/pvt](skills/pvt) | 2 |
+| Reporting | [skills/reporting](skills/reporting) | 3 |
 | Safety | [skills/safety](skills/safety) | 8 |
 | Subsea | [skills/subsea](skills/subsea) | 6 |
 
@@ -65,6 +66,7 @@ Representative skills include:
 | [skills/safety/vacuum-collapse-screening](skills/safety/vacuum-collapse-screening) | `neqsim-vacuum-collapse-screening` | Public cooldown and external-pressure screening for blocked-in vessels |
 | [skills/subsea/subsea-layout-geometry](skills/subsea/subsea-layout-geometry) | `neqsim-subsea-layout-geometry` | Public subsea layout geometry and step-out screening |
 | [skills/environment/energy-emissions-screening](skills/environment/energy-emissions-screening) | `neqsim-energy-emissions-screening` | Field-life energy and CO2-equivalent emissions screening |
+| [skills/reporting/final-report-writing-style](skills/reporting/final-report-writing-style) | `neqsim-final-report-writing-style` | Selects `prose_english` or `standard_engineering_english` for final reports only |
 
 These skills are intentionally simple and public. They are suitable for learning, testing agent workflows, and demonstrating repository structure. They are not design tools.
 

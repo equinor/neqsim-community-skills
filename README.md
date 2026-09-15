@@ -38,6 +38,11 @@ Skills that ship a Python package are installed editable, so re-running
 `pyproject.toml` changed. Add `--no-pip` to skip package installs entirely and
 run `neqsim skill sync-packages` afterwards.
 
+> **`neqsim` not recognized?** Without administrator rights the console script
+> often does not land on PATH. Replace `neqsim` with `python -m neqsim_cli`
+> (`python3 -m neqsim_cli` on macOS/Linux) in every command above — the arguments
+> are identical. Run it from the same environment you installed into.
+
 For this multi-skill repository, each skill is cataloged by a path such as `skills/process/separator-modelling/SKILL.md`.
 
 ## Skill Catalog

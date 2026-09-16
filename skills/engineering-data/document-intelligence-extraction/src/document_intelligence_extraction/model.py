@@ -13,6 +13,9 @@ _WORD_EXTENSIONS = {".doc", ".docx", ".odt"}
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp", ".webp", ".heic"}
 _PRESENTATION_EXTENSIONS = {".ppt", ".pptx", ".odp"}
 
+#: Methods that produce a readable rendition without page or cell provenance.
+TRIAGE_ONLY_METHODS = frozenset({"markdown_normalize"})
+
 
 @dataclass(frozen=True)
 class ExtractionStep:
@@ -21,6 +24,11 @@ class ExtractionStep:
     method: str
     purpose: str
     required: bool = True
+
+
+def _markdown_normalize_step(purpose: str) -> "ExtractionStep":
+    """Return the optional token-efficient Markdown rendition step."""
+    return ExtractionStep("markdown_normalize", purpose, required=False)
 
 
 @dataclass(frozen=True)
@@ -66,6 +74,11 @@ class EvidenceFact:
             raise ValueError("confidence must be between 0 and 1")
         if self.page is None and not self.locator:
             raise ValueError("page or locator is required for traceability")
+        if self.method in TRIAGE_ONLY_METHODS:
+            raise ValueError(
+                f"method '{self.method}' is orientation-only and discards page and cell "
+                "provenance; re-extract the value with a provenance-preserving method"
+            )
         self.review_status = (
             "needs_review"
             if self.safety_critical or self.ambiguous or self.confidence < 0.85
@@ -158,6 +171,15 @@ class DocumentIntelligenceExtractor:
             steps.append(ExtractionStep("native_tables", "Recover table cells and reading order"))
             steps.append(ExtractionStep("render_pages", "Render pages for layout-preserving review"))
             steps.append(ExtractionStep("vision", "Interpret drawings, charts, symbols, and annotations"))
+            steps.append(
+                _markdown_normalize_step(
+                    "Produce a token-efficient Markdown rendition for reading and triage only"
+                )
+            )
+            warnings.append(
+                "A Markdown rendition of a PDF loses page boundaries; cite pages from "
+                "native_text, native_tables, or ocr output."
+            )
             return ExtractionPlan(str(path), "pdf", "mixed_document", tuple(steps), tuple(warnings))
 
         if extension in _IMAGE_EXTENSIONS:
@@ -189,6 +211,11 @@ class DocumentIntelligenceExtractor:
                         ExtractionStep("vision", "Interpret extracted visual content"),
                     )
                 )
+            steps.append(
+                _markdown_normalize_step(
+                    "Produce a token-efficient Markdown rendition for reading and triage only"
+                )
+            )
             return ExtractionPlan(str(path), extension.lstrip("."), "office_document", tuple(steps))
 
         if extension in _NATIVE_TEXT_EXTENSIONS:
@@ -196,7 +223,12 @@ class DocumentIntelligenceExtractor:
                 str(path),
                 extension.lstrip("."),
                 "text",
-                (ExtractionStep("native_text", "Read structured text without OCR"),),
+                (
+                    ExtractionStep("native_text", "Read structured text without OCR"),
+                    _markdown_normalize_step(
+                        "Normalize markup to Markdown, preserving headings, lists, and tables"
+                    ),
+                ),
             )
 
         return ExtractionPlan(

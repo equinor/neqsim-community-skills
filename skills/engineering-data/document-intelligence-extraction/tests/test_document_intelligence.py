@@ -16,8 +16,31 @@ def test_scanned_pdf_routes_through_ocr_tables_and_vision():
         "native_tables",
         "render_pages",
         "vision",
+        "markdown_normalize",
     ]
     assert plan.warnings
+
+
+def test_markdown_normalize_is_optional_and_never_a_provenance_source():
+    extractor = DocumentIntelligenceExtractor()
+
+    pdf_step = next(
+        step for step in extractor.plan("standard.pdf").steps if step.method == "markdown_normalize"
+    )
+    docx_methods = [step.method for step in extractor.plan("datasheet.docx").steps]
+
+    assert pdf_step.required is False
+    assert "markdown_normalize" in docx_methods
+    with pytest.raises(ValueError, match="orientation-only"):
+        EvidenceFact(
+            field="design_pressure",
+            value=150,
+            unit="bara",
+            original_text="Design pressure 150 bar(a)",
+            page=4,
+            method="markdown_normalize",
+            confidence=0.99,
+        )
 
 
 def test_images_and_workbooks_use_different_extraction_paths():

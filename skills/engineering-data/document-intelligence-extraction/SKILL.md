@@ -3,7 +3,7 @@ name: neqsim-document-intelligence-extraction
 calculation_basis: "data-retrieval"
 version: "0.1.0"
 description: "Classify mixed engineering documents and images, route native text/table, OCR, and vision extraction, and produce source-traceable evidence packages with confidence and human-review gates. USE WHEN: a NeqSim task receives PDFs, scans, Word/Excel files, drawings, charts, photographs, or multiple conflicting engineering sources."
-last_verified: "2026-07-11"
+last_verified: "2026-09-16"
 requires:
   python_packages: []
   java_packages: []
@@ -60,6 +60,33 @@ document control.
 7. Normalize values and units while preserving the exact original value, text, and unit.
 8. Gate every safety-critical, ambiguous, or confidence-below-0.85 fact as `needs_review`.
 9. Hand the evidence package to a document-type skill for engineering interpretation, then to the relevant NeqSim model.
+
+## Token-Efficient Reading (`markdown_normalize`)
+
+Engineering sources are long, and feeding raw parser output to a model wastes context. The
+optional `markdown_normalize` step produces a compact Markdown rendition of a source so the
+model can read, orient, and locate the relevant sections cheaply. A converter such as
+[MarkItDown](https://github.com/microsoft/markitdown) (`pip install 'markitdown[docx,pptx,xlsx,pdf]'`)
+is a suitable adapter.
+
+It is a **reading aid, not an extraction method**. Construct it as follows:
+
+- Use it to decide *which* pages, sheets, or sections matter; then run the provenance-preserving
+  step on that region only.
+- `markdown_normalize` is rejected as an `EvidenceFact.method`. The local PDF converter joins
+  pages into one string, so page boundaries are lost and a page citation taken from it would be
+  fabricated. Cite pages from `native_text`, `native_tables`, or `ocr`.
+- Do not use it for spreadsheets that carry engineering meaning in formulas, merged ranges,
+  hidden rows, or unit headers. Markdown flattening discards all four; use `structured_tables`.
+- It is not an OCR engine. A scanned PDF still yields near-empty Markdown, and image handling is
+  metadata plus optional model-vision captioning. OCR stays with `neqsim-pdf-ocr`.
+- Cloud layout backends (Azure Document Intelligence, Content Understanding) do emit page markers,
+  but they send the document off the machine. Treat that as an enterprise-governed route, not a
+  community default.
+
+Where it pays off most: Word and PowerPoint documents, HTML, CSV/JSON/XML, EPUB, and text-heavy
+PDFs such as standards, reports, and specifications that must be read in full before the fields
+worth extracting are known.
 
 ## Python Usage Pattern
 
@@ -122,6 +149,8 @@ File-level metadata should additionally preserve content hash, document title/nu
 | Spreadsheet units disappear | The sheet was flattened to CSV too early | Read cells, headers, merged ranges, and formulas natively |
 | Conflicting design values are silently replaced | Sources were merged by field name | Use `find_conflicts` and require review |
 | A plausible number enters a simulation | Provenance/review gates were skipped | Reject facts without original text and page/locator |
+| A cited page number does not contain the value | A page was inferred from a Markdown rendition | Take the page from `native_text`, `native_tables`, or `ocr` |
+| A scanned PDF converts to a near-empty Markdown file | `markdown_normalize` has no OCR of its own | Run the OCR step and chain to `neqsim-pdf-ocr` |
 
 ## Limitations
 

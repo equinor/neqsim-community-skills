@@ -207,12 +207,28 @@ class ControlAuthorityModel:
                 "controlled-variable variance is {:.1f}x higher while saturated; "
                 "disturbance rejection has been lost, not gained".format(variance_ratio)
             )
-        if isfinite(saturated.disturbance_gain) and abs(saturated.disturbance_gain) >= 0.8:
+        # A large gain on a poor fit says nothing, so the fit must carry it.
+        if (
+            isfinite(saturated.disturbance_gain)
+            and abs(saturated.disturbance_gain) >= 0.8
+            and isfinite(saturated.disturbance_r_squared)
+            and saturated.disturbance_r_squared >= 0.5
+        ):
             warnings.append(
-                "disturbance-to-process gain is {:.2f} while saturated, at or above "
-                "unity scale; the disturbance is passing through undamped".format(
-                    saturated.disturbance_gain
+                "disturbance-to-process gain is {:.2f} while saturated at r-squared "
+                "{:.2f}; the disturbance is passing through undamped".format(
+                    saturated.disturbance_gain, saturated.disturbance_r_squared
                 )
+            )
+        if (
+            isfinite(saturated.disturbance_r_squared)
+            and saturated.disturbance_r_squared < 0.25
+            and saturated.sample_count >= 3
+        ):
+            warnings.append(
+                "the suspected disturbance explains only {:.0%} of the saturated "
+                "variance; it is unlikely to be the cause being complained "
+                "about".format(max(saturated.disturbance_r_squared, 0.0))
             )
         if modulating.sample_count < 2:
             warnings.append(

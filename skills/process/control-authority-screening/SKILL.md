@@ -74,7 +74,9 @@ Split the controlled variable by regime and compare the spread. A variance ratio
 
 ### 4. Disturbance gain, fitted separately per regime
 
-Fit the controlled variable against the suspected disturbance in each regime. A gain that rises towards unity as saturation increases is the confirmation: with no authority left, the disturbance arrives undiluted. The mirror image is equally informative — in the motivating case the controlled variable moved only 0.34 units per unit of the suspected disturbance at r-squared 0.04, so that disturbance explained about 4 % of the variance being complained about, and it was not the problem.
+Fit the controlled variable against the suspected disturbance in each regime. A gain that rises towards unity as saturation increases is the confirmation: with no authority left, the disturbance arrives undiluted. The gain is only reported as confirmation when the fit supports it — a large slope through scattered points says nothing, so the undamped-passthrough warning requires an r-squared of at least 0.5.
+
+The mirror image is equally informative and is raised as its own finding. In the motivating case the controlled variable moved 0.34 units per unit of the suspected disturbance at r-squared 0.04, so that disturbance explained about 4 % of the variance being complained about — it was not the problem, and the numbers said so before the inspection campaign did.
 
 ### 5. Time to limit
 

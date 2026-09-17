@@ -77,6 +77,18 @@ def test_disturbance_omitted_gives_undefined_gain():
     assert math.isnan(result.gain_ratio)
 
 
+def test_large_gain_on_a_poor_fit_does_not_raise_the_undamped_warning():
+    model = ControlAuthorityModel()
+    result = model.evaluate(
+        controller_output=[100.0] * 8,
+        controlled_variable=[19.0, 21.5, 19.3, 22.4, 19.1, 22.8, 19.4, 23.1],
+        disturbance=[11.0, 11.2, 11.4, 11.6, 11.8, 12.0, 12.2, 12.4],
+    )
+    assert result.saturated.disturbance_r_squared < 0.5
+    assert not any("undamped" in line for line in result.warnings)
+    assert any("explains only" in line for line in result.warnings)
+
+
 def test_off_set_point_fraction():
     model = ControlAuthorityModel()
     result = model.evaluate(

@@ -6,7 +6,7 @@
 # To publish a skill, submit the corresponding entry to the main NeqSim repo.
 
 catalog_version: "1.0"
-last_updated: "2026-09-11"
+last_updated: "2026-09-17"
 trust: community
 
 skills:
@@ -530,6 +530,24 @@ skills:
     repo: "equinor/neqsim-community-skills"
     path: "skills/process/control-valve-cv-screening/SKILL.md"
     tags: [process, control-valve, cv, sizing, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-control-authority-screening
+    version: "0.1.0"
+    description: "Educational control-authority screening from a controller output history: saturation fraction at both stops, the trend in saturation across comparable periods, the variance and disturbance-gain ratio between saturated and modulating regimes, off-set-point time, and time-to-limit from the observed rate of change. USE WHEN: a controlled variable has got worse while the disturbance looks unchanged, a control valve is reported wide open or bottomed out, a loop is suspected of having stopped controlling, or a root-cause investigation must separate a growing disturbance from a loop that has run out of authority, before a validated loop performance review."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/control-authority-screening/SKILL.md"
+    tags: [process, control, valve-saturation, control-authority, disturbance-rejection, root-cause, operability, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-heat-exchanger-fouling-assessment
+    version: "0.1.0"
+    description: "Educational heat-exchanger performance monitoring and fouling assessment for plate and shell-and-tube coolers, condensers, and seawater or glycol cooling-medium loops: reduce an operating snapshot to an overall U-value, normalise it to design flow without scaling the deposit, separate fouling resistance from film resistance, rule out maldistribution, and convert the degradation into a capacity limitation and a cleaning interval. USE WHEN: a task asks whether a heat exchanger, cooler, condenser, or cooling-medium loop has fouled or degraded, by how much against its design U-value, what the degradation is costing in duty or capacity, or how often it must be cleaned."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/heat-exchanger-fouling-assessment/SKILL.md"
+    tags: [process, heat-exchanger, fouling, u-value, effectiveness-ntu, cleaning-interval, degradation, seawater, glycol, cooling-water, capacity-limitation, monitoring, screening, education]
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-noise-screening

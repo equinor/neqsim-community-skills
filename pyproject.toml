@@ -13,8 +13,8 @@ authors = [{ name = "NeqSim community" }]
 dependencies = []
 
 [project.optional-dependencies]
-test = ["pytest>=7.4", "PyYAML>=6.0", "jsonschema>=4.0"]
-dev = ["pytest>=7.4", "ruff>=0.5", "PyYAML>=6.0", "jsonschema>=4.0"]
+test = ["pytest>=7.4", "PyYAML>=6.0", "jsonschema>=4.0", "setuptools>=68"]
+dev = ["pytest>=7.4", "ruff>=0.5", "PyYAML>=6.0", "jsonschema>=4.0", "setuptools>=68"]
 
 # Packages are discovered by setup.py from every skills/<category>/<skill>/src
 # so `pip install -e .` makes all skill modules importable in one step.

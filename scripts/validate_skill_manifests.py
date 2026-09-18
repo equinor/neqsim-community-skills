@@ -18,6 +18,10 @@ every ``skills/*/*/SKILL.md`` frontmatter block:
    internal skills). Enforced by the schema and re-checked here for a clearer
    message.
 
+4. Plugin layout: the skill directory name must equal the frontmatter ``name``.
+   Agent-plugin loaders (VS Code, Copilot CLI, Claude) silently skip a skill
+   whose folder name differs from its declared name, so this is an error.
+
 Exit codes:
     0 - all checks pass (warnings allowed)
     1 - one or more errors found
@@ -103,6 +107,16 @@ def check_use_when(manifest):
     return []
 
 
+def check_directory_matches_name(manifest, skill_md):
+    name = manifest.get("name")
+    if isinstance(name, str) and skill_md.parent.name != name:
+        return [
+            "directory '{}' must equal frontmatter name '{}' (agent-plugin loaders skip "
+            "mismatched skills)".format(skill_md.parent.name, name)
+        ]
+    return []
+
+
 def validate_repo(repo_root):
     schema, schema_path = load_schema(repo_root)
     if schema is None:
@@ -127,6 +141,8 @@ def validate_repo(repo_root):
         for err in validate_against_schema(manifest, schema):
             errors.append("[{}] schema: {}".format(rel, err))
         for err in check_use_when(manifest):
+            errors.append("[{}] {}".format(rel, err))
+        for err in check_directory_matches_name(manifest, skill_md):
             errors.append("[{}] {}".format(rel, err))
 
     return errors, warnings

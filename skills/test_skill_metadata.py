@@ -50,6 +50,18 @@ def test_all_public_skills_have_required_frontmatter_and_sections() -> None:
             assert section in text, f"{skill_file} missing {section}"
 
 
+def test_skill_directory_name_equals_manifest_name() -> None:
+    # Agent-plugin loaders silently skip skills whose folder differs from `name`.
+    for skill_file in sorted(SKILL_ROOT.glob("*/*/SKILL.md")):
+        metadata = _frontmatter(skill_file.read_text(encoding="utf-8"))
+        assert skill_file.parent.name == metadata["name"], (
+            f"{skill_file.parent} must be named {metadata['name']!r}"
+        )
+        assert re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", metadata["name"]), (
+            f"{skill_file} name {metadata['name']!r} is not kebab-case"
+        )
+
+
 def test_catalog_preview_points_to_existing_skill_files() -> None:
     catalog_text = CATALOG.read_text(encoding="utf-8")
 

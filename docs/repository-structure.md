@@ -31,7 +31,7 @@ The NeqSim community catalog identifies each skill by repository and path:
 
 ```yaml
 repo: "equinor/neqsim-community-skills"
-path: "skills/process/separator-modelling/SKILL.md"
+path: "skills/process/neqsim-separator-modelling/SKILL.md"
 ```
 
 This lets one public repository host several independent skills.

@@ -37,3 +37,23 @@ def test_setup_discovers_every_skill_package() -> None:
     expected = set(_top_level_packages())
     assert set(root_setup.PACKAGE_DIR) == expected
     assert all(rel.startswith("skills/") for rel in root_setup.PACKAGE_DIR.values())
+
+
+def test_setup_discovers_packages_in_flat_plugin_layout(tmp_path) -> None:
+    """An agent plugin copies skills to ``skills/<skill>/`` without categories."""
+    import importlib.util
+    import shutil
+
+    flat_skills = tmp_path / "skills"
+    flat_skills.mkdir()
+    for src in SKILL_ROOT.glob("*/*/src"):
+        shutil.copytree(src, flat_skills / src.parent.name / "src")
+    shutil.copy2(REPOSITORY_ROOT / "setup.py", tmp_path / "setup.py")
+
+    spec = importlib.util.spec_from_file_location("flat_setup", tmp_path / "setup.py")
+    flat_setup = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(flat_setup)
+
+    assert set(flat_setup.PACKAGE_DIR) == set(_top_level_packages())
+    assert all(rel.count("/") == 3 for rel in flat_setup.PACKAGE_DIR.values()), \
+        "flat layout must map skills/<skill>/src/<package>"

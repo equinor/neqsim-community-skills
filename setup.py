@@ -1,4 +1,4 @@
-"""Aggregate every ``skills/<category>/<skill>/src/<package>`` into one install.
+"""Aggregate every ``skills/**/<skill>/src/<package>`` into one install.
 
 ``pyproject.toml`` holds the static project metadata; this file only supplies
 the dynamic ``packages`` / ``package_dir`` mapping that setuptools cannot
@@ -24,7 +24,10 @@ SKILLS = ROOT / "skills"
 def discover_packages():
     packages = []
     package_dir = {}
-    for src in sorted(SKILLS.glob("*/*/src")):
+    # Categorised source layout (skills/<category>/<skill>/src) and the flat
+    # layout an agent plugin is built into (skills/<skill>/src).
+    sources = list(SKILLS.glob("*/*/src")) + list(SKILLS.glob("*/src"))
+    for src in sorted(set(sources)):
         if not src.is_dir():
             continue
         rel_src = src.relative_to(ROOT).as_posix()

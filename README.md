@@ -43,7 +43,7 @@ run `neqsim skill sync-packages` afterwards.
 > (`python3 -m neqsim_cli` on macOS/Linux) in every command above — the arguments
 > are identical. Run it from the same environment you installed into.
 
-For this multi-skill repository, each skill is cataloged by a path such as `skills/process/separator-modelling/SKILL.md`.
+For this multi-skill repository, each skill is cataloged by a path such as `skills/process/neqsim-separator-modelling/SKILL.md`.
 
 ## Skill Catalog
 
@@ -64,14 +64,14 @@ Representative skills include:
 
 | Skill | Catalog name | Purpose |
 | --- | --- | --- |
-| [skills/process/separator-modelling](skills/process/separator-modelling) | `neqsim-separator-modelling` | Educational gas/liquid separator screening indicators |
-| [skills/pvt/e300-fluid-io](skills/pvt/e300-fluid-io) | `neqsim-e300-fluid-io` | Eclipse E300 fluid import/export and public water-parameter handling |
-| [skills/flow-assurance/produced-water-scale-screening](skills/flow-assurance/produced-water-scale-screening) | `neqsim-produced-water-scale-screening` | Public produced-water brine builder and scale screening |
-| [skills/process/teg-dehydration-modeling](skills/process/teg-dehydration-modeling) | `neqsim-teg-dehydration-modeling` | Runnable NeqSim TEG dehydration flowsheet guidance |
-| [skills/safety/vacuum-collapse-screening](skills/safety/vacuum-collapse-screening) | `neqsim-vacuum-collapse-screening` | Public cooldown and external-pressure screening for blocked-in vessels |
-| [skills/subsea/subsea-layout-geometry](skills/subsea/subsea-layout-geometry) | `neqsim-subsea-layout-geometry` | Public subsea layout geometry and step-out screening |
-| [skills/environment/energy-emissions-screening](skills/environment/energy-emissions-screening) | `neqsim-energy-emissions-screening` | Field-life energy and CO2-equivalent emissions screening |
-| [skills/reporting/final-report-writing-style](skills/reporting/final-report-writing-style) | `neqsim-final-report-writing-style` | Selects `prose_english` or `standard_engineering_english` for final reports only |
+| [skills/process/neqsim-separator-modelling](skills/process/neqsim-separator-modelling) | `neqsim-separator-modelling` | Educational gas/liquid separator screening indicators |
+| [skills/pvt/neqsim-e300-fluid-io](skills/pvt/neqsim-e300-fluid-io) | `neqsim-e300-fluid-io` | Eclipse E300 fluid import/export and public water-parameter handling |
+| [skills/flow-assurance/neqsim-produced-water-scale-screening](skills/flow-assurance/neqsim-produced-water-scale-screening) | `neqsim-produced-water-scale-screening` | Public produced-water brine builder and scale screening |
+| [skills/process/neqsim-teg-dehydration-modeling](skills/process/neqsim-teg-dehydration-modeling) | `neqsim-teg-dehydration-modeling` | Runnable NeqSim TEG dehydration flowsheet guidance |
+| [skills/safety/neqsim-vacuum-collapse-screening](skills/safety/neqsim-vacuum-collapse-screening) | `neqsim-vacuum-collapse-screening` | Public cooldown and external-pressure screening for blocked-in vessels |
+| [skills/subsea/neqsim-subsea-layout-geometry](skills/subsea/neqsim-subsea-layout-geometry) | `neqsim-subsea-layout-geometry` | Public subsea layout geometry and step-out screening |
+| [skills/environment/neqsim-energy-emissions-screening](skills/environment/neqsim-energy-emissions-screening) | `neqsim-energy-emissions-screening` | Field-life energy and CO2-equivalent emissions screening |
+| [skills/reporting/neqsim-final-report-writing-style](skills/reporting/neqsim-final-report-writing-style) | `neqsim-final-report-writing-style` | Selects `prose_english` or `standard_engineering_english` for final reports only |
 
 These skills are intentionally simple and public. They are suitable for learning, testing agent workflows, and demonstrating repository structure. They are not design tools.
 
@@ -89,8 +89,8 @@ python -m pytest
 Install a specific example skill in editable mode:
 
 ```bash
-python -m pip install -e skills/process/separator-modelling
-python skills/process/separator-modelling/examples/basic_separator_screening.py
+python -m pip install -e skills/process/neqsim-separator-modelling
+python skills/process/neqsim-separator-modelling/examples/basic_separator_screening.py
 ```
 
 The Python examples do not require confidential data. They detect whether the optional `neqsim` Python package is available and fall back to public placeholder logic when it is not installed.
@@ -123,7 +123,7 @@ A *harness* is any small driver program (a test, a script, a CLI, or the main Ne
 1. Install the skill package (from this repo or after `neqsim skill install <name>`):
 
    ```bash
-   python -m pip install -e skills/flow-assurance/hydrate-margin-check
+   python -m pip install -e skills/flow-assurance/neqsim-hydrate-margin-check
    ```
 
 2. Import the model and call it from your harness:

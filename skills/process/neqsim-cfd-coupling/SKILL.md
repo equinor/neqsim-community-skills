@@ -354,9 +354,13 @@ because the mesh study on the *reference* quantity looks perfect.
 
 ## Running the case in a container
 
-OpenFOAM is usually run from an image rather than a host install. **Everything the
-case writes lives inside the container filesystem unless it is on a bind mount**, so
-the case root must be mounted before the solver starts, not after it finishes.
+OpenFOAM has no native Windows build; it is Linux software, so it is usually run
+from an image rather than a host install. **On Windows, Docker Desktop (or WSL2)
+must be installed and running before any case in this skill can execute** — the
+case can still be built and written without it, but nothing solves until a
+Linux runtime is available. **Everything the case writes lives inside the
+container filesystem unless it is on a bind mount**, so the case root must be
+mounted before the solver starts, not after it finishes.
 
 ```bash
 docker run --rm \

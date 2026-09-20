@@ -115,7 +115,9 @@ well models, no relative permeability. Keep it for the CFD work in
 
 ### Getting Flow to run
 
-Flow is Linux software. On Windows use WSL2 or a container:
+Flow has no native Windows build; it is Linux software. **On Windows, Docker
+Desktop must be installed** — use it to build/run the container below, or use
+WSL2:
 
 ```dockerfile
 FROM ubuntu:24.04

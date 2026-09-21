@@ -142,6 +142,24 @@ docker run --rm -v "${PWD}/deck:/data" opm-flow:2026.04 CASE.DATA --output-dir=/
 `mpi-default-bin` is required even for a serial run, because the OPM binaries
 link against the MPI libraries.
 
+**Never point `--output-dir` at a OneDrive/SharePoint-synced folder.** The
+sync client locks the `UNRST` file while Flow is appending to it and the run
+aborts part-way with `EclOutput.cpp: fstream fileH not open for writing`.
+Mount the deck read-only, write to a local temp directory, and copy the
+output back into the task folder afterwards:
+
+```powershell
+$tmp = Join-Path $env:TEMP "opm_out"; New-Item -ItemType Directory -Force $tmp | Out-Null
+docker run --rm -v "${PWD}/deck:/data:ro" -v "${tmp}:/out" opm-flow:2026.04 /data/CASE.DATA --output-dir=/out
+Copy-Item -Recurse $tmp "${PWD}/deck/out"
+```
+
+Two deck items that fail only after SCHEDULE has parsed: `WELLDIMS` item 3 is
+the number of **non-FIELD groups** (a producer group plus an injector group
+needs `2`, not `1`), and a voidage-replacement water target is
+`q_oil * Bo / Bw`, not `q_oil` plus a margin — omit the Bo factor and a 250
+bara field falls below its bubble point within a decade.
+
 ## NeqSim compositional fluid → black-oil table
 
 This is the join between the two halves of the stack, and it is where the silent

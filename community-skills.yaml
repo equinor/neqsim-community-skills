@@ -717,3 +717,11 @@ skills:
     path: "skills/subsurface/neqsim-near-well-and-injectivity/SKILL.md"
     tags: [subsurface, wells, injectivity, productivity, relative-permeability, opm-flow, reservoir-simulation, black-oil, pyscal, resdata]
     min_neqsim_version: "3.7.0"
+  - name: neqsim-reservoir-3d-visualisation
+    version: "0.1.0"
+    description: "Render a reservoir simulation grid in 3D from its Eclipse-format output: cell-corner geometry from the EGRID so corner-point and box grids render identically, static properties from the INIT, dynamic properties from the UNRST, wells as tubes, crinkle cutaways that keep whole cells, threshold views that isolate remaining oil, and exploded layer views. USE WHEN: an OPM Flow or Eclipse run needs a presentation-grade 3D figure, a sweep or bypassed-oil claim needs visual evidence, a property field must be inspected for spatial correlation before it is trusted, or a reservoir illustration is going into a report or decision gate. Covers the vertical-exaggeration, camera-framing, corner-ordering and scalar-range traps that silently produce an empty or misleading picture."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-reservoir-3d-visualisation/SKILL.md"
+    tags: [subsurface, reservoir-simulation, visualization, 3d, pyvista, resdata, opm-flow, eclipse, sweep, reporting]
+    min_neqsim_version: "3.7.0"

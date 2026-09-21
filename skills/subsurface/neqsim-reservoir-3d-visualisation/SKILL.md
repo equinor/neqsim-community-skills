@@ -31,6 +31,42 @@ script intended.
 Do not use it to *measure* anything. Read numbers from the summary vectors; use
 the picture to show where they came from.
 
+## Inputs
+
+| Group | Fields |
+| --- | --- |
+| Geometry | `CASE.EGRID` (cell-corner geometry, valid for box or corner-point grids) |
+| Static properties | `CASE.INIT` (e.g. `PERMX`, `PORO`, `SATNUM`) |
+| Dynamic properties | `CASE.UNRST` (e.g. `SWAT`, `PRESSURE`, `SGAS`) — requires `RPTRST BASIC=2` in the deck |
+| Wells | Well trajectories/completions from the grid or a separate well-track source |
+| Presentation choices | Vertical exaggeration factor `VE`, colour-map range `clim`, crinkle-cut plane, threshold value |
+
+All inputs are the simulator's own output files — never hand-built geometry —
+so the picture matches what the simulator actually solved.
+
+## Outputs
+
+- A full-block static-property render (extent, layering, well placement).
+- A crinkle cutaway exposing vertical heterogeneity.
+- A threshold view isolating cells above/below a dynamic-property cutoff (e.g.
+  remaining oil).
+- An optional exploded-layer view.
+- Each figure's caption states the vertical-exaggeration factor and the `clim`
+  range used, per `neqsim-professional-reporting` conventions.
+
+## Engineering Method
+
+1. Read cell-corner geometry from the EGRID (never rebuild from `DXV`/`DYV`/`DZV`)
+   and permute Eclipse corner ordering to VTK hexahedron ordering.
+2. Negate depth to elevation and apply the stated vertical exaggeration.
+3. Re-centre the mesh on the origin before framing the camera.
+4. Attach static (`INIT`) and dynamic (`UNRST`, last report step) property
+   arrays as cell data.
+5. Render the full block, a crinkle cutaway, and a threshold view, each with an
+   explicit `clim`.
+6. Interpret only **location** claims from the figure (sweep, channelling,
+   bypassed-oil shape); take magnitudes from the summary vectors.
+
 ## Read the geometry from the EGRID, never rebuild it
 
 Rebuilding the mesh from `DXV`/`DYV`/`DZV` works only for a box. Reading the
@@ -54,7 +90,7 @@ ECL_TO_VTK = [4, 5, 7, 6, 0, 1, 3, 2]
 Get this wrong and the cells render as bow-ties — visible as dark self-
 intersecting facets rather than as an error.
 
-## The four traps that produce a wrong or empty picture
+## Common Mistakes
 
 | Trap | Symptom | Fix |
 | --- | --- | --- |
@@ -67,7 +103,7 @@ An invisible model is the dangerous one: the figure still has a title, a colour
 bar and a legend, so it looks like a rendering failure rather than a framing
 error, and a caption written from the intent will survive.
 
-## Core recipe
+## Python Usage Pattern
 
 ```python
 import numpy as np, pyvista as pv
@@ -151,6 +187,41 @@ If PyVista cannot be installed, an exposed-face renderer built on
 the faces whose neighbour is outside the shown cell set, and shade by layer
 index for a depth cue. It is markedly slower above ~50 000 cells and has no
 real lighting, so prefer PyVista when it is available.
+
+## Validation Checklist
+
+- [ ] Geometry read from the EGRID cell corners, not rebuilt from `DXV`/`DYV`/`DZV`.
+- [ ] Corner order permuted with `ECL_TO_VTK = [4, 5, 7, 6, 0, 1, 3, 2]` (no
+      bow-tie facets).
+- [ ] Mesh re-centred on the origin before `view_isometric()` / `reset_camera()`.
+- [ ] Vertical exaggeration factor chosen, applied, and stated in the caption.
+- [ ] `clim` set explicitly (not autoscaled) and held constant across compared
+      figures.
+- [ ] Cutaways use `crinkle=True` so cut faces show whole cells.
+- [ ] Any "bypassed oil" or "sweep" claim is checked against the summary
+      vectors, not read as a magnitude off the figure.
+- [ ] A rim of remaining oil at the model boundary is checked against well
+      placement/model extent before being reported as bypassed oil.
+
+## Limitations
+
+- Establishes **location**, not magnitude — pressures, saturations and volumes
+  must be read from the simulator's summary vectors.
+- A restart file (`UNRST`) only exists if the deck requested it
+  (`RPTRST BASIC=2`); without it, no dynamic-property view is possible.
+- The `matplotlib` fallback (no PyVista) is slow above ~50 000 cells and has no
+  real lighting/shadowing, so depth cues are weaker.
+- Headless Linux rendering needs `pv.start_xvfb()`; without a display or Xvfb,
+  off-screen rendering can fail silently.
+- Does not model or check flow-simulation validity — it only visualises
+  results a separate simulator (OPM Flow/Eclipse) already produced.
+
+## References
+
+- Eclipse Reference Manual — grid geometry, `EGRID`/`INIT`/`UNRST` file formats.
+- `resdata` (equinor/resdata) documentation — `Grid`, `ResdataFile` APIs.
+- PyVista documentation — `UnstructuredGrid`, `clip_box`, `threshold`, camera
+  and colour-map (`clim`) controls.
 
 ## Related Skills
 

@@ -1,9 +1,9 @@
 ---
 name: neqsim-near-well-and-injectivity
 calculation_basis: "neqsim-java"
-version: "0.3.0"
-description: "Derive what the rock will give and take, and hand it to NeqSim: productivity and injectivity indices, their evolution as saturation fronts develop, and the SCAL basis behind them. Standardises on OPM Flow as the reservoir simulator, pyscal for relative permeability and resdata for output, and covers converting a NeqSim compositional fluid into a black-oil (PVTO/PVDG) or gas-condensate (VAPOIL/PVTG/PVDO) PVT table that OPM Flow will actually accept. USE WHEN: a productivity or injectivity index is about to be assumed, injectors must be checked against a voidage requirement, productivity decay through the bubble point matters, a gas condensate needs retrograde dropout and condensate banking represented, a reservoir model must be sized backwards from a mandated production profile, a NeqSim fluid must become a PVTO/PVDG/PVTG/PVTW deck section, or an Eclipse-format reservoir model must be built and run."
-last_verified: "2026-09-04"
+version: "0.4.0"
+description: "Derive what the rock will give and take, and hand it to NeqSim: productivity and injectivity indices, their evolution as saturation fronts develop, and the SCAL basis behind them. Standardises on OPM Flow as the reservoir simulator, pyscal for relative permeability and resdata for output; covers converting a NeqSim compositional fluid into a black-oil (PVTO/PVDG) or gas-condensate (VAPOIL/PVTG/PVDO) PVT table OPM Flow accepts, and consuming a NeqSim-generated VFPPROD lift-curve table as a well THP control or NETWORK branch. USE WHEN: a productivity or injectivity index is about to be assumed, injectors must be checked against voidage, productivity decay through the bubble point matters, a gas condensate needs retrograde dropout represented, a reservoir model must be sized backwards from a mandated profile, a NeqSim fluid must become a PVT deck section, a flowline or tubing lift curve must enter the deck as VFPPROD, or an Eclipse-format model must be built and run."
+last_verified: "2026-09-21"
 requires:
   python_packages: [pyscal, resdata, numpy]
   java_packages: [neqsim]
@@ -349,6 +349,49 @@ GRUPTREE
 Symptom of the missing group tree:
 `Production group FIELD has no constraints active, setting control mode to NONE`.
 
+## Lift curves for the deck (VFPPROD)
+
+A bottomhole-pressure floor in `WCONPROD` assumes the wells can always lift what
+the rock gives. Once a flowline, riser or tubing string is the constraint, hand the
+simulator a `VFPPROD` table instead: `BHP[flow][THP][WFR][GFR][ALQ]` in standard
+surface volumes, generated from a NeqSim `PipeBeggsAndBrills` model of the real
+geometry. The generation recipe (surface-condition recombination, secant on inlet
+pressure, `EclipseVFPExporter`) lives in `neqsim-production-optimization`
+§ "Lift curves / VFPPROD"; this section is the deck side.
+
+```
+-- 'BHP' column = inlet pressure of the modelled segment; THP = its outlet pressure
+VFPPROD
+  1 350.0 'GAS' 'WGR' 'OGR' 'THP' '' 'METRIC' 'BHP' /
+  100000.0 200000.0 400000.0 700000.0 1000000.0 1500000.0 /   -- Sm3/d
+  30.0 50.0 70.0 90.0 /                                      -- bara
+  0.0 1.0E-5 5.0E-5 /                                        -- WGR Sm3/Sm3
+  2.0E-4 4.0E-4 8.0E-4 /                                     -- OGR Sm3/Sm3
+  0.0 /
+  1 1 1 1  35.97 35.80 36.91 40.61 45.79 60.07 /              -- THP WFR GFR ALQ indices, then BHP per flow
+  ...
+```
+
+How it is consumed decides what the table must describe:
+
+| Modelled segment | Datum | Deck usage |
+|---|---|---|
+| Tubing (bottomhole → wellhead) | well reference depth from `WELSPECS` | `WCONPROD` with a THP limit and the table number (items 10 and 11); the simulator solves IPR × VLP |
+| Flowline + riser (template → host) | inlet node depth (informational) | `NETWORK` in RUNSPEC; `BRANPROP 'TEMPLATE' 'HOST' <table> /` and `NODEPROP` fixing the host pressure; wells then see a template pressure that moves with total rate |
+
+Gas condensate: `'GAS' 'WGR' 'OGR'` (OGR ~ 1/GOR; GOR 2990 → 3.3e-4). Oil:
+`'OIL' 'WCT' 'GOR'`. Bracket the expected operating point on every axis — Flow
+extrapolates linearly outside the table and says nothing about it.
+
+Read the table before using it. A minimum in inlet pressure against rate (riser
+liquid loading below, friction above) marks the unstable region: a well held on
+THP below that rate will oscillate or die in the simulator exactly as it would in
+the field. Keep the low-rate points so the simulator sees the turning point, and
+report the minimum-stable rate as a result, not a numerical nuisance.
+
+The table carries no arrival temperature; keep it in a side file per point for the
+hydrate and cooldown hand-off (`neqsim-flow-assurance`).
+
 ## Common Mistakes
 
 Deck traps that cost a run each:
@@ -360,6 +403,8 @@ Deck traps that cost a run each:
 | horizontal well drains one cell | `COMPDAT` ranges over **K only** | emit one record per cell along the drain, with the `'Y'` (or `'X'`) direction flag |
 | injectors run away to the fracture limit | an explicit well target overrides group control | put the wells on `'GRUP'` in `WCONINJE` and set `GCONINJE ... 'VREP' 3* 1.0 /` |
 | absurd produced-water rates | no liquid limit on the producers | set `WCONPROD` item 7 to the tubing or ESP capacity |
+| wells produce at the pressure floor with no lift limit | `WCONPROD` BHP floor only, no `VFPPROD` | generate a lift-curve table from the tubing / flowline geometry and control on THP (see above) |
+| `VFPPROD` generated in kg/hr | `LiftCurveGenerator` sweeps mass rate; the exporter rejects it | recombine at standard conditions and sweep in Sm3/d |
 | Flow exits silently, no message | non-English locale | `LANG=C.UTF-8 LC_ALL=C.UTF-8` |
 
 ## Near-well radial models
@@ -540,6 +585,8 @@ different well.
 
 ## Chain to
 
+- `neqsim-production-optimization` (neqsim repo) — generating the `VFPPROD`
+  lift-curve table from a `PipeBeggsAndBrills` tubing or flowline model
 - `neqsim-api-patterns` — building the NeqSim wellbore and process model that
   consumes the inflow relationship
 - `neqsim-subsea-and-wells` — completion, casing and barrier design

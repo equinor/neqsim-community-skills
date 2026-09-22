@@ -726,8 +726,8 @@ Brill is calibrated for no-slip liquid fractions down to about 0.01–0.02; belo
 that its two-phase friction multiplier is extrapolated and ΔP is over-predicted
 by 30–60 % on a large-bore high-pressure gas line. Above that it is a reasonable
 conservative bound. `TwoFluidPipe` is mechanistic and matches OLGA on ΔP for
-gas-dominated flow, but its holdup runs 2–4× OLGA and its transient is not usable
-for liquid-rich lines. The authority on which NeqSim model applies, and on its
+gas-dominated and single-phase flow; in intermittent (slug) flow it still
+over-predicts ΔP (see the benchmark matrix below). The authority on which NeqSim model applies, and on its
 current measured accuracy and open defects, is the `neqsim-flow-assurance`
 skill — read it before quoting a NeqSim pipeline number.
 
@@ -830,6 +830,27 @@ over-constrain `setOutletPressure` with a measured pressure drop the modelled
 geometry cannot physically produce — that alone can prevent convergence. When
 the measured drop greatly exceeds the predicted pipe friction, the balance is
 manifold valves and fittings and does not belong in the pipe boundary condition.
+
+### Benchmark matrix: where TwoFluidPipe can be quoted (2026)
+
+A 13-case steady and 5-case transient matrix (3-20 km, 8-16 in, 1/2/3-phase,
+horizontal, undulating, uphill, flowline-riser), run on one frozen basis per case
+(same fluid, geometry, mesh, source phase split, U-value), after the NeqSim
+energy-balance, interfacial-friction and transient-consistency fixes:
+
+| Regime | ΔP vs OLGA | Outlet T | Quote NeqSim? |
+| --- | --- | --- | --- |
+| Single-phase gas or liquid, any profile | within 2 % | within 0.1 K | Yes |
+| Gas-condensate, stratified/annular, hilly | within ~5 % | within 0.3 K | Yes, with the holdup caveat below |
+| Gas-condensate / wet gas with water, horizontal | +10 to +25 % (conservative) | within 0.3 K | As a conservative bound |
+| Gas-oil and three-phase in slug flow | +35 to +100 % | within 1 K | No - slug friction and regime classification at high holdup are open defects |
+| Flowline-riser | ~+70 % | within 1 K | No |
+
+Holdup is within 5-20 % of OLGA but is pinned by the minimum-slip floor in the
+gas-condensate cases, so do not quote it for liquid-inventory or pigging volumes.
+A transient started from the steady solution now holds that solution at constant
+boundaries; single-phase liquid transients still ring acoustically because
+pressure is marched, not a state variable.
 
 ```python
 pipe = jneqsim.process.equipment.pipeline.TwoFluidPipe("line", inlet_stream)
@@ -1024,6 +1045,8 @@ sensitivity — which a single-rate benchmark cannot detect.
 | Two models agree at one rate and are compared no further | A single operating point cannot separate a friction-model error from a hold-up error | Run a rate sweep and compare the **exponent** `n` in `dP ~ rate^n`, not just the level. For a real gas line `n > 2`, because the density falls as the pressure drops along the line |
 | A steady-state model's hold-up is several times OLGA's but the pressure drops agree | On a near-horizontal, friction-dominated line the hold-up barely enters the pressure balance | Do not treat pressure-drop agreement as hold-up validation. Report the slip ratio `u_g/u_l = ((1-lambda)/(1-H))*(H/lambda)` alongside; wet-gas values around 3 are typical, 10 indicates a closure problem |
 | A hold-up maximum looks alarming but the mean is fine | One terrain-trap section, not a global bias | Compare mean, median and p90, and re-run with terrain tracking off; if the median is unchanged the maximum is a single trap |
+| `TwoFluidPipe` two-phase arrival temperature 2-3 K colder than OLGA while single-phase matches | Fixed in NeqSim: the steady energy balance used a frozen-phase cp (no latent heat of condensation) and omitted the potential-energy term | Rebuild against current NeqSim; `TwoFluidPipeEnergyBalanceTest` pins it |
+| `TwoFluidPipe.runTransient` drifts away from its own steady solution with the boundaries unchanged (inventory and inlet pressure fall by tens of %) | Fixed in NeqSim: the transient momentum operator differed from the steady one; it is now calibrated to the steady state (`setSteadyConsistentTransient`, default on) | Before trusting any transient, run it at constant boundaries and check it holds the steady state |
 | `SOURCE: The following keys must have equal list length` | A transient `SOURCE` was given `TIME=(0, t)` but scalar `TEMPERATURE`/`GASFRACTION` | Every list-valued key on that `SOURCE` must have the same length as `TIME`; repeat the constant ones, e.g. `TEMPERATURE=(40, 40) C` |
 | A two-phase benchmark disagrees and every closure is suspect at once | The comparison mixes friction, hold-up, slip and the energy equation | Build a **single-phase** version of the same case first (strip the heavy ends so the fluid stays one phase over the whole P/T window, and set `SOURCE GASFRACTION=1`). Any deviation is then friction or energy alone. Confirm the table really is single phase by checking that the OLGA `HOL` profile is ~1e-16 |
 | A steady-state model's deviation does not shrink with mesh refinement | It is a model or closure error, not truncation | Stop refining. Recompute the pressure drop from the model's OWN reported profile (pressure, temperature, velocity, with density from a flash at each section state). If that disagrees with what the model reports, the model's state and its pressure are mutually inconsistent |

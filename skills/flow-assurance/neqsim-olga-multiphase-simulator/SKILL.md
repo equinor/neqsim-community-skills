@@ -848,8 +848,13 @@ energy-balance, interfacial-friction and transient-consistency fixes:
 
 Holdup is within 5-20 % of OLGA but is pinned by the minimum-slip floor in the
 gas-condensate cases, so do not quote it for liquid-inventory or pigging volumes.
-A transient started from the steady solution now holds that solution at constant
-boundaries; single-phase liquid transients still ring acoustically because
+A transient started from the steady solution now holds it at constant boundaries
+while each section stays in its starting regime (the steady-consistency force is
+dropped in a section that changes regime). After a rate change the end state is
+NeqSim's own steady solution at the new rate, so the transient inherits the steady
+closure errors: check the end state against a steady solve at the final rate.
+Liquid redistribution after a turndown still lags (inventory within ~20 % of OLGA
+after hours); single-phase liquid transients ring acoustically because
 pressure is marched, not a state variable.
 
 ```python

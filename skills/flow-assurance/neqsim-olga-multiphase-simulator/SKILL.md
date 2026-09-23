@@ -726,8 +726,9 @@ Brill is calibrated for no-slip liquid fractions down to about 0.01–0.02; belo
 that its two-phase friction multiplier is extrapolated and ΔP is over-predicted
 by 30–60 % on a large-bore high-pressure gas line. Above that it is a reasonable
 conservative bound. `TwoFluidPipe` is mechanistic and matches OLGA on ΔP for
-gas-dominated and single-phase flow; in intermittent (slug) flow it still
-over-predicts ΔP (see the benchmark matrix below). The authority on which NeqSim model applies, and on its
+gas-dominated and single-phase flow; in horizontal intermittent (slug) flow it
+still deviates, low by 15–28 % on gas-oil and high by ~20 % on three-phase (see
+the benchmark matrix below). The authority on which NeqSim model applies, and on its
 current measured accuracy and open defects, is the `neqsim-flow-assurance`
 skill — read it before quoting a NeqSim pipeline number.
 
@@ -836,21 +837,28 @@ manifold valves and fittings and does not belong in the pipe boundary condition.
 A 13-case steady and 5-case transient matrix (3-20 km, 8-16 in, 1/2/3-phase,
 horizontal, undulating, uphill, flowline-riser), run on one frozen basis per case
 (same fluid, geometry, mesh, source phase split, U-value), after the NeqSim
-energy-balance, interfacial-friction and transient-consistency fixes:
+energy-balance, interfacial-friction, transient-consistency and slug-unit fixes
+(`SlugUnitModel`, on by default; `setSlugUnitClosureEnabled(false)` restores the
+legacy slug correlation):
 
 | Regime | ΔP vs OLGA | Outlet T | Quote NeqSim? |
 | --- | --- | --- | --- |
 | Single-phase gas or liquid, any profile | within 2 % | within 0.1 K | Yes |
-| Gas-condensate, stratified/annular, hilly | within ~5 % | within 0.3 K | Yes, with the holdup caveat below |
-| Gas-condensate / wet gas with water, horizontal | +10 to +25 % (conservative) | within 0.3 K | As a conservative bound |
-| Gas-oil and three-phase in slug flow | +35 to +100 % | within 1 K | No - slug friction and regime classification at high holdup are open defects |
-| Flowline-riser | ~+70 % | within 1 K | No |
+| Gas-oil stratified, gas-condensate hilly | within ~5 % | within 0.3 K | Yes |
+| Three-phase slug flow, uphill | within 1 % | within 0.3 K | Yes |
+| Flowline-riser (slug flowline, vertical riser) | within 2 % | within 0.1 K | Yes, holdup +30 % |
+| Gas-oil slug flow, horizontal | -15 to -28 % (non-conservative) | within 0.4 K | With a margin; holdup up to +30 % |
+| Three-phase slug flow, horizontal | ~+20 % | within 0.3 K | As a conservative bound |
+| Gas-condensate / wet gas, horizontal, thin film | +12 to +23 % (conservative) | within 0.3 K | As a conservative bound - NeqSim classifies these annular where OLGA is stratified |
 
-Holdup is within 5-20 % of OLGA but is pinned by the minimum-slip floor in the
-gas-condensate cases, so do not quote it for liquid-inventory or pigging volumes.
-A transient started from the steady solution now holds that solution at constant
-boundaries; single-phase liquid transients still ring acoustically because
-pressure is marched, not a state variable.
+What moved the slug and riser cases, in order of effect: a slug-unit closure that
+charges mixture friction to the slug body only (the unit-averaged gradient of a
+periodic unit is wall friction plus gravity; the front-acceleration term is
+recovered at the tail and must not be added); a slug share weighted by whether the
+stratified layer can bridge the bore (Barnea 0.24), which also restores the
+trace-liquid limit; an annular film that reaches the bridging holdup is not annular
+(it was returning holdup 0.67 in a vertical riser); and the thinnest stratified-film
+root on upslopes.
 
 ```python
 pipe = jneqsim.process.equipment.pipeline.TwoFluidPipe("line", inlet_stream)
@@ -907,11 +915,13 @@ Further usage notes:
   older NeqSim in which the Joule-Thomson term was silently dropped — check it
   with an adiabatic run (`setHeatTransferCoefficient(0)`) against an isenthalpic
   PH flash to the same outlet pressure, which is the exact reference.
-- **Do not quote its holdup or inventory as a design number.** Holdup runs 2–4×
-  OLGA (0.064 vs 0.023 dry; 0.119 vs 0.034 with 15 m³/hr free water), with a slip
-  ratio near 10 against OLGA's ~3. The phase bookkeeping is clean — gas, oil and
-  water sum to the liquid holdup exactly — so this is a slip-closure gap, not an
-  accounting error.
+- **Do not quote its holdup or inventory as a design number without a margin.**
+  On the 2026 matrix mean holdup is within 1 % on three-phase lines, 8–14 % low
+  on gas-condensate and wet-gas lines, and 8–32 % high on gas-oil slug flow and
+  risers. On very lean wet-gas lines older builds ran 2–4× OLGA (0.064 vs 0.023);
+  rerun that check on your build before relying on a low-loading inventory. The
+  phase bookkeeping is clean — gas, oil and water sum to the liquid holdup
+  exactly — so remaining gaps are slip-closure gaps, not accounting errors.
 - **Its ΔP can be blind to the temperature field.** Adding 10 MW of DEH raised
   arrival temperature 22 K and left ΔP unchanged to five figures, where OLGA moved
   +12.3 % and Beggs & Brill +23.4 %. Warmer gas at fixed mass rate is less dense
@@ -919,11 +929,15 @@ Further usage notes:
   pressure march that is not seeing the updated densities. Treat ΔP from any case
   whose temperature field changes as indicative until it moves in the right
   direction.
-- **The transient is not usable on liquid-rich lines**, including severe slugging:
-  with every boundary held constant it leaves its own steady state, and the liquid
-  outlet flux collapses to zero because the phase momentum equations develop
-  sustained backflow. Gas-dominated lines are unaffected (0.00 bar null-test
-  drift). Use OLGA for liquid-rich transients.
+- **Transient: pressure is quotable, liquid redistribution is not.** On the 2026
+  matrix the end inlet pressure after a rate change agrees with OLGA to 0.02 bar
+  (gas line pack), 0.01 bar (liquid step), 0.23 bar (gas-condensate turndown) and
+  0.09 bar (three-phase turndown). Liquid-full lines now select the coupled
+  pressure-momentum solve automatically and settle instead of ringing. The liquid
+  inventory is 13–29 % low after a turndown, and on a gas-oil slug-flow ramp-up it
+  rises where OLGA's falls (surge volume of the wrong sign) — the transient ends
+  on NeqSim's own steady solution, so the steady slug holdup is the cause. Use
+  OLGA for surge and pigging volumes, and for severe slugging.
 
 ### Reference benchmark — what "good accuracy" looks like
 

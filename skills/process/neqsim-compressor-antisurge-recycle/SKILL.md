@@ -1,9 +1,9 @@
 ---
 name: neqsim-compressor-antisurge-recycle
 calculation_basis: "neqsim-java"
-version: 0.2.0
+version: 0.3.0
 description: "Set up anti-surge recycle control for a centrifugal compressor in NeqSim, including compressor-chart generation, steady-state AntiSurgeRecycleCalculator use, dynamic AntiSurgeController PI control, and CompressorAntiSurgeApplication topology binding for hot/cold recycle valves and speed runback. USE WHEN: a task needs to protect a NeqSim compressor from surge with a recycle (spill-back) loop and a compressor performance chart is either supplied or must be generated."
-last_verified: "2026-07-02"
+last_verified: "2026-09-23"
 requires:
   python_packages: []
   java_packages:
@@ -435,6 +435,25 @@ response.
   the `AntiSurgeController` valve has no authority over the recycle flow.
 - Driving a dynamic recycle flowsheet straight into deep surge, where
   `getDistanceToSurge()` clamps at -1.0 and the steady solver cannot recover.
+- Loading a VENDOR map into the default chart. `Compressor`'s default `"fan law"`
+  `CompressorChart` fits one quadratic of H/N^2 vs Q/N through all speed lines,
+  which on a real vendor map shifts discharge pressure by 10-15 % at the outer
+  speed lines (and moves the surge flow with it). Call
+  `compressor.setCompressorChartType("interpolate and extrapolate")` BEFORE
+  `getCompressorChart().setCurves(...)`; `Pump.setPumpChartType(...)` has the same
+  option. Units for `setCurves`: actual inlet m3/hr, head `kJ/kg` or `meter`,
+  polytropic efficiency in PERCENT.
+- Checking anti-surge valve capacity with the default `ThrottlingValve` sizing.
+  The default method uses xT = 0.137 without choking and under-rates a globe
+  anti-surge valve by a factor ~2 at pressure ratio 4. Set
+  `getMechanicalDesign().setValveSizingStandard("IEC 60534")`, then on
+  `getValveSizingMethod()` call `setxT(0.70)`, `setFL(0.90)` (or the vendor's
+  values) and `setAllowChoked(True)` before `setCv(cv, "US")`.
+- Setting the control-line margin from habit instead of the machine's anti-surge
+  write-up. Vendor controllers store the surge-control line as a function
+  generator in (Q^2, DP/Ps) coordinates; the flow margin is
+  sqrt(Q^2_SCL / Q^2_SLL) - 1 at equal DP/Ps (~20 % in Q^2 = ~10 % in flow is
+  typical), then `compressor.setSurgeControlMargin(margin)`.
 
 ## Limitations
 

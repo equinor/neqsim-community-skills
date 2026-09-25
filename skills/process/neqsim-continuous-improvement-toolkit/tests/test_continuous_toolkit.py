@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-import numpy as np
 import pytest
+
+np = pytest.importorskip("numpy")
 
 from continuous_improvement_toolkit import (TagreaderAdapter, enkf_update, identifiability,
                                             propose_next)

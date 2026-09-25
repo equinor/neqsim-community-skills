@@ -10,10 +10,22 @@ None of these need enterprise access. Use them from a stage script or name the a
 the plan as ``continuous_improvement_toolkit.tagreader_adapter:TagreaderAdapter``.
 """
 
-from .bayes_opt import expected_improvement, fit_gp, propose_next
-from .enkf import enkf_update, identifiability
 from .results import SourceResult
 from .tagreader_adapter import TagreaderAdapter
+
+# numpy-backed helpers load on first use, so the adapter works without numpy installed.
+_LAZY = {"fit_gp": "bayes_opt", "expected_improvement": "bayes_opt",
+         "propose_next": "bayes_opt", "enkf_update": "enkf", "identifiability": "enkf"}
+
+
+def __getattr__(name):
+    if name in _LAZY:
+        import importlib
+
+        module = importlib.import_module("." + _LAZY[name], __name__)
+        return getattr(module, name)
+    raise AttributeError("module %r has no attribute %r" % (__name__, name))
+
 
 __all__ = ["TagreaderAdapter", "SourceResult", "fit_gp", "expected_improvement", "propose_next",
            "enkf_update", "identifiability"]

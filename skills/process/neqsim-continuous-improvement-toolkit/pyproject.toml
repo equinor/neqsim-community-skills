@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-continuous-improvement-toolkit"
+version = "0.1.0"
+description = "Tagreader adapter, Bayesian optimisation, EnKF and identifiability helpers for NeqSim living tasks."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = ["numpy>=1.22"]
+
+[project.optional-dependencies]
+test = ["pytest>=7.4", "pandas>=1.5"]
+historian = ["tagreader"]
+
+[project.entry-points."neqsim_continuous.adapters"]
+tagreader = "continuous_improvement_toolkit.tagreader_adapter:TagreaderAdapter"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

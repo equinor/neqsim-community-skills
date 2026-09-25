@@ -74,7 +74,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-benchmark-reference-data
-    version: "0.1.0"
+    version: "0.1.1"
     description: "Turn the mandatory benchmark-validation step of a NeqSim task into a reproducible, source-traceable comparison. Supplies a registry of independent reference sources with authority tiers, validated ranges and stated uncertainties (IAPWS-95, IAPWS-IF97, Span-Wagner CO2, Setzmann-Wagner methane, Span nitrogen, Bucker-Wagner ethane, Lemmon propane, GERG-2008, CoolProp HEOS, NIST WebBook), an offline anchor table of published critical points, triple points, boiling points and one ambient liquid density that runs with no optional dependency and no network, an optional CoolProp backend for reference values at any state, and a comparison layer that grades PASS/WARN/FAIL, rejects a reference that does not outrank the model basis, records whether the deviation is inside the reference's own uncertainty, enforces the three-point minimum, and emits the exact benchmark_validation block that the task report generator and CI gate consume. USE WHEN: a task must validate NeqSim output against independent reference data, a benchmark notebook is being written, a benchmark_validation block must be produced for results.json, a reported deviation must be traced to a citable source, or an existing benchmark claim must be checked for independence and resolution before it is trusted."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -710,7 +710,7 @@ skills:
     tags: [process, fem, finite-element, scikit-fem, fenicsx, gmsh, pyvista, visualization, 3d, heat-transfer, conduction, cooldown, thermal-stress, insulation, diffusion, mesh-quality, coupling]
     min_neqsim_version: "3.7.0"
   - name: neqsim-near-well-and-injectivity
-    version: "0.3.0"
+    version: "0.4.1"
     description: "Derive what the rock will give and take, and hand it to NeqSim: productivity and injectivity indices, their evolution as saturation fronts develop, and the SCAL basis behind them. Standardises on OPM Flow as the reservoir simulator, pyscal for relative permeability and resdata for output, and covers converting a NeqSim compositional fluid into a black-oil (PVTO/PVDG) or gas-condensate (VAPOIL/PVTG/PVDO) PVT table that OPM Flow will actually accept. USE WHEN: a productivity or injectivity index is about to be assumed, injectors must be checked against a voidage requirement, productivity decay through the bubble point matters, a gas condensate needs retrograde dropout and condensate banking represented, a reservoir model must be sized backwards from a mandated production profile, a NeqSim fluid must become a PVTO/PVDG/PVTG/PVTW deck section, or an Eclipse-format reservoir model must be built and run."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -718,7 +718,7 @@ skills:
     tags: [subsurface, wells, injectivity, productivity, relative-permeability, opm-flow, reservoir-simulation, black-oil, pyscal, resdata]
     min_neqsim_version: "3.7.0"
   - name: neqsim-reservoir-3d-visualisation
-    version: "0.1.0"
+    version: "0.2.0"
     description: "Render a reservoir simulation grid in 3D from its Eclipse-format output: cell-corner geometry from the EGRID so corner-point and box grids render identically, static properties from the INIT, dynamic properties from the UNRST, wells as tubes, crinkle cutaways that keep whole cells, threshold views that isolate remaining oil, and exploded layer views. USE WHEN: an OPM Flow or Eclipse run needs a presentation-grade 3D figure, a sweep or bypassed-oil claim needs visual evidence, a property field must be inspected for spatial correlation before it is trusted, or a reservoir illustration is going into a report or decision gate. Covers the vertical-exaggeration, camera-framing, corner-ordering and scalar-range traps that silently produce an empty or misleading picture."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"

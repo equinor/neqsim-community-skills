@@ -1,9 +1,9 @@
 ---
 name: neqsim-benchmark-reference-data
 calculation_basis: "data-retrieval"
-version: "0.1.0"
+version: "0.1.1"
 description: "Turn the mandatory benchmark-validation step of a NeqSim task into a reproducible, source-traceable comparison. Supplies a registry of independent reference sources with authority tiers, validated ranges and stated uncertainties (IAPWS-95, IAPWS-IF97, Span-Wagner CO2, Setzmann-Wagner methane, GERG-2008, CoolProp HEOS, NIST WebBook and more), an offline anchor table of critical points, triple points and boiling points that needs no dependency or network, an optional CoolProp backend, and a comparison layer that grades PASS/WARN/FAIL, rejects a reference that does not outrank the model basis, records whether the deviation is inside the reference's own uncertainty, enforces the three-point minimum, and emits the exact benchmark_validation block the report generator and CI gate consume. USE WHEN: a task must validate NeqSim output against independent data, a benchmark notebook or benchmark_validation block is being written, a deviation must be traced to a citable source, or a benchmark claim must be checked."
-last_verified: "2026-08-08"
+last_verified: "2026-09-25"
 requires:
   python_packages: []
   java_packages: []
@@ -215,6 +215,13 @@ results["references"] = [{"id": "ref", "text": c} for c in report.citations()]
   reason.
 - **Validating a characterised reservoir fluid with pure-component anchors.**
   That validates the pure-component limit only; say so in the report.
+- **Checking a lab water PVT (`PVTW`) against a cubic/CPA water.** NeqSim CPA
+  pure water at 139.8 °C and 542 bara gives 978 kg/m3 against 953 kg/m3 from
+  IAPWS-95 (CoolProp), so `Bw` comes out 1.020 instead of 1.048 — a 2.7 %
+  bias that would wrongly flag a correct lab `Bw`. Use IAPWS-95 as the
+  reference for water `Bw` and compressibility; CPA viscosity (0.220 cP against
+  0.210 cP) is closer. Expect a brine `Bw` slightly **below** the pure-water
+  value and a brine viscosity a few percent **above** it.
 
 ## Limitations
 

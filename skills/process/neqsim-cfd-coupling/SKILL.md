@@ -2,7 +2,7 @@
 name: neqsim-cfd-coupling
 calculation_basis: "hybrid"
 version: "0.4.0"
-description: "Link a NeqSim process simulation and engineering documents to a single-phase or multiphase CFD study: merge P&ID, STID, datasheet and plant data into a traceable design basis, convert a flashed NeqSim fluid into CFD boundary conditions, screen which multiphase model is defensible, write and run a complete OpenFOAM case (steady RANS or transient VOF), gate on wall treatment, mesh independence and turbulence model, and convert local-vs-bulk results into enhancement factors for 1-D models. Tonal-noise requests fail closed unless source topology, geometry, synchronized spectra, acoustic terminations and structural boundaries exist; steady RANS is never presented as tonal-source diagnosis. USE WHEN: a task needs local velocity or shear peaks at bends, welds, restrictions, tees, headers or tube bundles, maldistribution, stratified or slug two-phase behaviour, a pressure-drop check on real geometry, qualification of an existing CFD/FEM report, or an aeroacoustic / flow-induced tonal-noise readiness assessment."
+description: "Link NeqSim and engineering documents to single- or multiphase CFD: traceable design basis, NeqSim boundary conditions, runnable OpenFOAM RANS/VOF cases, mesh/wall/turbulence gates and enhancement factors for 1-D models; tonal-noise work fails closed without evidence. USE WHEN: local velocity or shear peaks at bends, welds, tees or bundles, maldistribution, stratified/slug flow, real-geometry pressure drop, CFD/FEM report qualification, or aeroacoustic readiness."
 last_verified: "2026-08-07"
 requires:
   python_packages: []

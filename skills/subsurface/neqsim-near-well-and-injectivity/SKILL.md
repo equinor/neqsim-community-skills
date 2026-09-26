@@ -2,7 +2,7 @@
 name: neqsim-near-well-and-injectivity
 calculation_basis: "neqsim-java"
 version: "0.4.1"
-description: "Derive what the rock will give and take, and hand it to NeqSim: productivity and injectivity indices, their evolution as saturation fronts develop, and the SCAL basis behind them. Standardises on OPM Flow as the reservoir simulator, pyscal for relative permeability and resdata for output; covers converting a NeqSim compositional fluid into a black-oil (PVTO/PVDG) or gas-condensate (VAPOIL/PVTG/PVDO) PVT table OPM Flow accepts, and consuming a NeqSim-generated VFPPROD lift-curve table as a well THP control or NETWORK branch. USE WHEN: a productivity or injectivity index is about to be assumed, injectors must be checked against voidage, productivity decay through the bubble point matters, a gas condensate needs retrograde dropout represented, a reservoir model must be sized backwards from a mandated profile, a NeqSim fluid must become a PVT deck section, a flowline or tubing lift curve must enter the deck as VFPPROD, or an Eclipse-format model must be built and run."
+description: "Derive productivity and injectivity indices from the rock with OPM Flow, pyscal and resdata, convert a NeqSim fluid to black-oil (PVTO/PVDG) or gas-condensate (VAPOIL/PVTG/PVDO) tables, and use NeqSim VFPPROD lift curves in the deck. USE WHEN: a PI/II is about to be assumed, injectors vs voidage, productivity decay below bubble point, retrograde dropout, sizing a model to a mandated profile, a fluid or lift curve must enter a deck, or an Eclipse-format model must be built and run."
 last_verified: "2026-09-25"
 requires:
   python_packages: [pyscal, resdata, numpy]

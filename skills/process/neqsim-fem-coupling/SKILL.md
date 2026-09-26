@@ -2,7 +2,7 @@
 name: neqsim-fem-coupling
 calculation_basis: "screening"
 version: "0.2.0"
-description: "Link a NeqSim process simulation and engineering documents to a finite-element model of the solid: layered-wall heat conduction, transient cooldown, species diffusion in porous rock, and the resulting thermal and pressure stress. Builds a traceable design basis from P&ID, STID, datasheets and insulation spec; derives film coefficient and Biot number from a NeqSim flash; solves the layered 1-D problem against a closed-form check; generates Gmsh meshes in 2-D or 3-D and runnable scikit-fem or FEniCSx cases; renders with PyVista; gates on mesh independence, energy balance and boundary placement; and reduces the field to the U-value, hot-spot factor and no-touch time a 1-D NeqSim model consumes. USE WHEN: a task needs a temperature or stress field inside a solid - insulation defect, support/clamp short-circuit, buried or non-radial soil path, nozzle or wall discontinuity, cooldown or thermal-shock transient, porous diffusion - a 3-D geometry or rendered field, or qualification of an existing FEM report."
+description: "Link NeqSim and engineering documents to finite-element models of the solid: layered-wall conduction, transient cooldown, porous diffusion and thermal/pressure stress, with NeqSim film coefficients, closed-form checks, Gmsh 2-D/3-D meshes, scikit-fem/FEniCSx cases, PyVista renders and 1-D outputs (U-value, hot-spot factor, no-touch time). USE WHEN: insulation defects, clamp short-circuits, buried/non-radial soil paths, wall discontinuities, cooldown or thermal shock, or FEM report qualification."
 last_verified: "2026-08-08"
 requires:
   python_packages: []

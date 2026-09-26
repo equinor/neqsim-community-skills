@@ -2,7 +2,7 @@
 name: neqsim-production-network-routing
 calculation_basis: "screening"
 version: "0.1.0"
-description: "Educational production-network routing screening that routes wells through manifolds and flowlines/risers to a host and rolls up an arrival pressure, and screens multiwell flow regulated by a facility inlet/separator pressure. USE WHEN: a task needs a public, screening-level inflow rate per well, aggregated manifold rates, a platform arrival-pressure roll-up, or pressure-regulated multiwell flow from an inlet/separator and reservoir pressures before detailed NeqSim inflow and multiphase-hydraulics design."
+description: "Educational production-network routing: wells through manifolds and flowlines/risers to a host with an arrival-pressure roll-up, and multiwell flow regulated by an inlet/separator pressure. USE WHEN: a task needs screening-level per-well inflow, manifold rates, a platform arrival-pressure roll-up, or pressure-regulated multiwell flow before detailed NeqSim inflow and multiphase hydraulics."
 last_verified: "2026-06-24"
 requires:
   python_packages: []

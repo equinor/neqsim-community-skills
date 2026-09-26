@@ -1,9 +1,9 @@
 ---
 name: neqsim-near-well-and-injectivity
 calculation_basis: "neqsim-java"
-version: "0.4.0"
+version: "0.4.1"
 description: "Derive what the rock will give and take, and hand it to NeqSim: productivity and injectivity indices, their evolution as saturation fronts develop, and the SCAL basis behind them. Standardises on OPM Flow as the reservoir simulator, pyscal for relative permeability and resdata for output; covers converting a NeqSim compositional fluid into a black-oil (PVTO/PVDG) or gas-condensate (VAPOIL/PVTG/PVDO) PVT table OPM Flow accepts, and consuming a NeqSim-generated VFPPROD lift-curve table as a well THP control or NETWORK branch. USE WHEN: a productivity or injectivity index is about to be assumed, injectors must be checked against voidage, productivity decay through the bubble point matters, a gas condensate needs retrograde dropout represented, a reservoir model must be sized backwards from a mandated profile, a NeqSim fluid must become a PVT deck section, a flowline or tubing lift curve must enter the deck as VFPPROD, or an Eclipse-format model must be built and run."
-last_verified: "2026-09-21"
+last_verified: "2026-09-25"
 requires:
   python_packages: [pyscal, resdata, numpy]
   java_packages: [neqsim]
@@ -233,6 +233,24 @@ RSVD
   653.3 47.47901
   738.3 47.47901 /
 ```
+
+With **both `DISGAS` and `VAPOIL`** (a lab black-oil export that carries `PVTG`)
+the same rule applies to the gas side: Flow stops with *"no explicit RVVD ...
+datum must be at the GOC"*. An undersaturated oil has no initial free gas, so an
+`RVVD` table with `Rv = 0` at the `RSVD` depths is the honest fill; set EQUIL
+item 10 to 1 on **every** EQUIL row, including an aquifer/outside region.
+
+Three more traps when the deck is assembled from real model includes:
+
+- `TABDIMS` item 1 must be at least `max(SATNUM)` and each saturation keyword
+  must carry that many tables. A single measured SCAL table copied to every
+  region is an assumption and must be declared as one.
+- Lab and RMS includes put units such as `m3/m3` in comments. Strip everything
+  after `--` on each line **before** looking for the terminating `/`, or the
+  parser ends the record on a comment.
+- Two published sources can disagree on a date (e.g. production start in the
+  simulation activity versus the first year of a profile table). Pick one,
+  state it, and compare profiles on years since start as well as calendar year.
 
 ## Gas condensates need vaporised oil, not black oil
 

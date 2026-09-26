@@ -1,9 +1,9 @@
 ---
 name: neqsim-reservoir-3d-visualisation
 calculation_basis: "screening"
-version: "0.1.0"
+version: "0.2.0"
 description: "Render a reservoir simulation grid in 3D from its Eclipse-format output: cell-corner geometry from the EGRID so corner-point and box grids render identically, static properties from the INIT, dynamic properties from the UNRST, wells as tubes, crinkle cutaways that keep whole cells, threshold views that isolate remaining oil, and exploded layer views. USE WHEN: an OPM Flow or Eclipse run needs a presentation-grade 3D figure, a sweep or bypassed-oil claim needs visual evidence, a property field must be inspected for spatial correlation before it is trusted, or a reservoir illustration is going into a report or decision gate. Covers the vertical-exaggeration, camera-framing, corner-ordering and scalar-range traps that silently produce an empty or misleading picture."
-last_verified: "2026-09-21"
+last_verified: "2026-09-25"
 requires:
   python_packages: [pyvista, resdata, numpy, matplotlib]
   java_packages: []
@@ -98,6 +98,11 @@ intersecting facets rather than as an error.
 | Depth used directly as elevation | Model appears upside down | Negate z; depth increases downward, elevation upward |
 | No vertical exaggeration | 48 m of pay across 1.9 km is a flat sheet | Scale z by 6–10 and **state the factor in the caption** |
 | Plain `clip_box` | Cut face shows triangles, not cells | `clip_box(..., crinkle=True)` keeps whole cells |
+| Whole grid rendered when the model carries a large aquifer/outside region | The segment of interest is a sliver inside a grey slab | Threshold on the region array (`FIPNUM`/`EQLNUM`) and render only the segment |
+| Aquifer shown as a translucent volume | Stacked translucent faces add up to an opaque grey block | Show context as `ctx.outline()`; `extract_feature_edges` picks up every pillar of a faulted grid |
+| `view_isometric()` + `camera.azimuth` on an elongated segment | Edge-on view, structure unreadable | Place the camera explicitly on a sphere around the segment centre (see below) |
+| Default light kit at VE 6-10 | Steep flanks render near-black, colour map lost | `pv.global_theme.lighting_params.ambient = 0.35` |
+| INIT/UNRST array attached to all `nx*ny*nz` cells | Length mismatch, or properties shifted onto the wrong cells | Those arrays are **active-only**; build the mesh from the EGRID `ACTNUM` the simulator wrote (it includes MINPV/PINCH deactivation), not the input ACTNUM |
 
 An invisible model is the dangerous one: the figure still has a title, a colour
 bar and a legend, so it looks like a rendering failure rather than a framing
@@ -138,6 +143,62 @@ mesh.cell_data["SOIL"] = 1.0 - np.array(ResdataFile("CASE.UNRST")["SWAT"][-1])
 `INIT` holds the static arrays and `UNRST` the dynamic ones; `[-1]` is the last
 report step. A restart file only exists if the deck requested it
 (`RPTRST BASIC=2`).
+
+## Real corner-point grids
+
+The per-cell `get_cell_corner` loop above is fine for a box and takes minutes at
+100 000+ cells. For a real corner-point grid, build all corners at once from the
+EGRID `COORD`/`ZCORN`, active cells only (straight pillars, interpolate x/y at
+each corner depth):
+
+```python
+eg = ResdataFile("CASE.EGRID")
+coord = np.array(eg["COORD"][0]).reshape(nj + 1, ni + 1, 6)
+zcorn = np.array(eg["ZCORN"][0]).reshape(2 * nk, 2 * nj, 2 * ni)
+act = np.array(eg["ACTNUM"][0]).reshape(nk, nj, ni) > 0
+k, j, i = np.nonzero(act)                  # same order as INIT/UNRST arrays
+pts = np.empty((k.size, 8, 3)); n = 0
+for kp in (0, 1):
+    for jp in (0, 1):
+        for ip in (0, 1):
+            z = zcorn[2 * k + kp, 2 * j + jp, 2 * i + ip]
+            p = coord[j + jp, i + ip]
+            t = np.where(p[:, 5] != p[:, 2], (z - p[:, 2]) / (p[:, 5] - p[:, 2]), 0.0)
+            pts[:, n] = np.c_[p[:, 0] + t * (p[:, 3] - p[:, 0]), p[:, 1] + t * (p[:, 4] - p[:, 1]), z]
+            n += 1
+pts = pts[:, ECL_TO_VTK]
+```
+
+Then, for a readable figure of a real field model:
+
+- **Render the segment, not the grid.** `seg = mesh.threshold([1.5, 3.5],
+  scalars="FIPNUM")`; draw the rest only as `outline()`.
+- **Place the camera explicitly**, aimed at the segment centre, with azimuth
+  clockwise from north and elevation above horizontal:
+
+```python
+def set_cam(pl, seg, azimuth, elevation, zoom=1.0):
+    f = np.array(seg.center)
+    r = 1.6 * np.linalg.norm(np.array(seg.bounds[1::2]) - np.array(seg.bounds[0::2]))
+    a, e = np.radians(azimuth), np.radians(elevation)
+    pos = f + r * np.array([np.cos(e) * np.sin(a), np.cos(e) * np.cos(a), np.sin(e)])
+    pl.camera_position = [tuple(pos), tuple(f), (0.0, 0.0, 1.0)]
+    pl.camera.zoom(zoom)
+```
+
+  Look across the long axis of the segment (azimuth about 90 degrees from its
+  strike) and use the same call for every panel of a time-lapse, so the frames
+  are comparable.
+- **Wells from their real trajectories** (RESQML
+  `WellboreTrajectoryRepresentation` control points, a deviation survey, or
+  `WELSPECS`/`COMPDAT` cells as a fallback). Keep only the reservoir interval
+  (e.g. TVD > top reservoir minus a few hundred metres) and apply the **same**
+  centring and VE transform as the mesh, or the tube floats beside the grid.
+- **Report dates** for time-lapse titles come from `INTEHEAD` of each UNRST
+  step: day, month, year at indices 64, 65, 66.
+- **Categorical arrays** (fault block, zone) that the simulator does not write
+  back can be attached from the source model if they are indexed on the same
+  full grid: `array.reshape(nk, nj, ni)[act]`.
 
 ## The three views worth producing
 
@@ -194,6 +255,9 @@ real lighting, so prefer PyVista when it is available.
 - [ ] Corner order permuted with `ECL_TO_VTK = [4, 5, 7, 6, 0, 1, 3, 2]` (no
       bow-tie facets).
 - [ ] Mesh re-centred on the origin before `view_isometric()` / `reset_camera()`.
+- [ ] For a field model: only the segment rendered, context as an outline, and
+      an explicit camera shared by every compared panel.
+- [ ] INIT/UNRST arrays mapped onto the EGRID `ACTNUM` active cells.
 - [ ] Vertical exaggeration factor chosen, applied, and stated in the caption.
 - [ ] `clim` set explicitly (not autoscaled) and held constant across compared
       figures.

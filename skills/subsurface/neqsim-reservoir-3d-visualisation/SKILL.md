@@ -2,7 +2,7 @@
 name: neqsim-reservoir-3d-visualisation
 calculation_basis: "screening"
 version: "0.2.0"
-description: "Render a reservoir simulation grid in 3D from its Eclipse-format output: cell-corner geometry from the EGRID so corner-point and box grids render identically, static properties from the INIT, dynamic properties from the UNRST, wells as tubes, crinkle cutaways that keep whole cells, threshold views that isolate remaining oil, and exploded layer views. USE WHEN: an OPM Flow or Eclipse run needs a presentation-grade 3D figure, a sweep or bypassed-oil claim needs visual evidence, a property field must be inspected for spatial correlation before it is trusted, or a reservoir illustration is going into a report or decision gate. Covers the vertical-exaggeration, camera-framing, corner-ordering and scalar-range traps that silently produce an empty or misleading picture."
+description: "Render a reservoir grid in 3D from Eclipse-format output (EGRID geometry, INIT and UNRST properties) with well tubes, crinkle cutaways, threshold views and exploded layers, avoiding the exaggeration, camera, corner-order and scalar-range traps. USE WHEN: an OPM Flow or Eclipse run needs a presentation-grade 3D figure, a sweep or bypassed-oil claim needs visual evidence, a property field must be inspected for spatial correlation, or a reservoir illustration goes into a report or decision gate."
 last_verified: "2026-09-25"
 requires:
   python_packages: [pyvista, resdata, numpy, matplotlib]

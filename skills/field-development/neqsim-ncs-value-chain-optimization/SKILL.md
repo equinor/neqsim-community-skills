@@ -2,7 +2,7 @@
 name: neqsim-ncs-value-chain-optimization
 calculation_basis: "screening"
 version: "0.1.0"
-description: "Multi-year, capacity-constrained value-chain optimisation of the whole Norwegian Continental Shelf: forecasts every field from Sodir history (Arps decline capped by remaining reserves) and phases in discoveries by maturity, routes all oil and gas through the real trunklines, processing plants and receiving terminals of neqsim-ncs-infrastructure-network with a linear programme (SciPy HiGHS), and returns production per field, curtailment, shadow prices of every pipeline and plant, ullage timelines, tie-in rankings and production-uplift lists, then hands them to NeqSim ValueChainObjective, DebottleneckingAdvisor and process-model optimisation. USE WHEN: a task asks how to maximise value or production across the NCS, which pipeline/plant is the binding constraint and what an extra unit of capacity is worth, how an outage or new tie-in changes the whole system, which discoveries fit best into spare capacity, or where fields could produce more."
+description: "Multi-year, capacity-constrained NCS value-chain optimisation: forecasts fields from Sodir history, phases in discoveries, routes oil and gas through real trunklines, plants and terminals with a HiGHS LP, and returns production, curtailment, shadow prices, ullage, tie-in rankings and uplift lists for NeqSim follow-up. USE WHEN: maximising NCS value or production, finding the binding pipeline/plant and its capacity value, testing an outage or tie-in, or fitting discoveries into spare capacity."
 last_verified: "2026-09-26"
 requires:
   python_packages: ["scipy"]

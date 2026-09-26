@@ -2,7 +2,7 @@
 name: neqsim-heat-exchanger-fouling-assessment
 calculation_basis: "screening"
 version: "0.1.0"
-description: "Educational heat-exchanger performance monitoring and fouling assessment for plate and shell-and-tube coolers, condensers, and seawater or glycol cooling-medium loops: reduce an operating snapshot to an overall U-value, normalise it to design flow without scaling the deposit, separate fouling resistance from film resistance, rule out maldistribution, and convert the degradation into a capacity limitation and a cleaning interval. USE WHEN: a task asks whether a heat exchanger, cooler, condenser, or cooling-medium loop has fouled or degraded, by how much against its design U-value, what the degradation is costing in duty or capacity, or how often it must be cleaned."
+description: "Educational heat-exchanger monitoring and fouling assessment for plate and shell-and-tube coolers, condensers and cooling-medium loops: operating U-value, flow normalisation without scaling the deposit, fouling vs film resistance, maldistribution rule-out, capacity loss and cleaning interval. USE WHEN: a task asks whether an exchanger or cooling loop has fouled, by how much against design U, what it costs in duty or capacity, or how often to clean."
 last_verified: "2026-09-17"
 requires:
   python_packages: []

@@ -2,7 +2,7 @@
 name: neqsim-uncertainty-quantification
 calculation_basis: "advisory"
 version: "0.1.0"
-description: "Monte Carlo uncertainty quantification, tornado sensitivity and global sensitivity analysis for NeqSim tasks. Supplies inverse-CDF marginals (uniform, triangular, normal, log-normal from P10/P90), samplers (seeded pseudo-random, Latin hypercube, Halton), a technical/economic model split that caches the expensive flowsheet stage so price and cost parameters never re-solve, percentiles in the ascending p10<=p50<=p90 convention the task gate enforces, a split-half convergence check, a swing-ranked tornado, optional SALib Sobol'/Morris backends for interaction effects, an optional chaospy polynomial-chaos surrogate, and the uncertainty block the report generator and CI gate consume. USE WHEN: a task must report P10/P50/P90, a tornado or a probability of a negative outcome, a Monte Carlo loop wraps an expensive NeqSim simulation, parameters must be ranked before a sensitivity budget is spent, an interaction between inputs is suspected, or an existing uncertainty block must be audited."
+description: "Monte Carlo uncertainty, tornado and global sensitivity for NeqSim tasks: P10/P90 marginals, LHS/Halton sampling, a cached technical/economic split, ascending p10<=p50<=p90 percentiles, convergence check, optional SALib Sobol/Morris and chaospy surrogate, and the uncertainty block the report and CI gate consume. USE WHEN: reporting P10/P50/P90, a tornado or a probability of a negative outcome, wrapping an expensive simulation, ranking parameters, or auditing an uncertainty block."
 last_verified: "2026-08-08"
 requires:
   python_packages: []

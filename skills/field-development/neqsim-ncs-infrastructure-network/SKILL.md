@@ -2,7 +2,7 @@
 name: neqsim-ncs-infrastructure-network
 calculation_basis: "screening"
 version: "0.1.0"
-description: "Open-data graph of the whole Norwegian Continental Shelf export system - every field, discovery, host platform, trunkline, processing plant (Kårstø, Kollsnes, Nyhamna, Melkøya), receiving terminal (Emden, Dornum, Zeebrugge, Dunkerque, St Fergus, Easington, Nybro) and market - built live from the Sodir DataService, norskpetroleum.no capacity tables and Gassco plant pages, with read-only Sodir/FactPages/ENTSOG clients and NeqSim hand-offs (TiebackAnalyzer, HostFacility, LoopedPipeNetwork). USE WHEN: a task must know how NCS fields connect to the market, which fields share a pipeline or plant, how loaded each trunkline and plant is in a year, what an outage strands or reroutes, which elements are single points of failure, which host a discovery can tie into, or needs live open data (Sodir, ENTSOG flows) for an NCS value-chain study."
+description: "Open-data graph of the Norwegian Continental Shelf export system - fields, discoveries, hosts, trunklines, processing plants, receiving terminals and markets - built live from Sodir, norskpetroleum.no and Gassco, with NeqSim hand-offs (TiebackAnalyzer, HostFacility, LoopedPipeNetwork). USE WHEN: a task must know how NCS fields reach market, which fields share a pipeline or plant, trunkline/plant loading, what an outage strands, single points of failure, or which host a discovery can tie into."
 last_verified: "2026-09-26"
 requires:
   python_packages: []

@@ -2,7 +2,7 @@
 name: neqsim-control-authority-screening
 calculation_basis: "screening"
 version: "0.1.0"
-description: "Educational control-authority screening from a controller output history: saturation fraction at both stops, the trend in saturation across comparable periods, the variance and disturbance-gain ratio between saturated and modulating regimes, off-set-point time, and time-to-limit from the observed rate of change. USE WHEN: a controlled variable has got worse while the disturbance looks unchanged, a control valve is reported wide open or bottomed out, a loop is suspected of having stopped controlling, or a root-cause investigation must separate a growing disturbance from a loop that has run out of authority, before a validated loop performance review."
+description: "Educational control-authority screening from controller output history: saturation fraction and trend, saturated vs modulating variance and disturbance gain, off-set-point time and time-to-limit. USE WHEN: a controlled variable worsened while the disturbance looks unchanged, a valve is wide open or bottomed out, a loop may have stopped controlling, or an investigation must separate a growing disturbance from a loop out of authority."
 last_verified: "2026-09-17"
 requires:
   python_packages: []

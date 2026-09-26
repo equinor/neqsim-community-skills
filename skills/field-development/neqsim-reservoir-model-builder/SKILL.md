@@ -2,7 +2,7 @@
 name: neqsim-reservoir-model-builder
 calculation_basis: "screening"
 version: "0.4.0"
-description: "Set up a screening-level reservoir model from whatever data exists, on a data-maturity ladder from one public headline volume up to a full static-model parameter set, and refine it as data arrives. Data-first: six ingredients (geometry, petrophysics, fluid, SCAL, contacts, volumes) each carry a ranked source ladder with recorded used/blocked/absent outcomes. USE WHEN: a task needs a reservoir model for a field with only open data (e.g. an NCS field page), a best-guess structural model with NO seismic, log or contact data (play-typical trap, contacts solved to honour published volumes, assumption register), volumetrics from area/net pay/porosity/Sw, pressure and temperature defaults from depth, recovery factor and drive from analogues, well count and PI from permeability, conversion of an already-built static model (PORO/PERMX/NTG/SATNUM/EQLNUM arrays) into validated OPM Flow GRID/PROPS includes reconciled to P90/P50/P10, or a NeqSim SimpleReservoir/WellFlow spec with provenance and a data-acquisition plan."
+description: "Screening-level reservoir model from whatever data exists, on a maturity ladder from one public volume to a full static model, with ranked source ladders per ingredient. USE WHEN: a field has only open data, a best-guess structure without seismic/logs/contacts is needed, volumetrics or depth defaults, recovery and well count from analogues, static arrays to OPM Flow GRID/PROPS reconciled to P90/P50/P10, or a SimpleReservoir/WellFlow spec with provenance."
 last_verified: "2026-09-10"
 requires:
   python_packages: []

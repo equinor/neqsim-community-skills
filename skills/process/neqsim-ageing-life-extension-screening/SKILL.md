@@ -2,7 +2,7 @@
 name: neqsim-ageing-life-extension-screening
 calculation_basis: "screening"
 version: "0.1.0"
-description: "Educational ageing-trend and remaining-life screening for a repairable equipment population from its corrective-failure history: Laplace centroid trend test, Crow-AMSAA / NHPP power-law intensity fit, projection of the failure load to a required end-of-life year, and a maintain-versus-replace economic crossover. USE WHEN: a task asks whether equipment is degrading with age, whether a failure history shows a worsening trend, how many failures to expect between now and a life-extension target year, or whether to keep repairing versus replace, before a qualified life-extension or technical-condition assessment."
+description: "Educational ageing-trend and remaining-life screening for repairable equipment from corrective-failure history: Laplace trend test, Crow-AMSAA power-law fit, failure projection to an end-of-life year, maintain-vs-replace crossover. USE WHEN: a task asks whether equipment is degrading with age, whether failures are trending worse, how many failures to expect before a life-extension year, or whether to keep repairing or replace."
 last_verified: "2026-09-10"
 requires:
   python_packages: []

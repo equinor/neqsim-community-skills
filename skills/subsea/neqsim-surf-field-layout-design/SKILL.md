@@ -2,7 +2,7 @@
 name: neqsim-surf-field-layout-design
 calculation_basis: "screening"
 version: "0.2.0"
-description: "Design a screening subsea (SURF) field layout and place the host from open map, bathymetry and licence-block data: group wells into drill centres, place Xmas trees, templates, manifolds, PLEMs and riser bases, position an FPSO or fixed host, route and size every production, injection, service, umbilical and riser line, export the result as georeferenced GeoJSON and a map, and render a presentation-grade reservoir-to-host cutaway that carries the study's headline numbers. USE WHEN: a task needs a field layout designed rather than an existing one screened - deciding how many drill centres and templates are needed, where the host should sit, which flowline architecture to use (loop, single line or daisy chain), what size the flowlines and risers should be, how long the umbilicals are, a georeferenced layout to hand to flow assurance, cost estimation or a NeqSim production-network model, or a decision-gate illustration of the whole system from reservoir to host."
+description: "Design a screening SURF field layout and host position from open map, bathymetry and licence data: drill centres, trees, templates, manifolds, riser bases, routed and sized flowlines, umbilicals and risers, GeoJSON export and a reservoir-to-host cutaway. USE WHEN: a layout must be designed, not screened - template count, host location, loop/single/daisy-chain architecture, line sizes, umbilical lengths, or a georeferenced hand-off to flow assurance, cost or NeqSim network models."
 last_verified: "2026-09-04"
 requires:
   python_packages: []

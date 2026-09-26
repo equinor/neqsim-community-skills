@@ -75,7 +75,7 @@ skills:
 
   - name: neqsim-benchmark-reference-data
     version: "0.1.1"
-    description: "Turn the mandatory benchmark-validation step of a NeqSim task into a reproducible, source-traceable comparison. Supplies a registry of independent reference sources with authority tiers, validated ranges and stated uncertainties (IAPWS-95, IAPWS-IF97, Span-Wagner CO2, Setzmann-Wagner methane, Span nitrogen, Bucker-Wagner ethane, Lemmon propane, GERG-2008, CoolProp HEOS, NIST WebBook), an offline anchor table of published critical points, triple points, boiling points and one ambient liquid density that runs with no optional dependency and no network, an optional CoolProp backend for reference values at any state, and a comparison layer that grades PASS/WARN/FAIL, rejects a reference that does not outrank the model basis, records whether the deviation is inside the reference's own uncertainty, enforces the three-point minimum, and emits the exact benchmark_validation block that the task report generator and CI gate consume. USE WHEN: a task must validate NeqSim output against independent reference data, a benchmark notebook is being written, a benchmark_validation block must be produced for results.json, a reported deviation must be traced to a citable source, or an existing benchmark claim must be checked for independence and resolution before it is trusted."
+    description: "Reproducible, source-traceable benchmark validation for NeqSim tasks: a registry of reference sources with authority tiers and uncertainties (IAPWS, Span-Wagner, GERG-2008, CoolProp, NIST), an offline anchor table, PASS/WARN/FAIL grading with the three-point minimum, and the benchmark_validation block the report and CI gate consume. USE WHEN: validating NeqSim against independent data, writing a benchmark notebook or block, tracing a deviation to a citable source, or checking a benchmark claim."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/pvt/neqsim-benchmark-reference-data/SKILL.md"
@@ -84,7 +84,7 @@ skills:
 
   - name: neqsim-uncertainty-quantification
     version: "0.1.0"
-    description: "Monte Carlo uncertainty quantification, tornado sensitivity and global sensitivity analysis for NeqSim tasks. Supplies inverse-CDF marginals (uniform, triangular, normal, log-normal fitted from a stated P10/P90, deterministic), unit-hypercube samplers (seeded pseudo-random, Latin hypercube, Halton), a technical/economic model split that caches the expensive flowsheet stage so price and cost parameters never trigger a re-solve, linear-interpolation percentiles in the ascending p10<=p50<=p90 convention the task gate enforces, a scale-invariant split-half convergence check, a swing-ranked one-at-a-time tornado, optional SALib Saltelli/Sobol' and Morris backends that expose the interaction effects a tornado is blind to, an optional chaospy polynomial-chaos surrogate that reaches the same statistics in one to two orders of magnitude fewer model evaluations, and emission of the uncertainty block that the task report generator and CI gate consume. USE WHEN: a task must report P10/P50/P90, a tornado diagram or a probability of a negative outcome, a Monte Carlo loop wraps an expensive NeqSim simulation, parameters must be ranked before a sensitivity budget is committed, an interaction between uncertain inputs is suspected, or an existing uncertainty block must be audited for sample count, convergence and percentile convention."
+    description: "Monte Carlo uncertainty, tornado and global sensitivity for NeqSim tasks: P10/P90 marginals, LHS/Halton sampling, a cached technical/economic split, ascending p10<=p50<=p90 percentiles, convergence check, optional SALib Sobol/Morris and chaospy surrogate, and the uncertainty block the report and CI gate consume. USE WHEN: reporting P10/P50/P90, a tornado or a probability of a negative outcome, wrapping an expensive simulation, ranking parameters, or auditing an uncertainty block."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/process/neqsim-uncertainty-quantification/SKILL.md"
@@ -93,7 +93,7 @@ skills:
 
   - name: neqsim-pseudocomponent-split-characterization
     version: "0.1.0"
-    description: "Public plus-fraction (C7+) characterization by a controllable split factor: a Whitson three-parameter gamma molar split, a lumping split factor, delumping reconstruction, and the universal Paraffinic-Aromatic (P/A) heavy-lump split factor S (Uleberg 2026). USE WHEN: a task needs to divide a heavy end into pseudocomponents with one adjustable characterization/split factor, compute a delumping split factor from a reference fluid, reconstruct a detailed composition from a lumped one, or split heavy lumps into paraffinic/aromatic copies on a universal P/A set, before rigorous NeqSim characterization."
+    description: "Public plus-fraction (C7+) characterization by a controllable split factor: Whitson gamma split, lumping and delumping split factors, and the universal Paraffinic-Aromatic heavy-lump split factor S (Uleberg 2026). USE WHEN: splitting a heavy end with one adjustable factor, computing a delumping factor from a reference fluid, reconstructing a detailed composition from a lumped one, or splitting lumps into P/A copies before rigorous NeqSim characterization."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/pvt/neqsim-pseudocomponent-split-characterization/SKILL.md"
@@ -102,7 +102,7 @@ skills:
 
   - name: neqsim-reference-fluid-synthetic-generation
     version: "0.2.0"
-    description: "Public helpers to generate representative or synthetic fluid cases from a common reference fluid by adjusting a split/characterization factor, match that factor to measured PVT/separator data, blend well/fluid compositions into a field composition by molar-rate allocation, and — when there is NO PVT report and possibly no sample at all — build a declared best-guess fluid basis from fundamentals and named analogues: reservoir temperature from a provincial geothermal gradient, fluid type from GOR/degAPI bands, GOR and stock-tank gravity interpolated on an analogue depth trend with low/base/high cases, a seed light-ends + C7+ cut composition ready for a NeqSim EOS characterization, a per-parameter provenance and assumption register, and a ranked data-acquisition plan. USE WHEN: a task must calibrate a heavy-end split factor against measurements, produce field-level or per-case representative fluids from a reference model, combine several wells/fluids into one allocated field fluid, or establish a fluid for a discovery or prospect that has no laboratory PVT, before rigorous NeqSim characterization."
+    description: "Representative or synthetic fluids from a common reference fluid via a split factor, matched to PVT/separator data; molar-rate blending of well fluids; and, with NO PVT report, a declared best-guess fluid from geothermal gradient, GOR/API bands and analogue trends with low/base/high cases and an assumption register. USE WHEN: calibrating a heavy-end split factor, producing field or per-case fluids, allocating a combined field fluid, or establishing a fluid for a discovery without lab PVT."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/pvt/neqsim-reference-fluid-synthetic-generation/SKILL.md"
@@ -372,7 +372,7 @@ skills:
 
   - name: neqsim-reservoir-model-builder
     version: "0.4.0"
-    description: "Set up a screening-level reservoir model from whatever data exists, on a data-maturity ladder from a single public headline volume up to a full static-model parameter set, and refine it as data arrives. Enforces a data-first workflow: six modelling ingredients (geometry, petrophysics, fluid, SCAL, contacts, volumes) each have a ranked source ladder, every rung above the one in use must carry a recorded outcome of used/blocked/absent before the model may be built, a blocked source is reported as an access request rather than an acquisition programme, and any downgrade is surfaced with what it gave up so recovery factor can be decomposed into displacement times sweep. USE WHEN: a task needs a reservoir model for a field where only open data is available (for example an NCS field on public resource pages), needs a best-guess structural model when there is NO seismic, log or contact data at all (assumed play-typical trap style, layered stratigraphy, fluid contact and culmination solved to honour published volumes, structure-aware well placement, and a full assumption register), needs volumetrics from area/net pay/porosity/Sw, needs hydrostatic pressure and geothermal temperature defaults from depth, needs a recovery factor and drive mechanism from analogues, needs a well count and productivity index from permeability, needs to turn an ALREADY-BUILT static model (retrieved grid dimensions plus PORO/PERMX/NTG/SATNUM/EQLNUM cell arrays) into validated OPM Flow GRID and PROPS include files while catching the failure modes that produce a deck which runs and is wrong (array length mismatch, zero-based region arrays, fractions stored in percent, PERMZ left equal to PERMX, undefined sentinels) and reconciling the rebuilt in-place volume against a reported P90/P50/P10, or needs a NeqSim SimpleReservoir/WellFlow specification with a provenance trail and a ranked data-acquisition plan."
+    description: "Screening-level reservoir model from whatever data exists, on a maturity ladder from one public volume to a full static model, with ranked source ladders per ingredient. USE WHEN: a field has only open data, a best-guess structure without seismic/logs/contacts is needed, volumetrics or depth defaults, recovery and well count from analogues, static arrays to OPM Flow GRID/PROPS reconciled to P90/P50/P10, or a SimpleReservoir/WellFlow spec with provenance."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/field-development/neqsim-reservoir-model-builder/SKILL.md"
@@ -381,7 +381,7 @@ skills:
 
   - name: neqsim-norwegian-continental-shelf-data
     version: "0.4.0"
-    description: "Public Norwegian Continental Shelf (NCS) reference-facts database, carbon-cost basis, decline-curve forecasting, and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, field, carbon-cost/emission-abatement, or Arps decline-forecast facts (from norskpetroleum.no / Norwegian Offshore Directorate FactPages) to orient a production, resource-accounting, field-inventory, emission-reduction, or production-forecast screening before a validated NeqSim reservoir/process study."
+    description: "Public Norwegian Continental Shelf reference facts, carbon-cost basis, Arps decline forecasting and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, field, carbon-cost/abatement or decline-forecast facts (norskpetroleum.no / Sodir FactPages) to orient a production, resource-accounting, field-inventory, emission-reduction or forecast screening before a validated NeqSim study."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/field-development/neqsim-norwegian-continental-shelf-data/SKILL.md"
@@ -390,7 +390,7 @@ skills:
 
   - name: neqsim-ncs-infrastructure-network
     version: "0.1.0"
-    description: "Open-data graph of the whole Norwegian Continental Shelf export system - every field, discovery, host platform, trunkline, processing plant (Kårstø, Kollsnes, Nyhamna, Melkøya), receiving terminal (Emden, Dornum, Zeebrugge, Dunkerque, St Fergus, Easington, Nybro) and market - built live from the Sodir DataService, norskpetroleum.no capacity tables and Gassco plant pages, with read-only Sodir/FactPages/ENTSOG clients and NeqSim hand-offs (TiebackAnalyzer, HostFacility, LoopedPipeNetwork). USE WHEN: a task must know how NCS fields connect to the market, which fields share a pipeline or plant, how loaded each trunkline and plant is in a year, what an outage strands or reroutes, which elements are single points of failure, which host a discovery can tie into, or needs live open data (Sodir, ENTSOG flows) for an NCS value-chain study."
+    description: "Open-data graph of the Norwegian Continental Shelf export system - fields, discoveries, hosts, trunklines, processing plants, receiving terminals and markets - built live from Sodir, norskpetroleum.no and Gassco, with NeqSim hand-offs (TiebackAnalyzer, HostFacility, LoopedPipeNetwork). USE WHEN: a task must know how NCS fields reach market, which fields share a pipeline or plant, trunkline/plant loading, what an outage strands, single points of failure, or which host a discovery can tie into."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/field-development/neqsim-ncs-infrastructure-network/SKILL.md"
@@ -399,7 +399,7 @@ skills:
 
   - name: neqsim-ncs-value-chain-optimization
     version: "0.1.0"
-    description: "Multi-year, capacity-constrained value-chain optimisation of the whole Norwegian Continental Shelf: forecasts every field from Sodir history (Arps decline capped by remaining reserves) and phases in discoveries by maturity, routes all oil and gas through the real trunklines, processing plants and receiving terminals of neqsim-ncs-infrastructure-network with a linear programme (SciPy HiGHS), and returns production per field, curtailment, shadow prices of every pipeline and plant, ullage timelines, tie-in rankings and production-uplift lists, then hands them to NeqSim ValueChainObjective, DebottleneckingAdvisor and process-model optimisation. USE WHEN: a task asks how to maximise value or production across the NCS, which pipeline/plant is the binding constraint and what an extra unit of capacity is worth, how an outage or new tie-in changes the whole system, which discoveries fit best into spare capacity, or where fields could produce more."
+    description: "Multi-year, capacity-constrained NCS value-chain optimisation: forecasts fields from Sodir history, phases in discoveries, routes oil and gas through real trunklines, plants and terminals with a HiGHS LP, and returns production, curtailment, shadow prices, ullage, tie-in rankings and uplift lists for NeqSim follow-up. USE WHEN: maximising NCS value or production, finding the binding pipeline/plant and its capacity value, testing an outage or tie-in, or fitting discoveries into spare capacity."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/field-development/neqsim-ncs-value-chain-optimization/SKILL.md"
@@ -426,7 +426,7 @@ skills:
 
   - name: neqsim-surf-field-layout-design
     version: "0.2.0"
-    description: "Design a screening subsea (SURF) field layout and place the host from open map, bathymetry and licence-block data: group wells into drill centres, place Xmas trees, templates, manifolds, PLEMs and riser bases, position an FPSO or fixed host, route and size every production, injection, service, umbilical and riser line, export the result as georeferenced GeoJSON and a map, and render a presentation-grade reservoir-to-host cutaway that carries the study's headline numbers. USE WHEN: a task needs a field layout designed rather than an existing one screened - deciding how many drill centres and templates are needed, where the host should sit, which flowline architecture to use (loop, single line or daisy chain), what size the flowlines and risers should be, how long the umbilicals are, a georeferenced layout to hand to flow assurance, cost estimation or a NeqSim production-network model, or a decision-gate illustration of the whole system from reservoir to host."
+    description: "Design a screening SURF field layout and host position from open map, bathymetry and licence data: drill centres, trees, templates, manifolds, riser bases, routed and sized flowlines, umbilicals and risers, GeoJSON export and a reservoir-to-host cutaway. USE WHEN: a layout must be designed, not screened - template count, host location, loop/single/daisy-chain architecture, line sizes, umbilical lengths, or a georeferenced hand-off to flow assurance, cost or NeqSim network models."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/subsea/neqsim-surf-field-layout-design/SKILL.md"
@@ -498,7 +498,7 @@ skills:
 
   - name: neqsim-pipeline-survey-processing
     version: "0.1.0"
-    description: "Educational as-built pipeline survey processing that turns raw survey rows (KP, depth to top of pipe, seabed depth, easting/northing or latitude/longitude) into a cleaned, sign-normalised, resolution-filtered pipeline profile with flagged erroneous points, free-span and cover/burial candidates, a repeat-survey change comparison, a traceable processing log, and an elevation profile a NeqSim pipe model can consume. USE WHEN: a task needs a public, screening-level pipeline profile built from survey or inspection data before detailed DNV-RP-F105 free-span, DNV-RP-F109 on-bottom-stability, DNV-RP-F114 pipe-soil, or NeqSim thermal-hydraulic analysis."
+    description: "Educational as-built pipeline survey processing: raw KP/depth/seabed/coordinate rows to a cleaned, sign-normalised pipeline profile with flagged points, free-span and cover candidates, repeat-survey comparison, processing log and a NeqSim-ready elevation profile. USE WHEN: a task needs a screening-level pipeline profile from survey or inspection data before DNV-RP-F105, F109, F114 or NeqSim thermal-hydraulic analysis."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/subsea/neqsim-pipeline-survey-processing/SKILL.md"
@@ -516,7 +516,7 @@ skills:
 
   - name: neqsim-production-network-routing
     version: "0.1.0"
-    description: "Educational production-network routing screening that routes wells through manifolds and flowlines/risers to a host and rolls up an arrival pressure, and screens multiwell flow regulated by a facility inlet/separator pressure. USE WHEN: a task needs a public, screening-level inflow rate per well, aggregated manifold rates, a platform arrival-pressure roll-up, or pressure-regulated multiwell flow from an inlet/separator and reservoir pressures before detailed NeqSim inflow and multiphase-hydraulics design."
+    description: "Educational production-network routing: wells through manifolds and flowlines/risers to a host with an arrival-pressure roll-up, and multiwell flow regulated by an inlet/separator pressure. USE WHEN: a task needs screening-level per-well inflow, manifold rates, a platform arrival-pressure roll-up, or pressure-regulated multiwell flow before detailed NeqSim inflow and multiphase hydraulics."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/subsea/neqsim-production-network-routing/SKILL.md"
@@ -552,7 +552,7 @@ skills:
 
   - name: neqsim-control-authority-screening
     version: "0.1.0"
-    description: "Educational control-authority screening from a controller output history: saturation fraction at both stops, the trend in saturation across comparable periods, the variance and disturbance-gain ratio between saturated and modulating regimes, off-set-point time, and time-to-limit from the observed rate of change. USE WHEN: a controlled variable has got worse while the disturbance looks unchanged, a control valve is reported wide open or bottomed out, a loop is suspected of having stopped controlling, or a root-cause investigation must separate a growing disturbance from a loop that has run out of authority, before a validated loop performance review."
+    description: "Educational control-authority screening from controller output history: saturation fraction and trend, saturated vs modulating variance and disturbance gain, off-set-point time and time-to-limit. USE WHEN: a controlled variable worsened while the disturbance looks unchanged, a valve is wide open or bottomed out, a loop may have stopped controlling, or an investigation must separate a growing disturbance from a loop out of authority."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/process/neqsim-control-authority-screening/SKILL.md"
@@ -561,7 +561,7 @@ skills:
 
   - name: neqsim-heat-exchanger-fouling-assessment
     version: "0.1.0"
-    description: "Educational heat-exchanger performance monitoring and fouling assessment for plate and shell-and-tube coolers, condensers, and seawater or glycol cooling-medium loops: reduce an operating snapshot to an overall U-value, normalise it to design flow without scaling the deposit, separate fouling resistance from film resistance, rule out maldistribution, and convert the degradation into a capacity limitation and a cleaning interval. USE WHEN: a task asks whether a heat exchanger, cooler, condenser, or cooling-medium loop has fouled or degraded, by how much against its design U-value, what the degradation is costing in duty or capacity, or how often it must be cleaned."
+    description: "Educational heat-exchanger monitoring and fouling assessment for plate and shell-and-tube coolers, condensers and cooling-medium loops: operating U-value, flow normalisation without scaling the deposit, fouling vs film resistance, maldistribution rule-out, capacity loss and cleaning interval. USE WHEN: a task asks whether an exchanger or cooling loop has fouled, by how much against design U, what it costs in duty or capacity, or how often to clean."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/process/neqsim-heat-exchanger-fouling-assessment/SKILL.md"
@@ -624,7 +624,7 @@ skills:
 
   - name: neqsim-olga-multiphase-simulator
     version: "0.1.0"
-    description: "Run the OLGA transient multiphase flow simulator from Python: locate the installation, generate its PVT table and hydrate equilibrium curve from a NeqSim fluid, validate a genkey case with a rule check, launch the batch engine with the right flags, decode the engine exit code, and read .tpl trend and .ppl profile results. USE WHEN: a task must execute an OLGA case, batch or sweep OLGA runs, build a two- or three-phase OLGA PVT table or a HYDRATECURVE for HYDRATECHECK, diagnose an OLGA failure or licence error, or benchmark OLGA against the NeqSim pipeline models (TwoFluidPipe, PipeBeggsAndBrills) so that a multiphase flow result can be quoted with a known accuracy."
+    description: "Run the OLGA transient multiphase simulator from Python: locate it, build its PVT table and hydrate curve from a NeqSim fluid, rule-check a genkey case, launch the batch engine, decode the exit code, and read .tpl/.ppl results. USE WHEN: executing or sweeping OLGA cases, building an OLGA PVT table or HYDRATECURVE, diagnosing an OLGA failure or licence error, or benchmarking OLGA against NeqSim TwoFluidPipe / PipeBeggsAndBrills."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/flow-assurance/neqsim-olga-multiphase-simulator/SKILL.md"
@@ -696,7 +696,7 @@ skills:
 
   - name: neqsim-ageing-life-extension-screening
     version: "0.1.0"
-    description: "Educational ageing-trend and remaining-life screening for a repairable equipment population from its corrective-failure history: Laplace centroid trend test, Crow-AMSAA / NHPP power-law intensity fit, projection of the failure load to a required end-of-life year, and a maintain-versus-replace economic crossover. USE WHEN: a task asks whether equipment is degrading with age, whether a failure history shows a worsening trend, how many failures to expect between now and a life-extension target year, or whether to keep repairing versus replace, before a qualified life-extension or technical-condition assessment."
+    description: "Educational ageing-trend and remaining-life screening for repairable equipment from corrective-failure history: Laplace trend test, Crow-AMSAA power-law fit, failure projection to an end-of-life year, maintain-vs-replace crossover. USE WHEN: a task asks whether equipment is degrading with age, whether failures are trending worse, how many failures to expect before a life-extension year, or whether to keep repairing or replace."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/process/neqsim-ageing-life-extension-screening/SKILL.md"
@@ -713,7 +713,7 @@ skills:
     min_neqsim_version: "3.7.0"
   - name: neqsim-cfd-coupling
     version: "0.4.0"
-    description: "Link a NeqSim process simulation and engineering documents to a CFD study, single-phase or multiphase. Merges P&ID, STID, datasheet and plant-data inputs into a traceable design basis, converts a flashed NeqSim fluid into CFD boundary conditions, takes both phases and the interfacial tension from a multiphase flash and screens which multiphase model is defensible, writes and runs a complete OpenFOAM case (steady single-phase RANS or transient volume of fluid) for arbitrary geometry, reads the solved fields back, gates the study on wall treatment / mesh independence / turbulence model, and converts local-versus-bulk results into enhancement factors for one-dimensional models. Tonal-noise requests are first gated on source topology, internal geometry, synchronized spectra, event conditions, acoustic terminations, and structural boundaries; steady RANS is never presented as tonal-source diagnosis. USE WHEN: a task needs local flow detail a one-dimensional model cannot generate - velocity or shear peaks at bends, welds, restrictions, tees, headers or tube bundles, flow maldistribution across a bundle or manifold, stratified or slug two-phase behaviour in a line, a pressure-drop check on real geometry, a CFD/FEM report qualification, or a fail-closed readiness assessment for aeroacoustic or flow-induced tonal noise."
+    description: "Link NeqSim and engineering documents to single- or multiphase CFD: traceable design basis, NeqSim boundary conditions, runnable OpenFOAM RANS/VOF cases, mesh/wall/turbulence gates and enhancement factors for 1-D models; tonal-noise work fails closed without evidence. USE WHEN: local velocity or shear peaks at bends, welds, tees or bundles, maldistribution, stratified/slug flow, real-geometry pressure drop, CFD/FEM report qualification, or aeroacoustic readiness."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/process/neqsim-cfd-coupling/SKILL.md"
@@ -721,7 +721,7 @@ skills:
     min_neqsim_version: "3.7.0"
   - name: neqsim-fem-coupling
     version: "0.2.0"
-    description: "Link a NeqSim process simulation and engineering documents to a finite-element model of the solid: heat conduction through a layered wall, transient cooldown, species diffusion in porous rock, and the thermal and pressure stress that follow. Merges P&ID, STID, datasheet, insulation-specification and inspection inputs into a traceable design basis, converts a flashed NeqSim fluid into a film coefficient, a Biot and Fourier number and a mesh and time-step target, solves the layered one-dimensional problem with a dependency-free finite-element solver verified against the closed-form resistance, generates a structured Gmsh mesh in two dimensions or swept into three (revolved pipe or vessel wall, extruded plate or block) and a runnable scikit-fem or FEniCSx case, screens which backend is defensible (scikit-fem, FEniCSx, SfePy, MFEM, OpenSeesPy, PyNite), renders the mesh and the solved field off-screen with PyVista including surface, cut-plane and clipped three-dimensional views, gates the study on discretisation, mesh independence, energy balance and boundary placement, and reduces the field to the U-value, U-multiplier, hot-spot factor and no-touch time a one-dimensional NeqSim model consumes. USE WHEN: a task needs a temperature or stress field inside a solid that a one-dimensional heat-transfer coefficient cannot produce - a local insulation defect, a support or clamp short-circuit, a buried or non-radial soil path, a nozzle or wall discontinuity, a cooldown or thermal-shock transient, diffusion through a porous medium - when a three-dimensional geometry or a rendered field is needed, or when an existing thermal or stress finite-element report must be qualified before its numbers are trusted."
+    description: "Link NeqSim and engineering documents to finite-element models of the solid: layered-wall conduction, transient cooldown, porous diffusion and thermal/pressure stress, with NeqSim film coefficients, closed-form checks, Gmsh 2-D/3-D meshes, scikit-fem/FEniCSx cases, PyVista renders and 1-D outputs (U-value, hot-spot factor, no-touch time). USE WHEN: insulation defects, clamp short-circuits, buried/non-radial soil paths, wall discontinuities, cooldown or thermal shock, or FEM report qualification."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/process/neqsim-fem-coupling/SKILL.md"
@@ -729,7 +729,7 @@ skills:
     min_neqsim_version: "3.7.0"
   - name: neqsim-near-well-and-injectivity
     version: "0.4.1"
-    description: "Derive what the rock will give and take, and hand it to NeqSim: productivity and injectivity indices, their evolution as saturation fronts develop, and the SCAL basis behind them. Standardises on OPM Flow as the reservoir simulator, pyscal for relative permeability and resdata for output, and covers converting a NeqSim compositional fluid into a black-oil (PVTO/PVDG) or gas-condensate (VAPOIL/PVTG/PVDO) PVT table that OPM Flow will actually accept. USE WHEN: a productivity or injectivity index is about to be assumed, injectors must be checked against a voidage requirement, productivity decay through the bubble point matters, a gas condensate needs retrograde dropout and condensate banking represented, a reservoir model must be sized backwards from a mandated production profile, a NeqSim fluid must become a PVTO/PVDG/PVTG/PVTW deck section, or an Eclipse-format reservoir model must be built and run."
+    description: "Derive productivity and injectivity indices from the rock with OPM Flow, pyscal and resdata, convert a NeqSim fluid to black-oil (PVTO/PVDG) or gas-condensate (VAPOIL/PVTG/PVDO) tables, and use NeqSim VFPPROD lift curves in the deck. USE WHEN: a PI/II is about to be assumed, injectors vs voidage, productivity decay below bubble point, retrograde dropout, sizing a model to a mandated profile, a fluid or lift curve must enter a deck, or an Eclipse-format model must be built and run."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/subsurface/neqsim-near-well-and-injectivity/SKILL.md"
@@ -737,7 +737,7 @@ skills:
     min_neqsim_version: "3.7.0"
   - name: neqsim-reservoir-3d-visualisation
     version: "0.2.0"
-    description: "Render a reservoir simulation grid in 3D from its Eclipse-format output: cell-corner geometry from the EGRID so corner-point and box grids render identically, static properties from the INIT, dynamic properties from the UNRST, wells as tubes, crinkle cutaways that keep whole cells, threshold views that isolate remaining oil, and exploded layer views. USE WHEN: an OPM Flow or Eclipse run needs a presentation-grade 3D figure, a sweep or bypassed-oil claim needs visual evidence, a property field must be inspected for spatial correlation before it is trusted, or a reservoir illustration is going into a report or decision gate. Covers the vertical-exaggeration, camera-framing, corner-ordering and scalar-range traps that silently produce an empty or misleading picture."
+    description: "Render a reservoir grid in 3D from Eclipse-format output (EGRID geometry, INIT and UNRST properties) with well tubes, crinkle cutaways, threshold views and exploded layers, avoiding the exaggeration, camera, corner-order and scalar-range traps. USE WHEN: an OPM Flow or Eclipse run needs a presentation-grade 3D figure, a sweep or bypassed-oil claim needs visual evidence, a property field must be inspected for spatial correlation, or a reservoir illustration goes into a report or decision gate."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/subsurface/neqsim-reservoir-3d-visualisation/SKILL.md"
@@ -745,7 +745,7 @@ skills:
     min_neqsim_version: "3.7.0"
   - name: neqsim-continuous-improvement-toolkit
     version: "0.1.0"
-    description: "Generic building blocks for NeqSim living tasks (continuous task solving): a tagreader historian adapter for PI / IP.21 that plugs into cycle_plan.yaml, Gaussian-process Bayesian optimisation with expected improvement for solve stages on expensive NeqSim models, an ensemble Kalman parameter update, and an SVD identifiability check that shows which model parameters the measurements can actually determine. USE WHEN: a living task needs historian data without enterprise adapters, a solve loop must choose the next setpoint trial and quantify its expected gain for the stop rule, model parameters must be updated cycle by cycle from measurements, or a calibration must be checked for unidentifiable parameters before it is trusted."
+    description: "Building blocks for NeqSim living tasks: a tagreader PI/IP.21 adapter for cycle_plan.yaml, Gaussian-process Bayesian optimisation with expected improvement, an ensemble Kalman parameter update, and an SVD identifiability check. USE WHEN: a living task needs historian data without enterprise adapters, a solve loop must pick the next trial and its expected gain, parameters must update each cycle from measurements, or a calibration must be checked for unidentifiable parameters."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/process/neqsim-continuous-improvement-toolkit/SKILL.md"

@@ -2,7 +2,7 @@
 name: neqsim-reference-fluid-synthetic-generation
 calculation_basis: "screening"
 version: "0.2.0"
-description: "Generate representative or synthetic fluid cases from a common reference fluid by adjusting a split/characterization factor, match that factor to measured PVT/separator data, blend well/fluid compositions into a field composition by molar-rate allocation, and - when there is NO PVT report and possibly no sample - build a declared best-guess fluid basis from fundamentals and named analogues: reservoir temperature from a geothermal gradient, fluid type from GOR/degAPI bands, GOR and stock-tank gravity from an analogue depth trend with low/base/high cases, a seed light-ends + C7+ composition ready for NeqSim EOS characterization, and a provenance and assumption register. USE WHEN: a task must calibrate a heavy-end split factor against measurements, produce field-level or per-case representative fluids from a reference model, combine several wells/fluids into one allocated field fluid, or establish a fluid for a discovery or prospect with no laboratory PVT, before rigorous NeqSim characterization."
+description: "Representative or synthetic fluids from a common reference fluid via a split factor, matched to PVT/separator data; molar-rate blending of well fluids; and, with NO PVT report, a declared best-guess fluid from geothermal gradient, GOR/API bands and analogue trends with low/base/high cases and an assumption register. USE WHEN: calibrating a heavy-end split factor, producing field or per-case fluids, allocating a combined field fluid, or establishing a fluid for a discovery without lab PVT."
 last_verified: "2026-09-10"
 requires:
   python_packages: []

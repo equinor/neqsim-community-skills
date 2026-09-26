@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-ncs-value-chain-optimization"
+version = "0.1.0"
+description = "Capacity-constrained, multi-year value-chain optimisation of the whole Norwegian Continental Shelf (history, forecasts, discoveries, pipelines, plants, terminals) with NeqSim ValueChainObjective, DebottleneckingAdvisor and process-model hand-offs."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = ["neqsim-skill-ncs-infrastructure-network"]
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+lp = ["scipy>=1.9", "numpy"]
+neqsim = ["neqsim"]
+decline = ["neqsim-skill-norwegian-continental-shelf-data"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

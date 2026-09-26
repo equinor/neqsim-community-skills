@@ -388,6 +388,24 @@ skills:
     tags: [field-development, norwegian-continental-shelf, production, resources, open-data, database, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-ncs-infrastructure-network
+    version: "0.1.0"
+    description: "Open-data graph of the whole Norwegian Continental Shelf export system - every field, discovery, host platform, trunkline, processing plant (Kårstø, Kollsnes, Nyhamna, Melkøya), receiving terminal (Emden, Dornum, Zeebrugge, Dunkerque, St Fergus, Easington, Nybro) and market - built live from the Sodir DataService, norskpetroleum.no capacity tables and Gassco plant pages, with read-only Sodir/FactPages/ENTSOG clients and NeqSim hand-offs (TiebackAnalyzer, HostFacility, LoopedPipeNetwork). USE WHEN: a task must know how NCS fields connect to the market, which fields share a pipeline or plant, how loaded each trunkline and plant is in a year, what an outage strands or reroutes, which elements are single points of failure, which host a discovery can tie into, or needs live open data (Sodir, ENTSOG flows) for an NCS value-chain study."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/neqsim-ncs-infrastructure-network/SKILL.md"
+    tags: [field-development, norwegian-continental-shelf, infrastructure, pipelines, gas-transport, network, open-data, open-api, tie-back, screening]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-ncs-value-chain-optimization
+    version: "0.1.0"
+    description: "Multi-year, capacity-constrained value-chain optimisation of the whole Norwegian Continental Shelf: forecasts every field from Sodir history (Arps decline capped by remaining reserves) and phases in discoveries by maturity, routes all oil and gas through the real trunklines, processing plants and receiving terminals of neqsim-ncs-infrastructure-network with a linear programme (SciPy HiGHS), and returns production per field, curtailment, shadow prices of every pipeline and plant, ullage timelines, tie-in rankings and production-uplift lists, then hands them to NeqSim ValueChainObjective, DebottleneckingAdvisor and process-model optimisation. USE WHEN: a task asks how to maximise value or production across the NCS, which pipeline/plant is the binding constraint and what an extra unit of capacity is worth, how an outage or new tie-in changes the whole system, which discoveries fit best into spare capacity, or where fields could produce more."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/neqsim-ncs-value-chain-optimization/SKILL.md"
+    tags: [field-development, norwegian-continental-shelf, value-chain, optimization, linear-programming, debottlenecking, tie-back, production-forecast, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-field-layout-import
     version: "0.1.0"
     description: "Educational subsea field-layout import and normalization from supplied GeoJSON or tabular rows. USE WHEN: a task needs to turn an already-parsed subsea map (GeoJSON point features or CSV-like rows) into a clean, validated node list of wells, manifolds, and a host before geometry and routing screening."

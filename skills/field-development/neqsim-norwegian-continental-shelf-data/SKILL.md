@@ -288,6 +288,10 @@ workflows rather than running calculations itself:
 - Community companions: `reservoir-depletion-screening`,
   `production-network-routing`, `asset-value-npv-screening`,
   `energy-emissions-screening`.
+- Whole-shelf system questions (which fields share which pipelines, plants and
+  terminals; bottlenecks; outages; shelf-wide optimisation) go to
+  `neqsim-ncs-infrastructure-network` and `neqsim-ncs-value-chain-optimization`.
+  The optimiser reuses this skill's `fit_arps_decline` for its field forecasts.
 
 ## References
 

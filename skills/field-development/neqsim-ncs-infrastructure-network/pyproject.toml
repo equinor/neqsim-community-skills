@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-ncs-infrastructure-network"
+version = "0.1.0"
+description = "Open-data graph of the Norwegian Continental Shelf export system (fields, hubs, pipelines, processing plants, receiving terminals) with read-only Sodir/ENTSOG clients and NeqSim tie-back and trunkline hand-offs."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+neqsim = ["neqsim"]
+xlsx = ["openpyxl"]
+graph = ["networkx"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ncs_infrastructure_network = ["data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

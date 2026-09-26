@@ -725,3 +725,11 @@ skills:
     path: "skills/subsurface/neqsim-reservoir-3d-visualisation/SKILL.md"
     tags: [subsurface, reservoir-simulation, visualization, 3d, pyvista, resdata, opm-flow, eclipse, sweep, reporting]
     min_neqsim_version: "3.7.0"
+  - name: neqsim-continuous-improvement-toolkit
+    version: "0.1.0"
+    description: "Generic building blocks for NeqSim living tasks (continuous task solving): a tagreader historian adapter for PI / IP.21 that plugs into cycle_plan.yaml, Gaussian-process Bayesian optimisation with expected improvement for solve stages on expensive NeqSim models, an ensemble Kalman parameter update, and an SVD identifiability check that shows which model parameters the measurements can actually determine. USE WHEN: a living task needs historian data without enterprise adapters, a solve loop must choose the next setpoint trial and quantify its expected gain for the stop rule, model parameters must be updated cycle by cycle from measurements, or a calibration must be checked for unidentifiable parameters before it is trusted."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/neqsim-continuous-improvement-toolkit/SKILL.md"
+    tags: [process, continuous-improvement, living-task, historian, tagreader, bayesian-optimization, enkf, identifiability]
+    min_neqsim_version: "3.22.0"

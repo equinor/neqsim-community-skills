@@ -532,6 +532,15 @@ skills:
     tags: [environment, emissions, co2, combustion, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-weather-data
+    version: "0.1.0"
+    description: "Live, forecast and historical weather, wind and sea-state data for installations from open, keyless APIs - Open-Meteo worldwide and MET Norway/Sodir for the Norwegian Continental Shelf. USE WHEN: a task needs current, forecast or historical temperature, wind, humidity, pressure or wave data for an installation - by name on the NCS or by coordinates anywhere - for gas-turbine derating, fire-water/flare wind screening, dispersion stability class, or subsea cooldown screening."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/environment/neqsim-weather-data/SKILL.md"
+    tags: [environment, weather, wind, meteorology, marine, norwegian-continental-shelf, open-data, open-api, data-retrieval]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-two-phase-flow-regime-screening
     version: "0.1.0"
     description: "Educational two-phase flow-regime screening that classifies a horizontal gas-liquid flow pattern from superficial velocities using a simplified public Mandhane-style map and flags slug risk. USE WHEN: a task needs a public, screening-level flow-regime flag (stratified, slug, annular, bubble) and slug-risk triage to pair with slug-flow and flow-induced-vibration work."

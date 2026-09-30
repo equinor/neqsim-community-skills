@@ -104,6 +104,12 @@ This skill is a public dispersion-distance triage layer that decides when to inv
 - Flat open terrain, constant wind, no obstacles or buildings.
 - No deposition, reaction, or time-varying release.
 
+## Related Skills
+
+- `neqsim-weather-data` - live or historical `wind_speed`, plus a screening
+  `stability_class` estimate from wind speed, time of day and cloud cover via
+  `estimate_pasquill_stability_class`, instead of an assumed value.
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

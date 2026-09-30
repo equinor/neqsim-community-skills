@@ -148,6 +148,8 @@ print(monitors.effective_density_lpm_per_m2, monitors.verdict)
 - `neqsim-depressurization-screening` — inventory removal, the primary barrier for a
   pressurised system.
 - `neqsim-safety-function-coverage-screening` — whether the protective functions exist at all.
+- `neqsim-weather-data` — live or forecast `wind_speed_m_s` for the fire-monitor
+  wind-drift screening, instead of an assumed value.
 
 ## References
 

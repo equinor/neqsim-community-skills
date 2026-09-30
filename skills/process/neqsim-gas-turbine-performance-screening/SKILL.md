@@ -113,6 +113,11 @@ This skill is a public triage layer that decides when to invoke a validated gas-
 - Derates are linear screening factors; part-load, water injection, and DLE effects are not modelled.
 - Exhaust mass flow and temperature use fixed screening assumptions, not a heat-and-mass balance.
 
+## Related Skills
+
+- `neqsim-weather-data` - live or historical site ambient temperature (and elevation from
+  location resolution) to feed `ambient_temperature_k`/`site_elevation_m` instead of an assumed value.
+
 ## References
 
 - ISO 3977, Gas turbines — Procurement.

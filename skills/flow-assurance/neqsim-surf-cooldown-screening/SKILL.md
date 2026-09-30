@@ -151,6 +151,12 @@ work:
 In Python the same classes are reachable through the `neqsim` package (for
 example `from neqsim import jneqsim`).
 
+## Related Skills
+
+- `neqsim-weather-data` - live or historical sea-surface temperature
+  (`get_marine`) as an ambient/seabed-temperature indicator when no direct
+  seabed measurement is available.
+
 ## References
 
 - NeqSim repository: https://github.com/equinor/neqsim

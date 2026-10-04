@@ -123,6 +123,7 @@ This skill is a public polytropic-head triage layer that decides when to invoke 
 | Discharge temperature too high | Single high-ratio stage assumed | Split into stages with intercooling |
 | Power off significantly | Constant `Z` over a wide range | Use a real-gas method like the NeqSim Compressor |
 | Head looks wrong | Molecular weight in kg/mol not g/mol | Keep `M` in g/mol |
+| Measured discharge temperature far above the screening value at design efficiency | Low effective efficiency (off-design speed, fouling), a heavier gas than assumed, or hot recycle | Check mole weight and recycle-valve opening first; if both are clean, back out an effective efficiency from the temperature rise and compare the resulting power with the measured motor power |
 
 ## Limitations
 

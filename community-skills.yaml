@@ -744,6 +744,14 @@ skills:
     path: "skills/subsurface/neqsim-near-well-and-injectivity/SKILL.md"
     tags: [subsurface, wells, injectivity, productivity, relative-permeability, opm-flow, reservoir-simulation, black-oil, pyscal, resdata]
     min_neqsim_version: "3.7.0"
+  - name: neqsim-reservoir-history-match-forecast
+    version: "0.1.0"
+    description: "Compositional material-balance model of a gas-condensate field with several formations, compartments and wells: history match to rates, pressure and condensate yield, produced composition versus depletion, forecast under wellhead-pressure limits, and wellstreams for process models. USE WHEN: a multi-formation or multi-well gas field must be matched and forecast, composition change is needed, or a process model needs reservoir-driven feeds."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-reservoir-history-match-forecast/SKILL.md"
+    tags: [subsurface, reservoir, history-matching, material-balance, compositional, gas-condensate, forecast, multi-reservoir, process-integration]
+    min_neqsim_version: "3.7.0"
   - name: neqsim-reservoir-3d-visualisation
     version: "0.2.0"
     description: "Render a reservoir grid in 3D from Eclipse-format output (EGRID geometry, INIT and UNRST properties) with well tubes, crinkle cutaways, threshold views and exploded layers, avoiding the exaggeration, camera, corner-order and scalar-range traps. USE WHEN: an OPM Flow or Eclipse run needs a presentation-grade 3D figure, a sweep or bypassed-oil claim needs visual evidence, a property field must be inspected for spatial correlation, or a reservoir illustration goes into a report or decision gate."

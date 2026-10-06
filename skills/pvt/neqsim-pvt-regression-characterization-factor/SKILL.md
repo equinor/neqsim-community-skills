@@ -115,6 +115,25 @@ and `neqsim-reference-fluid-synthetic-generation` (generate the fluids).
 - A measured value of zero (relative residual is undefined; raises).
 - Passing `low >= high` (raises).
 - Interpreting a single-factor fit as a full EOS regression.
+- Reporting only the fitted factor: also show raw vs tuned vs lab per target, the
+  per-sample *predicted* CME/DLE/viscosity error, and a bound flag when the factor
+  is pinned at an endpoint (see Reporting tuning quality).
+- Tuning an oil characterisation (universal P/A) to a gas-cap or gas-condensate
+  sample: the GOR can be matched while the dew point and stock-tank density stay
+  wrong. Mark such a fluid NOT TUNED instead of reporting the fit.
+- Reusing a cloned NeqSim fluid across trials: clones share kij and volume-shift
+  state, so rewrite both on every composition change or earlier trials leak in.
+
+## Reporting tuning quality
+
+Every use of a tuned fluid in a report needs: a per-fluid table of raw, tuned and
+lab GOR, stock-tank density and saturation pressure with the fitted parameters and
+bound flags; per-sample prediction error (Psat, GOR, STO, CME above/below Psat,
+DLE Rs/Bo, viscosity) with mean and worst case; parity and CME/DLE overlay figures;
+untuned or inconsistent samples named (a CME referenced to a pressure that differs
+from the reported Psat is a lab inconsistency to flag, not to fit). Worked example:
+Grane task 2026-10-06 `60_figures_tables.py`; reporting rule in
+`neqsim-professional-reporting` Principle 9a.
 
 ## Limitations
 

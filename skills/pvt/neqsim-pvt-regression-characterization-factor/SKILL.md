@@ -135,6 +135,19 @@ from the reported Psat is a lab inconsistency to flag, not to fit). Worked examp
 Grane task 2026-10-06 `60_figures_tables.py`; reporting rule in
 `neqsim-professional-reporting` Principle 9a.
 
+Also required (Visund task 2026-10-06, `63_tuning_quality.py`):
+
+- Compute the **untuned "before"** with the optimiser start values through the same
+  quality function as the tuned "after" (gas: alpha 2, S 0.5, k 1; oil: S from the C7+ MW
+  correlation, k 1) and tabulate before and after per sample.
+- Give every experiment row a role: `fit target` or `check (not fitted)`. A check metric may
+  get worse when a target improves (oil Psat -3 points after the GOR and density fit); say so.
+- Process-level calibration (for example the produced-gas heavy-end leaning of the wellstream
+  recombination) is not a PVT parameter: list it in `parameters` with fluid
+  `wellstream recombination`, its bounds, and the benchmark role per window (calibrated,
+  hold-out, fitted separately). Never absorb a PVT or allocation mismatch in one factor on the
+  allocated oil: it closes the calibration window and fails the hold-outs.
+
 ## Limitations
 
 - Screening-level and single-factor; it does not tune the full EOS.

@@ -213,6 +213,8 @@ that the recent year has no overloaded element.
   `fit_arps_decline`.
 - `neqsim-resource-classification-screening`: maturity of the discoveries
   listed here.
+- `neqsim-ncs-ownership-equity`: partners and working interests of the fields
+  and discoveries listed here, for net-to-company economics.
 - `neqsim-production-network-routing`, `neqsim-step-out-screening`,
   `neqsim-pipe-route-profile`: detailed tie-back hydraulics.
 - NeqSim Java: `TiebackAnalyzer`, `HostFacility`, `LoopedPipeNetwork`,

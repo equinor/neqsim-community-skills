@@ -370,6 +370,15 @@ skills:
     tags: [field-development, reservoir, depletion, production-profile, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-reservoir-facility-value-chain
+    version: "0.1.0"
+    description: "History-match and forecast a gas chain from reservoir to export: p/z tank from shut-in wellhead pressure, well deliverability, facility capacity from process-model sweeps, separation pressure at the supply/capacity crossing, multi-field export coupling, scenarios, P10/P90. USE WHEN: linking reservoir depletion to a platform or export system, history matching, finding whether wells or facility limit production, or valuing compression and well levers."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/neqsim-reservoir-facility-value-chain/SKILL.md"
+    tags: [field-development, reservoir, material-balance, deliverability, facility-capacity, value-chain, history-match, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-reservoir-model-builder
     version: "0.4.0"
     description: "Screening-level reservoir model from whatever data exists, on a maturity ladder from one public volume to a full static model, with ranked source ladders per ingredient. USE WHEN: a field has only open data, a best-guess structure without seismic/logs/contacts is needed, volumetrics or depth defaults, recovery and well count from analogues, static arrays to OPM Flow GRID/PROPS reconciled to P90/P50/P10, or a SimpleReservoir/WellFlow spec with provenance."
@@ -397,6 +406,14 @@ skills:
     tags: [field-development, norwegian-continental-shelf, infrastructure, pipelines, gas-transport, network, open-data, open-api, tie-back, screening]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-ncs-ownership-equity
+    version: "0.1.0"
+    description: "Reads who owns Norwegian Continental Shelf fields, discoveries and licences from Sodir (partners, equity %, operator, history, company portfolio) and turns it into net-equity inputs for field evaluation and economics. Prospect equity is not public: user-supplied or a labelled licence proxy. USE WHEN: an evaluation needs partners and working interests, a net-to-company view of volumes, capex, opex or cash flow, a portfolio roll-up, or a check of an equity assumption."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/neqsim-ncs-ownership-equity/SKILL.md"
+    tags: [field-development, norwegian-continental-shelf, ownership, equity, licensee, discovery, prospect, economics, open-data, open-api, screening]
+    min_neqsim_version: "3.7.0"
   - name: neqsim-ncs-value-chain-optimization
     version: "0.1.0"
     description: "Multi-year, capacity-constrained NCS value-chain optimisation: forecasts fields from Sodir history, phases in discoveries, routes oil and gas through real trunklines, plants and terminals with a HiGHS LP, and returns production, curtailment, shadow prices, ullage, tie-in rankings and uplift lists for NeqSim follow-up. USE WHEN: maximising NCS value or production, finding the binding pipeline/plant and its capacity value, testing an outage or tie-in, or fitting discoveries into spare capacity."

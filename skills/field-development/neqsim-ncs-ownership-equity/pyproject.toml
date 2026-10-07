@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-ncs-ownership-equity"
+version = "0.1.0"
+description = "Read-only Sodir client that returns who owns Norwegian Continental Shelf fields, discoveries and licences (equity by company, operator, history, company portfolio) and turns it into net-equity inputs for field evaluation and economics. Prospect equity is user-supplied or a labelled licence proxy."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

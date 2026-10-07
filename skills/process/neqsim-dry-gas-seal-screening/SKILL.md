@@ -96,6 +96,10 @@ If the optional `neqsim` Python package is available, the result records that fa
 
 ## Related NeqSim Functionality
 
+- `neqsim.process.equipment.compressor.SealGasSupplyConditioning` checks the supply side: dew point margin after the isenthalpic reduction across the seal gas supply valve, the heater temperature that restores the 20 K practice, the liquid load implied by a filter sump filling rate and the sump fill time. Use it before concluding that a seal problem is a filter problem.
+- Evidence recipe from a field study (plant-agnostic): (1) find where the seal gas is taken (impeller, discharge, fuel gas) on the seal gas P&ID, because the contamination mechanism and the remedy differ; (2) compute the dew point margin at the supply conditions with the plant fluid; (3) detect filter drain events from the sump level sawtooth (level drop of more than 8 % in 15 min) and count them per day; (4) look for natural experiments (alternative supply gas, set-point step, shutdown) before regressing; (5) check that the filter analysis is not contaminated by priming diesel; (6) read the notification text of the seal and filter tags for design intent (orifice size, take-off location, O-ring quality).
+- `neqsim.process.equipment.compressor.DryGasSealAnalyzer` for vent-side condensation.
+
 This educational screening corresponds to validated, rigorous functionality in the NeqSim Java library that a qualified engineer should use for design-grade work:
 
 - `neqsim.process.equipment.compressor.DryGasSealAnalyzer` — isenthalpic seal-gap expansion, retrograde condensation mapping, dead-leg cooldown, condensate accumulation, and seal-gas conditioning unit sizing per API 692.

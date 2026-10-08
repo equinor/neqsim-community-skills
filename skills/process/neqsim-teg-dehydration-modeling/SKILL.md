@@ -139,6 +139,29 @@ still_vent = classify_emissions(streams["stillVent"])
 print(water_dew_C, lean_teg_wt, still_vent["NMVOC"])
 ```
 
+## Regeneration-Pressure Sensitivity (reboiler floating on the LP flare)
+
+Use this when the question is "does a few tens of mbar more reboiler pressure matter?" rather
+than a full flowsheet. A reboiler/still connected to an LP flare header has no pressure control;
+its pressure is the header pressure plus the pressure drop of the overhead path. Lean-TEG water
+content at fixed temperature and vapour composition scales with total pressure, so the
+effect is proportional (verified 2026-10-08, Aasta Hansteen, SRK-CPA, `mixingRule 10`):
+
+- `p_w(x_water, T)` = `y_water * P_bubble` from `bubblePointPressureFlash(False)` on a
+  `TEG`/`water` binary (`fl.getPhase(0)` is the gas); solve `x_water` so that
+  `p_w = y_steam * P_reboiler` by bisection (`y_steam` = steam / (steam + stripping gas), about
+  0.85 to 0.92 for 76 Sm3/h stripping gas and 690 kg/h water).
+- Benchmark: 98.90 wt% TEG at 204 C and 1 atm without stripping gas (textbook value about 98.7).
+- 0.200 to 0.215 barg at 198 C: lean-TEG water +1.29 % relative (about -0.005 wt%-points at the
+  design 99.6 wt%), equal to about 0.6 C of reboiler temperature, and +0.16 C on the equilibrium
+  dry-gas dew point at 69 barg. Reaching the 0.4 barg H alarm costs about +17 % water.
+- Dry-gas equilibrium: flash gas + `water` + `TEG` with 5 mol TEG solution per mol gas so the
+  liquid composition stays fixed; `dewPointTemperatureFlash()` for the dew point.
+- Water load: saturate the gas at the WET-GAS-SCRUBBER temperature (e.g. 22 C), not the
+  contactor lean-TEG inlet temperature (35 C); the two differ by a factor of two in kg/h.
+- In `neqsim_dev_setup` task scripts use `ns.JClass("neqsim.thermo.system.SystemSrkCPAstatoil")`
+  and the component name `TEG`.
+
 ## Validation Checklist
 
 - [ ] Water dew point of the dry gas is well below 0 C at the reference pressure.

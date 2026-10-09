@@ -42,6 +42,8 @@ terms or NPV; it supplies the equity fractions those steps multiply by.
 - `OwnershipReader()` reads live Sodir. Pass `fetch=` to run offline.
 - Names resolve loosely and case-insensitively: `"Troll"`, `"Wisting"`,
   `"7324/8-1 (Wisting)"`. Several matches raise `OwnershipError` listing the candidates.
+- Production licences are named by the bare number: `reader.licence("1252")` works,
+  `"PL1252"` raises `no production licence named 'PL1252'` (verified 2026-10-09).
 - `as_of` is a date (default today). Interests are valid from the start date to the
   inclusive end date; an empty end is open.
 - Companies for `portfolio()` are a name or a Sodir company id. An ambiguous name
@@ -60,6 +62,9 @@ interest %, operator flag, valid dates), `owner_kind`, `owner_name`, `operator`,
 - `portfolio_net([(record, gross), ...], company)`: sums a company's net over assets
 - `OwnershipReader.history("field" | "licence", name)`: ownership periods, oldest first
 - `portfolio(company, as_of)`: every field and discovery held, with interest %
+- `licence_milestones(licence)`: the licence work obligations (drill-or-drop, decision to continue, plan for
+  development) with deadlines as local Europe/Oslo dates. Sodir stores a deadline as local midnight, so reading the
+  epoch as UTC (`to_date`) gives the previous day; use `to_local_date` for deadlines.
 
 `basis` is `sodir_public`, `licence_proxy` or `user_provided`. Carry it into any
 report so the reader knows how firm the equity is.

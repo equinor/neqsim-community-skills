@@ -238,3 +238,29 @@ def test_service_error_is_raised():
         return json.dumps({"error": {"code": 400}}).encode()
     with pytest.raises(RuntimeError, match="DataService error"):
         SodirClient(fetch).query(7108)
+
+
+def test_licence_milestones_use_local_oslo_dates():
+    """Sodir stores a deadline as local midnight; read as UTC it is one day early."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    def oslo_midnight(y, m, d):
+        return int(datetime(y, m, d, tzinfo=ZoneInfo("Europe/Oslo")).timestamp() * 1000)
+
+    def fetch(url, timeout):
+        if "/MapServer/3007/" in url:
+            rows = [lic(1263, "1263", "Opco AS", 10, 100.0, ms(2025, 1, 1), oper=True)]
+        else:
+            assert "/FeatureServer/652/" in url
+            rows = [{"prlTaskTypeCode": "DOD", "prlTaskTypeEn": "Decision to drill", "prlTaskCategory": "WORK",
+                     "prlTaskStatusEn": "OPEN", "prlTaskExpiryDate": oslo_midnight(2027, 3, 14)},
+                    {"prlTaskTypeCode": "BOK", "prlTaskTypeEn": "Drill or drop", "prlTaskCategory": "WORK",
+                     "prlTaskStatusEn": "OPEN", "prlTaskExpiryDate": oslo_midnight(2026, 3, 14)}]
+        return json.dumps({"features": [{"attributes": r} for r in rows]}).encode("utf-8")
+
+    out = OwnershipReader(fetch=fetch).licence_milestones("1263")
+    assert [r["deadline"] for r in out] == ["2026-03-14", "2027-03-14"]
+    assert out[1]["code"] == "DOD"
+    with pytest.raises(OwnershipError):
+        OwnershipReader(fetch=lambda u, t: json.dumps({"features": []}).encode()).licence_milestones("nope")

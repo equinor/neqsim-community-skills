@@ -8,7 +8,8 @@ from datetime import date
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
 from .model import OwnershipError, OwnershipRecord, Stake, check_prospect_stakes
-from .sodir import Fetch, SodirClient, default_fetch, sql_quote, to_date
+from .sodir import (LICENCE_TASK_LAYER, SODIR_FACTMAPS, Fetch, SodirClient, default_fetch, sql_quote, to_date,
+                    to_local_date)
 
 PRODUCTION_LICENCE = "PRODUCTION LICENCE"
 BUSINESS_AREA = "BUSINESS ARRANGEMENT AREA"
@@ -144,6 +145,32 @@ class OwnershipReader:
                                  operators[0].company if operators else None, None, updated,
                                  "Sodir licence_licensee_hst (layer 3007)", warnings)
         return self._finish(record)
+
+    def licence_milestones(self, name: str) -> List[Dict[str, Any]]:
+        """Work obligations of a production licence with local (Europe/Oslo) deadlines.
+
+        Returns one dict per task (``code``, ``task``, ``category``, ``status``, ``deadline``
+        as an ISO date), ordered by deadline. Typical codes are the drill-or-drop decision,
+        the decision to continue, and the plan for development and operation.
+
+        Raises:
+            OwnershipError: when the licence name is unknown or ambiguous.
+        """
+        key = name.strip().upper()
+        rows = [r for r in self.client.query("licence_licensee_hst", f"UPPER(prlName)={sql_quote(key)}")
+                if str(r["prlName"]).upper() == key]
+        ids = {int(r["prlNpdidLicence"]) for r in rows}
+        if len(ids) != 1:
+            raise OwnershipError(f"licence name '{name}' is unknown or ambiguous: {sorted(ids)}")
+        lid = ids.pop()
+        tasks = self.client.query(LICENCE_TASK_LAYER, f"prlNpdidLicence={lid}", service=SODIR_FACTMAPS)
+        out = []
+        for t in tasks:
+            deadline = to_local_date(t.get("prlTaskExpiryDate"))
+            out.append({"code": t.get("prlTaskTypeCode"), "task": t.get("prlTaskTypeEn"),
+                        "category": t.get("prlTaskCategory"), "status": t.get("prlTaskStatusEn"),
+                        "deadline": deadline.isoformat() if deadline else None})
+        return sorted(out, key=lambda r: r["deadline"] or "")
 
     # ----------------------------------------------------------------- prospects
 

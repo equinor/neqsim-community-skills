@@ -12,6 +12,8 @@ from typing import Any, Callable, Dict, List, Optional
 _EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 USER_AGENT = "neqsim-ncs-ownership-equity/0.1 (+https://github.com/equinor/neqsim-community-skills)"
 SODIR_DATASERVICE = "https://factmaps.sodir.no/api/rest/services/DataService/Data/MapServer"
+SODIR_FACTMAPS = "https://factmaps.sodir.no/api/rest/services/Factmaps/FactMapsWGS84/FeatureServer"
+LICENCE_TASK_LAYER = 652  # FactMapsWGS84 layer with the work obligations of a licence
 
 # Layer ids probed against the live service; they are not all listed in the MapServer index.
 LAYERS: Dict[str, int] = {
@@ -41,6 +43,19 @@ def default_fetch(url: str, timeout: float = 90.0) -> bytes:
 def sql_quote(value: str) -> str:
     """Quote a string literal for an ArcGIS where clause."""
     return "'" + str(value).replace("'", "''") + "'"
+
+
+def to_local_date(epoch_ms: Optional[float], tz: str = "Europe/Oslo") -> Optional[date]:
+    """Convert a Sodir epoch-millisecond timestamp to the local calendar date.
+
+    Sodir stores deadlines as the instant of local midnight, which is the previous
+    day in UTC, so ``to_date`` is one day early for them.
+    """
+    if epoch_ms is None:
+        return None
+    from zoneinfo import ZoneInfo
+
+    return datetime.fromtimestamp(float(epoch_ms) / 1000.0, ZoneInfo(tz)).date()
 
 
 def to_date(epoch_ms: Optional[float]) -> Optional[date]:
@@ -76,10 +91,10 @@ class SodirClient:
         self.max_pages = max_pages
         self.records: List[ReadRecord] = []
 
-    def query(self, layer: str | int, where: str = "1=1") -> List[Dict[str, Any]]:
-        """Return the attribute dicts of every matching row."""
+    def query(self, layer: str | int, where: str = "1=1", service: str = SODIR_DATASERVICE) -> List[Dict[str, Any]]:
+        """Return the attribute dicts of every matching row (``service`` selects the REST service)."""
         layer_id = LAYERS[layer] if isinstance(layer, str) else int(layer)
-        base = f"{SODIR_DATASERVICE}/{layer_id}/query"
+        base = f"{service}/{layer_id}/query"
         rows: List[Dict[str, Any]] = []
         offset = 0
         url = base

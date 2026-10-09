@@ -17,16 +17,33 @@ Advisory skill. It is the Brazilian counterpart of `neqsim-norwegian-continental
 
 ## What to look for
 
-- Bid-round and block data: block polygons, round, contract type, area and operator after award.
-- Field and well production: monthly oil, gas and water by field and well, with API gravity where reported.
-- Well data and the national data bank for wells, seismic and geology, which is where analogue depth, temperature and pressure facts live.
+The ANP open-data page (checked 2026-10-09, `gov.br/anp`, "Dados abertos"; also mirrored on `dados.gov.br`) lists these datasets by name. Names are in Portuguese:
 
-Find the current portal, dataset names and file formats from the ANP open-data site at the time of use. Do not rely on a remembered URL or column name; check the file header before parsing.
+- Bid rounds and blocks: "Rodadas de Licitações de Petróleo e Gás Natural", "Fase de Exploração", "Fase de Desenvolvimento e Produção", "Blocos com Fase Exploratória Encerrada", "Dados Georreferenciados das Bacias Sedimentares Brasileiras".
+- Production: "Produção de Petróleo e Gás Natural por Poço", "Produção de petróleo e gás natural por estado e localização".
+- Wells and technical data: "Resultado de poço", "Dados de E&P", "Acervo de Dados Técnicos", "Amostras de Rochas e Fluidos".
+- Planning and money: "Previsão de Atividades e Investimentos Exploratórios", "Participações Governamentais".
+
+The page also links a data inventory spreadsheet and an annual open-data plan. Header names, separators and units are not listed there: read them from the file and its documentation, and do not rely on a remembered column name.
+
+## Python helpers
+
+The package `anp_open_data` has no data and no assumptions about headers:
+
+```python
+from anp_open_data import load_table, oil_volume, gas_volume, monthly_to_daily, check_crs, haversine_km
+
+rows = load_table(path, {"field": "<header>", "month": "<header>", "oil": "<header>"},
+                  sep=";", decimal=",", numeric=["month", "oil"])   # KeyError if a header is renamed
+rate_bbl_d = oil_volume(monthly_to_daily(rows[0]["oil"], 2026, 3), "m3", "bbl")
+```
+
+Separator, decimal mark, encoding and source units are arguments because they differ between datasets; check them in the file before use.
 
 ## Rules
 
 - Record the source, dataset name and download date for every number in `references/SOURCES.md`.
-- Units: ANP reports oil in m3 and gas in thousand m3 in many tables; convert explicitly and state the conversion to barrels or Sm3. Check month versus calendar-year aggregation.
+- Units: read the unit of every volume column from the file documentation (oil is often in m3 and gas in a thousand-m3 or m3 basis, but confirm); convert explicitly with `oil_volume` and `gas_volume` and state the conversion. Check month versus calendar-year aggregation.
 - Coordinates: confirm the CRS and datum of block polygons before computing distance to a host; reproject to a metric CRS first.
 - Production history of a host field is public only at the level the portal exposes; ullage and plateau need operator data and belong in a governed layer, not here.
 - Keep a small offline anchor table (field, block, year, rate) so a task still runs without network.

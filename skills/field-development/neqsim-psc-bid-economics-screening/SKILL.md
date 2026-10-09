@@ -48,16 +48,23 @@ The default terms are generic public placeholders. Replace them with the terms o
 ```python
 from psc_bid_economics_screening import PscBidModel
 
-result = PscBidModel(oil_price=70.0, discount_rate=0.10).evaluate(
+model = PscBidModel(oil_price=70.0, discount_rate=0.10,
+                    price_share_steps=[(60.0, 0.05)])   # optional contract price-band table, from the contract only
+result = model.evaluate(
     production, capex, opex,
     profit_oil_share_offered=0.25, chance_of_discovery=0.30,
     working_interest=0.70, signature_bonus_musd=20.0, exploration_program_musd=60.0,
 )
 print(result.bid_verdict, result.break_even_profit_oil_share)
+rows = model.tornado(0.20, production_mmbbl=production, capex_musd=capex, opex_musd=opex,
+                     profit_oil_share_offered=0.25, chance_of_discovery=0.30)   # largest swing first
 ```
+
+For P10/P50/P90 EMV and the probability of loss use the Java `PscBidEconomics.monteCarlo(samples, seed, priceSigma, volumeSigma, capexSigma)`: price, volume and CAPEX get mean-preserving lognormal factors, the dry outcome is counted in the probability of loss, and a fixed seed gives repeatable results. The Python class and the Java class agree on the deterministic EMV, break-even share and price-band results (pinned in the Java tests).
 
 ## Related NeqSim Functionality
 
-- `neqsim.process.fielddevelopment.economics.PscBidEconomics` — the validated Java class with the same mechanics and tests; prefer it inside NeqSim studies.
+- `neqsim.process.fielddevelopment.economics.PscBidEconomics` — the validated Java class with the same mechanics, plus Monte Carlo and tornado; prefer it inside NeqSim studies.
+- `neqsim.process.fielddevelopment.tieback.HostSynergyScreening` — host ullage cover and tie-back synergy value, credited only when the demand fits the host.
 - `neqsim.process.fielddevelopment.economics.TaxModelRegistry` (`BR-PSA`) and `CashFlowEngine` — full-life fiscal cash flow once a concept exists.
 - Chain with `neqsim-reservoir-model-builder`, `neqsim-brazil-presalt-analogue-basis`, `neqsim-asset-value-npv-screening` and the `frontier-block-bid-agent`.

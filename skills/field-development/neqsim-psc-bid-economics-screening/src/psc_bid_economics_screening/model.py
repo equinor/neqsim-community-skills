@@ -46,6 +46,7 @@ class PscBidModel:
         loss_offset_cap: float = 0.30,
         share_per_usd_above_reference: float = 0.0,
         reference_price: float = 40.0,
+        price_share_steps: Sequence[tuple] = (),
     ) -> None:
         self.oil_price = oil_price
         self.discount_rate = discount_rate
@@ -56,6 +57,8 @@ class PscBidModel:
         self.loss_offset_cap = loss_offset_cap
         self.share_per_usd = share_per_usd_above_reference
         self.reference_price = reference_price
+        steps = sorted((float(t), float(a)) for t, a in price_share_steps)
+        self.price_share_steps = steps
 
     def evaluate(
         self,
@@ -133,6 +136,56 @@ class PscBidModel:
             ],
         )
 
+    def tornado(self, relative_swing: float, **evaluate_kwargs) -> dict:
+        """One-at-a-time EMV sensitivity, largest swing first.
+
+        ``evaluate_kwargs`` are the arguments of :meth:`evaluate`. Returns
+        ``{name: (low_emv, high_emv)}`` with the lower value first.
+        """
+        lo, hi = 1.0 - relative_swing, 1.0 + relative_swing
+        base_price, base_rate = self.oil_price, self.discount_rate
+
+        def emv(model=None, **over):
+            args = dict(evaluate_kwargs)
+            args.update(over)
+            return (model or self).evaluate(**args).emv_musd
+
+        def with_price(f):
+            self.oil_price = base_price * f
+            try:
+                return emv()
+            finally:
+                self.oil_price = base_price
+
+        def with_rate(f):
+            self.discount_rate = base_rate * f
+            try:
+                return emv()
+            finally:
+                self.discount_rate = base_rate
+
+        scales = list(evaluate_kwargs.get("volume_scales", (1.0,)))
+        capex = list(evaluate_kwargs["capex_musd"])
+        pg = evaluate_kwargs["chance_of_discovery"]
+        rows = {
+            "oil price": (with_price(lo), with_price(hi)),
+            "volume": (
+                emv(volume_scales=[s * lo for s in scales]),
+                emv(volume_scales=[s * hi for s in scales]),
+            ),
+            "capex": (
+                emv(capex_musd=[c * lo for c in capex]),
+                emv(capex_musd=[c * hi for c in capex]),
+            ),
+            "chance of discovery": (
+                emv(chance_of_discovery=pg * lo),
+                emv(chance_of_discovery=min(1.0, pg * hi)),
+            ),
+            "discount rate": (with_rate(lo), with_rate(hi)),
+        }
+        ordered = {k: tuple(sorted(v)) for k, v in rows.items()}
+        return dict(sorted(ordered.items(), key=lambda kv: kv[1][0] - kv[1][1]))
+
     def _waterfall(self, production, capex, opex, share, scale, pem, delay):
         pool = pem
         loss_pool = 0.0
@@ -141,8 +194,13 @@ class PscBidModel:
         contractor_sum = 0.0
         state_sum = 0.0
         net_pre_tax = 0.0
+        step_add = 0.0
+        for threshold, added in self.price_share_steps:
+            if self.oil_price >= threshold:
+                step_add = added
         state_share = min(
-            MAX_SHARE, share + self.share_per_usd * max(0.0, self.oil_price - self.reference_price)
+            MAX_SHARE,
+            share + self.share_per_usd * max(0.0, self.oil_price - self.reference_price) + step_add,
         )
         for t in range(len(production)):
             revenue = production[t] * scale * self.oil_price

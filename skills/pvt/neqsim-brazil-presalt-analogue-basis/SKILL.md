@@ -21,7 +21,7 @@ Advisory skill. It tells an agent how to build a declared, low/base/high fluid a
 2. Treat the analogue values as inputs to confirm, not facts. Pre-salt carbonate reservoirs are generally light to medium oil with high GOR and CO2 in the associated gas that varies strongly between fields and within a field. Set the CO2 range from the analogue data you can cite, and record the source in the assumption register.
 3. Run the low and high CO2 cases through the whole chain, not only the base case. CO2 content drives phase envelope, hydrate and dense-phase behaviour, separation and compression duty, and the need for CO2 removal or re-injection.
 4. Gate the numbers before use:
-   - Check a CO2-rich phase envelope and a saturation pressure against any available analogue PVT; flag if the EOS is outside its validated range.
+   - Check a CO2-rich phase envelope and a saturation pressure against any available analogue PVT; flag if the EOS is outside its validated range. The NeqSim test `Co2RichAssociatedGasConsistencyTest` is the pass/fail gate for physical consistency (pure-CO2 critical temperature, bubble pressure rising with CO2, one dense phase above the cricondenbar). It is not a validation against measured pre-salt PVT; add measured data per field and say so in `data_gaps`.
    - Check hydrate and freezing margins on the CO2-rich gas.
    - Screen materials for sour or CO2 service with `neqsim-flow-assurance` and the material-selection skills; high CO2 partial pressure at depth is a corrosion driver.
 5. Show the effect of re-injecting CO2 or gas as a separate case with `neqsim-ccs-hydrogen`.

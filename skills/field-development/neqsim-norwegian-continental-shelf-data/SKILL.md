@@ -288,6 +288,22 @@ and value them from the neighbourhood instead of searching further:
 - Centuries may hold an RC5 project of the same field (Tune: "Tune Statfjord", TLI 0.35 to 0.5, first production 2034). Use
   it as a volume and profile-shape anchor, and do not map it to a named opportunity without confirmation.
 
+### Producing licence with a platform host (verified 2026-10-09, PL193 Kvitebjorn)
+
+When the unnamed opportunity sits in a licence whose own field has a fixed platform:
+
+- The licence layer gives the strip geometry and the platform jacket is in layer 304; draw the prior location over the part of the
+  licence on the side named in the brief (e.g. north of the platform for 'Nord') and report the share within extended-reach distance
+  (here 60 % within 6 km), because a platform well is then the base concept and subsea only the fallback.
+- The field and its licence have the same partners and no host tariff: charge only downstream transport and variable cost.
+  Partners come from OwnershipReader().field("<NAME>") (names with special characters work, e.g. `KVITEBJØRN`).
+- Host capacity proxy: the 30-day peak of the field's PDM export streams (<FIELD>-PROD_<FIELD>-G and -C in NET_VOL);
+  the Centuries base profile of an old field ends well before its cut-off year, so read both and show the tail.
+- Pressure state of the target (connected to the depleted main tank or an isolated compartment) changes well rate by a factor of
+  four and the subsea break-even volume by a factor of two; make it a discrete uncertainty, not a fluid case.
+- Check the Centuries projects of the field (IOR infill, pressure-reduction, other tie-ins with the field as host) for overlap
+  with the opportunity before valuing it.
+
 ## Limitations
 
 - Educational public data layer and screening calculator only; not a validated

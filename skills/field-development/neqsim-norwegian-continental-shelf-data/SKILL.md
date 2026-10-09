@@ -253,6 +253,40 @@ quantitative NCS production analysis use:
 | Wrong o.e. total | Mixing gas units | Gas in billion Sm3 equals million Sm3 o.e.; keep units consistent |
 | Over-reading a field record | Treating operator/status as current truth | Re-verify per-field data against FactPages |
 | Forecasting from R/P | Reading the static R/P ratio as a forecast | Use NeqSim `SimpleReservoir` / `runReservoir` |
+| Undrilled licence or prospect has no data | Looking in the field tables | Read the neighbourhood from the Sodir FactMaps FeatureServer (below) |
+
+### Neighbourhood of an undrilled licence (verified 2026-10-09, PL1252)
+
+Base `https://factmaps.sodir.no/api/rest/services/Factmaps/FactMapsWGS84/FeatureServer/<layer>/query`
+with `f=json&outSR=4326&returnGeometry=true` and an envelope (`geometry`, `geometryType=esriGeometryEnvelope`,
+`spatialRel=esriSpatialRelIntersects`). Layers: 616 licence (filter `prlName='1252'`, TFO licences use the bare number),
+304 facilities in place, 311 pipelines, 503 discoveries, 502 fields, 204 exploration wellbores, 201 all wellbores;
+tables: 532 discovery reserves (join on `dscNpdidDiscovery`), 515 field reserves, 651 licence phases, 652 licence tasks.
+Facility geometry is a point (`x`,`y`), discoveries and fields are polygons: take the minimum vertex distance, not a centroid.
+Useful reads: distance to candidate hosts, analogue discoveries with recoverable volumes, wildcat hit rate (biased by
+infrastructure-led exploration), the status mix of nearby discoveries (platform-drilled sub-discoveries "included in other discovery"
+versus stand-alone "production unlikely"), and ERD precedent as `sqrt(wlbTotalDepth^2 - wlbFinalVerticalDepth^2)` for wells
+drilled from a candidate host (layer 201 filtered on the platform well-name prefix).
+
+### Producing licence with unnamed opportunities (verified 2026-10-09, PL190 Tune)
+
+When the brief names opportunities that are not in Sodir (no wellbore, discovery or facility with the name), say so
+and value them from the neighbourhood instead of searching further:
+
+- Licence layer 616 uses the bare number (`prlName='190'`); its polygon can be a long strip, so draw a prior
+  location uniformly over the polygon and report the distance distribution to each candidate node, not one number.
+- Ownership: `OwnershipReader().licence("190")` and `.field("TUNE")` (name without `PL`).
+- A field with `fldRemainingOE` near zero in layer 515 (Tune: 0.05 of 23.0 MSm3 OE) has an idle template and export
+  route: the first tie-in candidate. Cross-check with the Centuries base profile of the field.
+- The Sodir pipeline layer (311) holds trunklines only; infield lines are not there, so existing-route lengths are
+  straight-line estimates to be confirmed by subsea integrity.
+- Step-out precedent by drilling facility: layer 205 (development wellbores) in an envelope, group on
+  `wlbDrillingFacility`, take the upper bound `sqrt(MD^2 - TVD^2)`; rig names and platform names are mixed in that column,
+  so quote the best well name (template wells reached 5.4-6.4 km, Oseberg platforms 8.0-9.6 km).
+- A wildcat just completed in the licence (`wlbCompletionYear` = current year, `wlbContent` empty, P&A) has no public result
+  yet: record it as an evidence gap and as an update to Pg, never infer the outcome.
+- Centuries may hold an RC5 project of the same field (Tune: "Tune Statfjord", TLI 0.35 to 0.5, first production 2034). Use
+  it as a volume and profile-shape anchor, and do not map it to a named opportunity without confirmation.
 
 ## Limitations
 

@@ -1,7 +1,7 @@
 ---
 name: neqsim-near-well-and-injectivity
 calculation_basis: "neqsim-java"
-version: "0.4.1"
+version: "0.4.2"
 description: "Derive productivity and injectivity indices from the rock with OPM Flow, pyscal and resdata, convert a NeqSim fluid to black-oil (PVTO/PVDG) or gas-condensate (VAPOIL/PVTG/PVDO) tables, and use NeqSim VFPPROD lift curves in the deck. USE WHEN: a PI/II is about to be assumed, injectors vs voidage, productivity decay below bubble point, retrograde dropout, sizing a model to a mandated profile, a fluid or lift curve must enter a deck, or an Eclipse-format model must be built and run."
 last_verified: "2026-09-25"
 requires:
@@ -424,6 +424,12 @@ Deck traps that cost a run each:
 | wells produce at the pressure floor with no lift limit | `WCONPROD` BHP floor only, no `VFPPROD` | generate a lift-curve table from the tubing / flowline geometry and control on THP (see above) |
 | `VFPPROD` generated in kg/hr | `LiftCurveGenerator` sweeps mass rate; the exporter rejects it | recombine at standard conditions and sweep in Sm3/d |
 | Flow exits silently, no message | non-English locale | `LANG=C.UTF-8 LC_ALL=C.UTF-8` |
+| `Non-monotonic values in keyword PVTO` on a table that looked fine | undersaturated branch pressures `p0 + 60`, `p0 + 150`, then `P_MAX` run past `P_MAX` for the high-Pb rows | add an offset only if `p0 + dp < P_MAX - 10`, then close every branch at `P_MAX` |
+| `SATNUM` (or other region arrays) rejected or ignored | written inside the GRID include | `SATNUM` belongs in `REGIONS`; write it to its own include |
+| oil field with a gas cap: produced GOR 1000+ from year one, pressure collapses | producers perforated through the gas cap (full-column `COMPDAT`) | perforate only layers whose centre is below the GOC (and above the OWC); add `WECON 'P*' 1* 1* <wct> <gor> 1* 'CON' /` per report step |
+| gas-cap blowdown spikes (9 GSm3/yr) when gas reinjection stops | nothing limits field gas handling | put the export plus reinjection capacity in `GCONPROD` item 5: `'FIELD' 'ORAT' <q> 1* <gas cap> 1* 'RATE' /` |
+| contact solve dies with `IndexError` while bracketing | the placement helper finds no oil column when the OWC sits a few metres under the GOC | use a one-well dummy deck for the 1-day volume runs; place real wells only after both contacts are solved |
+| gas match looks perfect and means nothing | NCS field production tables report SALES gas, not produced gas | treat the reinjection fraction as a free parameter and say the gas match is not independent evidence |
 
 ## Near-well radial models
 

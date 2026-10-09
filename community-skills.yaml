@@ -754,7 +754,7 @@ skills:
     tags: [process, fem, finite-element, scikit-fem, fenicsx, gmsh, pyvista, visualization, 3d, heat-transfer, conduction, cooldown, thermal-stress, insulation, diffusion, mesh-quality, coupling]
     min_neqsim_version: "3.7.0"
   - name: neqsim-near-well-and-injectivity
-    version: "0.4.1"
+    version: "0.4.2"
     description: "Derive productivity and injectivity indices from the rock with OPM Flow, pyscal and resdata, convert a NeqSim fluid to black-oil (PVTO/PVDG) or gas-condensate (VAPOIL/PVTG/PVDO) tables, and use NeqSim VFPPROD lift curves in the deck. USE WHEN: a PI/II is about to be assumed, injectors vs voidage, productivity decay below bubble point, retrograde dropout, sizing a model to a mandated profile, a fluid or lift curve must enter a deck, or an Eclipse-format model must be built and run."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -785,3 +785,27 @@ skills:
     path: "skills/process/neqsim-continuous-improvement-toolkit/SKILL.md"
     tags: [process, continuous-improvement, living-task, historian, tagreader, bayesian-optimization, enkf, identifiability]
     min_neqsim_version: "3.22.0"
+  - name: neqsim-psc-bid-economics-screening
+    version: "0.1.0"
+    description: "Educational PSC exploration-block bid screening: royalty, capped cost oil, profit-oil split, income tax, signature bonus and exploration programme, with EMV and the break-even offered profit-oil share. USE WHEN: judging a bid-round offer, asking how much State profit-oil share a block can bear, or comparing a near-field tie-back with a stand-alone case before any discovery exists."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/neqsim-psc-bid-economics-screening/SKILL.md"
+    tags: [field-development, economics, psc, bid-round, emv, exploration, brazil, screening, education]
+    min_neqsim_version: "3.7.0"
+  - name: neqsim-brazil-presalt-analogue-basis
+    version: "0.1.0"
+    description: "Declared best-guess fluid and flow-assurance basis for Santos Basin pre-salt blocks when no PVT exists: analogue ranges, CO2-rich gas handling, material and EOS checks, and an assumption register. USE WHEN: a frontier block in Santos or Campos pre-salt must be evaluated, a CO2-rich associated gas or CO2 re-injection case is in play, or a near-field analogue fluid is needed."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/pvt/neqsim-brazil-presalt-analogue-basis/SKILL.md"
+    tags: [pvt, brazil, pre-salt, co2, analogue, fluid-characterization, flow-assurance]
+    min_neqsim_version: "3.7.0"
+  - name: neqsim-anp-open-data
+    version: "0.1.0"
+    description: "Guide to reading Brazilian ANP open data for evaluation work: bid-round blocks, field and well production, well and seismic data bank, with CRS, unit and date checks and offline anchor handling. USE WHEN: a task needs Brazilian block, field production or well facts for a Santos, Campos or other Brazilian block, a host field such as a pre-salt FPSO, or a Sodir-like open-data basis."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/neqsim-anp-open-data/SKILL.md"
+    tags: [field-development, brazil, anp, open-data, production, blocks]
+    min_neqsim_version: "3.7.0"

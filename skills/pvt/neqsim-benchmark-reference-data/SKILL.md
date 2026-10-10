@@ -223,6 +223,12 @@ results["references"] = [{"id": "ref", "text": c} for c in report.citations()]
   0.210 cP) is closer. Expect a brine `Bw` slightly **below** the pure-water
   value and a brine viscosity a few percent **above** it.
 
+- **Grading a tubing/flowline outflow (VLP) against measured well pressures with a tight tolerance and unknown
+  geometry.** Gauge depth, deviation, tubing ID and gas-lift injection depth are usually unknown, so a 15 % band
+  just reports the geometry guess as FAIL. Set the tolerance to the engineering scatter of an untuned empirical
+  correlation (about 30 %) **before** running, record the signed bias per well (all wells over-predicting dP
+  means the deliverability is conservative), and carry that bias into the report as a stated direction of error.
+
 ## Limitations
 
 - The anchor table is intentionally small and pure-component only. It is a smoke

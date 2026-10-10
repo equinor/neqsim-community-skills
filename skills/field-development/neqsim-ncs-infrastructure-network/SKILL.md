@@ -189,6 +189,11 @@ that the recent year has no overloaded element.
 - **ENTSOG 404.** A 404 means "no data for the window", not a failure.
 - **norskpetroleum "csv" links.** They return xlsx. The data header is the row
   containing Operator/From/To.
+- **Sodir DataService WHERE clauses.** Several `LIKE`/`OR` terms or non-ASCII
+  letters (e.g. a name with "A" ring) return an empty body and a
+  `JSONDecodeError`. Query one simple predicate (or a block/licence number) and
+  filter names client-side. The licence layer (3000) returns no geometry, so
+  licence outlines and prospect positions need another source.
 - **Gassco UMM.** It sits behind a terms click-through with no API. Never
   automate acceptance; the user exports outage messages and supplies them.
 
@@ -219,6 +224,22 @@ that the recent year has no overloaded element.
   `neqsim-pipe-route-profile`: detailed tie-back hydraulics.
 - NeqSim Java: `TiebackAnalyzer`, `HostFacility`, `LoopedPipeNetwork`,
   `NetworkPlanningHorizon`, `TiebackRouteNetwork`.
+
+## Worked pattern: gas export from an injecting field
+
+For a field that re-injects gas and wants to start exporting (for example a
+Utsira High field routed through the Johan Sverdrup gas line to Heimdal or Statpipe):
+
+- Check the Sodir pipeline layer for status. A riser platform can be removed while
+  the pipeline objects remain listed, so confirm the real tie-in point (for
+  Heimdal, the subsea bypass of the removed riser platform).
+- The last pipeline section can be much smaller than the trunk (the Johan Sverdrup
+  gas line ends in a 12 inch spur), so test the spur, not only the trunk, for
+  rate and pressure.
+- Combine the route with the Gassled entry specification screening
+  (`enterprise-gas-quality-specification`) before the hydraulics: the export
+  option is decided by gas quality (dew points, Wobbe) as much as by capacity.
+- Keep the export rate in MSm3/d at 15 C, and the heating values on the same basis.
 
 ## References
 

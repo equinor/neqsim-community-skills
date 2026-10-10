@@ -119,6 +119,30 @@ See `examples/two_tank_field.py` for a runnable two-formation example.
   `cgr_scale` only absorbs part of the difference. Check the plant model before changing the reservoir fluid.
 - Claiming an improvement from composition change without the same-plant comparison.
 
+## Revitalising a depleted HPHT field (learned on Kristin, 2026-10)
+
+Use the tank model to answer "which drainage point, and is it drillable" before any simulator work:
+
+1. **One tank per pressure signature.** Group wells by static pressure (upper decile per quarter), compute
+   `p/z` with NeqSim Z at reservoir T, give P10-P90 from pressure scatter x Z x cumulative; report the
+   volume reachable at >= 250 bara separately from the total. Flag compartments whose only pressure
+   gauge is a dead well (no reservoir communication) as POOR data rather than averaging it in.
+2. **Rate vs wellhead pressure.** Replace Beggs-Brill by an average-T/Z momentum balance with NeqSim Z for
+   wet-gas tubing at low rate (Beggs-Brill was slow, non-monotonic and returned NaN below about 0.3 MSm3/d).
+   Calibrate `C` in `q = C (Pr^2 - Pwf^2)` on the latest 45 days of allocated rate and WHP. The low-pressure (LPP)
+   lever is large only at low reservoir pressure (x5 at 120 bara, <10 % at 300 bara).
+3. **Drilling window Monte Carlo** (all geomechanics are ranges, state them): pore pressure from the tank;
+   `Shmin = k_h Sv - A (Pi - Pr)` with stress path `A` 0.40-0.75; shale floor = overburden shale pore
+   pressure + trip margin (about 1.96 SG for Kristin, checked against the 1.98 SG used by the Q-4 clean-up).
+   Compare four strategies: conventional single mud weight, open reservoir on MPD, MPD with wellbore
+   strengthening, liner cemented across the shale. The last is the one that fails when the sand is drawn down
+   by hundreds of bar; that is the technology gap, not drilling itself.
+4. **Compaction slip**: `slip = (dP / M) h f_loc` against an assumed liner tolerance; re-pressurisation
+   effect is the cheapest mitigation to quote.
+5. **Value**: success probability = window x isolation x shear survival x water penalty; keep the P50 NPV
+   (negative for a gated sidetrack) and the expected NPV side by side; the tornado must use common random
+   numbers (seed per evaluation) or one-at-a-time swings are Monte Carlo noise.
+
 ## Limitations
 
 Material balance, not a grid: no gravity, coning, areal sweep or interference beyond tank connections.

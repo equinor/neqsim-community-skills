@@ -109,3 +109,18 @@ def test_description_includes_state_when_present():
     )
     result = compare("water density", 997.0, point)
     assert "temperature_K=298.15" in result.description()
+
+
+def test_description_tolerates_non_numeric_state_values():
+    point = ReferencePoint(
+        fluid="test",
+        property_name="recoverable_oil",
+        value=2.65,
+        unit="MSm3",
+        source_key="experimental",
+        state={"rc": "5F", "pressure_bara": 100.0},
+    )
+    result = compare("volume", 2.7, point)
+    assert "rc=5F" in result.description()
+    assert "pressure_bara=100" in result.description()
+    assert result.to_dict()["description"] == result.description()

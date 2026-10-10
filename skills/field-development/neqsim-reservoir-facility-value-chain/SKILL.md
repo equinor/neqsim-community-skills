@@ -74,6 +74,18 @@ between them.
 - Month 0 of a pull is usually partial. Exclude the current month from rates and totals.
 - Hindcast honestly: tank fitted to 2020, deliverability trained to 2023, tested 2024-2026. Report the
   bias per year; monthly errors are dominated by outages that on-stream hours do not capture.
+- **Comparing options (a well swap, a tie-back, a host change):** (1) put every option on one calendar
+  - a surrogate that starts both routes in the same year hides the years a template delays the gas
+  (it flipped a separate-compartment NPV from -0.5 to -1.0 GNOK). (2) Decompose a bundled proposal
+  into its parts (an extra well on a shared tank is acceleration worth about +1 GNOK; the tie-back
+  that carries it can cost about -1 GNOK) and value each alone; the sum hides which part pays.
+  (3) A well-count cap on "extra wells" must be read against the base project's own wells; a cap of a
+  few MSm3/d silently removes the whole project. Give capacity as MSm3/d for all wells at that host,
+  sized to the planned wells. (4) Check that the stated base case and the code agree (a notes table
+  said f = 0.8 while the headline run used f = 1.0); run both and say which one the headline uses.
+  (5) Check a flowline dP assumption against a real hydraulic run at the actual well rate and host
+  pressure. For a 320 m riser in wet gas the gas-only head is about 1 bar, but Beggs and Brill adds
+  2-3 bar of condensate holdup; treat that as an upper bound and cross-check with OLGA.
 
 ## Validation
 

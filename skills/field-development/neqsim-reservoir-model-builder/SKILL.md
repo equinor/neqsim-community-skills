@@ -566,6 +566,34 @@ infrastructure the enterprise `enterprise-osdu-data-platform` skill resolves the
 model in the Reservoir DDMS, maps published property names to Eclipse keywords
 and reports dataspace access, then hands the arrays here.
 
+## Using an operator's prospect-evaluation database
+
+When the operator's volumetric evaluation of the prospect or discovery is available (one
+analysis per pay zone with a depth-area table, crest and contacts, petrophysical and fluid
+distributions, recovery factors and in-place and recoverable volumes), it outranks the
+assumption ladder for those inputs. It is still an interpretation, not a measurement.
+
+| Evaluation field | Ladder rung to record | Builder input |
+|------------------|-----------------------|---------------|
+| depth-area table, crest, spill point | `structure_map` | dip and closure; the block stays a simplified model |
+| net-to-gross, porosity, saturation, permeability | `well_logs` (via the evaluation; say so) | rock properties per zone |
+| Bo, GOR, depth, pressure, temperature | `operator_document_values` | fluid anchors and initial state |
+| well oil-up-to, oil-down-to, water-up-to; evaluator contact | `log_interpreted_contact` | contact bracket |
+| in-place and recoverable volumes, recovery factors | `operator_volumetrics` | volume target and recovery check |
+
+- Build **one model per pay zone** when the evaluation names a pressure barrier or the zones
+  have different initial pressures; add means across zones, never percentiles.
+- Solve the contact against the in-place volume with the dip taken from the depth-area table
+  and **report the difference to the evaluator's contact** instead of forcing agreement; a
+  large gap means the simplified block does not reproduce the evaluated geometry.
+- Compare the evaluation's recovery factor with a depletion run before replacing it with an
+  analogue factor; where depletion with one producer per zone delivers a similar recovery, the
+  evaluator's factor is the better base, and an analogue factor that needs pressure support
+  must be labelled as such.
+- Record the analysis version (test, working, approved) and date; thick upside cases are
+  scenarios, not the base. Keep the source's access class: company-internal values do not go
+  into a public repository.
+
 ## Validation Checklist
 
 - [ ] The sizing basis is stated: geometry, in-place volume, or a back-calculated

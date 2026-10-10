@@ -193,7 +193,10 @@ that the recent year has no overloaded element.
   letters (e.g. a name with "A" ring) return an empty body and a
   `JSONDecodeError`. Query one simple predicate (or a block/licence number) and
   filter names client-side. The licence layer (3000) returns no geometry, so
-  licence outlines and prospect positions need another source.
+  licence outlines and prospect positions need another source. An exact-name
+  `IN ('ÅSGARD A','ÅSGARD B','BERLING')` list on the facility layer (6000)
+  works even with non-ASCII letters, and `return_geometry=True, out_sr=4326`
+  returns facility x/y (lon/lat) for distance-to-host checks.
 - **Gassco UMM.** It sits behind a terms click-through with no API. Never
   automate acceptance; the user exports outage messages and supplies them.
 

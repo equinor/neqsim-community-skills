@@ -1,8 +1,8 @@
 ---
 name: neqsim-ageing-life-extension-screening
 calculation_basis: "screening"
-version: "0.1.0"
-description: "Educational ageing-trend and remaining-life screening for repairable equipment from corrective-failure history: Laplace trend test, Crow-AMSAA power-law fit, failure projection to an end-of-life year, maintain-vs-replace crossover. USE WHEN: a task asks whether equipment is degrading with age, whether failures are trending worse, how many failures to expect before a life-extension year, or whether to keep repairing or replace."
+version: "0.2.0"
+description: "Educational ageing-trend and remaining-life screening (Laplace test, Crow-AMSAA fit, failure projection, maintain-vs-replace) plus the installation technical life basis (design life, cut-off, life-limiting populations). USE WHEN: asked whether equipment ages, how long a host or installation can operate, or whether a study horizon fits technical life."
 last_verified: "2026-09-10"
 requires:
   python_packages: []
@@ -22,12 +22,57 @@ Use this skill when a maintenance history has to answer a life-extension questio
 - A projection is needed of how many failures to expect between today and a required end-of-life year.
 - A maintain-versus-replace comparison is needed at screening level.
 - A recurring failure has to be characterised across many years of records.
+- A study (tie-back, economics, emissions, capacity increase, concept selection) needs a production or operating horizon: establish the technical life basis first (see below).
+- A question asks how long an installation or equipment population can operate, or what limits technical life.
 
 ## Do NOT Use For
 
 - A single non-repairable item's time-to-failure distribution — that is a lifetime (Weibull) problem, not a point-process problem.
 - Structural fatigue or corrosion remaining-life — those need a damage model, not a failure-count trend.
 - A qualified life-extension assessment or regulatory submission. This is screening input to one.
+
+## Technical Life Basis (establish this before any study that uses a horizon)
+
+Any study that needs a field life, production horizon, tie-in tail, NPV window or remaining-life statement (tie-back, debottlenecking, capacity increase, concept selection, emissions or economics roll-up) must first establish an explicit **technical life basis** for the host and for each life-limiting equipment population. Do not assume a horizon; read it, state its source, and carry it into the study as an input with a data-gap flag when it is missing.
+
+**Horizons to read and keep separate.** They are different numbers and routinely disagree:
+
+| Horizon | What it is | Typical source |
+|---|---|---|
+| Design life | Original design basis (often 20-30 years) | Design basis, datasheets |
+| Economic cut-off year | Last year with positive production-forecast cash flow | Production forecast / resource report |
+| Life-extension programme validity | Date to which the lifetime programme or consent is valid | Lifetime programme, regulator consent |
+| Cessation year | Planned decommissioning / cessation of production | Cessation plan; report "not found" if absent |
+| Equipment-specific end of life | Design life expiry or inspection-based residual life per population | Integrity records, class/inspection reports |
+
+Report the **extension ratio** (horizon divided by design life). A ratio above 1 means life extension is already assumed by the horizon, so the question is which populations limit it, not whether to extend.
+
+**Limiter classes to screen for every installation.** Rank them by how early their end of life falls against the horizon:
+
+- Dynamic and flexible risers and umbilicals (fatigue and design-life expiry; check whether a replacement programme is approved, deferred or cancelled).
+- Station-keeping and marine systems for floating hosts: mooring lines, winches, ballast and bilge pumps, hull condition. Distinguish approved from draft (unapproved) cost cases.
+- Export and infield pipelines (design-life expiry year, corrosion and metal-loss status).
+- Obsolescence of control, telemetry, safety and electrical systems (vendor support end dates).
+- Rotating equipment and compression headroom late in field life (recycle onset, turndown), which limits tail-end tie-in capacity.
+- Structural and hull integrity (condition survey required; state when none was read).
+
+**Verdict vocabulary.** Use the verdicts of this skill at installation level as well: `retain`, `retain-with-measures`, `partial-replacement` (name the populations), `replace`, `insufficient-data-for-decision`. Combine them per limiter, e.g. "retain with measures to the cut-off year, with partial replacement of risers".
+
+**Consequences for dependent studies.**
+
+- A tie-back or new-resource study must cap the host tail at the earliest *unmitigated* limiter, not at the cut-off year. State the usable host tail in years from the tie-in start year and list the limiter checks (riser life, pipeline design-life expiry, compression headroom) that must pass before a tie-in is assumed.
+- Economics and emissions roll-ups must use the stated horizon and show the sensitivity to the earliest limiter (a truncated-life case).
+- Capacity-increase and debottlenecking studies must not recommend capital on a population whose end of life precedes the payback period without flagging it.
+
+**Evidence rules (what may and may not be concluded).**
+
+- Aggregate failure counts that are flat or falling do **not** demonstrate absence of ageing. Say "no ageing trend demonstrated, no cohort or trend analysis run" unless the per-cohort trend with a plant-wide control (see the data-quality gate) has actually been computed.
+- A missing hull, mooring or integrity survey is a **data gap**, never an implicit pass.
+- A missing cessation year is reported as "not found", never replaced by the design life or by the cut-off year without saying so.
+- Record the retrieval date and source of every horizon, since forecasts and programmes are revised.
+- The result is screening input; human review is required before it is used in a decision.
+
+**Minimum output block** for any study that uses this basis: horizon table (with sources and dates), extension ratio, ranked limiter list with end-of-life years, per-limiter verdict, usable host tail for tie-ins, the sources not read, and the data gaps.
 
 ## The Modelling Trap This Skill Exists to Prevent
 
@@ -157,9 +202,11 @@ A `replace` verdict is a *screening* signal. It has to be combined with the cons
 
 - `neqsim-reliability-data-screening` — MTBF / availability once a failure rate is agreed. Use this skill first to establish whether that rate is *constant*; use that skill second to turn it into availability.
 - `neqsim-safety-function-coverage-screening` — when the item is a protective function.
-- `enterprise-life-extension-assessment` — the governed enterprise wrapper: regulatory framing, SAP/STID evidence requirements, safety-critical-element gating, and review handoff.
-- `enterprise-maintenance-api` — pulls the corrective-failure history that feeds `failure_times_years`.
-- `enterprise-ram-availability` — company acceptance policy on the resulting availability.
+- `neqsim-asset-value-npv-screening`, `neqsim-energy-emissions-screening`, `neqsim-capex-opex-screening`, `neqsim-step-out-screening` — take their horizon from the technical life basis, not from an assumed field life.
+- `neqsim-reservoir-facility-value-chain` and the tie-in, concept-selection, debottlenecking and capacity agents — cap the host tail at the earliest unmitigated limiter.
+- A private enterprise wrapper (written by the company) — regulatory framing, maintenance/tag-register evidence requirements, safety-critical-element gating, and review handoff.
+- A private maintenance-history reader — pulls the corrective-failure history that feeds `failure_times_years`.
+- A private RAM policy skill — company acceptance policy on the resulting availability.
 
 ## Limitations
 

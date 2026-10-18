@@ -141,6 +141,7 @@ model at two operating points.
 - Facility numbers come from process-model sweeps; the receiving terminal is not modelled unless asked.
 - Monthly errors are dominated by outages that on-stream hours do not capture.
 - Built from the Troll chain; other fields need their own data checks.
+- The time horizon is an input; cap it at the earliest unmitigated life limiter of the host and its risers/pipelines from `neqsim-ageing-life-extension-screening` rather than assuming a field life.
 
 ## Related
 

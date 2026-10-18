@@ -115,6 +115,7 @@ validated NeqSim economics evaluation and qualified commercial review.
 - Educational screening only; not a validated design method.
 - No confidential data or proprietary methods are included.
 - Escalate any quantitative or design use to validated NeqSim workflows.
+- The cash-flow horizon is an input. When it depends on an existing host or reused infrastructure, take it from the technical life basis in `neqsim-ageing-life-extension-screening` (design life, economic cut-off, programme validity, cessation year, life-limiting populations) and show a truncated-life sensitivity; do not assume a field life.
 
 ## References
 

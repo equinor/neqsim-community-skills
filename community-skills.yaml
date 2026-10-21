@@ -504,6 +504,15 @@ skills:
     tags: [subsea, pid, tie-in, drawing, svg, screening]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-jv-cost-control-screening
+    version: "0.1.0"
+    description: "Educational JV cost-control toolkit for a non-operating partner: parse JIB-style statements with subtotal checks, rank budget/forecast variances with fact-only commentary, split unit cost into volume and rate effects, check partner-share PI, and reconcile reports by roll-forward and arithmetic identities. USE WHEN: a partner receives JIB, budget, operations and cost-recovery reports from an operator and wants extraction and cross-report controls before human review."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/neqsim-jv-cost-control-screening/SKILL.md"
+    tags: [field-development, economics, joint-venture, jib, cost-control, variance, cost-recovery, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-capex-opex-screening
     version: "0.1.0"
     description: "Educational factored CAPEX/OPEX screening that turns a bare equipment cost into a total installed CAPEX (Lang/Hand-style installation factor + contingency), an annual OPEX, and a lifecycle total cost of ownership. USE WHEN: a task needs a public, screening-level CAPEX and OPEX magnitude before detailed NeqSim CostEstimationCalculator estimating or qualified cost-engineering review."

@@ -28,7 +28,7 @@ Not for controlled P&IDs, HAZOP, or anything that is built from.
 
 - Source and landing facility names.
 - Options for the templates: `new_export_pump`, `with_booster`, `keep_old_route`.
-- STID tags read from the real P&ID for existing equipment (`existing_tag`, `header_tag`); leave blank when not read.
+- Tags read from the controlled P&ID for existing equipment (`existing_tag`, `header_tag`); leave blank when not read.
 
 ## Outputs
 
@@ -44,8 +44,8 @@ list. Nothing is sized here; line size and pressure come from `neqsim-tie-in-pip
 
 ## Workflow
 
-1. Read the real P&ID (STID) for the existing equipment at each end: name the export header, pump and battery
-   limit valve. Pass the STID tag to the template (`existing_tag`, `header_tag`) and the element becomes
+1. Read the controlled P&ID for the existing equipment at each end: name the export header, pump and battery
+   limit valve. Pass the tag to the template (`existing_tag`, `header_tag`) and the element becomes
    `proposed=False`; leave it blank if you did not read it.
 2. `pair_sketch(source, landing)` or call `source_end_oil_export` / `landing_end_oil_header` with options
    (`new_export_pump`, `with_booster`, `keep_old_route`). Build a custom `TieInEndSketch` for other layouts.
@@ -73,13 +73,13 @@ for end, sketch in pair.items():
 ## Validation Checklist
 
 - [ ] `sketch.validate()` returns an empty list, or each finding is explained in the report.
-- [ ] Every tag read from STID is passed as `existing_tag` / `header_tag`; all other tags keep the `*`.
+- [ ] Every tag read from the controlled P&ID is passed as `existing_tag` / `header_tag`; all other tags keep the `*`.
 - [ ] The old route has a blind or isolation when it stays in place.
 - [ ] Open choices from `options` are listed as questions to the facility owners.
 
 ## Common Mistakes
 
-- Inventing STID tags. Use `proposed=True` (default) and keep the asterisk.
+- Inventing tags as if they came from the controlled P&ID. Use `proposed=True` (default) and keep the asterisk.
 - Showing the landing as a single point. Keep the ESDV, pig receiver and spectacle blind: they are what makes the
   tie-in operable and isolable.
 - Forgetting the old route. A blind towards the old export (FSO or tanker) is needed to isolate it safely.
@@ -92,10 +92,10 @@ philosophy, and no check that the existing header or riser slot can accept the l
 ## References
 
 - ISO 10628, Diagrams for the chemical and petrochemical industry.
-- STID controlled P&IDs of the existing facilities: the only source for real tags.
+- Controlled P&IDs of the existing facilities: the only source for real tags.
 
 ## Related
 
-`neqsim-tie-in-pipeline-concept`, `neqsim-pid-process-operations`. On Equinor data, mark up the original controlled P&ID
-instead of (or after) this conceptual sketch with the enterprise skill `enterprise-stid-pid-markup`.
+`neqsim-tie-in-pipeline-concept`, `neqsim-pid-process-operations`. For company-controlled P&IDs, use the matching
+enterprise overlay skill (enterprise repositories only).
 

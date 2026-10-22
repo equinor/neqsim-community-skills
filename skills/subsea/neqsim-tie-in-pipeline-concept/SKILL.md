@@ -32,7 +32,7 @@ studies, or any design-grade basis.
   `neqsim-ncs-infrastructure-network` snapshot (`hosts`).
 - Oil properties (`OilProperties`): standard density, viscosity at inlet and sea temperature. Take them from the
   stabilised cargo or export stream of a NeqSim process model; flash at line conditions with water removed.
-- Rate cases in Sm3/d, a design case and a turndown case. Cite where each number comes from (PDM, forecast).
+- Rate cases in Sm3/d, a design case and a turndown case. Cite where each number comes from (measured production, forecast).
 - Design-basis overrides (`basis_overrides`): arrival pressure, design pressure, inlet temperature, steel grade,
   corrosion allowance, riser height. Every default is an assumption: list the ones you did not confirm.
 
@@ -48,7 +48,7 @@ studies, or any design-grade basis.
 5. Cross-check the chosen size with NeqSim `PipeBeggsAndBrills` (segments of about 1 km, `setElevation` per
    segment, `setConstantSurfaceTemperature` plus `setHeatTransferCoefficient`). Keep the dry-oil fluid; do not
    pass water-containing cargo oil (a trace of water gave a second phase and a convergence failure in testing).
-6. Hand off to `neqsim-tie-in-pid-sketch` for the end connections and to the enterprise Echo skill for 3D views.
+6. Hand off to `neqsim-tie-in-pid-sketch` for the end connections and to an enterprise overlay skill for 3D views.
 
 ## Engineering Method
 

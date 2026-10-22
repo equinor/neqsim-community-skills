@@ -22,7 +22,7 @@ def source_end_oil_export(
         source: source platform name.
         landing: landing host name, used in labels.
         existing_equipment_label: label of the existing equipment the new line is tied to.
-        existing_tag: existing tag read from STID, or empty to leave it blank.
+        existing_tag: existing tag read from the controlled P&ID, or empty to leave it blank.
         new_export_pump: include a new export pump (needed when the existing discharge pressure is too low).
         keep_old_route: keep a block valve and blind towards the old route (FSO/tanker) so it can be isolated.
         line_label: text at the end of the line.
@@ -77,7 +77,7 @@ def landing_end_oil_header(
         landing: landing host name.
         source: source platform name.
         header_label: label of the existing header the new line joins.
-        header_tag: existing tag read from STID, or empty.
+        header_tag: existing tag read from the controlled P&ID, or empty.
         with_booster: add a booster pump between the receiver and the header (needed if the header pressure
             exceeds the arrival pressure).
         line_label: text at the start of the line.

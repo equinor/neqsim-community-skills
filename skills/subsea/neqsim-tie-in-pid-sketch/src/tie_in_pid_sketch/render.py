@@ -114,6 +114,6 @@ def render_svg(sketch: TieInEndSketch) -> str:
     out.append(f'<line x1="130" y1="68" x2="146" y2="68" stroke="{NEW}" stroke-width="2.8"/>')
     out.append(_txt(152, 72, "nytt omfang", 10, "start"))
     out.append(_txt(width - 24, height - 12,
-                    "Konseptuell skisse – * foreslått tag, ikke STID-tag. Ikke for bygging.", 10, "end", fill="#777"))
+                    "Konseptuell skisse – * foreslått tag, ikke tag fra kontrollert P&ID. Ikke for bygging.", 10, "end", fill="#777"))
     out.append("</svg>")
     return "\n".join(out)

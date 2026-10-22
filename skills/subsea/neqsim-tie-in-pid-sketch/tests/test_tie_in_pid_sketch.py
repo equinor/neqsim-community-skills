@@ -16,7 +16,7 @@ def test_svg_is_well_formed_and_contains_tags():
     root = ET.fromstring(svg)
     assert root.tag.endswith("svg")
     assert "XV-01*" in svg and "PL-01*" in svg and "Tie-in A" in svg
-    assert "ikke STID-tag" in svg
+    assert "ikke tag fra kontrollert P&amp;ID" in svg
 
 
 def test_existing_equipment_without_tag_gets_no_asterisk():

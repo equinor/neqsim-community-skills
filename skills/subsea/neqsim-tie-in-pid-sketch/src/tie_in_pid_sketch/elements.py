@@ -18,8 +18,8 @@ class Element:
 
     Attributes:
         kind: one of :data:`KINDS`.
-        tag: proposed tag, shown with a trailing ``*`` when ``proposed`` (a tag is never an existing STID tag
-            unless the caller read it from STID).
+        tag: proposed tag, shown with a trailing ``*`` when ``proposed`` (a tag is never an existing controlled-P&ID tag
+            unless the caller read it from the controlled P&ID).
         label: short description under the symbol.
         existing: ``True`` for existing plant (solid), ``False`` for new scope (bold, cloud-marked).
         proposed: tag has been invented for the sketch.

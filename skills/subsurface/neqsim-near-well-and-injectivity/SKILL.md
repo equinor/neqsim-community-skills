@@ -372,10 +372,10 @@ Symptom of the missing group tree:
 A bottomhole-pressure floor in `WCONPROD` assumes the wells can always lift what
 the rock gives. Once a flowline, riser or tubing string is the constraint, hand the
 simulator a `VFPPROD` table instead: `BHP[flow][THP][WFR][GFR][ALQ]` in standard
-surface volumes, generated from a NeqSim `PipeBeggsAndBrills` model of the real
-geometry. The generation recipe (surface-condition recombination, secant on inlet
-pressure, `EclipseVFPExporter`) lives in `neqsim-production-optimization`
-§ "Lift curves / VFPPROD"; this section is the deck side.
+surface volumes, generated from a NeqSim model of the real geometry. The
+generation recipe (surface-condition recombination, inlet-pressure solve,
+sanity enforcement, `EclipseVFPExporter`) lives in the core skill
+`neqsim-vfp-lift-curves` (`VfpTableBuilder`); this section is the deck side.
 
 ```
 -- 'BHP' column = inlet pressure of the modelled segment; THP = its outlet pressure
@@ -631,8 +631,10 @@ different well.
 
 ## Chain to
 
-- `neqsim-production-optimization` (neqsim repo) — generating the `VFPPROD`
-  lift-curve table from a `PipeBeggsAndBrills` tubing or flowline model
+- `neqsim-vfp-lift-curves` (neqsim repo) — generating the `VFPPROD`/`VFPINJ`
+  lift-curve table from a tubing, flowline or full-system model with
+  `VfpTableBuilder` (replaces the manual recombination loop in
+  `neqsim-production-optimization`)
 - `neqsim-api-patterns` — building the NeqSim wellbore and process model that
   consumes the inflow relationship
 - `neqsim-subsea-and-wells` — completion, casing and barrier design

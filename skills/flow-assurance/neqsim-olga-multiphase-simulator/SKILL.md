@@ -1003,10 +1003,10 @@ liquid there. `SlugUnitModel` now scales both velocities towards no-slip (defaul
 | Horizontal gas-oil and gas-oil-water lines, 15-160 kg/s (18 cases, no risers) | mean holdup error 11.8 % to 4.7 %, mean dP error 12.9 % to 8.4 %; worst remaining dP -24 % (30 bara, 20 kg/s) and +24 % (3-phase, 25 kg/s, where OLGA is stratified and NeqSim slug); low-rate cases below Froude 2.3 unchanged | With +-15 % margin, not at Froude below 2.3 for three-phase |
 | Gas-oil ramp-up 25 to 50 kg/s | inlet pressure RMS 0.60 bar (was 2.26), end offset -0.08 bar (was -2.10); inventory change still +9.0 m3 against OLGA's -10.1, no surge peak | End pressure only |
 | Gas-condensate turndown 60 to 30 kg/s | liquid accumulation 5 m3 against OLGA's 38 m3 | No |
-| Flowline plus riser | dP +11..+18 % (+90 % at 15 kg/s); OLGA riser holdup is almost no-slip (unit gas velocity 1.01-1.06 vm), NeqSim's annular/slug riser holds 2-3 times more; `setUseInclinedFilmBridgingCriterion(true)` cuts the mean error from 31 % to 20 % | No |
-| Horizontal annular gas condensate and wet gas | dP +8..+15 %, holdup +50 % at 140 kg/s | With +15 % margin |
+| Flowline plus riser | after the large-diameter churn closure (2026-10, `setLargeDiameterChurnClosureEnabled`, default on): dP -7..+7 % on five 10-12 in risers (was +11..+18 %, +90 % at low rate); riser holdup within 5 %. Kataoka-Ishii `D*` is 120-230 for subsea risers, so Taylor-bubble slug units do not apply there; the reference fits `C0 = 1.0, vd = 0.25 m/s` | Yes, with +-10 % margin |
+| Horizontal annular gas condensate and wet gas | after the Hart wetted-wall gate (2026-10): dP +1..+6 % at 60-140 kg/s, holdup within 5 % at 60 kg/s, +20 % at 100, +40 % at 140 kg/s (where Hart says fully wetted and the reference still says stratified) | dP yes; holdup with margin above 100 kg/s |
 | Low-rate stratified gas condensate / wet gas, flat (2.4 m/s, 82 bara) | dP +5 / +14 %, holdup -8 / -5 % after the depth-squared roughness (was +17/+29 %, -23/-22 %) | Yes |
-| Undulating lean wet gas, 40 km, +-20/35/50 m | dP +4 / +5 / +6 % against the reference (was +12 / -2 / +33 %); holdup 20-50 % high, about 30 % of it from NeqSim condensing more liquid than the reference's PVT table | Pressure drop yes; inventory with margin |
+| Undulating lean wet gas, 40 km, +-20/35/50 m | dP +1.6 / +1.5 / +1.4 % against the reference (was +12 / -2 / +33 %; +4..+6 % before the rough-wall root); holdup 20-50 % high, about 30 % of it from NeqSim condensing more liquid than the reference's PVT table | Pressure drop yes; inventory with margin |
 
 Do not lower the Andritsos-Hanratty enhancement by a bound or a wave-onset floor to fix low-rate flat wet gas: it
 improves that case but raises the undulating wet-gas error to +43 % and +62 % at 35 and 50 m. What works is changing
@@ -1015,6 +1015,40 @@ layers nearly smooth, thick ones rough. On this terrain line it gives +4/+5/+6 %
 +5/+30/+70 % above flat in both codes) and the low-rate flat cases +5/+14 % (holdup -8/-5 %). Check any
 interfacial-friction change on a terrain amplitude sweep as well as a flat line; the uphill Taitel-Dukler balance has
 three roots and the thin one disappears first when the interface is smoothed.
+
+Three regime rules learned on the same sweep (all default in NeqSim from 2026-10): a Kelvin-Helmholtz-unstable thin
+layer is annular only once the Hart wetted-wall fraction approaches one (dense-gas lines at 5-9 m/s are stratified
+with atomization, not annular); an unstable layer bridges into slugs from an equilibrium holdup of about 0.16 **and**
+a superficial-liquid Froude number `vsL/sqrt(gD)` above about 0.05 (lean wet gas on 2.5 degree up-slopes holds 0.14
+but at Froude 0.013 has no liquid to feed slugs: pseudo-slugs, stratified; gate on Froude, not on the no-slip
+fraction, or air-water at 0.3 m/s loses its slug region); steep large-diameter sections use churn drift flux with
+`C0 = 1`. Still open against
+the reference: three-phase low rate (regime right, dP +21..+29 % from liquid wall shear with the oil/water split
+matching exactly) and the ramp-up outflow surge peak.
+
+**Keep the steady holdup root and the transient closures on the same wall law.** The steady stratified root used
+smooth Blasius walls while the transient used the rough Haaland wall; on a 20 km condensate line the transient saw
+60 % more liquid wall shear than the state it was started from and accumulated liquid without bound after a turndown
+(188 → 442 m3, outflow below inflow before the step). Since 2026-10 the root uses the rough wall too and a null
+transient (no boundary change) holds its inventory to within 4 % over 30 min. Run that null transient on any
+stratified line before trusting a transient inventory: a drift of more than a few per cent before the step is a closure
+inconsistency, not pipeline physics.
+
+**Turn phase change on for every transient you compare with the reference, and turn it on the right way.**
+`TwoFluidPipe` ships with `setIncludeMassTransfer(false)`: the transient conserves gas and liquid separately, so a
+cooling condensate line delivers its inlet liquid rate to the outlet while the reference condenses 30 % more along
+the way, and a turndown settles 30 m3 below NeqSim's own steady state at the new rate. Enabling mass transfer alone
+is worse: the legacy closure targets the no-slip equilibrium volume fraction of the inlet fluid and, with a slip
+ratio of 2.5 in a stratified line, evaporates half the liquid inventory in five minutes. Use
+
+```python
+pipe.setComponentTransportEnabled(True)      # before pipe.run(): flash the conserved cell composition
+pipe.setIncludeMassTransfer(True)
+pipe.setLocalEquilibriumFlashPerStage(False) # one flash per step instead of four (RK4), same result, 3x faster
+```
+
+and budget for it: the 20 km, 80-cell condensate transient costs about 0.2 s of wall time per simulated second this
+way (0.03 s without phase change), so an 8 h turndown is a 1.5 h run.
 
 ## Validation Checklist
 

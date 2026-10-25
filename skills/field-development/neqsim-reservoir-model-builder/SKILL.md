@@ -296,6 +296,53 @@ and `addWaterInjector`. Two practical points:
   makes `runTransient` throw `setMolarComposition - Input totalFlow must be
   larger than 0`.
 
+### OPM Flow deck gotchas (best-guess decks)
+
+These keywords caused silent misbehaviour or hard stops in a pre-salt
+best-guess deck:
+
+- `GCONPROD`: the record is
+  `'FIELD' 'ORAT' oil_limit 1* gas_limit 1* 'RATE' /`.
+  - A gas limit with a mis-ordered default is ignored without a warning.
+  - Wells sit in child groups (for example `FLD`) under `FIELD`, so that the
+    field-level control actually binds.
+- `GCONINJE`: write one record per injected phase (`WATER` and `GAS`). A single
+  combined record controls only one phase.
+- `TUNING`: OPM ignores the keyword unless `flow` is started with
+  `--enable-tuning=true`.
+- `PVDG`: Bg must be strictly decreasing with pressure. Clip or re-sample the
+  NeqSim black-oil table near the saturation pressure.
+  - Use `PVDG` (dry gas) rather than `PVTG` for a reinjected separator gas,
+    unless condensate drop-out in the reservoir matters.
+  - A non-monotonic table stops the run at deck parsing.
+- When a sensitivity adds facility capacity (for example a subsea-separation
+  case that raises the field `GRAT` limit), report the uplift as the value of
+  that added capacity. Compare it with the same capacity added topside before
+  crediting the technology.
+
+### Evaluating the injection philosophy
+
+Run the strategies on one deck and one well set, so that only the strategy
+differs:
+
+1. Depletion.
+2. Gas reinjection only.
+3. WI+GI voidage replacement.
+4. WAG.
+5. Facility options such as subsea separation.
+
+Report recovery factor (RF), plateau length, minimum average pressure against
+Pb, maximum GOR and cumulative VRR in one table. Then:
+
+- check water injectivity per well at the injector BHP cap against the
+  concept's design rate;
+- split the voidage between water and gas;
+- name the plateau limiter (oil, gas handling, water handling or BHP);
+- test robustness over permeability (k/3 to kx3), injector count and BHP cap.
+
+A strategy is ruled out with a number. For example, "average pressure falls
+below Pb in year 3" rules depletion out.
+
 ## Search for everything first — simplify only when it is recorded
 
 A screening model is allowed to be simple. It is not allowed to be simple *by

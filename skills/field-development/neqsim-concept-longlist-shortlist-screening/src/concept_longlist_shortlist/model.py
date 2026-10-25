@@ -350,7 +350,9 @@ def screen_must_pass(
                 failures.append(entry)
             elif result != PASS:
                 suffix = " (fail asserted without evidence)" if result == FAIL else ""
-                entry["open_question"] = f"Provide evidence for '{entry['name']}'{suffix}"
+                entry["open_question"] = (
+                    f"Provide evidence for '{entry['name']}'{suffix}"
+                )
                 opens.append(entry)
             log.append(entry)
         if failures:
@@ -421,7 +423,9 @@ def normalise_scores(
         values = {cid: float(scores[cid][key]) for cid in concept_ids}
         lo, hi = min(values.values()), max(values.values())
         if hi == lo and len(concept_ids) > 1:
-            warnings.append(f"Criterion '{key}' does not discriminate between the concepts.")
+            warnings.append(
+                f"Criterion '{key}' does not discriminate between the concepts."
+            )
         for cid, v in values.items():
             x = 0.5 if hi == lo else (v - lo) / (hi - lo)
             norm[cid][key] = 1.0 - x if direction == COST else x
@@ -701,10 +705,14 @@ def select_short_list(
         if len(values) <= 1:
             for cid in ranked_ids:
                 v = choices.get(cid, {}).get(diversity_element)
-                if v is not None and v not in values and add(
-                    cid,
-                    f"Diversity: best-ranked concept with a different "
-                    f"{diversity_element} ({v})",
+                if (
+                    v is not None
+                    and v not in values
+                    and add(
+                        cid,
+                        f"Diversity: best-ranked concept with a different "
+                        f"{diversity_element} ({v})",
+                    )
                 ):
                     break
     for ref in reference_ids:
@@ -834,7 +842,9 @@ def run_screening(study: Mapping[str, Any]) -> dict[str, Any]:
                 "of weight samples"
             )
         if g.get("closable_by_low_confidence"):
-            reason += "; gap closable by its low-confidence scores - revisit with evidence"
+            reason += (
+                "; gap closable by its low-confidence scores - revisit with evidence"
+            )
         elimination_log.append(
             {"concept": r["concept"], "stage": "ranking", "reason": reason}
         )

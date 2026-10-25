@@ -12,7 +12,8 @@ license = { text = "Apache-2.0" }
 dependencies = []
 
 [project.optional-dependencies]
-test = ["pytest>=7.4"]
+test = ["pytest>=7.4", "matplotlib>=3.7"]
+figures = ["matplotlib>=3.7"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

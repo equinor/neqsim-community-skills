@@ -32,16 +32,23 @@ def test_default_long_list_applies_rules():
     out = generate_long_list()
     ids = {c["id"] for c in out["concepts"]}
     assert out["n_combinations"] == len(out["concepts"]) + len(out["excluded"])
-    assert not any(c["choices"]["host"] == "fpso" and c["choices"]["wells"] == "dry_tree"
-                   for c in out["concepts"])
-    assert not any(c["choices"]["host"] == "subsea_tieback"
-                   and c["choices"]["oil_export"] != "via_host" for c in out["concepts"])
+    assert not any(
+        c["choices"]["host"] == "fpso" and c["choices"]["wells"] == "dry_tree"
+        for c in out["concepts"]
+    )
+    assert not any(
+        c["choices"]["host"] == "subsea_tieback"
+        and c["choices"]["oil_export"] != "via_host"
+        for c in out["concepts"]
+    )
     assert all(e["reasons"] for e in out["excluded"])
     assert ids
 
 
 def test_givens_fix_elements_and_reject_unknown_option():
-    out = generate_long_list(givens={"drive": "water_injection", "power": "power_from_shore"})
+    out = generate_long_list(
+        givens={"drive": "water_injection", "power": "power_from_shore"}
+    )
     assert {c["choices"]["drive"] for c in out["concepts"]} == {"water_injection"}
     with pytest.raises(ValueError):
         generate_long_list(givens={"host": "flying_saucer"})
@@ -49,7 +56,10 @@ def test_givens_fix_elements_and_reject_unknown_option():
 
 def test_capacity_variants_single_topology_warns():
     topo = dict(host="fpso", wells="subsea", oil_export="shuttle_tanker")
-    concepts = [dict(_c(f"fpso_{q}", **topo), sizing={"plateau_kbopd": q}) for q in (100, 150, 200)]
+    concepts = [
+        dict(_c(f"fpso_{q}", **topo), sizing={"plateau_kbopd": q})
+        for q in (100, 150, 200)
+    ]
     out = detect_capacity_variants(concepts)
     assert out["n_distinct_topologies"] == 1
     assert out["variant_groups"] == [["fpso_100", "fpso_150", "fpso_200"]]
@@ -77,22 +87,34 @@ def test_normalisation_direction_and_weights():
     crit = [{"id": "npv", "weight": 3}, {"id": "capex", "weight": 1, "direction": COST}]
     w = normalise_weights(crit)
     assert w == pytest.approx({"npv": 0.75, "capex": 0.25})
-    n = normalise_scores(["a", "b"], crit, {"a": {"npv": 10, "capex": 5}, "b": {"npv": 20, "capex": 9}})
+    n = normalise_scores(
+        ["a", "b"], crit, {"a": {"npv": 10, "capex": 5}, "b": {"npv": 20, "capex": 9}}
+    )
     assert n["normalised"]["b"]["npv"] == 1.0 and n["normalised"]["a"]["capex"] == 1.0
-    flat = normalise_scores(["a", "b"], crit, {"a": {"npv": 1, "capex": 1}, "b": {"npv": 1, "capex": 2}})
+    flat = normalise_scores(
+        ["a", "b"], crit, {"a": {"npv": 1, "capex": 1}, "b": {"npv": 1, "capex": 2}}
+    )
     assert flat["normalised"]["a"]["npv"] == 0.5 and flat["warnings"]
     with pytest.raises(ValueError):
         normalise_weights([{"id": "x", "weight": -1}])
 
 
 def test_pareto_front():
-    n = {"a": {"x": 1.0, "y": 0.0}, "b": {"x": 0.0, "y": 1.0}, "c": {"x": 0.5, "y": 0.5},
-         "d": {"x": 0.4, "y": 0.4}}
+    n = {
+        "a": {"x": 1.0, "y": 0.0},
+        "b": {"x": 0.0, "y": 1.0},
+        "c": {"x": 0.5, "y": 0.5},
+        "d": {"x": 0.4, "y": 0.4},
+    }
     assert pareto_front(n) == ["a", "b", "c"]
 
 
 def test_robustness_is_deterministic_and_sums():
-    n = {"a": {"x": 1.0, "y": 0.0}, "b": {"x": 0.0, "y": 1.0}, "c": {"x": 0.6, "y": 0.6}}
+    n = {
+        "a": {"x": 1.0, "y": 0.0},
+        "b": {"x": 0.0, "y": 1.0},
+        "c": {"x": 0.6, "y": 0.6},
+    }
     w = {"x": 0.5, "y": 0.5}
     r1 = weight_robustness(n, w, top_k=2, n_samples=300, seed=7)
     r2 = weight_robustness(n, w, top_k=2, n_samples=300, seed=7)
@@ -110,16 +132,29 @@ def test_crossover_found():
 
 def test_short_list_diversity_reference_and_variants():
     concepts = [
-        _c("fpso_100", host="fpso"), _c("fpso_150", host="fpso"),
-        _c("semi", host="semi_submersible"), _c("tieback", host="subsea_tieback"),
+        _c("fpso_100", host="fpso"),
+        _c("fpso_150", host="fpso"),
+        _c("semi", host="semi_submersible"),
+        _c("tieback", host="subsea_tieback"),
     ]
     variants = detect_capacity_variants(concepts)
     ranking = weighted_ranking(
-        {"fpso_100": {"x": 0.9}, "fpso_150": {"x": 0.95}, "semi": {"x": 0.5}, "tieback": {"x": 0.2}},
+        {
+            "fpso_100": {"x": 0.9},
+            "fpso_150": {"x": 0.95},
+            "semi": {"x": 0.5},
+            "tieback": {"x": 0.2},
+        },
         {"x": 1.0},
     )
-    out = select_short_list(ranking, None, size=3, concepts=concepts, reference_ids=["tieback"],
-                            family_of=variants["family_of"])
+    out = select_short_list(
+        ranking,
+        None,
+        size=3,
+        concepts=concepts,
+        reference_ids=["tieback"],
+        family_of=variants["family_of"],
+    )
     ids = [s["concept"] for s in out["short_list"]]
     assert ids[0] == "fpso_150"
     assert "fpso_100" not in ids  # capacity variant occupies one slot
@@ -140,7 +175,10 @@ def _study():
         "must_pass": [{"id": "host_reach", "name": "Host within reach"}],
         "assessments": {
             "subsea_tieback|subsea|via_host|via_host|water_injection|power_from_host": {
-                "host_reach": {"result": "fail", "evidence": "Nearest host 180 km, step-out limit 50 km"}
+                "host_reach": {
+                    "result": "fail",
+                    "evidence": "Nearest host 180 km, step-out limit 50 km",
+                }
             }
         },
         "criteria": [
@@ -149,12 +187,20 @@ def _study():
             {"id": "co2", "weight": 0.2, "direction": "cost"},
         ],
         "scores": {
-            "fpso|subsea|shuttle_tanker|reinjection|water_injection|gas_turbine":
-                {"npv": 5.0, "capex": 6.0, "co2": 12},
-            "semi_submersible|subsea|shuttle_tanker|reinjection|water_injection|gas_turbine":
-                {"npv": 4.2, "capex": 5.5, "co2": 11},
+            "fpso|subsea|shuttle_tanker|reinjection|water_injection|gas_turbine": {
+                "npv": 5.0,
+                "capex": 6.0,
+                "co2": 12,
+            },
+            "semi_submersible|subsea|shuttle_tanker|reinjection|water_injection|gas_turbine": {
+                "npv": 4.2,
+                "capex": 5.5,
+                "co2": 11,
+            },
         },
-        "reference": ["fpso|subsea|shuttle_tanker|reinjection|water_injection|gas_turbine"],
+        "reference": [
+            "fpso|subsea|shuttle_tanker|reinjection|water_injection|gas_turbine"
+        ],
         "short_list_size": 2,
         "robustness": {"n_samples": 200, "seed": 3},
     }
@@ -174,10 +220,15 @@ def test_run_screening_end_to_end():
 def test_coverage_warns_only_for_undecided_elements():
     from concept_longlist_shortlist import coverage_report
 
-    concepts = [_c("a", host="fpso", wells="subsea"), _c("b", host="semi", wells="subsea")]
+    concepts = [
+        _c("a", host="fpso", wells="subsea"),
+        _c("b", host="semi", wells="subsea"),
+    ]
     framed = coverage_report(concepts, {"host": ["fpso", "semi"], "wells": ["subsea"]})
     assert framed["warnings"] == []
-    open_frame = coverage_report(concepts, {"host": ["fpso", "semi"], "wells": ["subsea", "dry_tree"]})
+    open_frame = coverage_report(
+        concepts, {"host": ["fpso", "semi"], "wells": ["subsea", "dry_tree"]}
+    )
     assert open_frame["missing"] == {"wells": ["dry_tree"]}
     assert any("wells" in w for w in open_frame["warnings"])
 

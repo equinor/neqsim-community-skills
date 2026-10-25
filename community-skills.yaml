@@ -533,7 +533,7 @@ skills:
 
   - name: neqsim-concept-longlist-shortlist-screening
     version: "0.1.0"
-    description: "Educational concept long-list to short-list screening for field development: generates a long list from a decision-element option matrix with compatibility rules and givens, flags capacity variants posing as concepts and undecided elements, applies evidence-based must-pass screens, ranks survivors with a weighted decision matrix and Pareto front, tests the ranking against weight uncertainty (rank acceptability and crossover weights) and selects a robust, diverse short list with a reference concept and an elimination log. USE WHEN: a concept long list must be generated or reduced to a short list before detailed concept comparison."
+    description: "Educational concept long-list to short-list screening for field development: long list from a decision-element matrix with rules and givens, capacity-variant and undecided-element flags, must-pass screens, weighted ranking with Pareto front, weight robustness and crossovers, a robust diverse short list with reference and elimination log, and traceable screening figures. USE WHEN: a concept long list must be generated, reduced to a short list or illustrated."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/field-development/neqsim-concept-longlist-shortlist-screening/SKILL.md"

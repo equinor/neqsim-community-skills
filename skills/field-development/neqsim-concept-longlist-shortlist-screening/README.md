@@ -19,3 +19,5 @@ python examples/basic_screening.py
 ```
 
 See [SKILL.md](SKILL.md) for the method, inputs and outputs.
+
+Figures (optional, needs matplotlib: `pip install .[figures]`): `render_screening_figures(result, out_dir)` writes the funnel, decision-matrix heatmap, Pareto trade-off, rank-acceptability, weight-crossover and per-concept schematic PNGs and returns `results.json` figure entries. See SKILL.md, Concept Figures.

@@ -40,7 +40,10 @@ study = {
             "host_reach": (
                 {"result": "fail", "evidence": "No host within 60 km (illustrative)"}
                 if cid.startswith("subsea_tieback")
-                else {"result": "pass", "evidence": "Standalone concept, no host needed"}
+                else {
+                    "result": "pass",
+                    "evidence": "Standalone concept, no host needed",
+                }
             )
         }
         for cid in ids
@@ -57,4 +60,8 @@ study = {
 }
 
 result = run_screening(study)
-print(json.dumps({k: result[k] for k in ("readiness", "short_list", "warnings")}, indent=2))
+print(
+    json.dumps(
+        {k: result[k] for k in ("readiness", "short_list", "warnings")}, indent=2
+    )
+)

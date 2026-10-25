@@ -1,5 +1,15 @@
 """Concept long-list generation, must-pass screening and robust short-listing (educational)."""
 
+from .figures import (
+    funnel_counts,
+    plot_concept_schematic,
+    plot_crossovers,
+    plot_decision_matrix,
+    plot_funnel,
+    plot_pareto,
+    plot_robustness,
+    render_screening_figures,
+)
 from .model import (
     ASSESSMENT_RESULTS,
     BENEFIT,
@@ -50,4 +60,12 @@ __all__ = [
     "weight_crossovers",
     "weight_robustness",
     "weighted_ranking",
+    "funnel_counts",
+    "plot_concept_schematic",
+    "plot_crossovers",
+    "plot_decision_matrix",
+    "plot_funnel",
+    "plot_pareto",
+    "plot_robustness",
+    "render_screening_figures",
 ]

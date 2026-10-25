@@ -531,6 +531,14 @@ skills:
     tags: [field-development, project-plan, stage-gate, timeline, tie-in, host-modification, life-extension, gantt, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-concept-longlist-shortlist-screening
+    version: "0.1.0"
+    description: "Educational concept long-list to short-list screening for field development: generates a long list from a decision-element option matrix with compatibility rules and givens, flags capacity variants posing as concepts and undecided elements, applies evidence-based must-pass screens, ranks survivors with a weighted decision matrix and Pareto front, tests the ranking against weight uncertainty (rank acceptability and crossover weights) and selects a robust, diverse short list with a reference concept and an elimination log. USE WHEN: a concept long list must be generated or reduced to a short list before detailed concept comparison."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/neqsim-concept-longlist-shortlist-screening/SKILL.md"
+    tags: [field-development, concept-selection, long-list, short-list, decision-matrix, mcda, robustness, screening, education]
+    min_neqsim_version: "3.7.0"
   - name: neqsim-asset-value-npv-screening
     version: "0.1.0"
     description: "Educational discounted-cash-flow (DCF) asset-value screening that builds a year-by-year net cash flow from revenue, OPEX, and a CAPEX schedule and returns NPV, IRR, and payback with a simple flat tax. USE WHEN: a task needs a public, screening-level NPV/IRR/payback before detailed NeqSim field-development economics or qualified commercial review."

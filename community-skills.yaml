@@ -891,8 +891,8 @@ skills:
     tags: [pvt, brazil, pre-salt, co2, analogue, fluid-characterization, flow-assurance]
     min_neqsim_version: "3.7.0"
   - name: neqsim-anp-open-data
-    version: "0.1.0"
-    description: "Guide to reading Brazilian ANP open data for evaluation work: bid-round blocks, field and well production, well and seismic data bank, with CRS, unit and date checks and offline anchor handling. USE WHEN: a task needs Brazilian block, field production or well facts for a Santos, Campos or other Brazilian block, a host field such as a pre-salt FPSO, or a Sodir-like open-data basis."
+    version: "0.2.0"
+    description: "Reads Brazilian ANP open data: bid-round blocks, field and well production, well data bank, GeoANP layers (blocks, fields, wells, gas pipelines), installation positions from wellheads and tie-in host ranking, with CRS, unit and date checks. USE WHEN: a task needs Brazilian block, field or well facts, a host such as a pre-salt FPSO, nearby installations or export lines for a tie-in, or a Sodir-like open-data basis."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/field-development/neqsim-anp-open-data/SKILL.md"

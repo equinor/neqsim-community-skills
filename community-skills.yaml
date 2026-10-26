@@ -181,6 +181,24 @@ skills:
     tags: [wells, extended-reach, torque-drag, drilling, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-h2s-phase-partitioning
+    version: "0.1.0"
+    description: "Educational H2S gas/oil/water partitioning with NeqSim SRK-CPA through a separator train, and back-calculation of wellstream H2S from measured separator-gas H2S. USE WHEN: a task has H2S measured in separator or export gas and needs wellstream H2S, the H2S split between gas, oil and produced water, a sour-service pH2S screen, or a gas-to-well H2S conversion table."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-h2s-phase-partitioning/SKILL.md"
+    tags: [h2s, souring, partitioning, separator, sour-service, cpa, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-reservoir-souring-correlation
+    version: "0.1.0"
+    description: "Educational reservoir souring screening: seawater fraction from tracers, automatic per-well H2S-versus-seawater-fraction correlations updated from new data, and a substrate-limited mixing-zone H2S bound. USE WHEN: a task asks how well or produced-water H2S develops with seawater breakthrough, needs per-well H2S correlations for a production model, or an upper bound on biogenic souring."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-reservoir-souring-correlation/SKILL.md"
+    tags: [h2s, souring, waterflood, seawater-fraction, correlation, reservoir, screening, education]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-well-trajectory-anticollision
     version: "0.1.0"
     description: "Educational 3D well path and anti-collision screening: minimum curvature, curve-hold from kick-off or sidetrack tie-in, reduced MWD uncertainty, ISCWSA separation factor against offsets, parent exit, slot check and target pull-back. USE WHEN: a task needs a concept well path, whether it clears existing wellbores, the governing offset, how far to move a target, or if a slot is free before an official anti-collision run."

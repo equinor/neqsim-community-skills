@@ -480,3 +480,80 @@ def recombine_to_gor_and_h2s(
         converged=converged,
         warnings=warnings,
     )
+
+
+def parse_e300_names_and_zi(path: str) -> Tuple[List[str], List[float]]:
+    """Component names (CNAMES) and overall composition (ZI) of an Eclipse E300 file, in file order."""
+    names: List[str] = []
+    zi: List[float] = []
+    section = None
+    with open(path, "r", encoding="utf-8", errors="replace") as fh:
+        for raw in fh:
+            line = raw.strip()
+            if not line or line.startswith("--"):
+                if section and line.startswith("--"):
+                    section = None
+                continue
+            if line in ("CNAMES", "ZI"):
+                section = line
+                continue
+            if section is None:
+                continue
+            token = line.replace("/", " ").split()
+            if section == "CNAMES":
+                names.extend(token)
+            else:
+                zi.extend(float(v) for v in token)
+            if line.endswith("/"):
+                section = None
+    if not names:
+        raise ValueError("no CNAMES section in %s" % path)
+    return names, zi
+
+
+def load_e300_fluid(path: str, add_water: bool = False):
+    """Read an E300 fluid as is: EOS, pseudo-components, BIPs and shifts come from the file.
+
+    Nothing is characterised or tuned here. The component order of the returned fluid is the
+    CNAMES order of the file. With add_water the PVTsim water parameters are added by NeqSim.
+    """
+    jn = _jneqsim()
+    rw = jn.thermo.util.readwrite.EclipseFluidReadWrite
+    fluid = rw.read(path, True) if add_water else rw.read(path)
+    fluid.setMultiPhaseCheck(True)
+    return fluid
+
+
+def apply_e300_composition(fluid, model_e300: str, composition) -> List[str]:
+    """Set the wellstream composition of an E300-based fluid without touching its EOS model.
+
+    composition is a FluidMagic E300 export (path), a dict keyed by the E300 CNAMES, or a list in
+    CNAMES order. The names must match the model file; values are normalised. Returns the CNAMES.
+    """
+    names, _ = parse_e300_names_and_zi(model_e300)
+    fluid_names = [str(n) for n in fluid.getComponentNames()]
+    if len(fluid_names) < len(names) or len(fluid_names) > len(names) + 1:
+        raise ValueError("fluid has %d components but model file lists %d" % (len(fluid_names), len(names)))
+    if isinstance(composition, str):
+        c_names, c_zi = parse_e300_names_and_zi(composition)
+        if c_names != names:
+            raise ValueError("composition file component list differs from the model file")
+        values = c_zi
+    elif isinstance(composition, dict):
+        unknown = sorted(set(composition) - set(names))
+        if unknown:
+            raise ValueError("composition has components not in the model file: %s" % unknown)
+        values = [float(composition.get(n, 0.0)) for n in names]
+    else:
+        values = [float(v) for v in composition]
+    if len(values) != len(names):
+        raise ValueError("composition has %d values for %d components" % (len(values), len(names)))
+    if any(v < 0 for v in values):
+        raise ValueError("composition has negative values")
+    total = sum(values)
+    if total <= 0:
+        raise ValueError("composition sums to zero")
+    z = [v / total for v in values] + [0.0] * (len(fluid_names) - len(names))
+    fluid.setMolarComposition(z)
+    fluid.init(0)
+    return names

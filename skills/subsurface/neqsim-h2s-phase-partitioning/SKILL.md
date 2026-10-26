@@ -54,6 +54,16 @@ Recombination, per pass: flash at the separator conditions; set gas H2S to the m
 
 Use `separator_gor_and_gas_h2s(fluid, stage)` to get the calculated GOR and gas H2S of any wellstream for a round-trip check.
 
+### Given an E300 model: do not build a fluid
+
+When the field already has a characterised E300 model (for example the Snorre E300) and the wellstream composition comes from FluidMagic, **do not create a fluid, add pseudo-components, re-characterise or tune the EOS**. The E300 file is the EOS model; only the composition and the recombination logic are used:
+
+1. `load_e300_fluid(model_e300)` reads the file as is (EOS, pseudo-components, BIPs, shifts, CNAMES order). Pass `add_water=True` only if the file has no water and water is needed.
+2. `apply_e300_composition(fluid, model_e300, composition)` sets the wellstream composition from the FluidMagic E300 export (path), a dict keyed by CNAMES, or a list in CNAMES order. Names must match the model file; the call raises otherwise.
+3. `recombine_to_gor_and_h2s(fluid, stage, gor_measured, y_h2s_measured)` adjusts the composition only (component by component) so the separator reproduces the measured GOR and gas H2S. The EOS parameters never change, so there is nothing to re-characterise between iterations.
+
+The E300 must contain `H2S` (and `H2O` if water is to be modelled). If it does not, ask for an E300 with H2S from the characterisation owner; do not add the component here, because that changes the EOS model.
+
 Worked demonstration (default composition, one stage at 70 C and 10 bara): the factor wellstream/gas falls from 0.81 at a dry stream to 0.58 at 30 percent water and 0.34 at 60 percent water mole fraction. Gas is richer in H2S than the wellstream, and more water carries more H2S to the water phase. These are demonstration values, not field values.
 
 ## Python Usage Pattern
@@ -72,6 +82,12 @@ table = conversion_factor_curve(None, stages, [0.0, 0.1, 0.3, 0.5])
 from h2s_partitioning import recombine_to_gor_and_h2s
 rec = recombine_to_gor_and_h2s(fluid, stages[0], gor_measured=380.0, y_h2s_measured=4.5e-4)
 print(rec.converged, rec.wellstream_h2s_mol_fraction)
+
+# With a given E300 model and a FluidMagic composition: no new fluid, no new characterisation
+from h2s_partitioning import load_e300_fluid, apply_e300_composition
+model = load_e300_fluid("field_model.e300")
+apply_e300_composition(model, "field_model.e300", "fluidmagic_composition.e300")
+rec = recombine_to_gor_and_h2s(model, stages[0], gor_measured=380.0, y_h2s_measured=4.5e-4)
 ```
 
 Use the project interpreter with `neqsim` installed; for a real field pass the field composition (and a plus-fraction characterisation) instead of the default.

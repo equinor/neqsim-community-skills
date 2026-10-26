@@ -1,14 +1,14 @@
 ---
 name: neqsim-anp-open-data
 calculation_basis: "screening"
-version: "0.1.0"
-description: "Guide to reading Brazilian ANP open data for evaluation work: bid-round blocks, field and well production, well and seismic data bank, with CRS, unit and date checks and offline anchor handling. USE WHEN: a task needs Brazilian block, field production or well facts for a Santos, Campos or other Brazilian block, a host field such as a pre-salt FPSO, or a Sodir-like open-data basis."
-last_verified: "2026-10-09"
+version: "0.2.0"
+description: "Reads Brazilian ANP open data: bid-round blocks, field and well production, well data bank, GeoANP layers (blocks, fields, wells, gas pipelines), installation positions from wellheads and tie-in host ranking, with CRS, unit and date checks. USE WHEN: a task needs Brazilian block, field or well facts, a host such as a pre-salt FPSO, nearby installations or export lines for a tie-in, or a Sodir-like open-data basis."
+last_verified: "2026-10-26"
 requires:
   python_packages: []
   java_packages: []
   env: []
-  network: ["ANP open-data portal (optional)"]
+  network: ["ANP open-data portal (optional)", "ANP GeoServer geomaps.anp.gov.br WFS (optional; cached offline)"]
 ---
 
 # ANP Open Data
@@ -20,6 +20,7 @@ Advisory skill. It is the Brazilian counterpart of `neqsim-norwegian-continental
 - A task needs Brazilian block, field production or well facts for a Santos, Campos or other Brazilian block.
 - A host field such as a pre-salt FPSO must be characterised from public data.
 - A Sodir-like open-data basis is needed for a Brazilian evaluation.
+- Nearby FPSOs, fields, wells or gas export lines must be located on a map, or tie-in hosts ranked for a Brazilian discovery.
 
 ## Inputs
 
@@ -32,6 +33,7 @@ Advisory skill. It is the Brazilian counterpart of `neqsim-norwegian-continental
 - Typed rows with explicit unit conversions (oil and gas volumes, daily rates).
 - A CRS check for block coordinates and a distance to the host.
 - Source, dataset name and download date for `references/SOURCES.md`.
+- Approximate installation positions with spread and water depth, latest and peak daily rates per installation, distances to pipelines, and a ranked tie-in host table.
 
 ## What to look for
 
@@ -58,6 +60,49 @@ rate_bbl_d = oil_volume(monthly_to_daily(rows[0]["oil"], 2026, 3), "m3", "bbl")
 
 Separator, decimal mark, encoding and source units are arguments because they differ between datasets; check them in the file before use.
 
+## GeoANP WFS layers and installation location
+
+ANP publishes map layers on a public GeoServer (`https://geomaps.anp.gov.br/geoserver/ows`, WFS 1.0.0, GeoJSON output, native CRS EPSG:4674 SIRGAS 2000, lon/lat order). `ANP_LAYERS` holds the aliases checked on 2026-10-26:
+
+| Alias | Layer | Content |
+| --- | --- | --- |
+| `blocks` | `sisroc:block_shp_geoanp` | Contract blocks |
+| `awarded_blocks_opc` | `geoanp:blocos_arrematados_opc_4deg_ciclo` | Permanent-offer awards |
+| `fields` | `sisroc:campos_gishub_db` | Field outlines (`name`, `operador`, `etapa`, `dat_inicio`, `med_lamina`, `fluido_pri`) |
+| `presalt_polygon` | `sisroc:presal_shp_geoanp` | Pre-salt polygon |
+| `gas_outflow_pipelines` | `geoanp:gasodutos_de_escoamento` | Gas outflow (export) pipelines |
+| `gas_processing_plants` | `geoanp:unidade_de_processamento_de_gas_natural` | Gas processing plants |
+| `wells` | `sisroc:pocos_gishub_db` | Wells with coordinates and water depth |
+
+```python
+from anp_open_data import fetch_layer, locate_installations, installation_production, name_key
+
+wells, log = fetch_layer("wells", task / "references/anp", bbox=(-44.6, -26.2, -41.8, -24.0),
+                         max_features=20000)          # cache + .log.json sidecar; offline=True reuses cache
+if log["truncated"]:
+    raise RuntimeError("raise max_features or narrow the bbox")
+hosts = locate_installations(wells, well_installation_pairs)   # pairs from the production file
+rates = installation_production(rows, "installation", "month", ["oil", "condensate"], ["gas"])
+```
+
+- **ANP does not publish FPSO hull coordinates.** `locate_installations` takes the median of the wellheads that produce to each installation; the result is labelled `approximate-derived-from-ANP-wells` with `well_spread_max_km`. Report it as approximate and replace it with the operator position where one exists.
+- Well-to-installation pairs come from "Produção de Petróleo e Gás Natural por Poço". Its headers are often damaged (U+FFFD); select columns by position after checking a known row, and parse Brazilian numbers (`.` thousands, `,` decimal).
+- Names mix accents, mojibake and U+FFFD. Join on `name_key`, which folds them to one key, and use `repair_name` for display.
+- Every download writes its URL, time, feature count and `truncated` flag; copy that record into `SOURCES.md`.
+
+## Tie-in host screening
+
+```python
+from anp_open_data import nearest_pipeline, rank_tie_in_hosts
+
+lines = nearest_pipeline((lon, lat), pipelines_geojson, top=5)        # km, nearest point, along-line km
+ranked = rank_tie_in_hosts((lon, lat), hosts, target_water_depth_m=2200,
+                           required_oil_m3d=16000, preferred_operators=["..."])
+```
+
+- Score = weighted sum of distance (`1 - d/max_step_out`), oil/gas ullage against the required rate, water-depth similarity, operator preference and remaining host life (`DEFAULT_WEIGHTS`). Unknown ullage or life scores 0.5 and is flagged in `notes`.
+- `kind: "standalone"` is the reference case; `kind: "pipeline"` with a `distance_km` from `nearest_pipeline` ranks an export line beside the FPSOs.
+- Ullage is not public. Feed operator capacity where known, or `host_capacity_check` from `neqsim-brazil-offshore-infrastructure-market`, and say which basis was used. The ranking is a screening order, not a host decision: hand the top hosts to flow assurance and cost.
 ## Engineering Method
 
 - Record the source, dataset name and download date for every number in `references/SOURCES.md`.
@@ -73,6 +118,8 @@ Separator, decimal mark, encoding and source units are arguments because they di
 - [ ] Block polygons were reprojected to a metric CRS before any distance was computed.
 - [ ] Each number has its source, dataset name and download date in `references/SOURCES.md`.
 - [ ] An offline anchor table exists so the task runs without network.
+- [ ] WFS reads are cached with their log record and none is `truncated`.
+- [ ] Derived installation positions are labelled approximate and the ullage basis of every ranked host is stated.
 
 ## Common Mistakes
 
@@ -82,6 +129,9 @@ Separator, decimal mark, encoding and source units are arguments because they di
 | Wrong decimals | Comma decimal parsed as a thousands separator | Pass `decimal=","` and check a known row |
 | Distances look wrong | Geographic CRS used for distance | Reproject, or use `haversine_km` on lat/lon |
 | Monthly total used as a rate | No days-in-month conversion | Use `monthly_to_daily` |
+| FPSO missing from the host list | Name spelled with mojibake or U+FFFD | Join on `name_key` |
+| Too few wells or fields on the map | WFS `maxFeatures` reached | Check `truncated`; narrow the bbox |
+| Lon and lat swapped | WFS 1.1/2.0 axis order | Use WFS 1.0.0 as built by `build_getfeature_url` |
 
 ## Limitations
 
@@ -94,7 +144,9 @@ Separator, decimal mark, encoding and source units are arguments because they di
 - Production series to `neqsim-reservoir-depletion-screening` and decline fitting.
 - Block and host positions to `neqsim-pipe-route-profile` and `neqsim-subsea-layout-geometry` for tie-back distance.
 - Block facts to `neqsim-psc-bid-economics-screening` and the `frontier-block-bid-agent`.
+- Installation positions, pipelines and ranked hosts to the `brazil-offshore-infrastructure-agent` and on to `tie-in-screening-agent` / `flow-assurance` for the top hosts.
 
 ## References
 
 - ANP open-data portal (`gov.br/anp`, "Dados abertos") and its mirror on `dados.gov.br`; cite dataset name and download date per number.
+- ANP GeoServer (`geomaps.anp.gov.br/geoserver`, the WebMaps / GeoANP backend); cite layer name and retrieval time.

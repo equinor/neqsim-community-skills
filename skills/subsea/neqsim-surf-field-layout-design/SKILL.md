@@ -286,6 +286,9 @@ open("layout.geojson", "w").write(json.dumps(layout.to_geojson()))
 
 ## Related NeqSim Functionality
 
+- **Sodir wellbore, field, pipeline, facility and block layers** for the layout basis: `neqsim-sodir-open-data`
+  lists every layer id and join key; request `out_sr=4326` (DataService geometry is ED50).
+
 The screening geometry this skill produces is meant to be replaced by real
 calculations. These are the classes that do it.
 

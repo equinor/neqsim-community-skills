@@ -156,6 +156,9 @@ reader.field("Alvheim", date(2019, 1, 1)).fractions()
 
 ## Related NeqSim Functionality
 
+- **Other Sodir layers** (wellbores, DST, tops, licences, surveys, CO2, FactPages CSV, bulk files): use
+  `neqsim-sodir-open-data` for the full catalog, recipes and traps before writing a new reader.
+
 `neqsim.process.fielddevelopment.economics` classes (cash flow, fiscal regime) accept the
 net series; equity itself is bookkeeping and has no Java counterpart.
 

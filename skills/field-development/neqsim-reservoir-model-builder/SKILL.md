@@ -360,6 +360,11 @@ displacement. The geology was never checked for; it was simply replaced.
 
 `reservoir_model_builder.data_first` makes that impossible to do silently.
 
+For the Norwegian shelf, run the open-data search first with `neqsim-sodir-open-data`: offset wellbores and
+their formation tops/DST/cores/oil samples, field and discovery reserves (`field_reserves`,
+`discovery_reserves`), monthly production (`profiles`), owners and pipelines. Record each read
+(`SodirOpenData.provenance()`) in the data-first gate so "no data found" is evidence, not an assumption.
+
 ```python
 from reservoir_model_builder import data_first_gate, acquisition_plan
 

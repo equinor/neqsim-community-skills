@@ -66,6 +66,12 @@ basis.assumptions                 # each with the measurement that retires it
 basis.acquisition_plan            # ranked by how much it reduces the answer
 ```
 
+**Measured anchors from open data (NCS):** before accepting an analogue, pull what Sodir already
+publishes for offset wells with `neqsim-sodir-open-data` (`use_case("pvt")`): DST bottom-hole pressure and
+temperature, GOR and fluid densities (`wellbore_dst`), `wlbBottomHoleTemperature` (0 = not reported),
+formation tops for depth. Pass them as `measured_temperature_C` / `measured_pressure_bara` and cite
+Sodir (NLOD 2.0) in the assumptions. These are priors, not a PVT study.
+
 ### Derive temperature. Do not derive pressure.
 
 This is the asymmetry that matters, and it is evidence-backed. On a Middle

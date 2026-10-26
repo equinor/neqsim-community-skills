@@ -302,6 +302,9 @@ entry for lists: facilities 6000, pipelines 6100, discoveries 7000, fields 7100.
 
 ## Related NeqSim Functionality
 
+- **Other Sodir layers** (wellbores, DST, tops, licences, surveys, CO2, FactPages CSV, bulk files): use
+  `neqsim-sodir-open-data` for the full catalog, recipes and traps before writing a new reader.
+
 This skill supplies and renders public data; it feeds downstream NeqSim
 workflows rather than running calculations itself:
 

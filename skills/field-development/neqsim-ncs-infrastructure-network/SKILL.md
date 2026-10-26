@@ -228,6 +228,9 @@ that the recent year has no overloaded element.
 
 ## Related NeqSim Functionality
 
+- **Other Sodir layers** (wellbores, DST, tops, licences, surveys, CO2, FactPages CSV, bulk files): use
+  `neqsim-sodir-open-data` for the full catalog, recipes and traps before writing a new reader.
+
 - `neqsim-ncs-value-chain-optimization`: multi-period, capacity-constrained
   optimisation of the whole NCS on this graph.
 - `neqsim-norwegian-continental-shelf-data`: headline facts, carbon cost,

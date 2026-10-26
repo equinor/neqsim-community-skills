@@ -459,6 +459,15 @@ skills:
     path: "skills/field-development/neqsim-ncs-ownership-equity/SKILL.md"
     tags: [field-development, norwegian-continental-shelf, ownership, equity, licensee, discovery, prospect, economics, open-data, open-api, screening]
     min_neqsim_version: "3.7.0"
+  - name: neqsim-sodir-open-data
+    version: "0.1.0"
+    description: "Map and read-only client for ALL Sodir (Sokkeldirektoratet) open data: DataService REST with 112 FactPages tables/layers (wellbores, DST, tops, fields, reserves, production, owners, facilities, pipelines, licences, surveys, CO2), FactPages CSV, FactMaps, bulk files. USE WHEN: a task needs an official NCS fact or must pick the right Sodir layer. Keyless, NLOD 2.0."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/neqsim-sodir-open-data/SKILL.md"
+    tags: [field-development, norwegian-continental-shelf, sodir, factpages, factmaps, open-data, open-api, wellbore, reserves, production, licence, pipelines, co2-storage, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-ncs-value-chain-optimization
     version: "0.1.0"
     description: "Multi-year, capacity-constrained NCS value-chain optimisation: forecasts fields from Sodir history, phases in discoveries, routes oil and gas through real trunklines, plants and terminals with a HiGHS LP, and returns production, curtailment, shadow prices, ullage, tie-in rankings and uplift lists for NeqSim follow-up. USE WHEN: maximising NCS value or production, finding the binding pipeline/plant and its capacity value, testing an outage or tie-in, or fitting discoveries into spare capacity."

@@ -7,6 +7,23 @@ GeoServer layers and derives approximate installation positions from producing
 wellheads; ``tieins`` screens and ranks tie-in hosts and export lines.
 """
 
+from .bathymetry import (
+    altitude_at,
+    build_etopo_url,
+    depth_at,
+    fetch_etopo_grid,
+    flag_slopes,
+    profile_along_route,
+)
+from .overview import (
+    connect_pipelines,
+    load_cached_layers,
+    node_register,
+    pipeline_register,
+    plot_overview,
+    summarise,
+    write_csv,
+)
 from .tieins import DEFAULT_WEIGHTS, nearest_pipeline, point_to_polyline_km, rank_tie_in_hosts
 from .tools import (
     OIL_M3_TO_BBL,
@@ -29,6 +46,19 @@ from .wfs import (
 )
 
 __all__ = [
+    "altitude_at",
+    "build_etopo_url",
+    "connect_pipelines",
+    "depth_at",
+    "fetch_etopo_grid",
+    "flag_slopes",
+    "load_cached_layers",
+    "node_register",
+    "pipeline_register",
+    "plot_overview",
+    "profile_along_route",
+    "summarise",
+    "write_csv",
     "ANP_LAYERS",
     "ANP_WFS_BASE",
     "DEFAULT_WEIGHTS",

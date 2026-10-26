@@ -35,6 +35,15 @@ ANP_LAYERS = {
     "gas_outflow_pipelines": "geoanp:gasodutos_de_escoamento",
     "gas_processing_plants": "geoanp:unidade_de_processamento_de_gas_natural",
     "wells": "sisroc:pocos_gishub_db",
+    "basins": "sisroc:basin_shp_geoanp",
+    "gas_transport_pipelines": "geoanp:gasodutos_de_transporte",
+    "oil_outflow_pipelines": "geoanp:oleodutos_de_escoamento",
+    "oil_transfer_pipelines": "geoanp:oleodutos_de_transferencia",
+    "oil_transport_pipelines": "geoanp:oleodutos_de_transporte",
+    "production_units": "geoanp:unidade_de_producao",
+    "lng_terminals": "geoanp:terminais_gnl",
+    "limit_terminals": "geoanp:terminais_limite",
+    "refineries": "geoanp:refinarias",
 }
 """Layer names verified against the ANP GeoServer capabilities document."""
 

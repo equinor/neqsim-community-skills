@@ -103,6 +103,39 @@ ranked = rank_tie_in_hosts((lon, lat), hosts, target_water_depth_m=2200,
 - Score = weighted sum of distance (`1 - d/max_step_out`), oil/gas ullage against the required rate, water-depth similarity, operator preference and remaining host life (`DEFAULT_WEIGHTS`). Unknown ullage or life scores 0.5 and is flagged in `notes`.
 - `kind: "standalone"` is the reference case; `kind: "pipeline"` with a `distance_km` from `nearest_pipeline` ranks an export line beside the FPSOs.
 - Ullage is not public. Feed operator capacity where known, or `host_capacity_check` from `neqsim-brazil-offshore-infrastructure-market`, and say which basis was used. The ranking is a screening order, not a host decision: hand the top hosts to flow assurance and cost.
+
+## National pipeline and connection-point overview
+
+```python
+from anp_open_data import overview
+layers = overview.load_cached_layers(cache_dir)     # cached ANP GeoJSON layers (fetch_layer first)
+pipes = overview.pipeline_register(layers)          # every pipeline, category, length, offshore flag
+nodes = overview.node_register(layers)              # platforms, UPGN, terminals, refineries, LNG
+conns = overview.connect_pipelines(pipes, nodes, snap_km=5.0, junction_km=1.0)
+summary = overview.summarise(pipes, conns)
+overview.write_csv(out_csv, pipes)
+overview.plot_overview(ax, layers, pipes, conns, bbox=None, label_nodes=True)
+```
+
+- Categories: gas outflow (escoamento), gas transport, oil outflow, oil transfer, oil transport; `offshore` is set when an endpoint is a platform or the line runs seaward of the coast.
+- Endpoints within `snap_km` of a node are connected to it; ends of different lines within `junction_km` become junctions; the rest are unnamed endpoints and are listed as gaps, not guessed.
+- Typical national read (2026): 656 lines, about 22,200 km, 152 offshore lines (3,790 km), 183 platforms, 36 UPGN.
+- ANP publishes trunk and export lines only; no flowlines, risers or umbilicals.
+
+## Bathymetry for SURF and pipeline routing
+
+```python
+from anp_open_data import bathymetry as bt
+grid = bt.fetch_etopo_grid((-45, -41.5, -28, -24.5), cache_dir, stride=1)  # (min_lon, max_lon, min_lat, max_lat); NOAA ETOPO 1', ERDDAP
+depth = bt.depth_at(grid, lat, lon)                                       # note lat, lon; positive metres
+prof = bt.profile_along_route(grid, [(lon0, lat0), (lon1, lat1)], step_km=1.0)
+flags = bt.flag_slopes(prof)        # length, depth range, max slope, length above 5 and 10 deg
+```
+
+- ETOPO is about 1.85 km resolution: route-screening and depth-class data only. Validate against ANP well and platform water depths (Santos pre-salt: mean deviation 1.4 %, max 6 % over 43 points) and report the deviation.
+- Slopes are smoothed by the grid; local escarpments, pockmarks and debris flows are invisible. A detailed design needs an MBES route survey.
+- Hand profiles to `neqsim-pipe-route-profile` / `flow-assurance` as KP-depth tables, and the field-area relief to `neqsim-subsea-layout-geometry`.
+
 ## Engineering Method
 
 - Record the source, dataset name and download date for every number in `references/SOURCES.md`.

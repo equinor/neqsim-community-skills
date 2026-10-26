@@ -19,6 +19,30 @@ NLOD 2.0 (reuse with attribution). This skill is the single place agents learn
 Page of record: <https://www.sodir.no/fakta/data-og-analyser/apne-data/>
 (it answers HTTP 403 to scripts - use the service hosts below, never scrape it).
 
+## When to Use
+
+- A task needs an official NCS fact: well, DST, formation top, field reserves, production history,
+  owner or operator, licence, facility, pipeline, survey or CO2 storage record.
+- You must pick the right Sodir layer or table, or need a prior for a fluid or reservoir model when no PVT study exists.
+- A company data source (GeoX, PDM, SMDA) is unavailable and Sodir is the open cross-check.
+
+## Inputs
+
+Field, discovery, well or licence name (or NPDID), an optional bounding box (WGS84), the question to answer,
+and the data tier required (`screening` only: open data never replaces PVT or governed data).
+
+## Outputs
+
+Rows (dict per record) with the layer id, join keys and retrieval date; `provenance()` source list for
+`results.json` / `SOURCES.md`; `assumptions` and `data_gaps` for anything not open.
+
+## Engineering Method
+
+1. Identify the question with `search()` / `use_case()` and the layer table below.
+2. Query server-side (`where`, `bbox`, `out_fields`) and join on `*Npdid*` keys, not names.
+3. Convert dates (Europe/Oslo) and geometry (`out_sr=4326`), take the latest version/valid-to-null rows.
+4. Label every derived number `screening`, cite Sodir (NLOD 2.0) and record the gaps.
+
 ## Routes (all keyless GET)
 
 | Route | URL | Use |
@@ -36,8 +60,7 @@ DataService layer id scheme `XYZZ`: X = 1 admin, 2 geology, 3 licences, 4 survey
 5 wellbore, 6 facilities, 7 hydrocarbons, 8 seabed minerals, 9 carbon storage;
 `ZZ=00` is the mother table.
 
-## Use
-
+## Python Usage Pattern
 ```python
 # pip install -e skills/field-development/neqsim-sodir-open-data   (pure stdlib, no keys)
 from sodir_open_data import SodirOpenData, search, describe, use_case, field_names
@@ -80,7 +103,7 @@ Refresh the catalog when Sodir adds fields: `<python> -m sodir_open_data.refresh
 `ownership_and_operators`, `facilities_and_pipelines`, `licences_and_blocks`,
 `seismic_and_surveys`, `co2_storage`, `geology`, `seabed_minerals`, `bulk_and_gis`).
 
-## Traps (read before trusting a number)
+## Common Mistakes (read before trusting a number)
 
 1. Scripts get HTTP 403 on `www.sodir.no`; the machine routes are `factmaps.` and `factpages.`.
 2. Geometry defaults to ED50 (EPSG:4230): pass `out_sr=4326` for WGS84 distances and maps.
@@ -105,7 +128,25 @@ Refresh the catalog when Sodir adds fields: `<python> -m sodir_open_data.refresh
 - CO2/CCS: `ccs-hydrogen` (injection history, storage themes).
 - When a company workflow exists with governed data (GeoX, PDM, SMDA), use it first; Sodir is the open cross-check.
 
-## Validation
+## Validation Checklist
+
+- [ ] Every number carries its layer id, `*Npdid*` key and retrieval date.
+- [ ] Geometry requested with `out_sr=4326`; dates converted from epoch ms (Europe/Oslo).
+- [ ] History tables filtered to the current state; latest `fldVersion` used for reserves.
+- [ ] Zero-valued temperatures/depths treated as not reported.
+- [ ] Results labelled `screening`; missing PVT and non-open data listed in `data_gaps`.
+- [ ] Sodir cited as `Norwegian Offshore Directorate (Sodir), factpages.sodir.no, NLOD 2.0`.
 
 `pytest` in this folder runs offline with a fake fetch and verifies that every layer id and join key cited in
 the recipes exists in the bundled catalog. A live smoke test is `<python> -m sodir_open_data query field --max-rows 2`.
+
+## Limitations
+
+Metadata only for seismic and logs (data are in Diskos); no prospect volumes or equity; no fluid compositions;
+reserves are Sodir's official estimates, not company volumes; the services can change layer ids (refresh the catalog).
+
+## References
+
+- Sodir open data: <https://www.sodir.no/fakta/data-og-analyser/apne-data/>
+- DataService REST: <https://factmaps.sodir.no/api/rest/services/DataService/Data/MapServer>
+- FactPages: <https://factpages.sodir.no>; licence: NLOD 2.0

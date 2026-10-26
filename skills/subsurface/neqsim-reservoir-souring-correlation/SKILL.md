@@ -68,8 +68,7 @@ bound = mixing_zone_h2s_mg_l(0.4, sulfate_sw_mg_l=2700.0, donor_fw_mg_l=300.0, t
 - [ ] Wells with no breakthrough yet are reported as `threshold` or low-confidence, not forced to a trend.
 - [ ] Update warnings reviewed by a person before the correlation is used downstream.
 
-## Limits
-
+## Limitations
 - Empirical: a correlation is a fit, not a mechanism. Changes in injection water treatment (sulfate removal, nitrate, biocide), rate, temperature front or reservoir sink invalidate history.
 - The mixing-zone bound is substrate limited and ignores kinetics, microbial community, pH, and re-oxidation; it is an upper bound only.
 - Thermal cutoff is a logistic screen, not a measured population limit; cooled regions around injectors extend the active zone.
@@ -83,3 +82,8 @@ bound = mixing_zone_h2s_mg_l(0.4, sulfate_sw_mg_l=2700.0, donor_fw_mg_l=300.0, t
 - Letting AICc pick a complex model on a handful of points; check `n` and the warnings.
 - Extrapolating a linear fit to full seawater cut when the mixing-zone bound turns over.
 - Hiding a regime change by forgetting too aggressively; keep the old registry entry for audit.
+
+## References
+
+- Reservoir souring literature on mixing-zone and thermal-cutoff models (see the method notes above) and the field's measured H2S history.
+- Companion skill `neqsim-h2s-phase-partitioning` for separator-gas to wellstream conversion.

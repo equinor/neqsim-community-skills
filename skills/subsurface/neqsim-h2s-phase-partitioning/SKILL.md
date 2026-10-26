@@ -70,8 +70,7 @@ Use the project interpreter with `neqsim` installed; for a real field pass the f
 - [ ] Sensitivity run on water fraction and composition (a factor curve), because the factor moves strongly with water.
 - [ ] Results reported with the limits below.
 
-## Limits
-
+## Limitations
 - Physical partitioning only. H2S ionisation in produced water (HS-, depends on pH, CO2 and alkalinity) and reaction with iron or scale are not modelled; at high pH or high water fraction the real water phase holds more H2S than predicted.
 - No PVT tuning for H2S: check against a measured H2S distribution when one exists.
 - Water drains per stage (no produced-water degasser, no recycle); compressor recycles and recompressed gas change the measured gas H2S and are not in the simple train.
@@ -84,3 +83,8 @@ Use the project interpreter with `neqsim` installed; for a real field pass the f
 - Forgetting `init(0)` on cloned fluids before reading `getz()`; this skill's helpers do it.
 - Reporting mg/L in water from mole fractions without the water density.
 - Using `getNumberOfMolesInPhase` for phase mole totals; use beta times total moles, or stream flow rates as done here.
+
+## References
+
+- NeqSim documentation and source: <https://github.com/equinor/neqsim> (CPA/SRK flash, `ThermodynamicOperations`).
+- Measured H2S distribution or sampling basis for the field (lab report) when available; see the Validation Checklist.

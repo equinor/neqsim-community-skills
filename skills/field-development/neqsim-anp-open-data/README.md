@@ -1,6 +1,6 @@
 # ANP Open Data
 
-Helpers for reading Brazilian ANP open data safely: oil and gas unit conversion, monthly-to-daily rates, CRS classification, great-circle distance, and a delimited-file reader that maps columns explicitly and fails loudly when a header changes.
+Helpers for reading Brazilian ANP open data safely: oil and gas unit conversion, monthly-to-daily rates, CRS classification, great-circle distance, a delimited-file reader that maps columns explicitly and fails loudly when a header changes, a cached reader for the ANP GeoServer (WFS) layers, installation positions derived from producing wellheads, and tie-in host and pipeline screening.
 
 ## Install
 

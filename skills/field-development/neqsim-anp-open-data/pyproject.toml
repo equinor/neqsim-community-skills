@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-anp-open-data"
-version = "0.1.0"
-description = "Helpers for reading Brazilian ANP open data safely: units, dates, CRS and column mapping."
+version = "0.2.0"
+description = "Helpers for reading Brazilian ANP open data safely: units, dates, CRS, column mapping, GeoServer layers, installation location and tie-in host ranking."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }

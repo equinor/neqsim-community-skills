@@ -334,3 +334,149 @@ def conversion_factor_curve(
         y = run_train(fl, list(stages[: stage_index + 1])).stages[-1].gas_h2s_ppmv
         out.append((wf, probe * 1.0e6 / y if y > 0 else float("nan")))
     return out
+
+
+_R = 8.314462618
+_T_SC_K = 288.15
+_P_SC_PA = 101325.0
+
+
+@dataclass
+class RecombinationResult:
+    """Wellstream recombined so that a test separator reproduces measured GOR and gas H2S."""
+
+    fluid: object
+    wellstream_h2s_mol_fraction: float
+    gor_calc: float
+    gor_measured: float
+    y_h2s_calc: float
+    y_h2s_measured: float
+    n_iter: int
+    converged: bool
+    warnings: List[str] = field(default_factory=list)
+
+
+def _phase_by_type(flashed) -> Dict[str, object]:
+    out = {}
+    for i in range(int(flashed.getNumberOfPhases())):
+        ph = flashed.getPhase(i)
+        out[str(ph.getPhaseTypeName())] = ph
+    return out
+
+
+def _flash_stage(fluid, stage: SeparatorStage):
+    jn = _jneqsim()
+    f = fluid.clone()
+    f.setTemperature(stage.temperature_c + 273.15)
+    f.setPressure(stage.pressure_bara)
+    jn.thermodynamicoperations.ThermodynamicOperations(f).TPflash()
+    f.initProperties()
+    return f
+
+
+def separator_gor_and_gas_h2s(fluid, stage: SeparatorStage) -> Tuple[float, float]:
+    """GOR (standard gas Sm3 per actual separator-oil m3) and separator-gas H2S mole fraction.
+
+    Volumes come from the phase compressibility factor, as for an ideal-gas standard volume,
+    to avoid the unreliable molar volume of characterised fluids.
+    """
+    f = _flash_stage(fluid, stage)
+    ph = _phase_by_type(f)
+    if "gas" not in ph or "oil" not in ph:
+        raise ValueError("separator flash must give gas and oil; got %s" % sorted(ph))
+    t_k, p_pa = stage.temperature_c + 273.15, stage.pressure_bara * 1.0e5
+    v_oil = float(ph["oil"].getBeta()) * float(ph["oil"].getZ()) * _R * t_k / p_pa
+    v_gas_sc = float(ph["gas"].getBeta()) * _R * _T_SC_K / _P_SC_PA
+    return v_gas_sc / v_oil, float(ph["gas"].getComponent("H2S").getx())
+
+
+def recombine_to_gor_and_h2s(
+    fluid,
+    stage: SeparatorStage,
+    gor_measured: float,
+    y_h2s_measured: float,
+    water_mol_fraction: Optional[float] = None,
+    max_iter: int = 30,
+    tol: float = 1.0e-4,
+) -> RecombinationResult:
+    """Adjust a wellstream so a test separator reproduces the measured GOR and gas H2S together.
+
+    Each pass flashes at the separator conditions, sets gas H2S to the measurement (other gas
+    components rescaled), sets oil H2S from the calculated K value, and recombines gas and oil at
+    gor_measured (Sm3 standard gas per m3 actual separator oil). Water is held at
+    water_mol_fraction (default: the input fluid's water mole fraction) and added back after
+    recombination. Convergence is relative on GOR and on gas H2S, never absolute on composition,
+    because H2S is a trace component.
+    """
+    if gor_measured <= 0 or not 0 < y_h2s_measured < 0.5:
+        raise ValueError("gor_measured must be positive and y_h2s_measured in (0, 0.5)")
+    jn = _jneqsim()
+    cur = fluid.clone()
+    cur.init(0)
+    names = [str(n) for n in cur.getComponentNames()]
+    if "H2S" not in names:
+        raise ValueError("fluid must contain an H2S component")
+    i_h2s = names.index("H2S")
+    i_w = names.index("water") if "water" in names else None
+    z0 = [float(cur.getPhase(0).getComponent(n).getz()) for n in names]
+    w = z0[i_w] if (i_w is not None and water_mol_fraction is None) else (water_mol_fraction or 0.0)
+    if w > 0 and i_w is None:
+        raise ValueError("water_mol_fraction given but fluid has no water component")
+    warnings: List[str] = []
+    t_k, p_pa = stage.temperature_c + 273.15, stage.pressure_bara * 1.0e5
+    v_gas_sc = _R * _T_SC_K / _P_SC_PA
+    converged = False
+    trim = 1.0
+    gor_calc = y_calc = float("nan")
+    it = 0
+    for it in range(1, max_iter + 1):
+        f = _flash_stage(cur, stage)
+        ph = _phase_by_type(f)
+        if "gas" not in ph or "oil" not in ph:
+            warnings.append("separator flash lost a gas or oil phase at iteration %d" % it)
+            break
+        gas, oil = ph["gas"], ph["oil"]
+        z_oil = float(oil.getZ())
+        gor_calc = float(gas.getBeta()) * v_gas_sc / (float(oil.getBeta()) * z_oil * _R * t_k / p_pa)
+        y = [float(gas.getComponent(n).getx()) for n in names]
+        x = [float(oil.getComponent(n).getx()) for n in names]
+        y_calc = y[i_h2s]
+        if abs(y_calc / y_h2s_measured - 1.0) < tol and abs(gor_calc / gor_measured - 1.0) < tol:
+            converged = True
+            break
+        if y_calc <= 0 or x[i_h2s] <= 0:
+            warnings.append("calculated H2S is zero in gas or oil; cannot rescale")
+            break
+        k_h2s = y_calc / x[i_h2s]
+        sg = (1.0 - y_h2s_measured) / (1.0 - y_calc)
+        y_star = [y_h2s_measured if i == i_h2s else v * sg for i, v in enumerate(y)]
+        x_h2s_new = y_h2s_measured / k_h2s
+        so = (1.0 - x_h2s_new) / (1.0 - x[i_h2s])
+        x_star = [x_h2s_new if i == i_h2s else v * so for i, v in enumerate(x)]
+        n_oil = 1.0 / (z_oil * _R * t_k / p_pa)
+        n_gas = gor_measured / v_gas_sc
+        if abs(y_calc / y_h2s_measured - 1.0) < 0.05:
+            trim *= y_h2s_measured / y_calc
+        z_hc = [n_oil * x_star[i] + n_gas * y_star[i] if i != i_w else 0.0 for i in range(len(names))]
+        z_hc[i_h2s] *= trim
+        tot = sum(z_hc)
+        z_new = [(1.0 - w) * v / tot for v in z_hc]
+        if i_w is not None:
+            z_new[i_w] = w
+        cur = cur.clone()
+        cur.setMolarComposition(z_new)
+        cur.init(0)
+    if not converged:
+        warnings.append("recombination did not converge in %d iterations (tol %.1e relative)" % (max_iter, tol))
+    cur_z = float(cur.getPhase(0).getComponent("H2S").getz())
+    return RecombinationResult(
+        fluid=cur,
+        wellstream_h2s_mol_fraction=cur_z,
+        gor_calc=gor_calc,
+        gor_measured=gor_measured,
+        y_h2s_calc=y_calc,
+        y_h2s_measured=y_h2s_measured,
+        n_iter=it,
+        converged=converged,
+        warnings=warnings,
+    )

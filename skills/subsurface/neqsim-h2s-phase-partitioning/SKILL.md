@@ -43,6 +43,17 @@ Use this skill to turn a measured **separator gas H2S** into a **wellstream H2S*
 3. Gas H2S ppmv is monotonic in wellstream H2S, so the back-calculation is a log-space bisection on wellstream H2S to match the measured value (tolerance 1e-6 relative). A measurement outside the reachable bracket raises `ValueError` rather than extrapolating.
 4. In the dilute limit gas H2S is linear in wellstream H2S, so one probe level gives the factor curve.
 
+### Two ways to get wellstream H2S
+
+| Method | Function | Use when |
+| --- | --- | --- |
+| Back-calculation | `wellstream_h2s_from_separator_gas` | The wellstream composition and water fraction are trusted; only H2S is unknown. Scales H2S alone. |
+| Recombination | `recombine_to_gor_and_h2s` | A test-separator GOR is measured with the gas H2S and the wellstream hydrocarbon composition is uncertain. Matches GOR and gas H2S together. |
+
+Recombination, per pass: flash at the separator conditions; set gas H2S to the measurement and rescale the other gas components; set oil H2S from the calculated K value; recombine gas and oil at the measured GOR (Sm3 standard gas per m3 actual separator oil, volumes from the compressibility factor); hold water at a fixed mole fraction. Convergence is relative on GOR and gas H2S, because an absolute composition tolerance such as 1e-5 is looser than a trace H2S mole fraction of 1e-4 or less. Water takes up some H2S that the gas/oil K correction does not see, so a damped multiplicative trim on total H2S is applied once gas H2S is within 5 percent. Tested: starting from a wellstream with 7 times too little H2S, three passes recover the true wellstream H2S and reproduce GOR and gas H2S to 1e-4.
+
+Use `separator_gor_and_gas_h2s(fluid, stage)` to get the calculated GOR and gas H2S of any wellstream for a round-trip check.
+
 Worked demonstration (default composition, one stage at 70 C and 10 bara): the factor wellstream/gas falls from 0.81 at a dry stream to 0.58 at 30 percent water and 0.34 at 60 percent water mole fraction. Gas is richer in H2S than the wellstream, and more water carries more H2S to the water phase. These are demonstration values, not field values.
 
 ## Python Usage Pattern
@@ -56,6 +67,11 @@ fluid = make_wellstream(composition=None, water_mol_fraction=0.3, h2s_mol_fracti
 res = wellstream_h2s_from_separator_gas(fluid, stages, measured_gas_h2s_ppmv=170.0, stage_index=0)
 print(res.wellstream_h2s_ppmv, res.conversion_factor, res.train.to_water_fraction)
 table = conversion_factor_curve(None, stages, [0.0, 0.1, 0.3, 0.5])
+
+# GOR measured together with the gas H2S: recombine so both are reproduced
+from h2s_partitioning import recombine_to_gor_and_h2s
+rec = recombine_to_gor_and_h2s(fluid, stages[0], gor_measured=380.0, y_h2s_measured=4.5e-4)
+print(rec.converged, rec.wellstream_h2s_mol_fraction)
 ```
 
 Use the project interpreter with `neqsim` installed; for a real field pass the field composition (and a plus-fraction characterisation) instead of the default.
@@ -63,7 +79,9 @@ Use the project interpreter with `neqsim` installed; for a real field pass the f
 ## Validation Checklist
 
 - [ ] H2S balance closure `to_gas + to_oil + to_water` within 2 percent (a warning is raised otherwise).
-- [ ] Round trip: flash with the solved wellstream H2S and reproduce the measured gas ppmv.
+- [ ] Round trip: flash with the solved wellstream H2S and reproduce the measured gas ppmv (and, for recombination, the measured GOR).
+- [ ] Recombination convergence is relative (1e-4) on GOR and gas H2S; never accept an absolute composition tolerance for trace H2S.
+- [ ] GOR basis stated: standard gas per actual separator-oil volume, not per stock-tank oil.
 - [ ] Composition, GOR and water fraction come from the same test or period as the H2S measurement.
 - [ ] Separator pressure and temperature are the measured values at the sample time, not design values.
 - [ ] Sample point: gas from the stage actually sampled, dry or wet basis stated, ppmv versus mol-ppm treated consistently.

@@ -8,7 +8,9 @@ from h2s_partitioning import (
     h2s_partial_pressure_kpa,
     is_sour_service,
     make_wellstream,
+    recombine_to_gor_and_h2s,
     run_train,
+    separator_gor_and_gas_h2s,
     water_mole_fraction,
     wellstream_h2s_from_separator_gas,
 )
@@ -60,3 +62,24 @@ def test_unreachable_measurement_raises(neqsim_available):
     fluid = make_wellstream(water_mol_fraction=0.2, h2s_mol_fraction=1.0e-5)
     with pytest.raises(ValueError):
         wellstream_h2s_from_separator_gas(fluid, STAGES, 1.0e9)
+
+
+def test_recombination_matches_gor_and_h2s_from_wrong_start(neqsim_available):
+    stage = STAGES[0]
+    truth = make_wellstream(water_mol_fraction=0.2, h2s_mol_fraction=3.0e-4)
+    gor_true, y_true = separator_gor_and_gas_h2s(truth, stage)
+    wrong = make_wellstream(water_mol_fraction=0.2, h2s_mol_fraction=2.0e-5)
+    res = recombine_to_gor_and_h2s(wrong, stage, gor_true, y_true)
+    assert res.converged, res.warnings
+    gor_chk, y_chk = separator_gor_and_gas_h2s(res.fluid, stage)
+    assert gor_chk == pytest.approx(gor_true, rel=1e-3)
+    assert y_chk == pytest.approx(y_true, rel=1e-3)
+    assert res.wellstream_h2s_mol_fraction == pytest.approx(3.0e-4, rel=0.05)
+
+
+def test_recombination_rejects_bad_input(neqsim_available):
+    fluid = make_wellstream(water_mol_fraction=0.2, h2s_mol_fraction=1.0e-5)
+    with pytest.raises(ValueError):
+        recombine_to_gor_and_h2s(fluid, STAGES[0], -1.0, 1.0e-4)
+    with pytest.raises(ValueError):
+        recombine_to_gor_and_h2s(fluid, STAGES[0], 100.0, 0.9)

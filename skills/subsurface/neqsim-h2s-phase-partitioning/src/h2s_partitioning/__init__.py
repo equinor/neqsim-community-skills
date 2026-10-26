@@ -1,5 +1,6 @@
 from .model import (
     ConversionResult,
+    RecombinationResult,
     SeparatorStage,
     StageResult,
     TrainResult,
@@ -7,7 +8,9 @@ from .model import (
     h2s_partial_pressure_kpa,
     is_sour_service,
     make_wellstream,
+    recombine_to_gor_and_h2s,
     run_train,
+    separator_gor_and_gas_h2s,
     water_mole_fraction,
     wellstream_h2s_from_separator_gas,
     with_h2s,
@@ -15,6 +18,7 @@ from .model import (
 
 __all__ = [
     "ConversionResult",
+    "RecombinationResult",
     "SeparatorStage",
     "StageResult",
     "TrainResult",
@@ -22,7 +26,9 @@ __all__ = [
     "h2s_partial_pressure_kpa",
     "is_sour_service",
     "make_wellstream",
+    "recombine_to_gor_and_h2s",
     "run_train",
+    "separator_gor_and_gas_h2s",
     "water_mole_fraction",
     "wellstream_h2s_from_separator_gas",
     "with_h2s",

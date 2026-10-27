@@ -1,0 +1,67 @@
+{
+  "technology": "Compact inline separation system (synthetic example)",
+  "qualification_basis": {
+    "description": "Synthetic example: a compact inline gas-liquid separation system replacing a conventional vessel in a new application.",
+    "intended_use": "Primary separation of a wet gas stream with a lower footprint and weight than a conventional separator.",
+    "environment": "Operating pressure, temperature and fluid composition taken from the project design basis (public example values).",
+    "functions": [
+      "Separate liquid from gas to the downstream specification",
+      "Handle turndown and slugging without loss of separation",
+      "Allow safe shutdown, depressurisation and inspection"
+    ],
+    "performance_expectations": [
+      "Liquid carry-over below the specified limit over the full flow range",
+      "Design life 25 years with the planned maintenance interval"
+    ],
+    "regulatory_requirements": [
+      "Applicable pressure-equipment and safety regulations (to be confirmed)"
+    ]
+  },
+  "role": {
+    "critical_to_business_case": true,
+    "qualified_fallback_available": false
+  },
+  "interfaces_untested": true,
+  "elements": [
+    {"id": "S", "name": "Compact separation system", "kind": "system",
+     "function": "Separate gas and liquid",
+     "technology_novelty": "limited_history", "application_area": "limited_knowledge", "trl": 3,
+     "evidence": ["Concept studies", "Limited pilot references (synthetic)"]},
+    {"id": "S.1", "name": "Pressure-containing body", "parent_id": "S", "kind": "subsystem",
+     "function": "Contain pressure",
+     "technology_novelty": "limited_history", "application_area": "known", "qualified_by": "others", "trl": 4,
+     "evidence": ["Third-party type approval for another application (synthetic)"]},
+    {"id": "S.2", "name": "Internal separation device", "parent_id": "S", "kind": "subsystem",
+     "function": "Separate phases at high gas load",
+     "technology_novelty": "new", "application_area": "new", "trl": 2,
+     "evidence": ["Small-scale laboratory tests (synthetic)"]},
+    {"id": "S.3", "name": "Piping and valves", "parent_id": "S", "kind": "subsystem",
+     "function": "Route fluids and isolate",
+     "technology_novelty": "proven", "application_area": "known", "trl": 7,
+     "evidence": ["Standard piping practice"]},
+    {"id": "S.4", "name": "Level and control software", "parent_id": "S", "kind": "software",
+     "function": "Control level and detect abnormal operation",
+     "technology_novelty": "limited_history", "application_area": "known", "qualified_by": "company", "trl": 6,
+     "evidence": ["Existing control platform in company use (synthetic)"]}
+  ],
+  "step_out": [
+    {"dimension": "design", "experience_basis": "Largest unit built (synthetic)",
+     "proposed": "Larger capacity per unit", "reference_value": 15, "proposed_value": 60, "unit": "kSm3/h", "direction": "max"},
+    {"dimension": "operating_conditions", "experience_basis": "Lowest temperature in service (synthetic)",
+     "proposed": "Colder operation", "reference_value": -5, "proposed_value": -20, "unit": "degC", "direction": "min"},
+    {"dimension": "lifetime", "experience_basis": "Operated for about 10 years (synthetic)",
+     "proposed": "25 years design life"}
+  ],
+  "benefits": [
+    {"text": "Lower weight and footprint enable the concept.", "kind": "business case"},
+    {"text": "Shorter delivery time than a large conventional vessel.", "kind": "schedule"}
+  ],
+  "risks": [
+    {"text": "Qualification of the internal device may sit on the project critical path.",
+     "kind": "schedule", "mitigation": "Start qualification early; keep a conventional fallback in the concept study."},
+    {"text": "Performance not reproduced at full scale.", "kind": "performance",
+     "mitigation": "Staged tests with scale-effect analysis."}
+  ],
+  "standardisation": ["Standard unit sizes could be reused across projects."],
+  "multi_implementation": ["The same internal device could serve several fields."]
+}

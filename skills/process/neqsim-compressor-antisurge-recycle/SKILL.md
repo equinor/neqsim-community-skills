@@ -694,6 +694,12 @@ the signal that an upstream machine missed spec. A worked end-to-end example
 (three-stage separation + shared-shaft recompression + control) is in the NeqSim
 repo notebook `examples/notebooks/CompressorShaft_ThreeStageSeparation.ipynb`.
 
+**Newer NeqSim cores (3.26+)** add to `CompressorShaft`: gear ratios (`addCompressor(c, ratio)`), members in different
+ProcessSystems, idle/removed members (`setMemberActive`, `removeCompressor`), a controlling member with discharge/suction/flow
+targets (`solveSpeedToTarget`), a per-member `getOperatingReport()` (margins, recycle demand, flags), an ambient site-rated
+`GasTurbineUnit` driver (`setGasTurbineUnitDriver`, `setAmbientTemperature`), `setElectricSupplyLimit`,
+`findMaxSpeedWithinPowerLimit` and `DriverLimitedThroughputSolver`. See the core skill of the same name for the code pattern.
+
 ## Related NeqSim Functionality
 
 - `neqsim.process.equipment.compressor.CompressorShaft` — groups several

@@ -33,7 +33,8 @@ SODIR_DISCOVERY_URL = "https://factpages.sodir.no/discovery/pageview/all/{npdid}
 # Discovery statuses that are candidates for future tie-in / development.
 CANDIDATE_DISCOVERY_STATUSES = {
     "Production decided", "Approved for production", "Production in clarification phase",
-    "Production likely, but unclarified", "Production not evaluated", "Production is unlikely",
+    "Production likely, but unclarified", "Production likely but unclarified", "Production not evaluated",
+    "Production is unlikely",
 }
 
 

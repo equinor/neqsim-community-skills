@@ -144,6 +144,24 @@ flags = bt.flag_slopes(prof)        # length, depth range, max slope, length abo
 - Production history of a host field is public only at the level the portal exposes; ullage and plateau need operator data and belong in a governed layer, not here.
 - Keep a small offline anchor table (field, block, year, rate) so a task still runs without network.
 
+## Discoveries and near-field plans
+
+ANP publishes no discovery list, names or volumes, but the layers below let a discovery inventory be
+reconstructed (implemented in `neqsim-near-field-discoveries`; use it instead of re-deriving the logic):
+
+| Layer | Use |
+| --- | --- |
+| `evaluation_plans` (`geoanp:pad`) | Discovery-evaluation plan polygons with start and end dates: a candidate inside a running plan is "in evaluation". The status code `IN_PL_ATIV` is not documented; keep the raw code. |
+| `wells` (`sisroc:pocos_gishub_db`) | Exploratory wells with `reclassificacao` (`DESCOBRIDOR`, `PORTADOR`, `PRODUTOR SUBCOMERCIAL`, `SECO ...`); hydrocarbon-bearing wells outside field outlines are discovery candidates. Compare folded text, because accents and encodings are damaged. |
+| `fields` (`sisroc:campos_gishub_db`) | `etapa` Produção / Desenvolvimento / Em Devolução gives producing, in-development and relinquished neighbours. |
+| `blocks` (`sisroc:block_shp_geoanp`) | `NUM_DESCOB` is the number of notified discoveries in the block. |
+| `relinquished_blocks`, `relinquished_fields` | Returned areas: the discovery was not pursued by that licensee. |
+| `production_units` (`geoanp:unidade_de_producao`) | Platform and FPSO points with owner, `DESC_ATENDIMENTOS` (fields served) and water depth. |
+
+Volumes of discoveries are not public: take them from the operator, a concession-contract summary or a
+press release and record the source. A discovery name (for example one used by an operator) maps to its
+discovery well through an alias with that source.
+
 ## Validation Checklist
 
 - [ ] Header, separator, decimal mark and encoding were read from the file, not remembered.

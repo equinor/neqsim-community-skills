@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-near-field-discoveries"
+version = "0.1.0"
+description = "Inventory of discoveries, evaluation plans, fields and hosts around a target (Norwegian Continental Shelf from Sodir, Brazil from ANP) with a normalised development stage, volumes where public, nearest hosts, GeoJSON/CSV exports and a near-field map."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+map = ["matplotlib>=3.7"]
+test = ["pytest>=7.4", "matplotlib>=3.7"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

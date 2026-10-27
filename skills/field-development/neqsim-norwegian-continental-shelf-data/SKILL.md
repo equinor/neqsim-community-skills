@@ -231,6 +231,12 @@ quantitative NCS production analysis use:
 - The community `asset-value-npv-screening` and `energy-emissions-screening`
   skills to turn a production profile into value and emissions screening.
 
+## Neighbouring discoveries
+
+Analogue volumes above come from discoveries, but for the area around one target use
+`neqsim-near-field-discoveries`: status, operator, recoverable volumes and resource class, concept text and
+nearest hosts for every discovery inside a radius, with a map and GeoJSON export.
+
 ## Validation Checklist
 
 - [ ] Reused figures carry the source attribution and reference year.

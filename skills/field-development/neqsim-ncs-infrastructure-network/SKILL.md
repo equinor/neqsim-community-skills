@@ -163,6 +163,15 @@ that the recent year has no overloaded element.
 | Economic value of throughput | `neqsim.process.optimization.valuechain.ValueChainObjective` | in `neqsim-ncs-value-chain-optimization` |
 | Host process model rate check | `ProcessModel` + `ProcessAutomation.findMaxThroughputJson` | via the `optimize-processmodel` agent |
 
+## Near-field discoveries
+
+The network snapshot keeps only 266 candidate discoveries as points with a status and reserves, and no
+description text, polygon or owner. For a field-development evaluation use `neqsim-near-field-discoveries`
+(`fetch_ncs_near_field`): it re-reads Sodir for the radius, adds outlines, the concept text with extracted
+tie-back or stand-alone hints, fields, facilities and pipelines, ranks everything by distance, groups open
+discoveries that could share a host, and draws the map. `records_from_snapshot(NcsNetwork.load().snapshot)` gives
+the offline subset. Feed the ranked neighbours back into `nearest_hosts` and `TiebackAnalyzer` here.
+
 ## Validation Checklist
 
 - [ ] `summary()` shows fields ≥ 120, hosts ≥ 50, the four plants and seven terminals.

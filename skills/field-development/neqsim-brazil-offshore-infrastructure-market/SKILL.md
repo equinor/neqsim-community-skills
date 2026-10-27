@@ -88,6 +88,14 @@ bim.unknown_entries()                               # quote these as UNKNOWN
 bim.dataset_age_days()                              # warn when the snapshot is old
 ```
 
+## Neighbouring discoveries
+
+Host capacity and gas-export routes only matter next to the discoveries that compete for them. For a Brazilian
+target list the nearby fields, evaluation-plan areas and discovery candidates with
+`neqsim-near-field-discoveries` (`brazil_records`, `near_field`, `plot_near_field`) before ranking hosts, and
+carry the in-development and in-evaluation neighbours into `host_capacity_check` as demand on the same host or
+export line. ANP gives no discovery volumes: take them from the operator and record the source.
+
 ## Validation Checklist
 
 - [ ] Every number quoted from the dataset carries its `source_id` and `as_of`; UNKNOWN is written as UNKNOWN.

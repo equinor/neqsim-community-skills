@@ -103,6 +103,17 @@ Refresh the catalog when Sodir adds fields: `<python> -m sodir_open_data.refresh
 `ownership_and_operators`, `facilities_and_pipelines`, `licences_and_blocks`,
 `seismic_and_surveys`, `co2_storage`, `geology`, `seabed_minerals`, `bulk_and_gis`).
 
+## Discoveries and near-field plans
+
+For "what discoveries are near my target and what is planned for them" use `neqsim-near-field-discoveries`
+(it builds the inventory, stage ladder, clusters and a map from the same layers). The tables it reads:
+`discovery` 7000 (status `dscCurrentActivityStatus`, hydrocarbon type, operator, polygon), `discovery_description`
+7001 (English text that often states stand-alone or tie-back and the host), `discovery_reserves` 7008
+(recoverable oil, gas, NGL, condensate, oe and resource class), `field` 7100 and `field_reserves` 7113,
+`facility` 6000 and `pipeline` 6100. Envelope queries (`geometry`, `esriGeometryEnvelope`, `inSR=4326`,
+`outSR=4326`) return the polygons. Status text uses both "likely, but unclarified" and "likely but
+unclarified" in different tables: match on a substring.
+
 ## Common Mistakes (read before trusting a number)
 
 1. Scripts get HTTP 403 on `www.sodir.no`; the machine routes are `factmaps.` and `factpages.`.

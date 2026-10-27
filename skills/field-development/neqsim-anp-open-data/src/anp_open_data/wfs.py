@@ -44,6 +44,9 @@ ANP_LAYERS = {
     "lng_terminals": "geoanp:terminais_gnl",
     "limit_terminals": "geoanp:terminais_limite",
     "refineries": "geoanp:refinarias",
+    "evaluation_plans": "geoanp:pad",
+    "relinquished_blocks": "geoanp:blocos_exploratorios_devolvidos",
+    "relinquished_fields": "geoanp:campos_de_producao_devolvidos",
 }
 """Layer names verified against the ANP GeoServer capabilities document."""
 

@@ -468,6 +468,15 @@ skills:
     tags: [field-development, norwegian-continental-shelf, sodir, factpages, factmaps, open-data, open-api, wellbore, reserves, production, licence, pipelines, co2-storage, screening]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-near-field-discoveries
+    version: "0.1.0"
+    description: "Inventory and map of the discoveries, fields, evaluation plans and hosts around a target on the NCS (Sodir) and in Brazil (ANP): common development-stage ladder, public volumes and resource class, concept text, nearest hosts, joint-development clusters, CSV/GeoJSON export. USE WHEN: a field-development, tie-back, bid or area study needs the best public knowledge of what is near the target, what is planned there, and a map of it (e.g. around a Santos or Campos discovery)."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/neqsim-near-field-discoveries/SKILL.md"
+    tags: [field-development, discoveries, near-field, tie-back, norwegian-continental-shelf, brazil, sodir, anp, map, open-data, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-ncs-value-chain-optimization
     version: "0.1.0"
     description: "Multi-year, capacity-constrained NCS value-chain optimisation: forecasts fields from Sodir history, phases in discoveries, routes oil and gas through real trunklines, plants and terminals with a HiGHS LP, and returns production, curtailment, shadow prices, ullage, tie-in rankings and uplift lists for NeqSim follow-up. USE WHEN: maximising NCS value or production, finding the binding pipeline/plant and its capacity value, testing an outage or tie-in, or fitting discoveries into spare capacity."

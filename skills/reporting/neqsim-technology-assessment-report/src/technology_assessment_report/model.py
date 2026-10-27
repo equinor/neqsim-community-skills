@@ -524,13 +524,54 @@ def build_report(
 _RISK_FILL = {"Low": "C6EFCE", "Medium": "FFEB9C", "High": "FFC7CE"}
 
 
+def _column_widths(
+    headers: Sequence[str], rows: Sequence[Sequence[str]], usable_inches: float, font_pt: float
+) -> list[float]:
+    """Return column widths in inches that fit ``usable_inches``.
+
+    Every column gets enough width for its longest word (capped) plus cell padding; the remaining
+    width is shared in proportion to the average text length of each column.
+
+    Args:
+        headers: Column headers.
+        rows: Table rows as strings.
+        usable_inches: Width available between the page margins.
+        font_pt: Font size in points used in the table.
+
+    Returns:
+        One width per column; the widths sum to ``usable_inches``.
+    """
+    char = font_pt * 0.0085
+    minimums, flex = [], []
+    for index, header in enumerate(headers):
+        cells = [row[index] for row in rows if index < len(row)]
+        words = [len(word) for text in cells + [header] for word in text.split()] or [3]
+        minimums.append(min(max(words), 14) * char + 0.2)
+        average = sum(len(c) for c in cells) / len(cells) if cells else 0.0
+        flex.append(max(min(average, 40), 1.0))
+    total_min = sum(minimums)
+    if total_min >= usable_inches:
+        return [m * usable_inches / total_min for m in minimums]
+    spare = usable_inches - total_min
+    return [m + spare * f / sum(flex) for m, f in zip(minimums, flex)]
+
+
+def _table_font_size(columns: int) -> int | None:
+    """Return a table font size in points for a table with the given number of columns."""
+    if columns >= 9:
+        return 8
+    if columns >= 5:
+        return 9
+    return None
+
+
 def _write_docx(report: Report, path: Path) -> Path:
     try:
         from docx import Document
         from docx.enum.section import WD_ORIENT, WD_SECTION
         from docx.oxml import OxmlElement
         from docx.oxml.ns import qn
-        from docx.shared import Pt
+        from docx.shared import Emu, Inches, Pt
     except ImportError as exc:
         raise ImportError("python-docx is required for Word output: pip install python-docx") from exc
 
@@ -602,11 +643,13 @@ def _write_docx(report: Report, path: Path) -> Path:
             new_section = doc.add_section(WD_SECTION.NEW_PAGE)
             new_section.orientation = WD_ORIENT.LANDSCAPE
             new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
+            new_section.left_margin = new_section.right_margin = Inches(0.7)
             landscape_open = True
         elif not section.landscape and landscape_open:
             new_section = doc.add_section(WD_SECTION.NEW_PAGE)
             new_section.orientation = WD_ORIENT.PORTRAIT
             new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
+            new_section.left_margin = new_section.right_margin = doc.sections[0].left_margin
             landscape_open = False
         doc.add_heading("{}. {}".format(index, section.title), 1)
         table_no = 0
@@ -622,6 +665,7 @@ def _write_docx(report: Report, path: Path) -> Path:
                 caption.add_run("Table {}.{}: {}".format(index, table_no, block.caption)).bold = True
                 tbl = doc.add_table(rows=1, cols=len(block.headers))
                 tbl.style = "Table Grid"
+                tbl.autofit = False
                 for cell, header in zip(tbl.rows[0].cells, block.headers):
                     cell.text = header
                     cell.paragraphs[0].runs[0].bold = True
@@ -633,6 +677,21 @@ def _write_docx(report: Report, path: Path) -> Path:
                         cell.text = value
                         if block.risk_column == position and value in _RISK_FILL:
                             shade(cell, _RISK_FILL[value])
+                current = doc.sections[-1]
+                usable = current.page_width - current.left_margin - current.right_margin
+                size = _table_font_size(len(block.headers))
+                widths = _column_widths(block.headers, block.rows, usable / 914400.0, size or 10)
+                for position, inches in enumerate(widths):
+                    width = Emu(int(inches * 914400))
+                    tbl.columns[position].width = width
+                    for row in tbl.rows:
+                        row.cells[position].width = width
+                if size is not None:
+                    for row in tbl.rows:
+                        for cell in row.cells:
+                            for paragraph in cell.paragraphs:
+                                for run in paragraph.runs:
+                                    run.font.size = Pt(size)
                 doc.add_paragraph()
     doc.save(str(path))
     return path

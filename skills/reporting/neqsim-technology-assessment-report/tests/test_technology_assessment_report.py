@@ -112,6 +112,33 @@ def test_save_markdown(tmp_path, assessment, fmirr):
     assert path.read_text(encoding="utf-8").startswith("# Technology Assessment Report")
 
 
+def test_column_widths_and_font_size():
+    from technology_assessment_report.model import _column_widths, _table_font_size
+
+    headers = ["Id", "Risk", "Failure mode"]
+    rows = [["1.1", "Medium", "Liquid carry-over into the gas outlet"]]
+    widths = _column_widths(headers, rows, 6.0, 9)
+    assert abs(sum(widths) - 6.0) < 1e-9
+    assert widths[0] < widths[1] < widths[2]
+    assert widths[1] >= len("Medium") * 9 * 0.0085  # the longest word always fits
+    crowded = _column_widths(headers, rows, 0.5, 9)  # too little room: scaled down, still sums
+    assert abs(sum(crowded) - 0.5) < 1e-9
+    assert _table_font_size(12) == 8 and _table_font_size(6) == 9 and _table_font_size(3) is None
+
+
+def test_docx_landscape_table_widths_fit_page(tmp_path, assessment, fmirr):
+    docx = pytest.importorskip("docx")
+    path = build_report(assessment, fmirr).save_docx(tmp_path / "w.docx")
+    document = docx.Document(str(path))
+    register = next(t for t in document.tables if t.rows[0].cells[0].text == "Id" and len(t.columns) == 12)
+    widths = [c.width for c in register.rows[1].cells]
+    landscape = next(s for s in document.sections if s.orientation == 1)
+    usable = landscape.page_width - landscape.left_margin - landscape.right_margin
+    assert abs(sum(widths) - usable) < 20000  # EMU rounding only
+    assert widths[0] < widths[3]  # id column narrower than failure mode column
+    assert widths[10] >= 460000  # the risk column keeps "Medium" on one line (about 0.5 in)
+
+
 def test_save_docx(tmp_path, assessment, fmirr):
     docx = pytest.importorskip("docx")
     meta = ReportMeta(title="Doc test", classification="Restricted", status="Draft")

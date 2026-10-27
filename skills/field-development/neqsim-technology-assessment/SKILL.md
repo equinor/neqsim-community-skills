@@ -1,7 +1,7 @@
 ---
 name: neqsim-technology-assessment
 calculation_basis: "screening"
-version: "0.1.0"
+version: "0.1.1"
 description: "Educational technology assessment for new or step-out technology: decomposition, novelty categorisation (1-4), technology readiness level (TRL 0-7) roll-up, enabling vs enhancing, step-out, benefits and risks, standardisation potential and a preliminary qualification outline. USE WHEN: a project study must decide which technology elements need qualification before FMIRR, a qualification programme or a technology assessment report."
 last_verified: "2026-10-27"
 requires:
@@ -53,7 +53,9 @@ panel. It structures judgement; it does not create evidence.
 - `step_out`: items per dimension (design, manufacturing, installation,
   operability, fluids, operating_conditions, lifetime) with the experience
   basis, the proposed value and optionally numeric `reference_value` /
-  `proposed_value` and a `direction` (`max` or `min`).
+  `proposed_value` and a `direction` (`max` or `min`). Set
+  `experience_documented: false` when no documented experience exists for the
+  dimension; it is then reported as a data gap, not as an assessed dimension.
 - `benefits`, `risks` (with optional mitigation), `standardisation`,
   `multi_implementation`.
 - `interfaces_untested`, optional `system_trl_override` with a rationale.

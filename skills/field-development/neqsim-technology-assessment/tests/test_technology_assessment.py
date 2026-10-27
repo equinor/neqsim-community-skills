@@ -136,6 +136,29 @@ def test_step_out_max_and_min_directions():
     assert rows["lifetime"]["status"].startswith("qualitative")
 
 
+def test_step_out_without_documented_experience_is_a_data_gap():
+    ta = _basic()
+    ta.add_step_out(StepOutItem("fluids", proposed="43 mol% CO2", experience_documented=False))
+    ta.add_step_out(StepOutItem("design", reference_value=10, proposed_value=5, experience_documented=False))
+    result = ta.assess()
+    rows = {r["dimension"]: r for r in result["step_out"]}
+    assert rows["fluids"]["status"] == "no documented experience basis"
+    assert rows["design"]["status"] == "within experience"  # numeric comparison wins
+    gaps = " ".join(result["data_gaps"])
+    assert "Step-out fluids: no documented experience basis" in gaps
+    assert "Step-out design: no documented experience basis" in gaps
+
+
+def test_from_dict_reads_experience_documented():
+    spec = {
+        "technology": "T",
+        "elements": [{"id": "A", "name": "A"}],
+        "step_out": [{"dimension": "lifetime", "experience_documented": False}],
+    }
+    row = from_dict(spec).assess()["step_out"][0]
+    assert row["experience_documented"] is False and row["status"] == "no documented experience basis"
+
+
 def test_data_gaps_list_missing_step_out_dimensions_and_basis():
     gaps = " ".join(_basic().assess()["data_gaps"])
     assert "No step-out defined for installation" in gaps

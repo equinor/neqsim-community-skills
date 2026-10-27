@@ -149,6 +149,7 @@ class StepOutItem:
     unit: str = ""
     direction: str = "max"
     note: str = ""
+    experience_documented: bool = True
 
 
 @dataclass(frozen=True)
@@ -389,6 +390,7 @@ class TechnologyAssessment:
 
     def _step_out_result(self) -> tuple[list[dict[str, Any]], list[str]]:
         rows: list[dict[str, Any]] = []
+        undocumented: list[str] = []
         for item in self._step_out:
             status = "qualitative: assess against experience"
             ratio = None
@@ -401,6 +403,10 @@ class TechnologyAssessment:
                     else item.proposed_value < item.reference_value
                 )
                 status = "step-out beyond experience" if beyond else "within experience"
+            elif not item.experience_documented:
+                status = "no documented experience basis"
+            if not item.experience_documented:
+                undocumented.append(item.dimension)
             rows.append(
                 {
                     "dimension": item.dimension,
@@ -413,10 +419,15 @@ class TechnologyAssessment:
                     "ratio": ratio,
                     "status": status,
                     "note": item.note,
+                    "experience_documented": item.experience_documented,
                 }
             )
         covered = {item.dimension for item in self._step_out}
         gaps = [_REQUIRED_STEP_OUT_NOTE.format(dim) for dim in STEP_OUT_DIMENSIONS if dim not in covered]
+        gaps += [
+            "Step-out {}: no documented experience basis; collect reference experience before relying on it.".format(dim)
+            for dim in undocumented
+        ]
         return rows, gaps
 
     def _qualification_outline(self, results: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -607,6 +618,7 @@ def from_dict(spec: Mapping[str, Any]) -> TechnologyAssessment:
                 unit=raw.get("unit", ""),
                 direction=raw.get("direction", "max"),
                 note=raw.get("note", ""),
+                experience_documented=bool(raw.get("experience_documented", True)),
             )
         )
     for raw in spec.get("benefits", []):

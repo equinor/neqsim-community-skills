@@ -916,7 +916,7 @@ skills:
     tags: [field-development, brazil, pre-salt, gas-export, tariffs, market, host-capacity, screening]
     min_neqsim_version: "3.7.0"
   - name: neqsim-technology-assessment
-    version: "0.1.0"
+    version: "0.1.1"
     description: "Educational technology assessment for new or step-out technology: decomposition, novelty categorisation (1-4), technology readiness level (TRL 0-7) roll-up, enabling vs enhancing, step-out, benefits and risks, standardisation potential and a preliminary qualification outline. USE WHEN: a project study must decide which technology elements need qualification before FMIRR, a qualification programme or a technology assessment report."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -932,7 +932,7 @@ skills:
     tags: [safety, technology-qualification, fmirr, failure-modes, risk-ranking, iso-14224, screening]
     min_neqsim_version: "3.7.0"
   - name: neqsim-technology-assessment-report
-    version: "0.1.0"
+    version: "0.1.1"
     description: "Builds a full technology assessment report (Markdown and Word) for any technology from technology_assessment.v1 and technology_fmirr.v1 results: qualification basis, decomposition, novelty and TRL, step-out, benefits and risks, FMIRR, qualification outline, conclusions, open points. USE WHEN: a project study needs a technology assessment report as a deliverable, or an assessment and FMIRR must be turned into a reviewable document."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"

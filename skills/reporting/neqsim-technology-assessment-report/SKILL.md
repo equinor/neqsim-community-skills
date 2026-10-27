@@ -1,7 +1,7 @@
 ---
 name: neqsim-technology-assessment-report
 calculation_basis: "advisory"
-version: "0.1.0"
+version: "0.1.1"
 description: "Builds a full technology assessment report (Markdown and Word) for any technology from technology_assessment.v1 and technology_fmirr.v1 results: qualification basis, decomposition, novelty and TRL, step-out, benefits and risks, FMIRR, qualification outline, conclusions, open points. USE WHEN: a project study needs a technology assessment report as a deliverable, or an assessment and FMIRR must be turned into a reviewable document."
 last_verified: "2026-10-27"
 requires:

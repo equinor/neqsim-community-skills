@@ -208,6 +208,7 @@ Not an allocation, nomination or tariff model.
 - `neqsim-agentic-process-optimization` - closed-loop optimisation of a large `ProcessModel`.
 - `neqsim-production-network-routing` - well-to-host routing.
 - `neqsim-norwegian-continental-shelf-data` - Sodir and Gassco data access.
+- `neqsim-process-modeling` (reference `multi-platform-complex`) and `neqsim-future-operation-study` - multi-platform package layout, and per-year strategy / modification register on a finished model.
 
 ## References
 

@@ -162,10 +162,51 @@ effect is proportional (verified 2026-10-08, Aasta Hansteen, SRK-CPA, `mixingRul
 - In `neqsim_dev_setup` task scripts use `ns.JClass("neqsim.thermo.system.SystemSrkCPAstatoil")`
   and the component name `TEG`.
 
+## Drizo / solvent stripping (`stripping_mode="drizo"`)
+
+Drizo regenerates TEG with a closed loop of recovered hydrocarbon solvent (BTEX) instead of
+fuel gas. Oseberg D documents it (system 24 manual 11-4A-AV-C87-24001 pp. 15-16): flash vapour
+cooled to 20 C and the condensate sent back to the still feed; still overhead (93 C) cooled to
+20 C into a three-phase receiver; solvent vaporised and superheated to 220 C and fed to a packed
+stripping column; excess solvent to the closed drain; reboiler 196-204 C at 0.35 barg.
+`build_teg_plant(..., stripping_mode="drizo", drizo_solvent_kg_hr=..., still_pressure_bara=1.36)`
+builds exactly this loop. Use `components=[...]` (with `feed_fractions` aligned) to add toluene
+and m-Xylene so the solvent carries real BTEX, and `drizo_solvent_comp={"m-Xylene": 0.4, ...}`.
+
+- The solvent circulation rate is a set-point (Splitter `setFlowRates([rate, -1.0], "kg/hr")`),
+  not a result; the stripped purity depends on it, so scan it against the measured lean-TEG
+  concentration. It is the main calibration knob for troubleshooting dehydration efficiency.
+- Three recycles are closed by the loop (solvent recovery, solvent loop, stripping vapour to
+  the reboiler) in addition to the lean-TEG recycle; a run takes several minutes, so use
+  `runAsThread()` with a join of 900 s or more, check `process.solved()`, and if it is false call
+  `process.run()` again (warm restart, up to 3 times; the stripping-vapour recycle often stops at
+  its iteration cap on the first pass with `errComp` about 2e-2 and converges on the second).
+- The still receiver must be a `ThreePhaseSeparator` (water out, oil out = solvent, gas out =
+  vent); a two-phase separator mixes the solvent into the water draw.
+- Without stripping, TEG at 204 C and 1 atm is about 98.9 wt%; a lean purity near that value means
+  the solvent loop is not stripping (rate too low, or the loop has not converged), not that
+  the model is right.
+- Report lean quality with `glycol_purity_wt()` (TEG/(TEG+water)). `WaterStripperColumn` lets
+  heavy solvent dissolve in the glycol, so `teg_mass_fraction()` falls as solvent rate rises
+  (97.95 wt% of liquid at 1500 kg/h) while the glycol/water purity rises (99.8 wt%); mixing the
+  two bases hides the stripping effect (measured 2026-10-28, 11.75 t/h semi-lean 97.8 wt%, 204 C,
+  1.36 bara, 2 vs 4 stages).
+- Stages matter more than rate: 4 stages with 300 Sm3/h dry gas gives 99.95 wt% where 2 stages
+  give 99.79. Use 4 stages for a packed stripping column unless vendor data says otherwise.
+- Convergence evidence: the Drizo loop was validated on the Oseberg D basis (12.3 MSm3/d feed,
+  11.75 t/h TEG, 4 stripper stages, 1000 kg/h solvent): converged in about 100 s after one warm
+  restart to lean 99.95 wt%, reboiler 0.83 MW (design 1.35 MW), dew point -49 C at 69 barg. The
+  generic default case of this skill (4.65 MSm3/d, 5.5 t/h TEG) did NOT converge in 8 warm
+  restarts with 300 or 600 kg/h solvent (lean purity oscillating 98.2-99.2 wt%); tune circulation,
+  solvent rate and stripper stages for your own case and check `process.solved()` before use.
+- The same-solvent-rate effect is non-monotonic if you read the wrong basis (see above).
+
 ## Validation Checklist
 
 - [ ] Water dew point of the dry gas is well below 0 C at the reference pressure.
-- [ ] Lean TEG purity is above 90 wt% (typically 97-99 wt% with stripping gas).
+- [ ] Lean TEG purity (`glycol_purity_wt`, TEG/(TEG+water)) is in the range of the real plant:
+      about 99.9 wt% (0.1 wt% water) for a stripped or Drizo unit, 98.7-99 wt% only when there
+      is no stripping. A value of 90-97 wt% means the regeneration is not representative.
 - [ ] Still-vent NMVOC and methane mass flows are finite and non-negative.
 - [ ] With `recirculate_stripping_gas=True`, still-vent NMVOC and methane do not
       increase versus the once-through case.
@@ -188,6 +229,8 @@ effect is proportional (verified 2026-10-08, Aasta Hansteen, SRK-CPA, `mixingRul
 | Run blocks or stalls | Running inline instead of on a thread | Use `process.runAsThread()` + `thr.join(timeout_ms)` |
 | TEG inventory drifts | No makeup | Add the `Calculator` makeup sized from TEG in dry gas, flash gas, still vent, water draws |
 | Water balance looks open | Closed-loop convergence was not established, or a water outlet was omitted | First require `process.solved()` and all recycle diagnostics solved; then include **still vent + regen water/HC draw + degassing flash gas** in the water accounting |
+| Plant has solvent recovery / 220 C superheated stripping vapour but is modelled with fuel gas | The unit is a Drizo plant | Use `stripping_mode="drizo"`; read the system manual for the solvent loop before choosing the stripping scheme |
+| Regeneration column reports `FALLBACK_PRODUCTS` / reboiler duty about 0 | Feed on tray 1 with stripping gas on tray 1 and a high condenser temperature | Feed at tray 0, stripping gas through `getReboiler().addStream(...)`, condenser near the real overhead temperature, as in the `TEGdehydrationProcessDistillationJS` example |
 
 ## Limitations
 

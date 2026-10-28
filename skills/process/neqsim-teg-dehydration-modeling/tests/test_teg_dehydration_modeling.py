@@ -6,6 +6,7 @@ from teg_dehydration_modeling import (
     NMVOC,
     build_teg_plant,
     classify_emissions,
+    glycol_purity_wt,
     teg_mass_fraction,
 )
 
@@ -85,3 +86,66 @@ def test_recirculated_stripping_gas_uses_one_controller_priority() -> None:
 
     assert process.getUnit("stripping gas recirc").getPriority() == 100
     assert process.getUnit("stripping gas makeup recycle").getPriority() == 100
+
+
+def test_drizo_build_has_solvent_loop_units() -> None:
+    pytest.importorskip("neqsim")
+
+    process, streams = _default_case(
+        stripping_mode="drizo", drizo_solvent_kg_hr=400.0, still_pressure_bara=1.36
+    )
+
+    for name in ("solvent loop recycle", "solvent recovery recycle", "solvent split"):
+        assert process.getUnit(name) is not None
+    assert streams["solventExcess"] is not None
+    assert streams["solventHeater"] is not None
+
+
+def test_drizo_rejects_recirculated_gas_and_unknown_mode() -> None:
+    pytest.importorskip("neqsim")
+
+    with pytest.raises(ValueError):
+        _default_case(stripping_mode="drizo", recirculate_stripping_gas=True)
+    with pytest.raises(ValueError):
+        _default_case(stripping_mode="steam")
+
+
+def test_glycol_purity_excludes_hydrocarbon_solvent() -> None:
+    class _Comp:
+        def __init__(self, name, z, mw):
+            self._n, self._z, self._mw = name, z, mw
+
+        def getComponentName(self):
+            return self._n
+
+        def getz(self):
+            return self._z
+
+        def getMolarMass(self):
+            return self._mw
+
+    class _Fluid:
+        comps = [
+            _Comp("TEG", 0.20, 0.15017),
+            _Comp("water", 0.001, 0.018015),
+            _Comp("m-Xylene", 0.05, 0.10617),
+        ]
+
+        def getNumberOfComponents(self):
+            return len(self.comps)
+
+        def getComponent(self, i):
+            return self.comps[i]
+
+    class _Stream:
+        def getFluid(self):
+            return _Fluid()
+
+        def getFlowRate(self, unit):
+            return 1000.0
+
+    s = _Stream()
+    assert glycol_purity_wt(s) > teg_mass_fraction(s)
+    assert glycol_purity_wt(s) == pytest.approx(99.94, abs=0.05)
+
+

@@ -6,6 +6,7 @@ from .plant import (
     build_teg_plant,
     classify_emissions,
     comp_mass_flows_kg_hr,
+    glycol_purity_wt,
     teg_mass_fraction,
 )
 
@@ -16,6 +17,7 @@ __all__ = [
     "GHG_CH4",
     "build_teg_plant",
     "comp_mass_flows_kg_hr",
+    "glycol_purity_wt",
     "teg_mass_fraction",
     "classify_emissions",
 ]

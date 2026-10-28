@@ -18,6 +18,7 @@ __all__ = [
     "build_teg_plant",
     "comp_mass_flows_kg_hr",
     "teg_mass_fraction",
+    "glycol_purity_wt",
     "classify_emissions",
 ]
 
@@ -96,8 +97,24 @@ def build_teg_plant(
     saturation_pressure_bara=None,
     recirculate_stripping_gas=False,
     recycle_blower_discharge_bara=1.4,
+    stripping_mode="gas",
+    drizo_solvent_kg_hr=150.0,
+    drizo_solvent_comp=None,
+    drizo_solvent_temp_C=220.0,
+    still_pressure_bara=1.2,
+    solvent_recovery_temp_C=20.0,
+    components=None,
 ):
     """Build a closed-loop TEG dehydration plant as a NeqSim ProcessSystem.
+
+    ``stripping_mode="gas"`` (default) strips with dry gas (once-through or recirculated).
+    ``stripping_mode="drizo"`` builds the Drizo solvent loop used on Oseberg D: flash vapour is
+    cooled to ``solvent_recovery_temp_C`` and its condensate returned to the still feed, the still
+    overhead is condensed in a three-phase receiver, the recovered hydrocarbon solvent is split at
+    a fixed ``drizo_solvent_kg_hr`` (the rest is drained), superheated to ``drizo_solvent_temp_C``
+    and fed to the stripper as stripping vapour. ``drizo_solvent_comp`` maps component name to
+    mole fraction (default hexane/benzene); ``components`` replaces ``GAS_COMPONENTS`` so heavier
+    aromatics (toluene, m-Xylene) can be added, with ``feed_fractions`` aligned to it.
 
     Returns a tuple ``(process, streams)`` where ``process`` is a NeqSim
     ``ProcessSystem`` ready to run (``process.runAsThread()`` then
@@ -131,12 +148,20 @@ def build_teg_plant(
     WaterDewPointAnalyser = jneqsim.process.measurementdevice.WaterDewPointAnalyser
 
     p = ProcessSystem()
-    n_comp = len(GAS_COMPONENTS) + 2
+    comp_names = list(components) if components is not None else list(GAS_COMPONENTS)
+    n_comp = len(comp_names) + 2
+    drizo = stripping_mode == "drizo"
+    if stripping_mode not in ("gas", "drizo"):
+        raise ValueError("stripping_mode must be 'gas' or 'drizo'")
+    if drizo and recirculate_stripping_gas:
+        raise ValueError("recirculate_stripping_gas applies to stripping_mode='gas' only")
+    still_P = float(still_pressure_bara)
+    ThreePhaseSeparator = jneqsim.process.equipment.separator.ThreePhaseSeparator
 
     # --- Feed fluid: CPA EOS, TEG added LAST so lean-TEG indices are stable. ---
     feedGas = SystemSrkCPA()
     total_gas = sum(float(f) for f in feed_fractions)
-    for name, frac in zip(GAS_COMPONENTS, feed_fractions):
+    for name, frac in zip(comp_names, feed_fractions):
         feedGas.addComponent(name, float(frac))
     if water_mode == "specified":
         water_moles = (float(water_content_ppm_mol or 0.0) * 1.0e-6) * total_gas
@@ -242,21 +267,67 @@ def build_teg_plant(
     fineFilter.setDeltaP(0.0, "bara")
     p.add(fineFilter)
 
+    if drizo:
+        # Solvent recovery: flash vapour condensed, liquid returned to the still feed.
+        srCooler = Heater("solvent recovery condenser", flashGas)
+        srCooler.setOutTemperature(273.15 + solvent_recovery_temp_C)
+        p.add(srCooler)
+        srDrum = Separator("solvent recovery drum", srCooler.getOutletStream())
+        p.add(srDrum)
+        flashVent = Stream("flash gas to flare", srDrum.getGasOutStream())
+        p.add(flashVent)
+        srLiquid = Stream("solvent recovery liquid", srDrum.getLiquidOutStream())
+        p.add(srLiquid)
+        retFluid = feedGas.clone()
+        retComp = [0.0] * n_comp
+        retComp[comp_names.index("n-hexane")] = 1.0
+        retFluid.setMolarComposition(retComp)
+        srReturn = Stream("solvent recovery return", retFluid)
+        srReturn.setFlowRate(1.0e-3, "kg/hr")
+        srReturn.setTemperature(solvent_recovery_temp_C, "C")
+        srReturn.setPressure(flash_drum_pressure_bara, "bara")
+        p.add(srReturn)
+    else:
+        flashVent = flashGas
+
     heatEx = HeatExchanger("lean/rich TEG heat-exchanger", fineFilter.getOutletStream())
     heatEx.setGuessOutTemperature(273.15 + 130.0)
     heatEx.setUAvalue(8316.0)
     p.add(heatEx)
 
-    flashValve2 = ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0))
-    flashValve2.setOutletPressure(1.2)
+    if drizo:
+        richMixer = Mixer("rich TEG + recovered solvent mixer")
+        richMixer.addStream(heatEx.getOutStream(0))
+        richMixer.addStream(srReturn)
+        p.add(richMixer)
+        stillFeed = richMixer.getOutletStream()
+    else:
+        stillFeed = heatEx.getOutStream(0)
+    flashValve2 = ThrottlingValve("Rich TEG LP flash valve", stillFeed)
+    flashValve2.setOutletPressure(still_P)
     p.add(flashValve2)
+    if drizo:
+        recycleSolventRecovery = Recycle("solvent recovery recycle")
+        recycleSolventRecovery.addStream(srLiquid)
+        recycleSolventRecovery.setOutletStream(srReturn)
+        p.add(recycleSolventRecovery)
 
-    # --- Stripping gas ---
+    # --- Stripping gas (Drizo: initial guess of the superheated solvent vapour) ---
     stripGas = feedGas.clone()
+    if drizo:
+        sol = drizo_solvent_comp or {"n-hexane": 0.7, "benzene": 0.3}
+        tot = float(sum(sol.values()))
+        stripGas.setMolarComposition(
+            [float(sol.get(n, 0.0)) / tot for n in comp_names] + [0.0, 0.0]
+        )
     strippingGas = Stream("stripGas", stripGas)
-    strippingGas.setFlowRate(stripping_gas_Sm3_hr, "Sm3/hr")
-    strippingGas.setTemperature(78.3, "C")
-    strippingGas.setPressure(1.2, "bara")
+    if drizo:
+        strippingGas.setFlowRate(float(drizo_solvent_kg_hr), "kg/hr")
+        strippingGas.setTemperature(float(drizo_solvent_temp_C), "C")
+    else:
+        strippingGas.setFlowRate(stripping_gas_Sm3_hr, "Sm3/hr")
+        strippingGas.setTemperature(78.3, "C")
+    strippingGas.setPressure(still_P, "bara")
     p.add(strippingGas)
     gasToReboiler = strippingGas.clone("gas to reboiler")
     p.add(gasToReboiler)
@@ -266,28 +337,60 @@ def build_teg_plant(
     column.setTemperatureTolerance(5.0e-2)
     column.setMassBalanceTolerance(2.0e-1)
     column.setEnthalpyBalanceTolerance(2.0e-1)
-    column.addFeedStream(flashValve2.getOutletStream(), 1)
+    column.addFeedStream(flashValve2.getOutletStream(), 0 if drizo else 1)
     column.getReboiler().setOutTemperature(273.15 + reboiler_temp_C)
-    column.getCondenser().setOutTemperature(273.15 + 85.0)
-    column.getTray(1).addStream(gasToReboiler)
-    column.setTopPressure(1.2)
-    column.setBottomPressure(1.2)
+    column.getCondenser().setOutTemperature(273.15 + (93.0 if drizo else 85.0))
+    if drizo:
+        column.getReboiler().addStream(gasToReboiler)
+        column.setTopPressure(still_P - 0.2)
+    else:
+        column.getTray(1).addStream(gasToReboiler)
+        column.setTopPressure(still_P)
+    column.setBottomPressure(still_P)
     column.setInternalDiameter(0.56)
     p.add(column)
 
     coolerRegenGas = Heater("regen gas cooler", column.getGasOutStream())
-    coolerRegenGas.setOutTemperature(273.15 + 47.0)
+    coolerRegenGas.setOutTemperature(
+        273.15 + (solvent_recovery_temp_C if drizo else 47.0)
+    )
     p.add(coolerRegenGas)
 
-    sepRegenGas = Separator("regen gas separator", coolerRegenGas.getOutletStream())
-    p.add(sepRegenGas)
-    waterToTreatment = Stream(
-        "water/HC to process or flare drum", sepRegenGas.getLiquidOutStream()
-    )
-    p.add(waterToTreatment)
+    solventExcess = None
+    solventHeater = None
+    if drizo:
+        sepRegenGas = ThreePhaseSeparator("regen gas separator", coolerRegenGas.getOutletStream())
+        p.add(sepRegenGas)
+        waterToTreatment = Stream("water to process or drain", sepRegenGas.getWaterOutStream())
+        p.add(waterToTreatment)
+        recoveredSolvent = Stream("recovered solvent", sepRegenGas.getOilOutStream())
+        p.add(recoveredSolvent)
+        solventSplit = Splitter("solvent split", recoveredSolvent)
+        solventSplit.setSplitNumber(2)
+        solventSplit.setFlowRates([float(drizo_solvent_kg_hr), -1.0], "kg/hr")
+        p.add(solventSplit)
+        solventExcess = Stream("excess solvent to closed drain", solventSplit.getSplitStream(1))
+        p.add(solventExcess)
+        solventHeater = Heater("solvent superheater", solventSplit.getSplitStream(0))
+        solventHeater.setOutPressure(still_P + 0.3, "bara")
+        solventHeater.setOutTemperature(273.15 + float(drizo_solvent_temp_C))
+        p.add(solventHeater)
+        stillVent = Stream("still vent", sepRegenGas.getGasOutStream())
+        p.add(stillVent)
+        recircBlower = None
+        recircHeater = None
+    else:
+        sepRegenGas = Separator("regen gas separator", coolerRegenGas.getOutletStream())
+        p.add(sepRegenGas)
+        waterToTreatment = Stream(
+            "water/HC to process or flare drum", sepRegenGas.getLiquidOutStream()
+        )
+        p.add(waterToTreatment)
 
     # --- Still vent: vented once-through, or recirculated as stripping gas ---
-    if recirculate_stripping_gas:
+    if drizo:
+        pass
+    elif recirculate_stripping_gas:
         recircSplit = Splitter("stripping gas recirc split", sepRegenGas.getGasOutStream())
         recircSplit.setFlowRates([float(stripping_gas_Sm3_hr), -1.0], "Sm3/hr")
         p.add(recircSplit)
@@ -316,13 +419,19 @@ def build_teg_plant(
     stripper = WaterStripperColumn("TEG stripper")
     stripper.addSolventInStream(column.getLiquidOutStream())
     stripper.addGasInStream(strippingGas)
-    stripper.setNumberOfStages(2)
-    stripper.setStageEfficiency(1.0)
+    if drizo:
+        stripper.setNumberOfStages(4)
+        stripper.setStageEfficiency(1.0)
+    else:
+        stripper.setNumberOfStages(2)
+        stripper.setStageEfficiency(1.0)
     p.add(stripper)
 
     recycleStripGas = Recycle("stripping gas recirc")
     recycleStripGas.addStream(stripper.getGasOutStream())
     recycleStripGas.setOutletStream(gasToReboiler)
+    if drizo:
+        recycleStripGas.setMaxIterations(60)
     p.add(recycleStripGas)
 
     if recirculate_stripping_gas:
@@ -331,6 +440,12 @@ def build_teg_plant(
         recycleStrippingMakeup.setOutletStream(strippingGas)
         recycleStrippingMakeup.setPriority(recycleStripGas.getPriority())
         p.add(recycleStrippingMakeup)
+    if drizo:
+        recycleSolventLoop = Recycle("solvent loop recycle")
+        recycleSolventLoop.addStream(solventHeater.getOutletStream())
+        recycleSolventLoop.setOutletStream(strippingGas)
+        recycleSolventLoop.setPriority(recycleStripGas.getPriority())
+        p.add(recycleSolventLoop)
 
     heatEx.setFeedStream(1, stripper.getLiquidOutStream())
 
@@ -370,9 +485,11 @@ def build_teg_plant(
 
     makeupCalc = Calculator("TEG makeup calculator")
     makeupCalc.addInputVariable(dehydratedGas)
-    makeupCalc.addInputVariable(flashGas)
+    makeupCalc.addInputVariable(flashVent)
     makeupCalc.addInputVariable(stillVent)
     makeupCalc.addInputVariable(waterToTreatment)
+    if solventExcess is not None:
+        makeupCalc.addInputVariable(solventExcess)
     makeupCalc.setOutputVariable(makeupTEG)
     p.add(makeupCalc)
 
@@ -399,6 +516,11 @@ def build_teg_plant(
         "waterDewAnalyser": waterDewAnalyser,
         "strippingGas": strippingGas,
         "recircBlower": recircBlower,
+        "flashVent": flashVent,
+        "waterToTreatment": waterToTreatment,
+        "solventExcess": solventExcess,
+        "solventHeater": solventHeater,
+        "column": column,
     }
     return p, streams
 
@@ -421,10 +543,21 @@ def comp_mass_flows_kg_hr(stream):
 
 
 def teg_mass_fraction(stream):
-    """Return the TEG weight percent of a NeqSim stream."""
+    """Return the TEG weight percent of a NeqSim stream (all components in the denominator)."""
     flows = comp_mass_flows_kg_hr(stream)
     tot = sum(flows.values())
     return 100.0 * flows.get("TEG", 0.0) / tot if tot > 0 else 0.0
+
+
+def glycol_purity_wt(stream):
+    """Return TEG/(TEG+water) in weight percent, the plant's "wt% glycol" lean/rich basis.
+
+    Use this, not ``teg_mass_fraction``, for lean-TEG quality when hydrocarbons (Drizo solvent,
+    dissolved BTEX) are present in the liquid.
+    """
+    flows = comp_mass_flows_kg_hr(stream)
+    denom = flows.get("TEG", 0.0) + flows.get("water", 0.0)
+    return 100.0 * flows.get("TEG", 0.0) / denom if denom > 0 else 0.0
 
 
 def classify_emissions(stream):

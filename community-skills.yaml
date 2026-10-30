@@ -540,6 +540,15 @@ skills:
     tags: [subsea, pid, tie-in, drawing, svg, screening]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-subsea-slot-tee-reuse-inventory
+    version: "0.1.0"
+    description: "Inventory of tie-in capacity in existing subsea infrastructure (free template/manifold slots, spare tees and hubs, J-tube/riser slots, spare or reusable pipelines, flowlines, gas-lift, injection and MEG lines, umbilical cores) with status, size, remaining life, source and verification level, and a reuse-versus-new-build ranking. USE WHEN: a tie-in needs to know which existing slots, tees or lines can be used or re-purposed, or which line could raise production."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/neqsim-subsea-slot-tee-reuse-inventory/SKILL.md"
+    tags: [subsea, tie-in, slots, tee, hub, reuse, infrastructure, lifetime, screening, open-data]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-jv-cost-control-screening
     version: "0.1.0"
     description: "Educational JV cost-control toolkit for a non-operating partner: parse JIB-style statements with subtotal checks, rank budget/forecast variances with fact-only commentary, split unit cost into volume and rate effects, check partner-share PI, and reconcile reports by roll-forward and arithmetic identities. USE WHEN: a partner receives JIB, budget, operations and cost-recovery reports from an operator and wants extraction and cross-report controls before human review."

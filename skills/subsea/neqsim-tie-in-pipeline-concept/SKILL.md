@@ -131,4 +131,6 @@ of several hundred metres. Use `DnvStF101PipelineDesignCalculator` in NeqSim for
 ## Related
 
 `neqsim-pipe-route-profile`, `neqsim-bathymetry-profile-screening`, `neqsim-ncs-infrastructure-network`,
-`neqsim-pressure-drop-screening`, `neqsim-pipe-wall-thickness-screening`, `neqsim-tie-in-pid-sketch`.
+`neqsim-pressure-drop-screening`, `neqsim-pipe-wall-thickness-screening`, `neqsim-tie-in-pid-sketch`,
+`neqsim-subsea-slot-tee-reuse-inventory` (existing slots, tees and reusable lines to compare with this new-build line;
+lifetime action for reused items), `neqsim-ageing-life-extension-screening`.

@@ -1,0 +1,14 @@
+{
+  "name": "Synthetic discovery D (illustrative)",
+  "position": {"lat": 60.12, "lon": 3.20},
+  "host_position": {"lat": 60.00, "lon": 3.00},
+  "service": "multiphase",
+  "rate": {"value": 3000, "unit": "Sm3/d"},
+  "source_pressure_bar": 150,
+  "arrival_pressure_min_bar": 20,
+  "design_pressure_bar": 300,
+  "horizon_end_year": 2045,
+  "as_of_year": 2026,
+  "flowline_size_in": 8,
+  "fluid": {"wax": false, "hydrate_prone": false}
+}

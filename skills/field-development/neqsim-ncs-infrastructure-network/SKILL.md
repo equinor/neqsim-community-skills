@@ -229,7 +229,9 @@ the offline subset. Feed the ranked neighbours back into `nearest_hosts` and `Ti
 - Kårstø publishes product rates (t/h), not dry-gas throughput. Its export is
   bounded by Statpipe dry gas and Europipe II.
 - Host processing capacities are not open data. Tie-back screening uses
-  distance and water depth unless the caller supplies capacity.
+  distance and water depth unless the caller supplies capacity. Free slots, spare tees and reusable
+  lines are not open data either: use `neqsim-subsea-slot-tee-reuse-inventory` (it labels them
+  estimated/unknown and ranks reuse against new build).
 - Route extraction is text mining of public prose. Treat `needs_review` routes
   as hypotheses.
 - UK-side systems (FLAGS, SAGE, FUKA, CATS, Forties) end at an entry node; the

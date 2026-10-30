@@ -204,6 +204,7 @@ A `replace` verdict is a *screening* signal. It has to be combined with the cons
 - `neqsim-safety-function-coverage-screening` — when the item is a protective function.
 - `neqsim-asset-value-npv-screening`, `neqsim-energy-emissions-screening`, `neqsim-capex-opex-screening`, `neqsim-step-out-screening` — take their horizon from the technical life basis, not from an assumed field life.
 - `neqsim-reservoir-facility-value-chain` and the tie-in, concept-selection, debottlenecking and capacity agents — cap the host tail at the earliest unmitigated limiter.
+- `neqsim-subsea-slot-tee-reuse-inventory` — uses `lifetime_check` (ok / monitor / life-extend / refurbish / replace / data-gap) for reused slots, tees and lines against the tie-in horizon; take the life basis from this skill.
 - A private enterprise wrapper (written by the company) — regulatory framing, maintenance/tag-register evidence requirements, safety-critical-element gating, and review handoff.
 - A private maintenance-history reader — pulls the corrective-failure history that feeds `failure_times_years`.
 - A private RAM policy skill — company acceptance policy on the resulting availability.

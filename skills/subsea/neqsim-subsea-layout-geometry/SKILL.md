@@ -137,5 +137,5 @@ In Python these classes are reachable through the `neqsim` package (for example 
 
 - NeqSim: https://github.com/equinor/neqsim
 - NeqSim Community Skills: https://github.com/equinor/neqsim-community-skills
-- Related community skills: `pipe-route-profile`, `bathymetry-profile-screening`, `step-out-screening`, `field-layout-import`
+- Related community skills: `pipe-route-profile`, `bathymetry-profile-screening`, `step-out-screening`, `field-layout-import`, `neqsim-subsea-slot-tee-reuse-inventory` (free slots, spare tees and reusable lines at a host, built on the Sodir facility and pipeline data used here)
 - Great-circle (haversine) distance on a spherical Earth is a standard public geodesy relation.

@@ -1,0 +1,24 @@
+{
+  "schema": "neqsim.subsea_infrastructure_inventory.v1",
+  "host": "Synthetic Host A (illustrative, not a real facility)",
+  "area": "Synthetic area",
+  "as_of": "2026-10-30",
+  "items": [
+    {"id": "HOST-A", "kind": "host", "status": "in_use", "service": "multiphase", "position": {"lat": 60.00, "lon": 3.00}, "verification": "documented", "source": "synthetic example"},
+    {"id": "TMPL-1", "name": "Template 1", "kind": "template", "status": "in_use", "total_slots": 6, "free_slots": 2, "position": {"lat": 60.05, "lon": 3.08},
+     "install_year": 2012, "design_life_years": 30, "verification": "documented", "source": "synthetic slot register"},
+    {"id": "TMPL-2", "name": "Template 2", "kind": "template", "status": "in_use", "total_slots": 4, "free_slots": 1, "position": {"lat": 60.20, "lon": 3.30},
+     "install_year": 2008, "design_life_years": 25, "verification": "estimated", "source": "nominal slots minus wells (estimate)"},
+    {"id": "TEE-1", "name": "Spare tee on trunk", "kind": "tee", "status": "spare", "total_slots": 1, "free_slots": 1, "hub_type": "PLET with spare hub", "position": {"lat": 60.10, "lon": 3.15},
+     "install_year": 2008, "design_life_years": 25, "condition": "good", "verification": "documented", "source": "synthetic P&ID tag"},
+    {"id": "GL-1", "name": "Gas-lift line to Template 1", "kind": "gas_lift_line", "status": "in_use", "service": "gas_lift", "size_in": 6, "length_km": 8.0,
+     "pressure_rating_bar": 350, "install_year": 2002, "design_life_years": 30, "condition": "good", "repurpose_option": "spare capacity on shared lift header",
+     "position": {"lat": 60.04, "lon": 3.06}, "verification": "documented", "source": "synthetic line list"},
+    {"id": "FL-OLD", "name": "Disused 10 in oil flowline", "kind": "flowline", "status": "abandoned", "service": "oil", "size_in": 10, "length_km": 9.5,
+     "pressure_rating_bar": 250, "install_year": 1995, "design_life_years": 25, "condition": "fair", "position": {"lat": 60.07, "lon": 3.10},
+     "verification": "documented", "source": "synthetic line list", "insulated": true},
+    {"id": "WI-1", "name": "Spare water-injection core", "kind": "injection_line", "status": "spare", "service": "water_injection", "size_in": 8, "length_km": 6.0,
+     "pressure_rating_bar": 400, "install_year": 2008, "design_life_years": 25, "condition": "good", "position": {"lat": 60.06, "lon": 3.07},
+     "verification": "estimated", "source": "synthetic: believed spare"}
+  ]
+}

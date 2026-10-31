@@ -181,6 +181,14 @@ skills:
     tags: [wells, extended-reach, torque-drag, drilling, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-well-design-study
+    version: "0.2.0"
+    description: "Screening well design study and report: pore/fracture window, casing seats and kick tolerance, casing and tubing design (API TR 5C3), erosional-velocity screening, torque and drag, ECD, offset-well calibration, time and cost P10/P50/P90, fail-closed validation and a Word report. USE WHEN: a concept or pre-FEED well design, casing or kick-tolerance review, or well time and cost range is needed, especially with offset wells."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-well-design-study/SKILL.md"
+    tags: [wells, well-design, casing, kick-tolerance, torque-drag, offset-wells, time-cost, report, screening]
+    min_neqsim_version: "3.7.0"
   - name: neqsim-h2s-phase-partitioning
     version: "0.1.0"
     description: "Educational H2S gas/oil/water partitioning with NeqSim SRK-CPA through a separator train, and back-calculation of wellstream H2S from measured separator-gas H2S. USE WHEN: a task has H2S measured in separator or export gas and needs wellstream H2S, the H2S split between gas, oil and produced water, a sour-service pH2S screen, or a gas-to-well H2S conversion table."

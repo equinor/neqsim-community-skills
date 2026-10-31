@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-well-design-study"
+version = "0.2.0"
+description = "Screening-level well design study toolkit for NeqSim: pressure window, casing seats and kick tolerance, casing and tubing design (API TR 5C3), torque and drag, ECD, offset-well calibration, time and cost Monte Carlo and a Word report."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+report = ["matplotlib>=3.7", "python-docx>=1.1", "pandas>=2.0"]
+test = ["pytest>=7.4", "matplotlib>=3.7", "python-docx>=1.1", "pandas>=2.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

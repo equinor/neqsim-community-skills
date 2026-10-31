@@ -1,7 +1,8 @@
 """Screening-level well design study toolkit: pressure window, seats, casing design, torque and drag, hydraulics, offsets and report."""
 
-from .casing_design import (CATALOG, GRADES, DesignFactors, Grade, Pipe, StringBasis, body_yield_kn, burst_rating_psi, candidates, check_string,
-                            check_tubing, collapse_rating_psi, load_cases, select_string, thermal_axial_force_kn, vme_stress_ratio, wellhead_rating_class)
+from .casing_design import (CATALOG, GRADES, DesignFactors, Grade, Pipe, StringBasis, alternative_pipes, body_yield_kn, burst_rating_psi, candidates, check_string,
+                            check_tubing, collapse_basis_comparison, collapse_rating_psi, drift_diameter_in, load_cases, max_evacuation_level_for_collapse,
+                            select_string, thermal_axial_force_kn, vme_stress_ratio, wellhead_rating_class)
 from .casing_seats import PlannedSection, annulus_capacity_m3_per_m, evaluate_plan, kick_tolerance, propose_seats_bottom_up
 from .hydraulics import FlowSection, MudRheology, circulation, flow_sweep
 from .normalise import (COLUMNS, approx_tvd, normalise_casing_rows, normalise_mud_rows, normalise_wellbore_rows, parse_date, parse_inches, tag_problem_sentences,
@@ -16,3 +17,4 @@ from .tubing import (actual_velocity_ms, erosional_velocity_ms, max_rate_for_ero
                      turner_critical_velocity_ms)
 
 __all__ = [n for n in dir() if not n.startswith("_")]
+

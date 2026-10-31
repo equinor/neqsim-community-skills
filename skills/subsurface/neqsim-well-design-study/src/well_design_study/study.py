@@ -79,13 +79,16 @@ def run_well_study(spec: Dict[str, object]) -> Dict[str, object]:
         nxt = sections[i + 1] if i + 1 < len(sections) else None
         next_td = nxt["shoe_tvd_m"] if nxt else s["shoe_tvd_m"]
         next_mud = nxt["mud_sg"] if nxt else model.pore_sg(s["shoe_tvd_m"], "high")
+        kick_mud = None
         if nxt and kick.get("basis", "mud") == "pore":
-            next_mud = model.pore_sg(next_td, mar.get("pore_case", "high"))
+            kick_mud = model.pore_sg(next_td, mar.get("pore_case", "high"))
+            if spec.get("legacy_evacuation_fluid", False):
+                next_mud = kick_mud  # skill 0.2.0 behaviour: the pore EMW also stood in for the fluid left in the pipe after loss of returns
         shoe_frac = s.get("shoe_strength_sg") or model.frac_sg(s["shoe_tvd_m"], "low")
         basis = StringBasis(
             name=s["name"], od_in=s["casing_od_in"], top_tvd_m=s.get("string_top_tvd_m", model.mudline_tvd_m), shoe_tvd_m=s["shoe_tvd_m"],
             shoe_md_m=s["shoe_md_m"], toc_tvd_m=s.get("toc_tvd_m", s["shoe_tvd_m"] - 300.0), mud_sg=s["mud_sg"], next_td_tvd_m=next_td,
-            next_mud_sg=next_mud, next_pore_sg=model.pore_sg(next_td, "high"), frac_shoe_sg=shoe_frac,
+            next_mud_sg=next_mud, next_pore_sg=model.pore_sg(next_td, "high"), frac_shoe_sg=shoe_frac, kick_mud_sg=kick_mud,
             pore_sg_at=(lambda z, m=model: m.pore_sg(z, "base")), gas_sg=kick.get("gas_sg", 0.25), kick_intensity_sg=kick.get("intensity_sg", 0.06),
             packer_fluid_sg=comp.get("packer_fluid_sg", 1.20), shut_in_wellhead_bar=comp.get("shut_in_wellhead_bar") if is_prod else None,
             test_pressure_bar=s.get("test_pressure_bar"), evacuation_fraction=s.get("evacuation_fraction", 0.5),

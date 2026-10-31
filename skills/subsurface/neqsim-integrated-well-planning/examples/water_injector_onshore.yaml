@@ -1,0 +1,259 @@
+schema: iwp_planning_basis.v1
+study:
+  id: IWP-DEMO-C
+  title: Water injector, onshore well (synthetic demonstration)
+  maturity: selection
+  revision: A
+  author: neqsim-community
+  date: '2026-10-31'
+  currency: USD
+  synthetic: true
+  purpose: Required wellhead pressure, fracture margin and pump duty for a water injector
+well:
+  id: C-1
+  type: water_injector
+  environment: onshore
+  name: Synthetic onshore water injector
+datums:
+  reference: RKB
+  reference_elevation_msl_m: 5.0
+  water_depth_m: 0.0
+  coordinate_system: synthetic local grid
+  pressure_reference: bara (absolute)
+  standard_conditions:
+    temperature_C: 15.0
+    pressure_bara: 1.01325
+environment:
+  surface_temperature_C: 5.0
+targets:
+  rate:
+    kind: water_m3d
+    low: 900.0
+    base: 1300.0
+    high: 1700.0
+  injection_basis: matrix
+trajectory:
+  md_m: 2000.0
+  tvd_m: 2000.0
+  survey:
+    kop_md_m: 500.0
+    build_rate_deg_per_30m: 2.0
+    hold_inclination_deg: 0.0
+    azimuth_deg: 90.0
+  max_dls_deg_per_30m: 3.0
+reservoir:
+  pressure_bara:
+    low: 190.0
+    base: 200.0
+    high: 210.0
+  temperature_C: 75.0
+  permeability_md:
+    low: 120.0
+    base: 300.0
+    high: 450.0
+  thickness_m: 30.0
+  skin:
+    low: 0.0
+    base: 2.0
+    high: 6.0
+  drainage_radius_m: 300.0
+  wellbore_radius_m: 0.108
+  datum_tvd_m: 2000.0
+  fracture_gradient_bar_per_m: 0.17
+  injection_temperature_C: 15.0
+  rock:
+    alpha_per_K: 1.0e-05
+    E_GPa: 5.0
+    nu: 0.25
+  reservoir_viscosity_pa_s: 0.0006
+fluid:
+  eos: CPA
+  components:
+  - name: water
+    mole_fraction: 1.0
+    origin: synthetic injection water
+  pvt_measurements: []
+  water_chemistry: null
+  contaminants:
+    co2_mol_frac: 0.0
+    h2s_ppm: 0.0
+completion:
+  tubing:
+    od_in: 5.5
+    id_m: 0.124
+    roughness_m: 4.5e-05
+    grade: L80
+    weight_ppf: 17.0
+    wall_in: 0.304
+    shoe_md_m: 1770.0
+  casing:
+  - name: Conductor
+    od_in: 30.0
+    hole_in: 36.0
+    top_md_m: 0.0
+    shoe_md_m: 120.0
+    shoe_tvd_m: 120.0
+    grade: X-52
+    cement_top_md_m: 0.0
+  - name: Surface casing
+    od_in: 13.375
+    hole_in: 17.5
+    top_md_m: 0.0
+    shoe_md_m: 800.0
+    shoe_tvd_m: 800.0
+    grade: L80
+    weight_ppf: 68.0
+    cement_top_md_m: 0.0
+  - name: Production casing
+    od_in: 9.625
+    hole_in: 12.25
+    top_md_m: 0.0
+    shoe_md_m: 1800.0
+    shoe_tvd_m: 1800.0
+    grade: L80
+    weight_ppf: 47.0
+    cement_top_md_m: 1200.0
+  packer_md_m: 1750.0
+  sssv_md_m: 100.0
+  perforations:
+  - top_md_m: 1900.0
+    base_md_m: 1940.0
+  lift:
+    type: none
+  tree: conventional injection tree
+  wellhead_rating_bar: 345.0
+  formations:
+  - name: Overburden shale
+    top_tvd_m: 0.0
+  - name: Caprock
+    top_tvd_m: 1760
+  - name: Reservoir
+    top_tvd_m: 1920
+    base_tvd_m: 2020
+  overall_u_w_m2k: 5.0
+facility:
+  host_pressure_bara: 150.0
+  host_pressure_note: injection water supply (pump discharge) pressure available at
+    the wellhead manifold
+  supply_pressure_bara: 5.0
+  pump_efficiency: 0.7
+  max_injection_pressure_bara: 180.0
+  max_pump_power_kw: 1500.0
+  host_temperature_C: 15.0
+  flowline: {}
+  choke_dp_bar: 0.0
+operations:
+  life_years: 25
+  intervention_strategy: wireline; coiled tubing for stimulation
+  abandonment: permanent abandonment per applicable regulation (requirement to be
+    identified)
+drilling:
+  hazards:
+  - shallow gas (synthetic placeholder)
+  pressure_window:
+  - tvd_m: 200.0
+    pore_bara: 20.612342
+    frac_bara: 33.383
+    mud_bara: 23.219840000000005
+  - tvd_m: 600.0
+    pore_bara: 59.817026
+    frac_bara: 98.129
+    mud_bara: 69.05216000000001
+  - tvd_m: 1000.0
+    pore_bara: 99.02171000000001
+    frac_bara: 162.875
+    mud_bara: 116.76800000000003
+  - tvd_m: 1400.0
+    pore_bara: 138.226394
+    frac_bara: 227.621
+    mud_bara: 166.36736000000002
+  - tvd_m: 1800.0
+    pore_bara: 177.431078
+    frac_bara: 292.367
+    mud_bara: 217.85024000000004
+  - tvd_m: 2000.0
+    pore_bara: 200.0
+    frac_bara: 324.74
+    mud_bara: 244.29800000000006
+  rig: land rig (synthetic)
+standards:
+  jurisdiction: TO_BE_IDENTIFIED
+design_factors: {}
+limits:
+- parameter: wellhead_injection_pressure_bara
+  condition: injection, all cases
+  max: 180.0
+  unit: bara
+  source: synthetic wellhead/flowline rating placeholder
+  limit_basis: SYNTHETIC
+- parameter: fracture_margin_bar
+  condition: injection, matrix basis
+  min: 0.0
+  unit: bar
+  source: 'definition: bottom-hole pressure below effective fracture pressure (matrix
+    basis)'
+  limit_basis: ASSUMED
+- parameter: pump_power_kw
+  condition: injection
+  max: 1500.0
+  unit: kW
+  source: synthetic facility power allocation
+  limit_basis: SYNTHETIC
+provenance:
+  reservoir.pressure_bara:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  reservoir.temperature_C:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  reservoir.permeability_md:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  reservoir.thickness_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  reservoir.skin:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  reservoir.drainage_radius_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  reservoir.fracture_gradient_bar_per_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  fluid.components:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  completion.tubing.id_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  facility.host_pressure_bara:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+    note: supply pressure available at the injection manifold
+  targets.rate:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  trajectory.md_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  trajectory.tvd_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  datums.reference_elevation_msl_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true

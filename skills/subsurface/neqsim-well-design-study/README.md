@@ -9,4 +9,4 @@ pytest
 
 See `SKILL.md` for inputs, method, validation checklist and limitations. Educational / screening only; not for final well design.
 
-Modules: `pressure`, `casing_seats`, `casing_design`, `tubing`, `torque_drag`, `hydraulics`, `offsets`, `normalise`, `study`, `figures`, `report`. Example: `examples/example_study.py`.
+Modules: `pressure`, `casing_seats`, `casing_design`, `tubing`, `torque_drag`, `hydraulics`, `offsets`, `normalise`, `study`, `figures`, `report`, `wellplan_graphics`, `wellplan_charts`. Examples: `examples/example_study.py`, `examples/example_wellplan.py` (A3 schematic sheet, Gantt, risk matrix and a professional report layout, synthetic data).

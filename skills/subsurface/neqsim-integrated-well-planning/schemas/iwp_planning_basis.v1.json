@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "iwp_planning_basis.v1",
+  "title": "Integrated well planning basis",
+  "description": "Planning basis of one study: purpose and targets, datums, reservoir, fluid, trajectory, completion, facility constraints, operations, limits and a provenance map. Ranges are {low, base, high}.",
+  "type": "object",
+  "required": ["schema", "study", "well", "datums", "targets", "trajectory", "reservoir", "fluid", "completion", "facility"],
+  "properties": {
+    "schema": {"const": "iwp_planning_basis.v1"},
+    "study": {
+      "type": "object",
+      "required": ["id", "maturity"],
+      "properties": {
+        "id": {"type": "string"},
+        "title": {"type": "string"},
+        "maturity": {"enum": ["concept", "selection", "detailed_engineering_support", "operating_well_evaluation"]},
+        "revision": {"type": "string"},
+        "synthetic": {"type": "boolean"},
+        "currency": {"type": "string"}
+      }
+    },
+    "well": {
+      "type": "object",
+      "required": ["type", "environment"],
+      "properties": {
+        "id": {"type": "string"},
+        "type": {"enum": ["oil_producer", "gas_producer", "gas_condensate_producer", "water_injector", "gas_injector"]},
+        "environment": {"enum": ["onshore", "platform", "subsea"]}
+      }
+    },
+    "datums": {
+      "type": "object",
+      "required": ["reference_elevation_msl_m"],
+      "properties": {
+        "reference": {"type": "string"},
+        "reference_elevation_msl_m": {"type": "number"},
+        "water_depth_m": {"type": "number", "minimum": 0},
+        "coordinate_system": {"type": "string"},
+        "pressure_reference": {"type": "string"},
+        "standard_conditions": {"type": "object"}
+      }
+    },
+    "targets": {"type": "object", "required": ["rate"], "properties": {"rate": {"$ref": "#/definitions/range"}}},
+    "trajectory": {"type": "object", "required": ["md_m", "tvd_m"], "properties": {"md_m": {"type": "number", "exclusiveMinimum": 0}, "tvd_m": {"type": "number", "exclusiveMinimum": 0}}},
+    "reservoir": {"type": "object", "required": ["pressure_bara", "temperature_C"], "properties": {"pressure_bara": {"$ref": "#/definitions/range"}, "temperature_C": {"type": "number"}}},
+    "fluid": {
+      "type": "object",
+      "required": ["components"],
+      "properties": {
+        "eos": {"enum": ["SRK", "PR", "CPA"]},
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "object", "required": ["name", "mole_fraction"], "properties": {"name": {"type": "string"}, "mole_fraction": {"type": "number", "minimum": 0}}}
+        }
+      }
+    },
+    "completion": {"type": "object", "required": ["tubing"], "properties": {"tubing": {"type": "object", "required": ["id_m"], "properties": {"id_m": {"type": "number", "exclusiveMinimum": 0}}}}},
+    "facility": {"type": "object", "required": ["host_pressure_bara"], "properties": {"host_pressure_bara": {"$ref": "#/definitions/range"}}},
+    "limits": {
+      "type": "array",
+      "items": {"type": "object", "required": ["parameter"], "properties": {"parameter": {"type": "string"}, "min": {"type": "number"}, "max": {"type": "number"}, "source": {"type": "string"},
+                "limit_basis": {"enum": ["APPROVED", "SYNTHETIC", "ASSUMED", "NONE"]}}}
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": {"type": "object", "required": ["class"], "properties": {"class": {"enum": ["SUPPLIED", "MEASURED", "FITTED", "CALCULATED", "ASSUMED"]}, "source": {"type": "string"}}}
+    }
+  },
+  "definitions": {
+    "range": {
+      "oneOf": [
+        {"type": "number"},
+        {"type": "object", "required": ["base"], "properties": {"low": {"type": "number"}, "base": {"type": "number"}, "high": {"type": "number"}, "kind": {"type": "string"}}}
+      ]
+    }
+  }
+}

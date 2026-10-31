@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "iwp_handoff_envelope.v1",
+  "title": "Integrated well planning hand-off envelope",
+  "description": "Common wrapper for every hand-off between the well-planning engineer and another agent. The payload is validated against the schema named in message_schema.",
+  "type": "object",
+  "required": ["schema", "message_schema", "study_id", "from_agent", "to_agent", "created", "status", "payload"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": {"const": "iwp_handoff_envelope.v1"},
+    "message_schema": {"type": "string", "pattern": "^iwp_[a-z_]+\\.v1$"},
+    "study_id": {"type": "string", "minLength": 1},
+    "revision": {"type": "string"},
+    "from_agent": {"type": "string"},
+    "to_agent": {"type": "string"},
+    "created": {"type": "string"},
+    "status": {"enum": ["DRAFT", "READY", "RETURNED", "REJECTED"]},
+    "synthetic": {"type": "boolean"},
+    "provenance": {"type": "array", "items": {"type": "object"}},
+    "open_items": {"type": "array", "items": {"type": "string"}},
+    "payload": {"type": "object"}
+  }
+}

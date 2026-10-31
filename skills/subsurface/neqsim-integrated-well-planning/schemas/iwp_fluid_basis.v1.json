@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Fluid / PVT basis in",
+  "description": "Fluid characterisation and PVT evidence supplied by the PVT/fluid agents.",
+  "type": "object",
+  "required": [
+    "fluid_id",
+    "eos",
+    "components"
+  ],
+  "properties": {
+    "fluid_id": {
+      "type": "string"
+    },
+    "eos": {
+      "enum": [
+        "SRK",
+        "PR",
+        "CPA"
+      ]
+    },
+    "mixing_rule": {
+      "type": "string"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "mole_fraction"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "mole_fraction": {
+            "type": "number"
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "pvt_measurements": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "tuning": {
+      "type": "object"
+    },
+    "validity_range": {
+      "type": "object"
+    },
+    "water_chemistry": {
+      "type": "object"
+    },
+    "wax_appearance_temperature_C": {
+      "type": "number"
+    },
+    "source": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "$id": "iwp_fluid_basis.v1"
+}

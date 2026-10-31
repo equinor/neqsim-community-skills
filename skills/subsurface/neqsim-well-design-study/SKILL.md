@@ -1,8 +1,8 @@
 ---
 name: neqsim-well-design-study
 calculation_basis: "screening"
-version: "0.2.0"
-description: "Screening well design study and report: pore/fracture window, casing seats and kick tolerance, casing and tubing design (API TR 5C3), erosional-velocity screening, torque and drag, ECD, offset-well calibration, time and cost P10/P50/P90, fail-closed validation and a Word report. USE WHEN: a concept or pre-FEED well design, casing or kick-tolerance review, or well time and cost range is needed, especially with offset wells."
+version: "0.3.0"
+description: "Screening well design study and well-plan document: pressure/fracture window, casing seats, kick tolerance, casing and tubing design (API TR 5C3) with load-basis comparison, torque and drag, ECD, offset calibration, time and cost P10/P50/P90, fail-closed validation, A3 well schematic, BOP and barrier sketches, Gantt, risk matrix and a professional Word report. USE WHEN: a concept or pre-FEED well design or well plan is needed, especially with offset wells."
 last_verified: "2026-10-31"
 requires:
   python_packages: ["numpy"]
@@ -79,6 +79,31 @@ Study spec options that matter on a real case:
 
 Figures: `well_design_study.figures` (`window_plot` with `extras`, `schematic`, `design_factor_plot`, `time_depth_plot`, `histogram_plot(units=...)`, `line_plot`). Report: `well_design_study.report.WellReport` (title page, table of contents, numbered tables and figures, provenance lines, `callout`, `landscape`/`portrait`, `appendix`, coloured status labels such as `[VERIFIED]`, `[DERIVED]`, `[ASSUMED]`).
 
+## Well plan document and graphics (0.3.0)
+
+A drilling-programme style well plan (cover with document control, summary with key data, chapters, drawings, registers) is built from three modules. All take plain data, use synthetic inputs in the tests and never invent numbers; every figure needs a provenance line and every number a status label.
+
+| Module | Functions |
+| --- | --- |
+| `wellplan_graphics` | `A3Sheet` (frame, title block, revision table, notes box), `well_schematic_sheet` (A3 sheet: MD / TVD RKB / TVDSS scales, formation column, nested casing with cement, pressure and mud-weight track, section table coloured by status), `bop_stack_sketch`, `barrier_schematic` (primary / secondary / environmental plugs), `trajectory_plan_section` (plan and section, `plan_extent_m`), `anticollision_sweep_plot`, `dodge` (label spacing) |
+| `wellplan_charts` | `gantt_chart` (P50 bars, P10-P90 whiskers, calendar axis), `risk_matrix` (5 x 5, before and after mitigation), `decision_tree` (contingency tree), `s_curve_plot`, `time_depth_band_plot`, `cost_breakdown_chart`, `location_map` (rings, scale bar, collision-free labels), `offset_comparison_chart` |
+| `report.WellPlanReport` | cover with document control (prepared / reviewed / approved left blank), revision history and distribution, contents, list of figures and tables (Word SEQ fields), header and footer with document id, classification and page x of y, `key_data_box`, `table` (repeated header, numeric alignment, kept together up to 16 rows), `figure` (caption, provenance line), `landscape(a3=True)` / `portrait`, `sheet_page` (an A3 landscape page for a drawing), `appendix` |
+
+Casing load-basis helpers in `casing_design`: `collapse_basis_comparison` (mud outside with no cement credit, set cement, unset slurry), `max_evacuation_level_for_collapse` (fluid-level limit as an operational mitigation), `alternative_pipes` (all catalogue walls and grades with collapse under a conservative and a realistic basis, drift against the next bit, weight and a relative cost index) and the new `StringBasis` fields `displacement_sg` (adds the `cementing` load case), `evacuation_level_tvd_m`, `evacuation_external="cement_slurry"` and `kick_mud_sg`.
+
+**Logic fix in 0.3.0.** With `kick.basis = "pore"` version 0.2.0 replaced the fluid left in the pipe after loss of returns (the planned next-section mud) by the pore EMW, which understated the internal collapse support and failed thin-wall liners that pass with the planned mud. The pore EMW now only sets the formation pressure of the gas kick (`kick_mud_sg`); `legacy_evacuation_fluid: true` in the spec reproduces the old numbers.
+
+Example: `examples/example_wellplan.py` (synthetic). Run `python examples/example_wellplan.py OUTPUT_FOLDER`.
+
+### Professional layout checklist
+
+- Cover: document id, revision, date, status (DRAFT / SCREENING), classification, prepared / reviewed / approved cells left blank for named people, revision history, distribution.
+- Answer-first summary of at most one page with a key-data box (well, rig, water depth, RKB, TD, target, spud, days and cost P10/P50/P90, cost class, casing one-liner, pressure range, wellhead class, top risks) and the readiness label.
+- Consistent numbering, a caption with number on every figure and table, a provenance line under every figure, units on axes, at least 170 dpi, no overlapping labels (use `dodge`).
+- Drawings on landscape pages (A3 sheet through `sheet_page`), wide tables in landscape sections, no orphan headings, no blank pages, tables not overflowing.
+- Run the report-design QA (`report-design` of the repository, or the skill `neqsim-report-design-and-visual-qa`), render every page, view every page image and record the QA in a log; update fields and export the PDF through Word with the instance stopped afterwards.
+- Fail closed: any failed extended check (pore-pressure sensitivity, wall tolerance, displacement fluid, planned strength against offsets) keeps the label BLOCKED_BY_FAILED_CHECKS.
+
 ## Validation Checklist
 
 - [ ] 9-5/8 in 47 ppf N80 reproduces the published 4 760 psi collapse and 6 870 psi burst within 2 percent (built-in check).
@@ -102,7 +127,8 @@ Figures: `well_design_study.figures` (`window_plot` with `extras`, `schematic`, 
 | Kick tolerance far below a planned design | Legacy mud-based kick convention with mud well above pore pressure, or a different hole section assumed per table row | Use `kick.basis = "pore"`, report both conventions, state the reading of the planned design's rows and do not tune to agree |
 | Riserless window or kick tolerance fails at the conductor | Window judged as EMW at RKB depth; kick tolerance asked where no shut-in exists | Flag the section `riserless`; the window is converted to mud weight below the seabed under a seawater head |
 | Hydrostatic pore EMW looks too high near the seabed | Normal gradient applied from the rotary table | Build pore curves with `hydrostatic_pressure_bar` (pressure from mean sea level) |
-| Liner collapse fails by a wide margin | Fixed 50 percent evacuation with the mud column outside | Use `evacuation_basis = "pore_balance"` and compare `evacuation_external = "set_cement"`; confirm in the company casing tool |
+| Liner collapse fails by a wide margin | Fixed 50 percent evacuation with the mud column outside, or (0.2.0) the pore EMW used as the fluid left in the pipe | Use `evacuation_basis = "pore_balance"` with the planned next-section mud inside (0.3.0), compare `collapse_basis_comparison`, check the next bit against the drift with `alternative_pipes`, and confirm in the company casing tool |
+| Thicker wall passes collapse but the next bit no longer fits | Drift (ID less 1/8 in) below the bit | Keep the wall or change the hole programme; grade does not help in the elastic regime (D/t above about 35) |
 | Zero torque in a vertical well | Perfectly straight survey | Add a tortuosity allowance (0.2 - 0.5 deg per 30 m) |
 | Days per 1000 m of 5 | Sidetrack row (days after kick-off only) mixed with full wells | Exclude sidetracks from time statistics |
 | Strength trend scattered | Offsets at different RKB and water depth, FIT mixed with LOT, wells with a different overpressure regime | Rebase to equal depth below the seabed, keep FIT as lower bound, exclude other regimes (state it) |
@@ -117,6 +143,7 @@ Figures: `well_design_study.figures` (`window_plot` with `extras`, `schematic`, 
 
 ## Related NeqSim Functionality
 
+- `neqsim-integrated-well-planning` uses this skill as its **drilling and casing design module** (tubular formula ratings, pressure window, seats, kick tolerance, torque and drag, time and cost); the integrated skill adds the reservoir-well-facility chain, operating envelopes, barrier schematics, alternatives, hand-off schemas and the combined report.
 - `neqsim.process.mechanicaldesign.subsea.WellDesignCalculator`, `WellMechanicalDesign`, `WellIntegrityScreening` and `WellCostEstimator` for casing and cost roll-ups inside process models; this skill adds offset calibration, kick tolerance, torque and drag, time/cost ranges and the report.
 - Skills `neqsim-erd-reach-screening`, `neqsim-well-trajectory-anticollision` for reach and collision checks; `neqsim-near-well-and-injectivity` and `neqsim-subsea-and-wells` for inflow and production wells; `neqsim-flow-assurance` for hydrate and CO2 corrosion of the well fluid.
 - NeqSim gas density at wellhead and shoe conditions gives the influx density and the shut-in wellhead pressure that load the casing.

@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Well model out",
+  "description": "Executable well model summary returned by the planning chain (producer or injector) for downstream agents.",
+  "type": "object",
+  "required": [
+    "well_id",
+    "well_type",
+    "environment",
+    "cases",
+    "ledger_refs",
+    "model_files"
+  ],
+  "properties": {
+    "well_id": {
+      "type": "string"
+    },
+    "well_type": {
+      "type": "string"
+    },
+    "environment": {
+      "type": "string"
+    },
+    "depth_datum": {
+      "type": "string"
+    },
+    "pressure_reference": {
+      "type": "string"
+    },
+    "standard_conditions": {
+      "type": "object"
+    },
+    "cases": {
+      "type": "object",
+      "description": "low/base/high operating points"
+    },
+    "ledger_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "model_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "tubing": {
+      "type": "object"
+    },
+    "assumptions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$id": "iwp_well_model.v1"
+}

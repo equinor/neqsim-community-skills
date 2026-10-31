@@ -1,0 +1,291 @@
+schema: iwp_planning_basis.v1
+study:
+  id: IWP-DEMO-B
+  title: Gas-condensate producer, subsea tie-back well (synthetic demonstration)
+  maturity: selection
+  revision: A
+  author: neqsim-community
+  date: '2026-10-31'
+  currency: USD
+  synthetic: true
+  purpose: Tubing and flowline back-pressure screening for a subsea gas-condensate
+    well
+well:
+  id: B-1
+  type: gas_condensate_producer
+  environment: subsea
+  name: Synthetic subsea gas-condensate producer
+datums:
+  reference: RKB
+  reference_elevation_msl_m: 25.0
+  water_depth_m: 350.0
+  coordinate_system: synthetic local grid
+  pressure_reference: bara (absolute)
+  standard_conditions:
+    temperature_C: 15.0
+    pressure_bara: 1.01325
+environment:
+  seabed_temperature_C: 4.0
+targets:
+  rate:
+    kind: gas_sm3d
+    low: 800000.0
+    base: 1200000.0
+    high: 1600000.0
+  plateau_years: 4.0
+trajectory:
+  md_m: 3500.0
+  tvd_m: 3252.0
+  survey:
+    kop_md_m: 1100.0
+    build_rate_deg_per_30m: 2.0
+    hold_inclination_deg: 28.0
+    azimuth_deg: 90.0
+  max_dls_deg_per_30m: 3.0
+reservoir:
+  pressure_bara:
+    low: 400.0
+    base: 450.0
+    high: 470.0
+  temperature_C: 110.0
+  permeability_md:
+    low: 12.0
+    base: 20.0
+    high: 30.0
+  thickness_m: 40.0
+  skin:
+    low: 0.0
+    base: 3.0
+    high: 10.0
+  drainage_radius_m: 500.0
+  wellbore_radius_m: 0.108
+  porosity: 0.15
+  relperm:
+    swc: 0.2
+    soc: 0.1
+    krg_max: 1.0
+    kro_max: 1.0
+    ng: 3.0
+    'no': 3.0
+  datum_tvd_m: 3252.0
+  ipr_points: 14
+  fracture_gradient_bar_per_m: 0.17
+  depletion_bar_per_year: 15.0
+  water_cut: 0.0
+fluid:
+  eos: SRK
+  components:
+  - name: methane
+    mole_fraction: 0.75
+    origin: synthetic
+  - name: ethane
+    mole_fraction: 0.08
+    origin: synthetic
+  - name: propane
+    mole_fraction: 0.05
+    origin: synthetic
+  - name: n-butane
+    mole_fraction: 0.03
+    origin: synthetic
+  - name: n-hexane
+    mole_fraction: 0.04
+    origin: synthetic
+  - name: n-octane
+    mole_fraction: 0.03
+    origin: synthetic
+  - name: nC10
+    mole_fraction: 0.02
+    origin: synthetic
+  pvt_measurements: []
+  water_chemistry: null
+  contaminants:
+    co2_mol_frac: 0.0
+    h2s_ppm: 0.0
+  wax_appearance_temperature_C: null
+  free_water_for_hydrate:
+    water_mole_fraction: 0.02
+completion:
+  tubing:
+    od_in: 5.5
+    id_m: 0.124
+    roughness_m: 4.5e-05
+    grade: 13Cr-L80
+    weight_ppf: 17.0
+    wall_in: 0.304
+    shoe_md_m: 3300.0
+  casing:
+  - name: Conductor
+    od_in: 30.0
+    hole_in: 36.0
+    top_md_m: 375.0
+    shoe_md_m: 500.0
+    shoe_tvd_m: 500.0
+    grade: X-52
+    cement_top_md_m: 375.0
+  - name: Surface casing
+    od_in: 13.375
+    hole_in: 17.5
+    top_md_m: 375.0
+    shoe_md_m: 1400.0
+    shoe_tvd_m: 1394.0
+    grade: L80
+    weight_ppf: 68.0
+    cement_top_md_m: 375.0
+  - name: Production casing
+    od_in: 9.625
+    hole_in: 12.25
+    top_md_m: 375.0
+    shoe_md_m: 3300.0
+    shoe_tvd_m: 3075.0
+    grade: L80
+    weight_ppf: 53.5
+    cement_top_md_m: 2500.0
+  packer_md_m: 3280.0
+  sssv_md_m: 650.0
+  perforations:
+  - top_md_m: 3440.0
+    base_md_m: 3480.0
+  lift:
+    type: none
+    gas_rate_sm3d: 0.0
+  tree: vertical subsea tree (synthetic)
+  wellhead_rating_bar: 690.0
+  formations:
+  - name: Overburden shale
+    top_tvd_m: 0.0
+  - name: Caprock
+    top_tvd_m: 2862
+  - name: Reservoir
+    top_tvd_m: 3122
+    base_tvd_m: 3285
+  - name: Fluid contact (synthetic)
+    top_tvd_m: 3252
+    kind: contact
+  overall_u_w_m2k: 5.0
+facility:
+  host_pressure_bara:
+    low: 80.0
+    base: 90.0
+    high: 100.0
+  host_temperature_C: 30.0
+  choke_dp_bar: 0.0
+  flowline:
+    length_m: 8000.0
+    id_m: 0.2
+    elevation_change_m: 60.0
+    roughness_m: 4.5e-05
+    ambient_temperature_C: 4.0
+  max_oil_sm3d: 5000.0
+  max_gas_msm3d: 6.0
+  max_liquid_m3d: 6000.0
+  fluid_quality:
+    max_water_cut: 0.6
+operations:
+  life_years: 20
+  intervention_strategy: light well intervention vessel (synthetic assumption)
+  abandonment: permanent abandonment per applicable regulation (requirement to be
+    identified)
+drilling:
+  hazards:
+  - shallow gas (synthetic placeholder)
+  pressure_window:
+  - tvd_m: 325.20000000000005
+    pore_bara: 32.88340809200001
+    frac_bara: 53.64849800000001
+    mud_bara: 37.123199840000005
+  - tvd_m: 975.5999999999999
+    pore_bara: 96.630224276
+    frac_bara: 158.925494
+    mud_bara: 111.64655216000001
+  - tvd_m: 1626.0
+    pore_bara: 160.37704046
+    frac_bara: 264.20249
+    mud_bara: 189.23250800000002
+  - tvd_m: 2276.3999999999996
+    pore_bara: 224.12385664399997
+    frac_bara: 369.47948599999995
+    mud_bara: 269.88106736
+  - tvd_m: 2926.8
+    pore_bara: 287.87067282800007
+    frac_bara: 474.75648200000006
+    mud_bara: 353.5922302400001
+  - tvd_m: 3252.0
+    pore_bara: 450.0
+    frac_bara: 527.39498
+    mud_bara: 396.5962880000001
+  rig: semi-submersible (synthetic)
+standards:
+  jurisdiction: TO_BE_IDENTIFIED
+design_factors: {}
+limits:
+- parameter: erosional_ratio
+  condition: production, all cases
+  max: 1.0
+  unit: '-'
+  source: API RP 14E ratio definition; C-factor 100 assumed
+  limit_basis: ASSUMED
+- parameter: hydrate_margin_K
+  condition: production, wellhead
+  min: 3.0
+  unit: K
+  source: synthetic subcooling margin for demonstration (operator value to be supplied)
+  limit_basis: SYNTHETIC
+- parameter: wellhead_pressure_bara
+  condition: shut-in
+  max: 690.0
+  unit: bara
+  source: synthetic tree rating placeholder
+  limit_basis: SYNTHETIC
+provenance:
+  reservoir.pressure_bara:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  reservoir.temperature_C:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  reservoir.permeability_md:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  reservoir.thickness_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  reservoir.skin:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  reservoir.drainage_radius_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  fluid.components:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  completion.tubing.id_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  facility.host_pressure_bara:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  targets.rate:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  trajectory.md_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  trajectory.tvd_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true
+  datums.reference_elevation_msl_m:
+    class: ASSUMED
+    source: synthetic demonstration assumption (no field data)
+    synthetic: true

@@ -182,12 +182,20 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-well-design-study
-    version: "0.2.0"
-    description: "Screening well design study and report: pore/fracture window, casing seats and kick tolerance, casing and tubing design (API TR 5C3), erosional-velocity screening, torque and drag, ECD, offset-well calibration, time and cost P10/P50/P90, fail-closed validation and a Word report. USE WHEN: a concept or pre-FEED well design, casing or kick-tolerance review, or well time and cost range is needed, especially with offset wells."
+    version: "0.3.0"
+    description: "Screening well design study and well-plan document: pressure/fracture window, casing seats, kick tolerance, casing and tubing design (API TR 5C3) with load-basis comparison, torque and drag, ECD, offset calibration, time and cost P10/P50/P90, fail-closed validation, A3 well schematic, BOP and barrier sketches, Gantt, risk matrix and a professional Word report. USE WHEN: a concept or pre-FEED well design or well plan is needed, especially with offset wells."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/subsurface/neqsim-well-design-study/SKILL.md"
-    tags: [wells, well-design, casing, kick-tolerance, torque-drag, offset-wells, time-cost, report, screening]
+    tags: [wells, well-design, well-plan, casing, kick-tolerance, torque-drag, offset-wells, time-cost, report, screening]
+    min_neqsim_version: "3.7.0"
+  - name: neqsim-integrated-well-planning
+    version: "0.1.0"
+    description: "Integrated well planning for oil, gas-condensate, water- and gas-injection wells (onshore, platform, subsea): provenance-tracked basis, NeqSim reservoir-well-facility chain (IPR, drift-flux VLP, injectivity, hydrate, annulus pressure, tubing movement), operating envelopes, barrier schematics, alternatives, A3 drawings, hand-off schemas, report and capability ledger. USE WHEN: a well must be sized, compared or documented from reservoir, fluid, host and completion data."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-integrated-well-planning/SKILL.md"
+    tags: [wells, well-planning, nodal-analysis, injectivity, operating-envelope, barriers, flow-assurance, integrity, drawings, report]
     min_neqsim_version: "3.7.0"
   - name: neqsim-h2s-phase-partitioning
     version: "0.1.0"

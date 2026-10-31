@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Host constraints in",
+  "description": "Host/facility boundary constraints supplied by the host, tie-in or capacity agents.",
+  "type": "object",
+  "required": [
+    "host_id",
+    "pressure_bara"
+  ],
+  "properties": {
+    "host_id": {
+      "type": "string"
+    },
+    "pressure_bara": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "object",
+          "required": [
+            "base"
+          ],
+          "properties": {
+            "low": {
+              "type": "number"
+            },
+            "base": {
+              "type": "number"
+            },
+            "high": {
+              "type": "number"
+            }
+          }
+        }
+      ]
+    },
+    "temperature_C": {
+      "type": "number"
+    },
+    "max_rates": {
+      "type": "object"
+    },
+    "power_kw_available": {
+      "type": "number"
+    },
+    "fluid_quality": {
+      "type": "object"
+    },
+    "backpressure_vs_rate": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "source": {
+      "type": "string"
+    },
+    "valid_from": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "$id": "iwp_host_constraints.v1"
+}

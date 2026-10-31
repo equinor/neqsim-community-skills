@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Interface specification",
+  "description": "Specification of an assessment that needs an external tool or specialist; carries no result.",
+  "type": "object",
+  "required": [
+    "id",
+    "assessment",
+    "receiver",
+    "inputs_available",
+    "inputs_missing",
+    "status"
+  ],
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "assessment": {
+      "type": "string"
+    },
+    "receiver": {
+      "type": "string"
+    },
+    "ledger_ref": {
+      "type": "string"
+    },
+    "inputs_available": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "inputs_missing": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expected_return": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "UNRESOLVED",
+        "READY_FOR_HANDOFF",
+        "RETURNED"
+      ]
+    },
+    "statement": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "$id": "iwp_interface_spec.v1"
+}

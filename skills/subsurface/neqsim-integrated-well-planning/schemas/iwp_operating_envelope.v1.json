@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Operating envelope",
+  "description": "Operating-envelope table rows with limit source, margin and status.",
+  "type": "object",
+  "required": [
+    "well_id",
+    "rows"
+  ],
+  "properties": {
+    "well_id": {
+      "type": "string"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "parameter",
+          "condition",
+          "status"
+        ],
+        "properties": {
+          "parameter": {
+            "type": "string"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "min_limit": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "max_limit": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "limit_source": {
+            "type": "string"
+          },
+          "limit_basis": {
+            "type": "string"
+          },
+          "predicted": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "margin_to_limit": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "status": {
+            "enum": [
+              "PASS",
+              "WARN",
+              "FAIL",
+              "NEEDS_REVIEW",
+              "NOT_ASSESSED"
+            ]
+          },
+          "action": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "$id": "iwp_operating_envelope.v1"
+}

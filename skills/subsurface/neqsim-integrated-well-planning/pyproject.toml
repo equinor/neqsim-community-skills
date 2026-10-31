@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-integrated-well-planning"
+version = "0.1.0"
+description = "Integrated well planning for NeqSim: planning basis, reservoir-well-facility chain, operating envelopes, barrier schematics, alternatives, drawings and a well-planning report for producers and injectors."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = ["numpy>=1.24", "PyYAML>=6.0", "jsonschema>=4.0"]
+
+[project.optional-dependencies]
+neqsim = ["jpype1>=1.5"]
+report = ["matplotlib>=3.7", "python-docx>=1.1", "pandas>=2.0"]
+view3d = ["pyvista>=0.43"]
+test = ["pytest>=7.4", "matplotlib>=3.7", "python-docx>=1.1", "pandas>=2.0", "PyYAML>=6.0", "jsonschema>=4.0", "Pillow>=10.0"]
+
+[project.scripts]
+integrated-well-planning = "integrated_well_planning.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "../neqsim-well-design-study/src"]

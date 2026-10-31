@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Flow-assurance requirements",
+  "description": "Requirements the well imposes on, or receives from, the flow-assurance study (temperatures, pressures, rates, inhibitor basis, open threats).",
+  "type": "object",
+  "required": [
+    "well_id",
+    "conditions",
+    "open_threats"
+  ],
+  "properties": {
+    "well_id": {
+      "type": "string"
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "state",
+          "pressure_bara",
+          "temperature_C"
+        ],
+        "properties": {
+          "state": {
+            "type": "string"
+          },
+          "pressure_bara": {
+            "type": "number"
+          },
+          "temperature_C": {
+            "type": "number"
+          },
+          "rate": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "inhibitor_basis": {
+      "type": "object"
+    },
+    "open_threats": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "lab_data_needed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "returned_margins": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "$id": "iwp_flow_assurance_requirements.v1"
+}

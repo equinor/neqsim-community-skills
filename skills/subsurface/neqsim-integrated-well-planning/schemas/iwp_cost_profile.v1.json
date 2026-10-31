@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cost and profile out",
+  "description": "Deliverability profile (low/base/high) and supplied cost basis handed to economics and field-development agents. Contains no recovery or value estimate.",
+  "type": "object",
+  "required": [
+    "well_id",
+    "profile",
+    "cost",
+    "exclusions"
+  ],
+  "properties": {
+    "well_id": {
+      "type": "string"
+    },
+    "profile": {
+      "type": "object",
+      "required": [
+        "years",
+        "cases",
+        "unit"
+      ],
+      "properties": {
+        "years": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "cases": {
+          "type": "object"
+        },
+        "unit": {
+          "type": "string"
+        }
+      }
+    },
+    "cost": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "capex": {
+          "type": "number"
+        },
+        "opex_per_year": {
+          "type": "number"
+        },
+        "source": {
+          "type": "string"
+        },
+        "price_basis_year": {
+          "type": "number"
+        }
+      }
+    },
+    "energy_demand": {
+      "type": "object"
+    },
+    "exclusions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "statement": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "$id": "iwp_cost_profile.v1"
+}

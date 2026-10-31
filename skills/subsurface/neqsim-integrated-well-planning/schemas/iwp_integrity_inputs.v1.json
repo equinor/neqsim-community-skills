@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Integrity inputs",
+  "description": "Load cases, barrier proposal and open items exchanged with the well-integrity agent; returns carry verification evidence.",
+  "type": "object",
+  "required": [
+    "well_id",
+    "load_cases",
+    "barrier_states",
+    "open_items"
+  ],
+  "properties": {
+    "well_id": {
+      "type": "string"
+    },
+    "load_cases": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "tubing": {
+      "type": "object"
+    },
+    "apb": {
+      "type": "object"
+    },
+    "tubing_movement": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "barrier_states": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "limits_supplied": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "open_items": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "returned_verification": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "additionalProperties": true,
+  "$id": "iwp_integrity_inputs.v1"
+}

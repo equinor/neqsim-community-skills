@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VFP table request",
+  "description": "Request to vfp-lift-curve-agent: tubing/flowline geometry, fluid and the grids for VFPPROD or VFPINJ tables.",
+  "type": "object",
+  "required": [
+    "table_kind",
+    "well_id",
+    "tubing",
+    "fluid_basis",
+    "grids"
+  ],
+  "properties": {
+    "table_kind": {
+      "enum": [
+        "VFPPROD",
+        "VFPINJ"
+      ]
+    },
+    "well_id": {
+      "type": "string"
+    },
+    "datum_depth_m": {
+      "type": "number"
+    },
+    "tubing": {
+      "type": "object",
+      "required": [
+        "id_m",
+        "md_m",
+        "tvd_m"
+      ],
+      "properties": {
+        "id_m": {
+          "type": "number"
+        },
+        "md_m": {
+          "type": "number"
+        },
+        "tvd_m": {
+          "type": "number"
+        },
+        "roughness_m": {
+          "type": "number"
+        }
+      }
+    },
+    "survey": {
+      "type": "object"
+    },
+    "thermal": {
+      "type": "object"
+    },
+    "fluid_basis": {
+      "type": "object"
+    },
+    "grids": {
+      "type": "object",
+      "required": [
+        "rate",
+        "whp_bara"
+      ],
+      "properties": {
+        "rate": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2
+        },
+        "whp_bara": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2
+        },
+        "water_cut": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "gor": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "lift_gas": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "rate_unit": {
+      "type": "string"
+    },
+    "calibration": {
+      "type": "object"
+    },
+    "expected_return": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "$id": "iwp_vfp_request.v1"
+}

@@ -198,7 +198,7 @@ class StringBasis:
     test_pressure_bar: Optional[float] = None
     evacuation_fraction: float = 0.5
     evacuation_basis: str = "fraction"  # "fraction" (fixed share of the string evacuated) or "pore_balance" (loss of returns to pore balance)
-    evacuation_external: str = "mud_or_pore"  # external load in the evacuation case: higher of mud column and pore (legacy), or "set_cement" (pore below the cement top)
+    evacuation_external: str = "mud_or_pore"  # evacuation external load: "mud_or_pore" (no cement credit, legacy), "set_cement" (pore below the cement top) or "cement_slurry" (unset slurry)
     cement_sg: float = 1.90
     water_depth_m: float = 0.0
     air_gap_m: float = 0.0
@@ -207,6 +207,9 @@ class StringBasis:
     overpull_kn: float = 400.0
     ext_pore_case_sg: Optional[float] = None
     cap_gas_at_frac: bool = True
+    evacuation_level_tvd_m: Optional[float] = None  # fixed fluid level (TVD) in the evacuation case; overrides ``evacuation_basis``
+    displacement_sg: Optional[float] = None  # density of the fluid inside during cementing; adds the ``cementing`` load case (unset slurry outside) when given
+    kick_mud_sg: Optional[float] = None  # mud-equivalent density that sets the formation pressure in the gas-kick case (pore basis); None = ``next_mud_sg`` (mud basis)
 
 
 def _external_bar(basis: StringBasis, z: float) -> float:
@@ -235,7 +238,7 @@ def load_cases(basis: StringBasis, n: int = 41) -> Dict[str, Dict[str, np.ndarra
     p_wh_sea = basis.sea_sg * g * basis.water_depth_m
     cases: Dict[str, Dict[str, np.ndarray]] = {}
 
-    p_form = (basis.next_mud_sg + basis.kick_intensity_sg) * g * basis.next_td_tvd_m
+    p_form = ((basis.kick_mud_sg if basis.kick_mud_sg is not None else basis.next_mud_sg) + basis.kick_intensity_sg) * g * basis.next_td_tvd_m
     p_shoe_gas = p_form - basis.gas_sg * g * (basis.next_td_tvd_m - basis.shoe_tvd_m)
     if basis.cap_gas_at_frac:
         p_shoe_gas = min(p_shoe_gas, basis.frac_shoe_sg * g * basis.shoe_tvd_m)
@@ -255,11 +258,21 @@ def load_cases(basis: StringBasis, n: int = 41) -> Dict[str, Dict[str, np.ndarra
         # loss of returns: the fluid level falls until the internal hydrostatic head balances the pore pressure at the shoe
         pore_shoe_bar = basis.pore_sg_at(basis.shoe_tvd_m) * g * basis.shoe_tvd_m
         z_evac = max(ml, basis.shoe_tvd_m - pore_shoe_bar / (basis.next_mud_sg * g))
+    if basis.evacuation_level_tvd_m is not None:
+        z_evac = max(ml, float(basis.evacuation_level_tvd_m))
     pi_evac = np.where(z > z_evac, basis.next_mud_sg * g * (z - z_evac), 0.0)
     pext_run = np.array([max(basis.mud_sg * g * (zz - ml) + p_wh_sea, _external_bar(basis, float(zz))) for zz in z])
     if basis.evacuation_external == "set_cement":
         pext_run = pext
+    elif basis.evacuation_external == "cement_slurry":
+        # unset cement outside: slurry hydrostatic below the cement top, mud above it (most severe external load, a transient)
+        toc = max(basis.toc_tvd_m, ml)
+        pext_run = np.array([p_wh_sea + basis.mud_sg * g * (min(zz, toc) - ml) + basis.cement_sg * g * max(0.0, zz - toc) for zz in z])
     cases["evacuation"] = {"z": z, "pi": pi_evac, "po": pext_run}
+    if basis.displacement_sg is not None:
+        toc_c = max(basis.toc_tvd_m, ml)
+        po_c = np.array([p_wh_sea + basis.mud_sg * g * (min(zz, toc_c) - ml) + basis.cement_sg * g * max(0.0, zz - toc_c) for zz in z])
+        cases["cementing"] = {"z": z, "pi": p_wh_sea + basis.displacement_sg * g * (z - ml), "po": po_c}
     return cases
 
 
@@ -410,3 +423,118 @@ def wellhead_rating_class(max_pressure_bar: float, classes_psi: Sequence[float] 
         if psi_to_bar(c) >= need:
             return {"class_psi": c, "class_bar": psi_to_bar(c), "utilisation": need / psi_to_bar(c)}
     return {"class_psi": float("nan"), "class_bar": float("nan"), "utilisation": float("nan")}
+
+
+def drift_diameter_in(pipe: Pipe, allowance_in: float = 0.125) -> float:
+    """Drift diameter (in): inside diameter minus a drift allowance (default 1/8 in, the common convention for casing of 9 5/8 in and larger; confirm with the vendor)."""
+    return pipe.id_in - allowance_in
+
+
+def collapse_basis_comparison(pipe: Pipe, basis: StringBasis, bases: Sequence[str] = ("mud_or_pore", "set_cement", "cement_slurry"), df: DesignFactors = DesignFactors(),
+                              n: int = 41) -> List[Dict[str, object]]:
+    """Collapse design factor of one pipe under several external-load bases of the evacuation (loss of returns) case.
+
+    Bases: ``mud_or_pore`` (no credit for cement, the original mud column outside; conservative), ``set_cement`` (pore pressure outside, cement set) and
+    ``cement_slurry`` (unset slurry outside, a transient). Other load cases are unchanged.
+
+    Args:
+        pipe: candidate pipe.
+        basis: string basis (its ``evacuation_external`` is overridden for each row).
+        bases: external-load bases to compare.
+        df: minimum design factors.
+        n: number of depth nodes.
+
+    Returns:
+        One dict per basis with ``basis``, ``collapse_df``, ``collapse_case``, ``passes_collapse``.
+    """
+    from dataclasses import replace
+
+    rows = []
+    for b in bases:
+        res = check_string(pipe, replace(basis, evacuation_external=b), df, n)
+        rows.append({"basis": b, "collapse_df": float(res["collapse_df"]), "collapse_case": res["collapse_case"], "passes_collapse": bool(res["collapse_df"] >= df.collapse)})
+    return rows
+
+
+def max_evacuation_level_for_collapse(pipe: Pipe, basis: StringBasis, df: DesignFactors = DesignFactors(), n: int = 41) -> Dict[str, float]:
+    """Deepest well fluid level (TVD below RKB, m) at which the collapse design factor is still at least the minimum, with the basis as given.
+
+    The fluid level is the operational mitigation of a thin-wall string: keeping the level above the returned depth (fill-up, loss control) keeps the
+    collapse load within the pipe rating. Bisection between a full well (level at the mudline) and an empty string (level at the shoe); fluid below the
+    level is the next-section mud of the basis.
+
+    Args:
+        pipe: candidate pipe.
+        basis: string basis, including ``evacuation_external``.
+        df: minimum design factors.
+        n: number of depth nodes.
+
+    Returns:
+        Dict with ``level_tvd_m`` (deepest allowed fluid level; the shoe depth means even an empty string passes, the mudline means no evacuation is
+        allowed), ``allowed_evacuated_length_m`` (empty length below the mudline that is still acceptable) and ``collapse_df_full_evacuation``
+        (factor with an empty string).
+    """
+    from dataclasses import replace
+
+    ml = basis.water_depth_m + basis.air_gap_m
+    top = ml  # the fluid level is a well-wide level: a full well has the fluid at the mudline (wellhead)
+    shoe = float(basis.shoe_tvd_m)
+
+    def coll(level: float) -> float:
+        return float(check_string(pipe, replace(basis, evacuation_level_tvd_m=level), df, n)["collapse_df"])
+
+    full = coll(shoe)
+    if coll(top) < df.collapse:
+        return {"level_tvd_m": float(top), "allowed_evacuated_length_m": 0.0, "collapse_df_full_evacuation": full}
+    if full >= df.collapse:
+        return {"level_tvd_m": shoe, "allowed_evacuated_length_m": shoe - top, "collapse_df_full_evacuation": full}
+    lo, hi = top, shoe  # collapse factor passes at ``lo`` (string full) and fails at ``hi`` (string empty)
+    for _ in range(40):
+        mid = 0.5 * (lo + hi)
+        if coll(mid) >= df.collapse:
+            lo = mid
+        else:
+            hi = mid
+    return {"level_tvd_m": lo, "allowed_evacuated_length_m": lo - top, "collapse_df_full_evacuation": full}
+
+
+def alternative_pipes(basis: StringBasis, grades: Sequence[str], df: DesignFactors = DesignFactors(), bit_od_in: Optional[float] = None,
+                      drift_allowance_in: float = 0.125, grade_cost_factor: Optional[Dict[str, float]] = None, conservative_basis: str = "mud_or_pore",
+                      realistic_basis: str = "set_cement", n: int = 41) -> List[Dict[str, object]]:
+    """Trade-off table of all catalogue pipes of ``basis.od_in``: collapse factors under a conservative and a realistic external-load basis, weight, drift and bit clearance.
+
+    A heavier wall raises the collapse rating of a thin-wall string but reduces the inside diameter, so the next bit may no longer pass. In the elastic
+    collapse regime (large D/t) the grade does not change the rating, only the wall does.
+
+    Args:
+        basis: string basis.
+        grades: grades to try.
+        df: minimum design factors.
+        bit_od_in: bit that must pass the string (next hole section); None skips the drift check.
+        drift_allowance_in: ID minus drift (in).
+        grade_cost_factor: relative price per tonne by grade (an index, for example L80 = 1.0); missing grades default to 1.0. The cost index is the string
+            weight in tonnes times this factor, not a price.
+        conservative_basis: external-load basis of the conservative case.
+        realistic_basis: external-load basis of the realistic case.
+        n: number of depth nodes.
+
+    Returns:
+        List of dicts sorted by string weight with ``pipe``, ``wall_in``, ``grade``, ``id_in``, ``drift_in``, ``bit_clearance_in``, ``bit_passes``,
+        ``collapse_df_conservative``, ``collapse_df_realistic``, ``passes_all_conservative`` (all design factors, conservative basis),
+        ``passes_all_realistic``, ``weight_kg_per_m``, ``string_weight_t``, ``cost_index``.
+    """
+    from dataclasses import replace
+
+    gcf = grade_cost_factor or {}
+    out = []
+    for pipe in candidates(basis.od_in, grades):
+        rc = check_string(pipe, replace(basis, evacuation_external=conservative_basis), df, n)
+        rr = check_string(pipe, replace(basis, evacuation_external=realistic_basis), df, n)
+        drift = drift_diameter_in(pipe, drift_allowance_in)
+        clear = None if bit_od_in is None else drift - float(bit_od_in)
+        out.append({"pipe": pipe.label(), "wall_in": pipe.wall_in, "grade": pipe.grade, "id_in": pipe.id_in, "drift_in": drift, "bit_clearance_in": clear,
+                    "bit_passes": True if clear is None else bool(clear >= 0.0), "collapse_df_conservative": float(rc["collapse_df"]),
+                    "collapse_df_realistic": float(rr["collapse_df"]), "passes_all_conservative": bool(rc["passes"]), "passes_all_realistic": bool(rr["passes"]),
+                    "weight_kg_per_m": pipe.weight_kg_per_m, "string_weight_t": float(rr["string_weight_t"]),
+                    "cost_index": float(rr["string_weight_t"]) * float(gcf.get(pipe.grade, 1.0))})
+    return sorted(out, key=lambda r: (r["string_weight_t"], r["grade"]))

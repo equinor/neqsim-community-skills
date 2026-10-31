@@ -19,7 +19,7 @@ from .runtime import ensure_runtime, jclass
 SC_MOLAR_VOLUME_SM3_PER_KMOL = 23.645
 WATER_MW_KG_PER_MOL = 0.018015
 WATER_SC_DENSITY = 999.0
-HIGHER_IS_WORSE = {"skin", "water_cut", "host_pressure_bara", "gor"}
+HIGHER_IS_WORSE = {"skin", "water_cut", "host_pressure_bara", "gor", "wgr"}
 _OPPOSITE = {"low": "high", "base": "base", "high": "low"}
 
 
@@ -53,6 +53,7 @@ def case_params(basis: Dict[str, Any], case: str) -> Dict[str, Any]:
     out["re_m"] = float(g("reservoir.drainage_radius_m") or 400.0)
     out["rw_m"] = float(g("reservoir.wellbore_radius_m") or 0.108)
     out["water_cut"] = pick(g("reservoir.water_cut") if g("reservoir.water_cut") is not None else 0.0, case, "water_cut")
+    out["wgr_sm3_per_msm3"] = pick(g("reservoir.wgr_sm3_per_msm3") if g("reservoir.wgr_sm3_per_msm3") is not None else 0.0, case, "wgr")
     out["host_pressure_bara"] = pick(g("facility.host_pressure_bara"), case, "host_pressure_bara")
     out["rate"] = case_value(g("targets.rate"), "base")
     out["rate_low"], out["rate_high"] = case_value(g("targets.rate"), "low"), case_value(g("targets.rate"), "high")
@@ -124,10 +125,12 @@ def lump_to_cpa_fluid(source, temperature_C: float, pressure_bara: float, water_
     """
     require("SystemSrkCPAstatoil")
     f = jclass("SystemSrkCPAstatoil")(273.15 + temperature_C, pressure_bara)
+    total = float(source.getTotalNumberOfMoles()) or 1.0
     n_plus, m_plus = 0.0, 0.0
     for i in range(source.getNumberOfComponents()):
         c = source.getComponent(i)
-        name, z, mm = str(c.getComponentName()), float(c.getz()), float(c.getMolarMass())
+        name, mm = str(c.getComponentName()), float(c.getMolarMass())
+        z = float(c.getNumberOfmoles()) / total
         if name in CPA_LIBRARY_NAMES:
             f.addComponent(name, z)
         elif name.lower() != "water":

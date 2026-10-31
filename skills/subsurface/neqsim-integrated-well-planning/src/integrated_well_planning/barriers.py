@@ -13,7 +13,7 @@ from typing import Any, Dict, List, Optional
 
 from .registers import get_path
 
-STATES = ("production", "shut_in", "injection", "intervention", "abandonment")
+STATES = ("production", "shut_in", "injection", "intervention", "abandonment", "drilling", "well_test", "suspended")
 ENVELOPES = ("primary", "secondary")
 VERIFICATION_STATUS = ("UNVERIFIED", "PLANNED", "VERIFIED", "NOT_APPLICABLE")
 
@@ -106,6 +106,45 @@ def propose_barriers(basis: Dict[str, Any]) -> List[BarrierState]:
         _e("A3", "Surface/seabed plug and wellhead removal plan", "secondary", "final isolation at the top", None, [], ["jurisdiction requirement to be identified"]),
     ]
     states.append(BarrierState("abandonment", "Permanent abandonment (placeholder arrangement)", aband,
+                               ["abandonment requirements for this jurisdiction are not identified in the basis: arrangement is a placeholder"]))
+    return states
+
+
+EXPLORATION_STATES = ("drilling", "well_test", "suspended", "abandonment")
+
+
+def propose_exploration_barriers(basis: Dict[str, Any]) -> List[BarrierState]:
+    """Propose barrier schematics for an exploration / appraisal well (drilling, well test, temporary suspension, permanent abandonment).
+
+    Elements are proposals from the casing description (``completion.casing``, ``drilling.rig``); they are ``UNVERIFIED`` and carry no acceptance
+    criteria, plug lengths or compliance statement. Plug positions and verification methods come from the verified well-barrier standard.
+    """
+    casing = (get_path(basis, "completion") or {}).get("casing", [])
+    env = get_path(basis, "well.environment")
+    last = casing[-1] if casing else {}
+    shoe = last.get("shoe_md_m")
+    top_cement = last.get("cement_top_md_m")
+    bop = "subsea BOP stack with shear rams and marine riser" if env == "subsea" else "surface BOP stack"
+    mud = _e("P1", "Drilling-fluid column (overbalance)", "primary", "keep the well overbalanced to formation pressure", None, ["mud weight inside the pore/fracture window"],
+             ["kick-tolerance and pore-pressure basis (well-control assessment) to be supplied"], "continuous monitoring: pit level, flow check, trip tank")
+    sec_drill = [_e("S1", "Casing, cement and wellhead", "secondary", "contain pressure outside the open hole", shoe, ["cement top"], ["casing test and cement evidence"]),
+                 _e("S2", bop, "secondary", "close in the well and shear the string", None, [], ["BOP test and shear-capacity evidence to be supplied"])]
+    states = [BarrierState("drilling", "Drilling the reservoir section with a marine riser", [mud] + sec_drill,
+                           ["primary barrier is a fluid column, not a mechanical element; its verification is operational"])]
+    test = [_e("P1", "Test string with downhole tester valve and packer", "primary", "contain test flow inside the string", None, ["packer seat in cased hole"],
+               ["test-string and tester-valve pressure and function tests to be supplied"]),
+            _e("P2", "Surface test tree and flow head with emergency shutdown", "primary", "isolate flow at surface", None, [], ["ESD logic and test records"]),
+            _e("S1", "Casing and cement across the packer", "secondary", "contain pressure around the string", shoe, ["cement top"], ["cement evidence"]),
+            _e("S2", bop, "secondary", "back-up closure of the annulus", None, [], ["BOP test records"])]
+    states.append(BarrierState("well_test", "Drill-stem test of the reservoir interval", test, ["hydrocarbon flow to surface needs a dedicated well-test risk assessment (flaring, burner, H2S)"]))
+    susp = [_e("P1", "Primary plug above the reservoir (cement or mechanical)", "primary", "temporary isolation of the reservoir", None, [], ["plug position and verification per the verified standard"]),
+            _e("S1", "Secondary plug / casing and cement", "secondary", "back-up isolation", top_cement, [], ["cement evidence"]),
+            _e("S2", "Wellhead with internal tree cap / corrosion cap", "secondary", "seal the wellhead during suspension", None, [], ["cap installation record"])]
+    states.append(BarrierState("suspended", "Temporary suspension for future re-entry (discovery case)", susp, ["suspension duration and monitoring requirements are not identified in the basis"]))
+    aband = [_e("A1", "Primary reservoir plug", "primary", "permanent isolation of the reservoir", None, [], ["plug length, placement and verification are NOT specified here"]),
+             _e("A2", "Secondary plug / cemented casing annulus", "secondary", "back-up permanent isolation", top_cement, [], ["cement evidence"]),
+             _e("A3", "Surface/seabed plug and wellhead removal plan", "secondary", "final isolation at the top", None, [], ["jurisdiction requirement to be identified"])]
+    states.append(BarrierState("abandonment", "Permanent abandonment of the exploration well", aband,
                                ["abandonment requirements for this jurisdiction are not identified in the basis: arrangement is a placeholder"]))
     return states
 

@@ -138,6 +138,8 @@ def build_envelope(basis: Dict[str, Any], results: Dict[str, Any], warn_utilisat
         else:
             add("compression_power_kw", "injection, base case", "kW", inj.get("power_kw"), "NeqSim isentropic duty (L07)")
     integ = results.get("integrity") or {}
+    for ex in results.get("extra_conditions", []):
+        add(ex["parameter"], ex["condition"], ex.get("unit", "-"), ex.get("predicted"), ex.get("source", "study calculation"))
     apb = integ.get("apb")
     if apb:
         add("annulus_a_pressure_bara", "heat-up/cool-down, predicted APB (free-standing)", "bara", apb.get("final_pressure_bara"), "AnnularPressureBuildup (L09)")

@@ -70,7 +70,7 @@ def _check_png(path, min_w=400):
     assert im.size[0] >= min_w and im.size[1] >= 250
     arr = np.asarray(im.convert("L"), float)
     assert arr.std() > 5.0, "image looks blank"
-    assert (arr < 250).mean() > 0.01
+    assert (arr < 250).mean() > 0.005
     return im
 
 

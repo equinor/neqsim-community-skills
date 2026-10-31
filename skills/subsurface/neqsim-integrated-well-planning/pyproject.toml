@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-integrated-well-planning"
-version = "0.1.0"
+version = "0.2.0"
 description = "Integrated well planning for NeqSim: planning basis, reservoir-well-facility chain, operating envelopes, barrier schematics, alternatives, drawings and a well-planning report for producers and injectors."
 readme = "README.md"
 requires-python = ">=3.10"

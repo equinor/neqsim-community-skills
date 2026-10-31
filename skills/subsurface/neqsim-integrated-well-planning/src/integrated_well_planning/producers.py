@@ -14,7 +14,7 @@ import numpy as np
 
 from .basis import PRODUCER_TYPES
 from .model_chain import (ModelUnavailable, build_fluid, case_params, effective_tubing_depths, flowline_back_pressure, darcy_oil_pi_sm3d_per_bar,
-                          require, reservoir_properties, standard_factors, thermal_model, water_moles_for_cut, SC_MOLAR_VOLUME_SM3_PER_KMOL, WATER_SC_DENSITY)
+                          require, reservoir_properties, standard_factors, thermal_model, water_moles_for_cut, SC_MOLAR_VOLUME_SM3_PER_KMOL, WATER_SC_DENSITY, WATER_MW_KG_PER_MOL)
 from .nodal import NodalResult, composite_oil_ipr, solve_nodal, surplus_at
 from .registers import get_path
 from .runtime import jclass
@@ -61,7 +61,7 @@ class ProducerModel:
         """Mass rates (kg/s) for a stock-tank oil or wellstream-gas-equivalent rate ``q`` (Sm3/d)."""
         if self.gas_well:
             hc = q * self.std["kg_per_sm3_gas_equivalent"] / 86400.0
-            water = 0.0
+            water = q * float(p.get("wgr_sm3_per_msm3", 0.0)) * 1.0e-6 * WATER_SC_DENSITY / 86400.0
         else:
             hc = q * self.std["kg_per_sm3_stock_tank_liquid"] / 86400.0
             wc = p.get("water_cut", 0.0)
@@ -126,11 +126,18 @@ class ProducerModel:
     def _thermal(self, p: Dict[str, Any], mass: float):
         return thermal_model(self.basis, mass, p["temperature_C"])
 
-    def traverse(self, case: str, q: float, whp_bara: float, overrides: Optional[Dict[str, Any]] = None):
-        """Run the drift-flux traverse from the wellhead at rate ``q``; returns the Java Result and extras."""
+    def traverse(self, case: str, q: float, whp_bara: float, overrides: Optional[Dict[str, Any]] = None, from_bottomhole: bool = False):
+        """Run the drift-flux traverse at rate ``q``; returns the Java Result and extras.
+
+        By default the pressure given is the wellhead pressure and the result is the bottom-hole pressure (VLP). With ``from_bottomhole=True`` the
+        pressure given is the flowing bottom-hole pressure and the result carries the wellhead pressure the well can deliver.
+        """
         p = self.params(case, overrides)
         mflow = self.mass_flow(p, q)
-        wm = water_moles_for_cut(self.basis, p.get("water_cut", 0.0)) if not self.gas_well else 0.0
+        if self.gas_well:
+            wm = (mflow["water"] / WATER_MW_KG_PER_MOL) / (mflow["hydrocarbon"] / self.std["mw_kg_per_mol"]) if mflow["water"] > 0 else 0.0
+        else:
+            wm = water_moles_for_cut(self.basis, p.get("water_cut", 0.0))
         extra = None
         if mflow["lift_mol_s"] > 0:
             hc_mol_s = mflow["hydrocarbon"] / self.std["mw_kg_per_mol"]
@@ -141,8 +148,28 @@ class ProducerModel:
         h.setStraightWell(self.depths["md_m"], self.depths["inclination_deg"], self.segments).setThermalModel(tm)
         if wm > 0:
             h.setMultiPhaseCheck(True)
-        res = h.calculateFromWellhead(float(whp_bara))
+        res = h.calculateFromBottomhole(float(whp_bara)) if from_bottomhole else h.calculateFromWellhead(float(whp_bara))
         return res, {"mass": mflow, "thermal": tm, "fluid": fluid, "params": p, "wellhead_temperature_C": tm.temperatureAt(0.0) - 273.15}
+
+    def available_whp(self, case: str, q: float, overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """Wellhead pressure the well can deliver at rate ``q``: IPR gives the flowing bottom-hole pressure, the tubing traverse gives the wellhead pressure.
+
+        The difference to the required wellhead pressure (host boundary + minimum choke drop) is the choke drop the subsea choke has to absorb at that rate.
+        """
+        ipr = self.ipr(case, overrides)
+        if q >= ipr["aof"]:
+            return {"q": q, "feasible": False, "reason": "rate above the inflow limit"}
+        pwf = float(ipr["pwf"](q))
+        try:
+            res, extra = self.traverse(case, q, pwf, overrides, from_bottomhole=True)
+        except Exception as exc:  # noqa: BLE001 - the Java traverse throws when the column cannot lift the fluid to the surface
+            return {"q": q, "feasible": False, "pwf_bara": pwf, "reason": "tubing traverse failed: {}".format(str(exc)[:140])}
+        req = self.back_pressure(case, q, overrides)
+        whp = float(res.getWellheadPressureBara())
+        return {"q": q, "feasible": True, "pwf_bara": pwf, "whp_available_bara": whp, "whp_required_bara": req["wellhead_pressure_bara"], "choke_dp_bar": whp - req["wellhead_pressure_bara"],
+                "wellhead_temperature_C": extra["wellhead_temperature_C"], "erosional_ratio": _f(res.getMaxErosionalRatio()), "turner_ratio": _f(res.getMinTurnerRatio()),
+                "loading_risk": bool(res.isLiquidLoadingRisk()), "regimes": str(res.getRegimeCounts()), "hydrostatic_dp_bar": float(res.getHydrostaticDropBar()),
+                "friction_dp_bar": float(res.getFrictionDropBar()), "mass_flow_kg_s": extra["mass"]["total"], "tubing_id_m": extra["params"]["tubing_id_m"]}
 
     def back_pressure(self, case: str, q: float, overrides: Optional[Dict[str, Any]] = None) -> Dict[str, float]:
         """Wellhead pressure needed to deliver ``q`` to the host (flowline dP interpolated from a 5-point table)."""
@@ -179,7 +206,7 @@ class ProducerModel:
     def vlp_bhp(self, case: str, q: float, overrides: Optional[Dict[str, Any]] = None) -> float:
         """Bottom-hole pressure required to deliver ``q`` against the host back pressure."""
         p = self.params(case, overrides)
-        key = case + self._key(p, "tubing_id_m", "host_pressure_bara", "water_cut", "lift_gas_sm3d") + "|q={:.5g}".format(q)
+        key = case + self._key(p, "tubing_id_m", "host_pressure_bara", "water_cut", "lift_gas_sm3d", "wgr_sm3_per_msm3") + "|q={:.5g}".format(q)
         if key in self._vlp_cache:
             return self._vlp_cache[key][0]
         whp = self.back_pressure(case, q, overrides)["wellhead_pressure_bara"]
@@ -214,8 +241,16 @@ class ProducerModel:
             out["warnings"].append("only an unstable intersection exists (VLP loading branch)")
         if detail and q_diag > 0:
             whp = self.back_pressure(case, q_diag, overrides)
-            res, extra = self.traverse(case, q_diag, whp["wellhead_pressure_bara"], overrides)
+            throttled = bool(get_path(self.basis, "facility.throttle_surplus_across_choke")) and out["target_met"] and q_diag < ipr["aof"]
+            if throttled:
+                # the well delivers the target with surplus pressure: the choke absorbs it, so the real tree conditions follow from the bottom-hole pressure
+                res, extra = self.traverse(case, q_diag, float(ipr["pwf"](q_diag)), overrides, from_bottomhole=True)
+                whp = {"wellhead_pressure_bara": float(res.getWellheadPressureBara()), "flowline_dp_bar": whp["flowline_dp_bar"],
+                       "choke_dp_bar": float(res.getWellheadPressureBara()) - whp["wellhead_pressure_bara"] + whp["choke_dp_bar"]}
+            else:
+                res, extra = self.traverse(case, q_diag, whp["wellhead_pressure_bara"], overrides)
             out["diagnostic_rate"] = q_diag
+            out["diagnostic_basis"] = "throttled at the choke: wellhead pressure from the inflow (bottom-hole) side" if throttled else "wellhead pressure at the minimum required back pressure (choke open)"
             out["wellhead"] = {"pressure_bara": whp["wellhead_pressure_bara"], "temperature_C": extra["wellhead_temperature_C"], "flowline_dp_bar": whp["flowline_dp_bar"],
                                "choke_dp_bar": whp["choke_dp_bar"]}
             out["bottomhole"] = {"pressure_bara": float(res.getBottomholePressureBara()), "temperature_C": p["temperature_C"]}

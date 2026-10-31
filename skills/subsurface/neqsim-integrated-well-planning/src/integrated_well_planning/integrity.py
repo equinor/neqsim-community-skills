@@ -228,3 +228,48 @@ def evaluate_integrity(basis: Dict[str, Any], producer: Optional[Dict[str, Any]]
     except Exception as exc:  # noqa: BLE001 - keep the rest of the integrity block when a Java class is missing
         out["apb_error"] = "{}: {}".format(type(exc).__name__, str(exc)[:160])
     return out
+
+
+def lifecycle_tubing_matrix(basis: Dict[str, Any], states: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Tubing utilisation for supplied life-cycle states at the tree and at the packer, with temperature-derated formula ratings and a von Mises triaxial check.
+
+    Each state is a dict with ``state``, ``pi_top_bara``, ``pi_packer_bara``, ``po_top_bara``, ``po_packer_bara``, ``t_top_C``, ``t_packer_C`` and optionally
+    ``axial_force_n`` (effective tension added at the packer, tension positive; for a fixed packer take it from ``tubing_movement``). Effective tension at the
+    tree is the buoyed tubing weight in the internal fluid density ``fluid_density_kg_m3`` (default 300 kg/m3). The matrix is a screening subset of life-cycle
+    cases, not an ISO 13679 load-case matrix; utilisation = load / formula rating and the design-factor status follows the supplied ``basis.design_factors`` only.
+
+    Returns:
+        One row per state and location with burst, collapse and triaxial utilisation (``None`` when ratings are unavailable).
+    """
+    require("TubingMovementCalculator")
+    tub = get_path(basis, "completion.tubing")
+    dims = pipe_dimensions(tub["od_in"], tub.get("weight_ppf"), tub.get("wall_in"))
+    depths = effective_tubing_depths(basis)
+    pack_tvd = min(depths["tvd_m"] * float(get_path(basis, "completion.packer_md_m") or depths["tvd_m"]) / float(get_path(basis, "trajectory.md_m")), depths["tvd_m"])
+    w_kg_m = float(tub.get("weight_ppf") or 0.0) * PPF_TO_KG_M
+    factors = get_path(basis, "design_factors") or {}
+    calc = jclass("TubingMovementCalculator")()
+    calc.setLength(float(pack_tvd)).setGeometry(dims["od_in"] * IN, dims["id_in"] * IN, dims["id_in"] * IN * 1.05, 0.2)
+    rows: List[Dict[str, Any]] = []
+    for st in states:
+        rho = float(st.get("fluid_density_kg_m3", 300.0))
+        a_steel = math.pi / 4.0 * ((dims["od_in"] * IN) ** 2 - (dims["id_in"] * IN) ** 2)
+        a_in = math.pi / 4.0 * (dims["id_in"] * IN) ** 2
+        buoyant_n = max(0.0, (w_kg_m - rho * a_in - 0.0) * G * pack_tvd)
+        for loc, key, z in (("tree", "top", 0.0), ("packer", "packer", pack_tvd)):
+            pi, po, t = st["pi_{}_bara".format(key)], st["po_{}_bara".format(key)], st["t_{}_C".format(key)]
+            rat = tubular_ratings(dims["od_in"], dims["wall_in"], tub.get("grade", ""), float(t))
+            row: Dict[str, Any] = {"state": st["state"], "location": loc, "pi_bara": pi, "po_bara": po, "temperature_C": t, "burst_load_bar": max(0.0, pi - po), "collapse_load_bar": max(0.0, po - pi)}
+            if rat["available"]:
+                f_eff = (buoyant_n if loc == "tree" else 0.0) + float(st.get("axial_force_n", 0.0) if loc == "packer" else 0.0)
+                tri = calc.vonMises(float(pi), float(po), float(f_eff), float(rat["yield_psi"] * 0.00689475729))
+                row.update({"burst_rating_bar": rat["burst_bar"], "collapse_rating_bar": rat["collapse_bar"], "burst_utilisation": row["burst_load_bar"] / rat["burst_bar"],
+                            "collapse_utilisation": row["collapse_load_bar"] / rat["collapse_bar"], "effective_tension_kn": f_eff / 1e3, "von_mises_mpa": float(tri.getVonMisesPa()) / 1e6,
+                            "triaxial_utilisation": 1.0 / float(tri.getDesignFactor()) if float(tri.getDesignFactor()) > 0 else None, "yield_derated_psi": rat["yield_psi"]})
+                for k2, u in (("burst", row["burst_utilisation"]), ("collapse", row["collapse_utilisation"]), ("triaxial", row["triaxial_utilisation"])):
+                    req = (factors.get(k2) or {}).get("value")
+                    row[k2 + "_status"] = ("NEEDS_REVIEW (no supplied design factor)" if not req else ("PASS" if u is not None and (1.0 / max(u, 1e-9)) >= req else "FAIL")) if u else "NOT_LOADED"
+            else:
+                row["status"] = "NOT_ASSESSED ({})".format(rat.get("reason", ""))
+            rows.append(row)
+    return rows

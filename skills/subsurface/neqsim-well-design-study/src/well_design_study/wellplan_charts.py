@@ -314,7 +314,7 @@ def cost_breakdown_chart(items: Sequence[Dict[str, object]], path: Path, unit: s
         The PNG path.
     """
     n = len(items)
-    fig, ax = plt.subplots(figsize=(8.8, 0.42 * n + 2.0))
+    fig, ax = plt.subplots(figsize=(8.8, max(4.0, 0.42 * n + 2.0)))
     for i, it in enumerate(items):
         tot = bool(it.get("total"))
         ax.barh(i, float(it["p50"]), color="#1f3a5f" if tot else "#6fa3d0", edgecolor="k", lw=0.5, height=0.6)

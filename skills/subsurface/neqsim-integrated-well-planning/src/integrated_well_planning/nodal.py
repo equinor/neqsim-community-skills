@@ -61,7 +61,7 @@ def solve_nodal(inflow_pwf: Callable[[float], float], outflow_pwf: Callable[[flo
         refine: bisection steps per bracket.
 
     Returns:
-        :class:`NodalResult`; ``status`` is ``STABLE``, ``UNSTABLE_ONLY`` or ``NO_INTERSECTION``.
+        :class:`NodalResult`; ``status`` is ``STABLE``, ``UNSTABLE_ONLY``, ``STABLE_AT_RANGE_END`` (inflow above outflow over the whole range) or ``NO_INTERSECTION``.
     """
     if q_min <= 0 or q_max <= q_min:
         raise ValueError("need 0 < q_min < q_max")
@@ -92,6 +92,10 @@ def solve_nodal(inflow_pwf: Callable[[float], float], outflow_pwf: Callable[[flo
     elif res.intersections:
         res.operating_point = res.intersections[-1]
         res.status = "UNSTABLE_ONLY"
+    elif bool(np.all(surplus > 0.0)):
+        # the inflow stays above the outflow over the whole scanned range: the rate is limited by the scan range (the inflow limit), not by the tubing
+        res.operating_point = Intersection(float(qs[-1]), float(ipr[-1]), True)
+        res.status = "STABLE_AT_RANGE_END"
     return res
 
 

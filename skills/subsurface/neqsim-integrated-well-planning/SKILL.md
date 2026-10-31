@@ -1,7 +1,7 @@
 ---
 name: neqsim-integrated-well-planning
 calculation_basis: "hybrid"
-version: "0.1.0"
+version: "0.2.0"
 description: "Integrated well planning for oil, gas-condensate, water- and gas-injection wells (onshore, platform, subsea): provenance-tracked basis, NeqSim reservoir-well-facility chain (IPR, drift-flux VLP, injectivity, hydrate, annulus pressure, tubing movement), operating envelopes, barrier schematics, alternatives, A3 drawings, hand-off schemas, report and capability ledger. USE WHEN: a well must be sized, compared or documented from reservoir, fluid, host and completion data."
 last_verified: "2026-10-31"
 required_skills:
@@ -71,6 +71,17 @@ The planning basis (`iwp_planning_basis.v1`, YAML or JSON, template: `templates/
 9. **Alternatives.** Tubing size, lift (gas lift screening), wellhead pressure, completion variants through the same chain for low/base/high; scorecard (weights are ASSUMED equal unless supplied; criteria without data are excluded, not scored zero), non-dominated front, binding constraint, tornado and sensitivity grid, deliverability versus time with linear depletion. Recovery and project value are not inferred from deliverability. Cost enters only if supplied with currency and source.
 10. **Drilling and completion interfaces.** Minimum-curvature geometry and DLS check, casing formula ratings and a pore/mud/fracture arithmetic check are implemented; anti-collision, geomechanics, drilling hydraulics, cementing and detailed mechanical design become `iwp_interface_spec.v1` documents with inputs available/missing, receiver and expected return, status `UNRESOLVED`.
 11. **Drawings and report.** `drawings` renders every chart from the results with provenance; `report` builds the Word and Markdown report with a readiness label (`NOT READY` or `SCREENING - FOR REVIEW`, never an approval).
+
+### Extensions used for real studies (0.2.0)
+
+- **Characterised fluids.** `fluid.e300_file` (absolute, or relative to `fluid.e300_base_dir`) reads an Eclipse E300 fluid (`model_chain.read_e300_fluid`); hydrate and inhibitor work lumps it to a CPA fluid (`lump_to_cpa_fluid`: library components copied, every pseudo-component lumped to one TBP fraction with a Soreide density, a declared model choice). `reservoir.wgr_sm3_per_msm3` gives gas wells a water-gas ratio (low/base/high, 5 to 45 is typical).
+- **Boundary from an upstream flowline study.** `facility.boundary_table` `{q_scale, q_sm3d, p_bara, reference_host_pressure_bara}` replaces the 5-point flowline model: tree/manifold pressure versus rate, shifted by the change in host pressure, plus `facility.choke_dp_bar`. `ProducerModel.available_whp(case, q)` returns the wellhead pressure the well can deliver (IPR bottom-hole pressure traversed up the tubing), the required value and the choke drop to absorb (never throws: `feasible: false` with a reason). `facility.throttle_surplus_across_choke: true` makes `operating_point` report the diagnostic wellhead pressure from the inflow side when the choke absorbs the surplus.
+- **Nodal status `STABLE_AT_RANGE_END`** when the inflow stays above the outflow over the whole scanned range (the rate is then limited by the scan range, not by the tubing).
+- **Hydraulic-method comparison** (`hydraulics_compare.compare_methods`): the drift-flux reference against Gray, Beggs-Brill, Hagedorn-Brown and Mukherjee-Brill at the same rate and wellhead pressure (isothermal at the drift-flux mean temperature; a calibration question, not a verdict).
+- **Life-cycle tubing matrix** (`integrity.lifecycle_tubing_matrix`): burst, collapse and von Mises utilisation at the tree and the packer for supplied states (production, shut-in, test, APB heat-up, kill, evacuated) with temperature-derated formula ratings; design-factor status only from supplied factors. `results["extra_conditions"]` rows enter the envelope as calculated conditions (limits from `basis.limits`, otherwise `NEEDS_REVIEW`/`NOT_ASSESSED`).
+- **Exploration wells.** `barriers.propose_exploration_barriers` (drilling, well test, suspended, abandonment; all `UNVERIFIED`); the drilling module supplies window, seats, kick tolerance, time and cost.
+- **Scoring helper** `alternatives.score_raw(ids, criteria, raw, weights, source)` for hand-built criteria (higher is better, `None` excluded) used for the scorecard, weight-robustness runs and Pareto views.
+- **More charts and sheets** (`iwp_charts_extra.py`, registered in `iwp_graphics.CHARTS`): `multi_line` (direct end labels with spreading, hlines/vlines/shading/annotations), `grouped_bar`, `hbar_grouped`, `pressure_window` (offset points, FIT/LOT/pore markers), `percentile`, `offset_map`, and the A3 `casing_programme_sheet`.
 
 ### Capability ledger
 
@@ -170,6 +181,10 @@ NeqSim runtime: `ensure_runtime()` starts the JVM once from `IWP_NEQSIM_CLASSPAT
 - [ ] Alternatives compare like with like; weights and missing criteria are stated; no recovery or value claim.
 
 ## Common Mistakes
+
+- Reading the E300 component moles from `getz()` before an `init`; the lumping helper uses mole numbers for that reason.
+- Treating a dew point from an uncalibrated best-guess fluid as a measurement: compare the NeqSim value with every earlier quoted dew point and record a discrepancy in the data gaps.
+- Reading the plateau-hold pressure (the reservoir pressure at which a rate can no longer be held) as a recovery or value statement.
 
 - Treating a steady-state drift-flux result as a transient or slugging validation.
 - Reading `low` as "low value" of every parameter: here `low` is the pessimistic outcome (high skin, high water cut, high host pressure).

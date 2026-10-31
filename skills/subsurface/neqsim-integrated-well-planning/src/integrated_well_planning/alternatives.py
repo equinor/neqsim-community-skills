@@ -87,6 +87,14 @@ def scorecard(rows: List[Dict[str, Any]], weights: Optional[Dict[str, float]] = 
         raw["cost"][i] = -float(cost) if cost is not None else None
         iq = (r.get("qualitative") or {}).get("intervention_access")
         raw["intervention_access"][i] = float(iq) if iq is not None else None
+    return score_raw([r["id"] for r in rows], crit, raw, weights_used, weights_source)
+
+
+def score_raw(ids: Sequence[str], crit: Sequence[str], raw: Dict[str, Dict[str, Optional[float]]], weights_used: Dict[str, float], weights_source: str = "ASSUMED equal weights") -> Dict[str, Any]:
+    """Normalise raw criterion values (higher = better, ``None`` = no data) to 0-1 per criterion and compute the weighted total per alternative.
+
+    Criteria without data for any alternative are excluded from the total (not scored zero). Use this directly for study-specific criteria.
+    """
     scores: Dict[str, Dict[str, Optional[float]]] = {}
     for c in crit:
         vals = [v for v in raw[c].values() if v is not None]
@@ -99,13 +107,12 @@ def scorecard(rows: List[Dict[str, Any]], weights: Optional[Dict[str, float]] = 
             else:
                 scores[c][i] = (v - min(vals)) / (max(vals) - min(vals))
     totals = {}
-    for r in rows:
-        i = r["id"]
-        num = sum(weights_used.get(c, 1.0) * scores[c][i] for c in crit if scores[c][i] is not None)
-        den = sum(weights_used.get(c, 1.0) for c in crit if scores[c][i] is not None)
+    for i in ids:
+        num = sum(weights_used.get(c, 1.0) * scores[c][i] for c in crit if scores[c].get(i) is not None)
+        den = sum(weights_used.get(c, 1.0) for c in crit if scores[c].get(i) is not None)
         totals[i] = num / den if den else 0.0
-    missing = [c for c in crit if all(scores[c][r["id"]] is None for r in rows)]
-    return {"criteria": crit, "scores": scores, "raw": raw, "weights": weights_used, "weights_source": weights_source, "totals": totals, "criteria_without_data": missing,
+    missing = [c for c in crit if all(scores[c].get(i) is None for i in ids)]
+    return {"criteria": list(crit), "scores": scores, "raw": raw, "weights": weights_used, "weights_source": weights_source, "totals": totals, "criteria_without_data": missing,
             "note": "scores are relative to the alternatives compared; criteria without data are excluded from the weighted total, not scored zero"}
 
 
@@ -166,7 +173,11 @@ def deliverability_profile(model: Any, basis: Dict[str, Any], years: Sequence[fl
         p0 = model.params(c)["pressure_bara"]
         qs = []
         for y in years:
-            r = model.operating_point(c, {"pressure_bara": p0 - dep * y}, detail=False)
+            p_y = p0 - dep * y
+            if p_y <= max(1.5 * model.params(c)["host_pressure_bara"], 5.0):
+                qs.append(0.0)  # reservoir pressure at or below the host back pressure: no natural deliverability
+                continue
+            r = model.operating_point(c, {"pressure_bara": p_y}, detail=False)
             qs.append(r.get("q_op"))
         out["cases"][c] = qs
     out["target"] = model.params("base")["rate"]

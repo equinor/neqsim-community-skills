@@ -2,7 +2,7 @@
 name: neqsim-task-grill
 calculation_basis: "advisory"
 version: "0.1.0"
-description: "Use when: an engineering task is about to start and its basis is not settled - interview the user one question at a time, each with a recommended answer, on the decision or question, the quality bar, the available data and its sources, access to tools and data, constraints, open decisions and the weakest assumptions, then write a task brief, data requests and a run plan that names which NeqSim, community and enterprise agents produce which reports. Never invents data; unknown stays OPEN."
+description: "USE WHEN: an engineering task is about to start and its basis is not settled - interview the user one question at a time, each with a recommended answer, on the decision or question, the quality bar, the available data and its sources, access to tools and data, constraints, open decisions and the weakest assumptions, then write a task brief, data requests and a run plan that names which NeqSim, community and enterprise agents produce which reports. Never invents data; unknown stays OPEN."
 last_verified: "2026-11-01"
 requires:
   python_packages: []
@@ -13,9 +13,17 @@ requires:
 
 # NeqSim Task Grill ("grill me")
 
-Run this before a study, report or workflow, when the request is a sentence and the result must be a report people will rely on. It settles the basis so the agents can deliver the best possible result without guessing. It asks and records; the calculations stay with the specialist agents.
+It settles the basis so the agents can deliver the best possible result without guessing. It asks and records; the calculations stay with the specialist agents.
 
-## Behaviour
+## When to Use
+
+Run this before a study, report or workflow, when the request is a sentence and the result must be a report people will rely on.
+
+## Inputs
+
+The user's request in their own words, plus whatever the user can name: data, earlier reports, standards, tools and people involved.
+
+## Engineering Method
 
 1. Ask **one question at a time**. Give a recommended answer and say why the question matters. Wait for the answer.
 2. If the user does not know, record `OPEN`. Never fill in a plausible value. A value without a source is an assumption and is labelled so.
@@ -49,8 +57,41 @@ Pick the agent per report from the discovery tools (`agent_search`, `skill_searc
 
 A specialist's solved task becomes a report for a larger workflow with `neqsim report-manifest <task> --type <report_type> --person "<name>"`. Project-development work uses `enterprise-project-intake` (energy-project-agents), which adds the gate, the WR2704 register and the company requirements.
 
-## Rules
+## Python Usage Pattern
 
+There is no calculation here; the skill drives the task toolkit from the shell:
+
+```bash
+neqsim new-task "<title>" --type <type> --prompt "<verbatim request>"
+neqsim report-manifest <task> --type <report_type> --person "<name>"
+```
+
+Write the four output files into the task folder. `intake_answers.json` records every answer, including `OPEN`, so the interview can resume.
+
+## Validation Checklist
+
+- Every question is answered or marked `OPEN`.
+- No value appears without a source; unsourced values are labelled assumptions.
+- Conflicting answers were raised and resolved.
+- Access to each named tool or source was tested, not assumed.
+- The three weakest assumptions and how to test each are written down.
+
+## Common Mistakes
+
+- Asking several questions at once.
+- Filling in a plausible value for an unknown instead of recording `OPEN`.
+- Asking whether a tool is reachable instead of trying it.
+- Treating mock data as real in a formal issue.
+
+## Limitations
+
+- Nothing here approves a decision.
+- It does not run calculations; the chosen agents do.
 - Read-only on source systems; never edit SharePoint files.
 - Mock data is allowed only to test a chain and is labelled mock everywhere.
-- Nothing here approves a decision.
+
+## References
+
+- `neqsim-task-workflow` (task folder and report workflow) and `neqsim-professional-reporting`.
+- `enterprise-project-intake` (energy-project-agents) for project-development intake.
+

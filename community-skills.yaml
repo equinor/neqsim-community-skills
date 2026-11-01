@@ -981,3 +981,11 @@ skills:
     path: "skills/reporting/neqsim-technology-assessment-report/SKILL.md"
     tags: [reporting, technology-qualification, technology-assessment, report, docx, advisory]
     min_neqsim_version: "3.7.0"
+  - name: neqsim-task-grill
+    version: "0.1.0"
+    description: "Grill-me intake before an engineering task: one question at a time with a recommended answer on the decision, quality bar, data, access, constraints and assumptions; writes a task brief, data requests and a run plan naming the NeqSim, community and enterprise agents per report. Never invents data; unknown stays OPEN."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/reporting/neqsim-task-grill/SKILL.md"
+    tags: [reporting, intake, planning, workflow]
+    min_neqsim_version: "3.7.0"

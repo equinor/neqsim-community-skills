@@ -901,6 +901,14 @@ skills:
     path: "skills/subsurface/neqsim-reservoir-history-match-forecast/SKILL.md"
     tags: [subsurface, reservoir, history-matching, material-balance, compositional, gas-condensate, forecast, multi-reservoir, process-integration]
     min_neqsim_version: "3.7.0"
+  - name: neqsim-reservoir-material-balance
+    version: "0.1.0"
+    description: "Screen gas and oil reservoir in-place volumes with pressure-production material balance, including gas p/z, Havlena-Odeh, black-oil and volatile-oil fits, aquifer-support scenarios, uncertainty and identifiability checks. USE WHEN: an MBAL model, STOIIP/OOIP/GIIP estimate, pressure history match, lower-in-place-volume claim, gas-cap or water-drive evaluation is needed."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-reservoir-material-balance/SKILL.md"
+    tags: [subsurface, reservoir, material-balance, mbal, history-matching, in-place-volumes, ooip, giip, black-oil, aquifer]
+    min_neqsim_version: "3.7.0"
   - name: neqsim-reservoir-3d-visualisation
     version: "0.2.0"
     description: "Render a reservoir grid in 3D from Eclipse-format output (EGRID geometry, INIT and UNRST properties) with well tubes, crinkle cutaways, threshold views and exploded layers, avoiding the exaggeration, camera, corner-order and scalar-range traps. USE WHEN: an OPM Flow or Eclipse run needs a presentation-grade 3D figure, a sweep or bypassed-oil claim needs visual evidence, a property field must be inspected for spatial correlation, or a reservoir illustration goes into a report or decision gate."

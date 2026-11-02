@@ -942,12 +942,20 @@ skills:
     tags: [pvt, brazil, pre-salt, co2, analogue, fluid-characterization, flow-assurance]
     min_neqsim_version: "3.7.0"
   - name: neqsim-anp-open-data
-    version: "0.2.0"
+    version: "0.2.1"
     description: "Reads Brazilian ANP open data: bid-round blocks, field and well production, well data bank, GeoANP layers (blocks, fields, wells, gas pipelines), installation positions from wellheads and tie-in host ranking, with CRS, unit and date checks. USE WHEN: a task needs Brazilian block, field or well facts, a host such as a pre-salt FPSO, nearby installations or export lines for a tie-in, or a Sodir-like open-data basis."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/field-development/neqsim-anp-open-data/SKILL.md"
     tags: [field-development, brazil, anp, open-data, production, blocks]
+    min_neqsim_version: "3.7.0"
+  - name: neqsim-anp-well-production-history
+    version: "0.1.0"
+    description: "Reads Brazilian ANP well-level production open data into unit-explicit series: merges onshore, offshore and pre-salt files without double counting, builds well/field histories with GOR and water cut, checks data features, prepares decline-fit input and a declared fluid basis. USE WHEN: a task needs production history of Brazilian wells or fields, decline or GOR analysis, a fluid basis from public data, or what public data can support for an MBAL or well-flow model."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/field-development/neqsim-anp-well-production-history/SKILL.md"
+    tags: [field-development, brazil, anp, open-data, production, wells, decline, gor, fluid-basis]
     min_neqsim_version: "3.7.0"
   - name: neqsim-brazil-offshore-infrastructure-market
     version: "0.1.0"

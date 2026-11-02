@@ -1,7 +1,7 @@
 ---
 name: neqsim-anp-open-data
 calculation_basis: "screening"
-version: "0.2.0"
+version: "0.2.1"
 description: "Reads Brazilian ANP open data: bid-round blocks, field and well production, well data bank, GeoANP layers (blocks, fields, wells, gas pipelines), installation positions from wellheads and tie-in host ranking, with CRS, unit and date checks. USE WHEN: a task needs Brazilian block, field or well facts, a host such as a pre-salt FPSO, nearby installations or export lines for a tie-in, or a Sodir-like open-data basis."
 last_verified: "2026-10-26"
 requires:
@@ -40,7 +40,7 @@ Advisory skill. It is the Brazilian counterpart of `neqsim-norwegian-continental
 The ANP open-data page (checked 2026-10-09, `gov.br/anp`, "Dados abertos"; also mirrored on `dados.gov.br`) lists these datasets by name. Names are in Portuguese:
 
 - Bid rounds and blocks: "Rodadas de Licitações de Petróleo e Gás Natural", "Fase de Exploração", "Fase de Desenvolvimento e Produção", "Blocos com Fase Exploratória Encerrada", "Dados Georreferenciados das Bacias Sedimentares Brasileiras".
-- Production: "Produção de Petróleo e Gás Natural por Poço", "Produção de petróleo e gás natural por estado e localização".
+- Production: "Produção de Petróleo e Gás Natural por Poço", "Produção de petróleo e gás natural por estado e localização". Well-level files are read by `neqsim-anp-well-production-history`; units differ by family (bbl/dia and Mm³/dia = thousand m³/d in the by-well rate files; m³ and Mm³ per month in the volume files).
 - Wells and technical data: "Resultado de poço", "Dados de E&P", "Acervo de Dados Técnicos", "Amostras de Rochas e Fluidos".
 - Planning and money: "Previsão de Atividades e Investimentos Exploratórios", "Participações Governamentais".
 
@@ -86,7 +86,7 @@ rates = installation_production(rows, "installation", "month", ["oil", "condensa
 ```
 
 - **ANP does not publish FPSO hull coordinates.** `locate_installations` takes the median of the wellheads that produce to each installation; the result is labelled `approximate-derived-from-ANP-wells` with `well_spread_max_km`. Report it as approximate and replace it with the operator position where one exists.
-- Well-to-installation pairs come from "Produção de Petróleo e Gás Natural por Poço". Its headers are often damaged (U+FFFD); select columns by position after checking a known row, and parse Brazilian numbers (`.` thousands, `,` decimal).
+- Well-to-installation pairs come from "Produção de Petróleo e Gás Natural por Poço". Its headers are often damaged (U+FFFD) and rows can mix encodings; read it with `anp_well_production.normalize` (skill `neqsim-anp-well-production-history`), which matches headers by folded name, fails loudly on a missing column and parses Brazilian numbers (`.` thousands, `,` decimal).
 - Names mix accents, mojibake and U+FFFD. Join on `name_key`, which folds them to one key, and use `repair_name` for display.
 - Every download writes its URL, time, feature count and `truncated` flag; copy that record into `SOURCES.md`.
 
@@ -192,7 +192,7 @@ discovery well through an alias with that source.
 
 ## Hand-offs
 
-- Production series to `neqsim-reservoir-depletion-screening` and decline fitting.
+- Production series to `neqsim-reservoir-depletion-screening` and decline fitting: read and clean them with `neqsim-anp-well-production-history` (verified file units, pre-salt/offshore merge, split wells, fluid basis).
 - Block and host positions to `neqsim-pipe-route-profile` and `neqsim-subsea-layout-geometry` for tie-back distance.
 - Block facts to `neqsim-psc-bid-economics-screening` and the `frontier-block-bid-agent`.
 - Installation positions, pipelines and ranked hosts to the `brazil-offshore-infrastructure-agent` and on to `tie-in-screening-agent` / `flow-assurance` for the top hosts.

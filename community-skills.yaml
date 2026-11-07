@@ -190,7 +190,7 @@ skills:
     tags: [wells, well-design, well-plan, casing, kick-tolerance, torque-drag, offset-wells, time-cost, report, screening]
     min_neqsim_version: "3.7.0"
   - name: neqsim-integrated-well-planning
-    version: "0.1.0"
+    version: "0.2.0"
     description: "Integrated well planning for oil, gas-condensate, water- and gas-injection wells (onshore, platform, subsea): provenance-tracked basis, NeqSim reservoir-well-facility chain (IPR, drift-flux VLP, injectivity, hydrate, annulus pressure, tubing movement), operating envelopes, barrier schematics, alternatives, A3 drawings, hand-off schemas, report and capability ledger. USE WHEN: a well must be sized, compared or documented from reservoir, fluid, host and completion data."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -656,7 +656,7 @@ skills:
 
   - name: neqsim-seabed-protection-screening
     version: "0.1.0"
-    description: "Educational subsea pipeline trenching, burial and rock-dump screening driven by route and map-layer data: samples seabed substrate, fishing intensity, ice scour and no-rock zones along a route, finds crossings of existing pipelines, selects a trenching method or rock dump per segment, sizes trench depth, rock volume and tonnage, crossing and free-span supports, indicative durations and a burial hand-off for NeqSim cooldown and thermal models. USE WHEN: a flow-assurance, SURF or tie-back study needs burial, trenching or rock-dump scope, cover for hazards, thermal effect of burial, or rock quantities before DNV-RP-F111, F110, F105, F109 or F114 assessments and a contractor estimate."
+    description: "Trenching, burial and rock-dump screening from route and map-layer data. Samples substrate, fishing intensity, ice scour and no-rock zones; finds crossings; selects protection by segment; estimates cover, rock quantities, supports, durations and a burial hand-off to NeqSim cooldown models. USE WHEN: early flow-assurance, SURF or tie-back studies need protection scope, burial thermal effects or rock quantities before detailed DNV assessments and contractor estimates."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/subsea/neqsim-seabed-protection-screening/SKILL.md"
@@ -1000,7 +1000,7 @@ skills:
     min_neqsim_version: "3.7.0"
   - name: neqsim-task-grill
     version: "0.1.0"
-    description: "Grill-me intake before an engineering task: one question at a time with a recommended answer on the decision, quality bar, data, access, constraints and assumptions; writes a task brief, data requests and a run plan naming the NeqSim, community and enterprise agents per report. Never invents data; unknown stays OPEN."
+    description: "USE WHEN: an engineering task is about to start and its basis is not settled - interview the user one question at a time, each with a recommended answer, on the decision or question, the quality bar, the available data and its sources, access to tools and data, constraints, open decisions and the weakest assumptions, then write a task brief, data requests and a run plan that names which NeqSim, community and enterprise agents produce which reports. Never invents data; unknown stays OPEN."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/reporting/neqsim-task-grill/SKILL.md"

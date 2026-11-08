@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-subsea-equipment-placement"
+version = "0.1.0"
+description = "Constraint-based screening and ranking of subsea equipment sites (drill centres, templates, manifolds, PLETs) and routes against hosts, existing infrastructure, exclusion zones, seabed slope and well reach."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

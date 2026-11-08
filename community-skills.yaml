@@ -520,6 +520,15 @@ skills:
     tags: [subsea, field-development, layout, step-out, illustration, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-subsea-equipment-placement
+    version: "0.1.0"
+    description: "Constraint-based siting of subsea equipment and routes (drill centres, templates, manifolds, PLETs, tie-ins): screens and ranks sites against clearances, existing lines and crossings, exclusion zones, seabed slope, fishing exposure and well reach, and checks the route. USE WHEN: a tie-back or SURF study must decide where equipment goes, or defend a placement against map data, standards and installation constraints."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/neqsim-subsea-equipment-placement/SKILL.md"
+    tags: [subsea, surf, placement, template, manifold, plet, crossings, exclusion-zones, reach, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-surf-field-layout-design
     version: "0.2.0"
     description: "Design a screening SURF field layout and host position from open map, bathymetry and licence data: drill centres, trees, templates, manifolds, riser bases, routed and sized flowlines, umbilicals and risers, GeoJSON export and a reservoir-to-host cutaway. USE WHEN: a layout must be designed, not screened - template count, host location, loop/single/daisy-chain architecture, line sizes, umbilical lengths, or a georeferenced hand-off to flow assurance, cost or NeqSim network models."

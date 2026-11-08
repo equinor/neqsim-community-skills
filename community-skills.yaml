@@ -64,6 +64,15 @@ skills:
     tags: [pvt, composition, validation, quality]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-forward-separator-train
+    version: "0.1.0"
+    description: "Run one fluid (E300 file or composition) through a forward-only, no-recycle multi-stage separator train (HP, MP, LP, stock tank) the way PVTsim and ECL300 do, and return GOR, Bo, stock-tank oil density/API and gas per stage. USE WHEN: a user says 'run this fluid through the separator train', 'kjør dette for et gitt fluid', needs surface-process results (GOR, Bo, STO, gas rates) for an E300 fluid, or wants a single reproducible case that can later be repeated for many compositions."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/pvt/neqsim-forward-separator-train/SKILL.md"
+    tags: [pvt, separator, e300, gor, bo, surface-process]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-e300-fluid-io
     version: "0.1.0"
     description: "Read, write, and add water to Eclipse E300 fluid files for NeqSim. USE WHEN: a task needs to load an E300 file into a NeqSim fluid, write a NeqSim fluid to E300, or add water to a fluid or E300 file with the public PVTsim water parameters (volume shift 0.084004, parachor 10.0, kij 0.5)."

@@ -66,7 +66,7 @@ skills:
 
   - name: neqsim-forward-separator-train
     version: "0.1.0"
-    description: "Run one fluid (E300 file or composition) through a forward-only, no-recycle multi-stage separator train (HP, MP, LP, stock tank) the way PVTsim and ECL300 do, and return GOR, Bo, stock-tank oil density/API and gas per stage. USE WHEN: a user says 'run this fluid through the separator train', 'kjør dette for et gitt fluid', needs surface-process results (GOR, Bo, STO, gas rates) for an E300 fluid, or wants a single reproducible case that can later be repeated for many compositions."
+    description: "Run one fluid (E300 or composition) through a forward-only, no-recycle separator train (HP, MP, LP, stock tank) like PVTsim/ECL300 and return GOR, Bo, STO API and gas per stage; also fit ONE shared stage P/T set to reservoir-simulation oil and gas rates over many fluids. USE WHEN: 'kjør dette for et gitt fluid', surface GOR/Bo/STO for an E300 fluid, or fitting the pseudo-process P/T per tank/scrubber of a reservoir simulation."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/pvt/neqsim-forward-separator-train/SKILL.md"

@@ -2,7 +2,7 @@
 name: neqsim-forward-separator-train
 calculation_basis: "neqsim-java"
 version: "0.1.0"
-description: "Run one fluid (E300 file or composition) through a forward-only, no-recycle multi-stage separator train (HP, MP, LP, stock tank) the way PVTsim and ECL300 do, and return GOR, Bo, stock-tank oil density/API and gas per stage. USE WHEN: a user says 'run this fluid through the separator train', 'kjør dette for et gitt fluid', needs surface-process results (GOR, Bo, STO, gas rates) for an E300 fluid, or wants a single reproducible case that can later be repeated for many compositions."
+description: "Run one fluid (E300 or composition) through a forward-only, no-recycle separator train (HP, MP, LP, stock tank) like PVTsim/ECL300 and return GOR, Bo, STO API and gas per stage; also fit ONE shared stage P/T set to reservoir-simulation oil and gas rates over many fluids. USE WHEN: 'kjør dette for et gitt fluid', surface GOR/Bo/STO for an E300 fluid, or fitting the pseudo-process P/T per tank/scrubber of a reservoir simulation."
 last_verified: "2026-11-08"
 requires:
   python_packages: [neqsim]
@@ -79,11 +79,56 @@ temperature, `Separator`; the liquid outlet feeds the next stage.
 
 The user normally runs variations themselves: loop the script over several E300
 files or composition JSONs and collect the `GOR_Sm3_Sm3`, `Bo_m3_Sm3` and
-`STO_API` fields into a table. If asked to generate the compositions, use a
-Latin hypercube of mole fractions (for example +-20 % on each C1-C6 component and
-on the C7+ amount, and a tilt of the C7+ distribution so MW and SG shift
-consistently with the pseudo-component EOS parameters), renormalise to 1.0, and
-keep stage P/T and feed P/T fixed across cases so the cases are comparable.
+`STO_API` fields into a table. `scripts/make_variations.py base.e300 --n 30
+--outdir d` writes Latin-hypercube variations (+-20 % on each C1-C6 component, on
+the C7+ amount and on a C7+ tilt, keeping the pseudo-component EOS parameters)
+plus a `manifest.csv`. Keep stage P/T and feed P/T fixed across cases so the
+cases are comparable.
+
+## Fit ONE P/T set to reservoir-simulation rates
+
+A reservoir simulator applies one pseudo process (the same stage P/T) to every
+fluid it produces, from all formations. To reproduce its produced oil and gas
+rate, regress a single set of stage pressures and temperatures over all fluids.
+Only oil and gas rate matter (hence GOR); Bo and densities are not used.
+
+Manifest CSV, one row per fluid: `fluid` (E300 path), `oil_Sm3_h`, `gas_Sm3_h`
+(targets from the simulator), optional `feed_kmol_h`, `feed_P_bara`, `feed_T_C`,
+`weight`, `formation` (label for the error report only; all formations share the
+one P/T set).
+
+```
+<python> scripts/fit_separator_pt.py manifest.csv --x0 "80:70,25:55,3:45" \
+    --feed-p 300 --feed-t 110 --p-max 120 --out fit.json
+```
+
+- Unknowns: P and T of every stage (stage count = number of `--x0` stages; stock
+  tank fixed at 15 degC, 1.01325 bara). Pressure falls along the train by construction.
+- Residuals: ln(model/target) for oil and for gas per fluid, so errors are relative.
+- Output `fit.json` and `*_per_fluid.csv`: fitted stages, per-fluid target vs model
+  (oil, gas, GOR, % error), `formation_report`, parameter standard errors,
+  Jacobian condition number, warnings.
+
+**Uniqueness is not guaranteed.** Oil and gas rate alone constrain only a
+combination of the stage conditions. Tested on synthetic targets (known train
+60:55, 15:45, 1.8:35, 1 % noise): fluids varied +-20 % around one base gave a
+pure data fit (`--prior-weight 0`) with huge standard errors that drifted to a
+physically odd set at the same noise-level match. A weak prior toward `--x0`
+(`--prior-weight`, default 0.02) selects one reproducible solution along the flat
+valley; with three different base fluids the match was at the noise level
+(about 1 % GOR) for every formation, and the standard errors shrank (about 7-21 degC,
+a factor 1.8 in pressure). So:
+
+1. Always report the fitted set together with its `std_error`s and the match quality;
+   do not present poorly determined stages as measured values.
+2. Use fluids from as many formations with different volatility as possible; that
+   is what makes P/T better determined.
+3. Set `--x0` to the simulator's own pseudo-process (or a typical train); the prior
+   keeps the answer near it. Fix a stage you know by narrowing `--t-min/--t-max`
+   and `--p-max`.
+4. If `formation_report` shows a formation biased by more than a few percent GOR,
+   one P/T set does not fit all formations; say so instead of tuning further.
+5. A run on 30 fluids and 3 stages takes about 1 minute.
 
 ## Limits
 

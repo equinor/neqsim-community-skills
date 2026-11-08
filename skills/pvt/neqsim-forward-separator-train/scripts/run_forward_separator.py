@@ -59,12 +59,15 @@ def parse_stages(text):
     return stages
 
 
-def run_train(jneqsim, fluid, stages, flow_kg_h):
-    """Build and run the forward train; return feed stream, stage records, stock tank liquid."""
+def run_train(jneqsim, fluid, stages, flow, unit="kg/hr"):
+    """Build and run the forward train; return feed stream, stage records, stock tank liquid.
+
+    flow is given in unit ("kg/hr" or e.g. "mole/sec").
+    """
     eq = jneqsim.process.equipment
     ps = jneqsim.process.processmodel.ProcessSystem()
     feed = eq.stream.Stream("feed", fluid)
-    feed.setFlowRate(flow_kg_h, "kg/hr")
+    feed.setFlowRate(flow, unit)
     ps.add(feed)
     liquid = feed
     records = []

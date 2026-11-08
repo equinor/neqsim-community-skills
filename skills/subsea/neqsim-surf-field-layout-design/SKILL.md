@@ -165,6 +165,8 @@ only for orientation.
 
 ## Engineering Method
 
+**Regime first.** Resolve the country and the operator with `neqsim-jurisdiction-regulatory-basis` (`activity_basis(country, ("surf",))`) before choosing a layout: route approval, seabed-use and safety-zone rules, pipeline and riser design codes and verification steps differ by regime, and the layout is only a screening geometry until they are checked. Carry its `assumptions` and `data_gaps` into the hand-off.
+
 **Drill centres.** Wells of each service are grouped into templates of
 `slots_per_template` slots, and the resulting drill centres are spaced evenly
 over 70 % of the reservoir length along the field axis. Water injectors are

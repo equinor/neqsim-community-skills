@@ -1007,8 +1007,8 @@ skills:
     tags: [reporting, intake, planning, workflow]
     min_neqsim_version: "3.7.0"
   - name: neqsim-jurisdiction-regulatory-basis
-    version: "0.1.0"
-    description: "Identifies the country and regulatory regime of the evaluated asset and records the authorities, governing laws, regulation families, recognised standards and fiscal basis that apply, with Norway, UK, US, Brazil and EU profiles. USE WHEN: any study, design, safety, emissions, layout, mechanical-design or economics task evaluates an asset in a specific country, or the country is not stated and must be asked or declared as an assumption."
+    version: "0.2.0"
+    description: "Identifies the country and regulatory regime of the evaluated asset and records authorities, governing laws, regulation families, recognised standards and fiscal basis, with NO, GB, US, BR, AO, CA and EU profiles and a per-topic well and SURF register. USE WHEN: any study, design, safety, emissions, layout, well-planning, SURF or economics task evaluates an asset in a specific country, or the country is not stated and must be asked or declared as an assumption."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/engineering-data/neqsim-jurisdiction-regulatory-basis/SKILL.md"

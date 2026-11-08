@@ -138,6 +138,58 @@ PROFILES = {
             "https://dados.gov.br (ANP open data)",
         ],
     },
+    "AO": {
+        "name": "Angola (offshore blocks under production sharing agreements)",
+        "authorities": [
+            "ANPG (National Agency for Petroleum, Gas and Biofuels) - concessionaire and regulator",
+            "Ministry of Mineral Resources, Petroleum and Gas (MIREMPET)",
+            "Ministry of Environment - environmental licensing",
+        ],
+        "laws": [
+            "Petroleum Activities Law (Law 10/04)",
+            "Petroleum Activities Taxation Law (Law 13/04)",
+            "Environmental regulation for petroleum operations (Decree 39/00, verify current text)",
+        ],
+        "safety_regulations": [
+            "Technical and safety requirements are set mainly through the block production sharing agreement and ANPG-approved operator procedures; obtain them for the block",
+        ],
+        "recognised_standards": [
+            "API, ISO and DNV standards named in the block contract and the operator's design basis",
+        ],
+        "pressure_equipment": "Per the operator's design basis and the block contract; ASME or equivalent",
+        "fiscal_note": "Contract-based: production sharing agreement per block plus petroleum income, production and transaction taxes; verify per contract",
+        "data_sources": [
+            "https://anpg.co.ao (verify current domain)",
+            "Block production sharing agreement (from the operator)",
+        ],
+    },
+    "CA": {
+        "name": "Canada (Newfoundland and Labrador offshore area)",
+        "authorities": [
+            "C-NLOER (Canada-Newfoundland and Labrador Offshore Energy Regulator, formerly C-NLOPB) - safety, environment, resource management",
+            "Impact Assessment Agency of Canada - federal impact assessment",
+            "Environment and Climate Change Canada and Fisheries and Oceans Canada - environment and fisheries",
+            "Transport Canada - vessels",
+        ],
+        "laws": [
+            "Canada-Newfoundland Atlantic Accord Implementation Act and the provincial counterpart",
+            "Impact Assessment Act",
+        ],
+        "safety_regulations": [
+            "Newfoundland Offshore Area Petroleum Drilling and Production Regulations",
+            "Newfoundland Offshore Petroleum Installations Regulations",
+            "Newfoundland Offshore Certificate of Fitness Regulations",
+        ],
+        "recognised_standards": [
+            "CSA, API, ISO and DNV standards as referenced by the regulations and guidelines",
+        ],
+        "pressure_equipment": "Per the installations regulations and referenced CSA or ASME codes; verify",
+        "fiscal_note": "Provincial offshore royalty regime plus federal and provincial corporate tax; verify per project agreement",
+        "data_sources": [
+            "https://laws-lois.justice.gc.ca",
+            "C-NLOER website (verify current domain after the rename)",
+        ],
+    },
     "EU": {
         "name": "European Union baseline (member-state transposition and national authority must be added)",
         "authorities": [
@@ -165,5 +217,7 @@ ALIASES = {
     "GB": "GB", "UK": "GB", "UKCS": "GB", "UNITED KINGDOM": "GB", "GREAT BRITAIN": "GB",
     "US": "US", "USA": "US", "UNITED STATES": "US", "GOM": "US", "GULF OF MEXICO": "US",
     "BR": "BR", "BRAZIL": "BR", "BRASIL": "BR",
+    "AO": "AO", "ANGOLA": "AO",
+    "CA": "CA", "CANADA": "CA", "NEWFOUNDLAND": "CA", "BAY DU NORD": "CA",
     "EU": "EU", "DK": "EU", "DENMARK": "EU", "NL": "EU", "NETHERLANDS": "EU", "EUROPEAN UNION": "EU",
 }

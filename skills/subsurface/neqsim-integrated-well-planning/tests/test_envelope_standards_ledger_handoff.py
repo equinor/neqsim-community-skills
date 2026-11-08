@@ -223,3 +223,14 @@ def test_route_table_names_only_catalog_style_agents():
     names = {a for r in handoff.ROUTES.values() for k in ("in_from", "out_to") for a in r.get(k, [])}
     assert "vfp-lift-curve-agent" in names and "well-trajectory-anticollision-agent" in names and "asset-economics-agent" in names
     assert all(n == n.lower() and " " not in n for n in names)
+
+
+def test_known_jurisdiction_adds_to_verify_regulation_rows():
+    pytest.importorskip("jurisdiction_basis")
+    base = standards.seed_register("TO_BE_IDENTIFIED")
+    norway = standards.seed_register("Norway")
+    extra = [e for e in norway if e.id.startswith("STD-J")]
+    assert len(norway) > len(base) and extra
+    assert all(e.status == "TO_VERIFY" and "jurisdiction: Norway" in e.applicability for e in extra)
+    assert not standards.validate_register(norway)
+    assert not standards.ready_for_compliance_statement(norway)

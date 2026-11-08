@@ -62,12 +62,44 @@ _SEED = [
 ]
 
 
+def _jurisdiction_rows(jurisdiction: str) -> List[StandardEntry]:
+    """Return TO_VERIFY rows for the laws, regulations and contract terms of a known jurisdiction.
+
+    Uses ``jurisdiction_basis.activity_basis`` when that skill is installed; returns no rows when it is
+    missing or the jurisdiction is unknown. Rows name what to check; they carry no limits.
+    """
+    try:
+        from jurisdiction_basis import activity_basis
+    except ImportError:
+        return []
+    block = activity_basis(jurisdiction, ("well",))
+    area_by_topic = {"well_control_bop": "well_control", "materials_sour_chemicals": "materials"}
+    rows: List[StandardEntry] = []
+    seen = set()
+    for topic, item in block.get("activities", {}).get("well", {}).items():
+        for r in item["instruments"]:
+            if r["layer"] == "standard-referenced" or r["instrument"] in seen:
+                continue
+            seen.add(r["instrument"])
+            rows.append(StandardEntry(
+                "STD-J{:02d}".format(len(rows) + 1), item["title"], r["instrument"],
+                applicability="TO_VERIFY (jurisdiction: {}; {}; registry status {})".format(jurisdiction, r["authority"], r["status"]),
+                verification_method="Fetch the current text at the authority; record edition and clause; {}".format(r["note"]),
+                assessment_area=area_by_topic.get(topic, "operations")))
+    return rows
+
+
 def seed_register(jurisdiction: str = "TO_BE_IDENTIFIED") -> List[StandardEntry]:
-    """Return the default register (all rows TO_VERIFY) for the study."""
+    """Return the default register (all rows TO_VERIFY) for the study.
+
+    A recognised jurisdiction (for example ``Norway`` or ``US``) adds ``STD-J`` rows for its laws and
+    regulations from the optional ``jurisdiction_basis`` skill.
+    """
     rows = []
     for sid, topic, doc, method, area in _SEED:
         rows.append(StandardEntry(sid, topic, doc, applicability="TO_VERIFY (jurisdiction: {})".format(jurisdiction), verification_method=method,
                                   assessment_area=area))
+    rows.extend(_jurisdiction_rows(jurisdiction))
     return rows
 
 

@@ -160,6 +160,13 @@ Verified by `tests/test_limits.py`.
 
 Screening geometry on straight segments in a local frame: no obstacle-avoiding routing, no geohazard interpretation, no foundation, structural, dropped-object or trawl-load calculation, no installation or vessel analysis, no anti-collision, no probabilistic fishing or ship-impact assessment. Map data may be restricted, incomplete or shifted. The ranking weights are declared assumptions. Hand-offs: `neqsim-seabed-protection-screening` (burial, rock, crossings design scope), `neqsim-pipe-route-profile` (profiles), `neqsim-erd-reach-screening` and `neqsim-well-trajectory-anticollision` (wells), `neqsim-surf-design-study` (hydraulics and design checks), specialists for geotechnical, geohazard, installation and fishing-interaction work.
 
+## References
+
+- DNV-ST-F101, Submarine pipeline systems (route selection, survey, installation).
+- DNV-RP-F105, F109, F110, F114: free span, on-bottom stability, global buckling, pipe-soil interaction.
+- ISO 13628-1, Subsea production systems, general requirements and recommendations.
+- NORSOK U-001, Subsea production systems.
+
 ## Related NeqSim Functionality
 
 Skills: `neqsim-surf-field-layout-design`, `neqsim-subsea-layout-geometry`, `neqsim-seabed-protection-screening`, `neqsim-pipe-route-profile`, `neqsim-bathymetry-profile-screening`, `neqsim-field-layout-import`, `neqsim-subsea-slot-tee-reuse-inventory`, `neqsim-step-out-screening`, `neqsim-tie-in-pipeline-concept`, `neqsim-erd-reach-screening`, `neqsim-jurisdiction-regulatory-basis`, `neqsim-surf-design-study`.

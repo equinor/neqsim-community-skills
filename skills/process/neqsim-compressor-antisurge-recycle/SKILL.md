@@ -1,9 +1,9 @@
 ---
 name: neqsim-compressor-antisurge-recycle
 calculation_basis: "neqsim-java"
-version: 0.4.0
+version: 0.5.0
 description: "Anti-surge recycle for centrifugal compressors in NeqSim: chart generation, AntiSurgeRecycleCalculator, dynamic AntiSurgeController, CompressorAntiSurgeApplication binding, MinimumSpeedRecycleControllerStructure split-range control, speed-solve convergence and recycle power/CO2 savings. USE WHEN: a task must protect a compressor from surge with a recycle loop, coordinate speed and recycle at minimum speed, or value avoided recycle."
-last_verified: "2026-10-18"
+last_verified: "2026-11-07"
 requires:
   python_packages: []
   java_packages:
@@ -30,6 +30,19 @@ that mirrors NeqSim's proportional anti-surge step so an agent can pre-estimate
 the recycle flow and decide whether a chart must be generated first. Real
 control design must use the validated NeqSim equipment classes below and a
 qualified rotating-equipment review (API 617 / API 692).
+
+## Complete compressor automation and P&ID studies
+
+For a request to build a natural-gas compressor train with scrubbers, cooling,
+anti-surge, instrumentation, shutdown tests and professional P&IDs, use the
+[agentic compressor workflow](references/agentic-compressor-workflow.md).
+It coordinates the existing process, rotating-equipment, control, safety and
+independent P&ID review agents. It requires an actual material graph, converged
+steady state, canonical settings applied/read back on native copies, fault and
+refinement tests, source-bound DEXPI 2.0.1/P&ID exports, and automation-engineering
+registers/narratives. Proposed devices and direct compressor-derived inputs are
+separate from executed measurement paths. A controller command alone is not
+recycle-flow or surge-protection evidence.
 
 ## When to Use
 
@@ -226,6 +239,23 @@ calc.setSurgeControlMargin(0.10);
 calc.setRecycleCoolerTemperature(35.0, "C");
 AntiSurgeRecycleCalculator.Result result = calc.solve();
 ```
+
+## Constant-Speed Compressors: Fixed-Speed Operating Point
+
+A motor-driven machine on a fixed gear (no VFD) cannot move speed, so the speed solvers of `CompressorShaft` do not
+apply. Use `CompressorShaft.evaluateFixedSpeedControl()` (or `CompressorFixedSpeedControl.evaluate(compressor,
+requiredBara)` for one stage). Per stage it reports, on the real chart at the fixed speed:
+
+| Status | Meaning |
+|---|---|
+| `ON_CURVE` | chart delivers the required pressure at the process flow |
+| `RECYCLE_CONTROLLED` | surplus head; recycle raises the through-flow until chart head = requirement; power, recycle fraction and discharge temperature are those of that point |
+| `THROTTLE_REQUIRED` | surplus head even at stonewall; recycle cannot remove it |
+| `HEAD_DEFICIT` | chart cannot reach the pressure (for example a lighter gas at the same flow); `deliverableDischargeBara` gives what it can |
+
+Set the stage pressures with `setMemberRequiredDischargePressure`, call `runAtFixedSpeed(rpm, null)`, then evaluate.
+Idle members (1oo2 trains) are `NOT_EVALUATED`. The evaluation runs a deep copy of each member, so MW correction, IGV and
+the efficiency model are those of the flowsheet. Tests: `CompressorFixedSpeedControlTest`.
 
 ## Dynamic Anti-Surge Control (AntiSurgeController)
 
@@ -694,11 +724,75 @@ the signal that an upstream machine missed spec. A worked end-to-end example
 (three-stage separation + shared-shaft recompression + control) is in the NeqSim
 repo notebook `examples/notebooks/CompressorShaft_ThreeStageSeparation.ipynb`.
 
-**Newer NeqSim cores (3.26+)** add to `CompressorShaft`: gear ratios (`addCompressor(c, ratio)`), members in different
-ProcessSystems, idle/removed members (`setMemberActive`, `removeCompressor`), a controlling member with discharge/suction/flow
-targets (`solveSpeedToTarget`), a per-member `getOperatingReport()` (margins, recycle demand, flags), an ambient site-rated
-`GasTurbineUnit` driver (`setGasTurbineUnitDriver`, `setAmbientTemperature`), `setElectricSupplyLimit`,
-`findMaxSpeedWithinPowerLimit` and `DriverLimitedThroughputSolver`. See the core skill of the same name for the code pattern.
+## Common-Shaft Trains Across Platforms, Power-Limited Drivers and Ambient Derating
+
+`CompressorShaft` (since 3.26) covers the cases a plain "one shaft, one target" model misses. All of it is
+reached through the same object, and the members may live in **different `ProcessSystem`s** (the
+`Runnable` you pass to `solveSpeed` runs every system in order and copies the inter-platform stream).
+
+```python
+shaft = CompressorShaft("HT 3rd+4th+5th stage (one GT)")
+shaft.addCompressor(ka23003)            # OSA, ratio 1.0
+shaft.addCompressor(ka23004, 1.0)       # OSD; second argument = gear ratio (member rpm per shaft rpm)
+shaft.addCompressor(ka26001, 1.2)
+shaft.setSpeedBounds(rpmMin, rpmMax)    # driver speed band; keep it inside the chart-valid region
+shaft.setGasTurbineUnitDriver(gt)       # site-rated GasTurbineUnit (power vs ambient, exhaust-T limit)
+shaft.setAmbientTemperature(24.0, "C")  # moves the driver rating; also feeds a CompressorDriver
+shaft.setMemberRequiredDischargePressure(ka26001, 160.0, "bara")   # margins in the report
+# controlling member sets the speed; the others float on their charts at r_i * N:
+shaft.solveSpeedToTarget(ka23003, CompressorShaft.ControlTarget.DISCHARGE_PRESSURE, 24.0, "bara", run_both)
+# other targets: SUCTION_PRESSURE (bara) and INLET_FLOW ("kg/hr" or "m3/hr"); direction is not assumed
+report = shaft.getOperatingReport()     # per member: speed, power, surge/stonewall distance,
+                                        # requiredRecycleFraction (to control line), flags; JSON via toJson()
+```
+
+- **HT 3rd stage sets the speed (until decoupling).** Make the 3rd stage the controlling member with its own
+  flow and discharge-pressure target; the 4th/5th stage run at the same speed, their flow follows from the
+  process, and the report gives the margin to the discharge need (`"excess head (throttle or recycle)"`,
+  `"speed too low for the discharge need"`) and the recycle fraction anti-surge must carry
+  (`requiredRecycleFraction`, `recyclePowerW`). After the 3rd stage gets its own motor (DG4), call
+  `shaft.removeCompressor(ka23003)` and give it a new `CompressorShaft` with `setMaxShaftPower(5, "MW")` or
+  `setElectricSupplyLimit(MW, "MW", motorEff)`.
+- **Always-coupled trains** (LT 1st+2nd stage recompressors) are one `CompressorShaft` for all years.
+- **Decoupling dates and per-year modes.** Keep the membership per year (or per half-year when the date falls inside a
+  year) in a table, run each part with its own shaft set and report the time weight. Details, the efficiency-calibration
+  and chart-similarity pitfalls: `neqsim-rotating-equipment-design`, section "Chart gas similarity, efficiency
+  calibration and chart-speed basis".
+- **Idle members.** `setMemberActive(c, false)` locks the compressor inactive (flowsheet skips it), removes it
+  from the power sum and limit checks; with no active member `solveSpeed` returns 0 rpm and status
+  `SHAFT_IDLE` (feasible). The idle compressor's outlet is not updated, so give an idle train a bypass line or
+  zero flow in the flowsheet.
+- **Power limit.** `getAvailableShaftPower` = explicit `setMaxShaftPower`, else a `CompressorDriver` curve,
+  else `GasTurbine` rating, else `GasTurbineUnit.getAvailablePowerAtAmbient(T)`; `setElectricSupplyLimit`
+  caps it by the smaller value. `solveSpeed` flags `OVER_POWER`; `findMaxSpeedWithinPowerLimit(run)` gives the
+  highest speed the driver holds; `DriverLimitedThroughputSolver(shaft, ref, targetP, "bara", flow -> ..., run)
+  .solve(minFlow, maxFlow)` gives the highest throughput and the binding limit (`DRIVER_POWER`, `MAX_SPEED`,
+  `SURGE`, `STONEWALL`, `NONE`).
+- **Fuel and exhaust.** After a solve `shaft.updateDriverOperatingPoint()` runs the `GasTurbineUnit` at the
+  shaft demand; read `getFuelMassFlowKgPerHr()`, `getExhaustTemperatureK()`,
+  `getWasteHeatRecoveryDutyW(stackK, effectiveness)`.
+- Gotchas: chart evaluation outside the map throws `ChartOperatingPoint` at the bracket ends of a speed solve,
+  so set speed bounds inside the chart-valid region; the discharge-pressure solve of one member assumes
+  pressure rises with speed (suction/flow targets only need a bracket). Details and the gap list:
+  `neqsim-rotating-equipment-design` section "Compressor trains on a common shaft".
+- **Modelling traps found in the Oseberg HT-shaft rework (Python port `eot_ofc_common.shaft`; they apply to the Java class too).**
+  (1) *Do not take gear ratios from datasheet rated speeds.* The digitised charts of KA23003 and KA23004 share one speed grid
+  (70-108 % of 10200 rpm) and neither reproduces its Hatch rated speed (10037 / 10710 rpm); the effective member rpm per
+  power-turbine rpm, read from measured pressure / temperature / recycle-inclusive flow, was 2.18 for both - one ratio, not 0.937.
+  Derive the ratio per machine from a measured window (`required_member_speed`), keep the other window as a check, and read an
+  ASV-recycled machine at its machine flow (net flow x measured recycle), not at the net flow.
+  (2) *The controlling member sets N only while it needs the highest speed.* A follower that must reach its discharge pressure
+  above its surge control line imposes a minimum speed; use `N = max(N_control, N_min,follower)` (`min_shaft_speed_on_control_line`)
+  and report which one binds. Followers have no flow target: their flow is the chart flow at N (`capacity`), the surplus is
+  recycled / let down, a shortfall is a surge or stonewall flag.
+  (3) *A controlling member below its control line is held on it by the ASV*: evaluate its head at `max(Q, Q_surge (1 + margin))`
+  or its speed demand is understated by 10-15 %.
+  (4) *Keep the flow of a follower out of the solve.* If the follower flow is an input (table or measured recycle), the shaft
+  speed only checks it; to make the volume an output, drop the measured recycle and iterate N and the flow in the outer loop.
+  (5) *Loop gain across platforms.* A recycle of flash gas between two coupled simulators (NGL stabiliser -> LP compression -> DPC
+  -> stabiliser) can amplify; compare the one-way coupled result with the converged loop before blaming the composition.
+- Wet-gas recompression chains: validate the speed set by the 3rd stage against the measured PT speed of both trains
+  (an under-loaded train - net flow small against surge - is read at its machine flow, and its speed is then set by the 4th stage).
 
 ## Related NeqSim Functionality
 

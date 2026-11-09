@@ -224,6 +224,15 @@ skills:
     tags: [h2s, souring, waterflood, seawater-fraction, correlation, reservoir, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-reservoir-h2s-mineral-buffer
+    version: "0.1.0"
+    description: "Original (pre-souring) H2S in reservoir fluids from mineral buffering: pyrite + Fe-carbonate with the CH4/CO2 of the fluid fixes the H2S fugacity, which explains the exponential rise of H2S with reservoir temperature (Haaland 1999 correlation, about 54 kJ/mol). USE WHEN: a task asks what H2S to expect in a new reservoir or discovery, why H2S rises with temperature, whether a measured H2S is natural or souring, or which mineral reaction controls H2S."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-reservoir-h2s-mineral-buffer/SKILL.md"
+    tags: [h2s, reservoir, mineral-buffer, pyrite, siderite, thermodynamics, sour-gas, screening]
+    min_neqsim_version: "3.29.0"
+
   - name: neqsim-well-trajectory-anticollision
     version: "0.1.0"
     description: "Educational 3D well path and anti-collision screening: minimum curvature, curve-hold from kick-off or sidetrack tie-in, reduced MWD uncertainty, ISCWSA separation factor against offsets, parent exit, slot check and target pull-back. USE WHEN: a task needs a concept well path, whether it clears existing wellbores, the governing offset, how far to move a target, or if a slot is free before an official anti-collision run."

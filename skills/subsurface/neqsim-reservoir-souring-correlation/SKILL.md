@@ -74,6 +74,7 @@ bound = mixing_zone_h2s_mg_l(0.4, sulfate_sw_mg_l=2700.0, donor_fw_mg_l=300.0, t
 - Thermal cutoff is a logistic screen, not a measured population limit; cooled regions around injectors extend the active zone.
 - No reservoir transport: use a reservoir simulator for front timing, streamlines and sweep.
 - Partitioning of H2S between oil, gas and water in the reservoir and wellbore is not modelled here.
+- The natural (pre-injection) H2S baseline is not modelled here; get it from `neqsim-reservoir-h2s-mineral-buffer` (pyrite + Fe-carbonate buffer, rises with reservoir temperature) and subtract it before fitting souring correlations.
 
 ## Common Mistakes
 

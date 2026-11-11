@@ -1,9 +1,9 @@
 ---
 name: neqsim-olga-multiphase-simulator
 calculation_basis: "neqsim-java"
-version: "0.1.0"
-description: "Run the OLGA transient multiphase simulator from Python: locate it, build its PVT table and hydrate curve from a NeqSim fluid, rule-check a genkey case, launch the batch engine, decode the exit code, and read .tpl/.ppl results. USE WHEN: executing or sweeping OLGA cases, building an OLGA PVT table or HYDRATECURVE, diagnosing an OLGA failure or licence error, or benchmarking OLGA against NeqSim TwoFluidPipe / PipeBeggsAndBrills."
-last_verified: "2026-08-15"
+version: "0.2.0"
+description: "Run the OLGA transient multiphase simulator from Python: locate it, build, configure and report its PVT table and hydrate curve from a NeqSim fluid, rule-check a genkey case, launch the batch engine, decode the exit code, and read .tpl/.ppl results. USE WHEN: executing or sweeping OLGA cases, building or documenting an OLGA PVT table or HYDRATECURVE, diagnosing an OLGA failure, or benchmarking OLGA against NeqSim pipe models."
+last_verified: "2026-11-11"
 requires:
   python_packages: []
   java_packages: []
@@ -551,6 +551,74 @@ generator.writeOLGAinpFile("linnorm.tab")
   resolve phases by type, mark absent phases, and nearest-neighbour fill in
   grid-index space; mass fractions (`RS`, `RSW`) are deliberately left at zero
   where the phase is absent.
+
+#### Configuring a study table
+
+The generator works in four stages, each configured before `run()`:
+
+1. **Fluid preparation** - `setProducedWater(value, spec)` adds water to a copy
+   of a water-free feed (`"watercut"` = vol % of the standard liquid, `"mol/mol"`,
+   `"mol%"`, `"wt%"`). The water component may exist with zero moles (an E300
+   file read with added water). A feed that already holds water is rejected.
+2. **Grid** - `setPressureRange` / `setTemperatureRange` (bara / **K**) or
+   explicit `setPressures` / `setTemperatures`. `setEnvelopeRefinement(true, g)`
+   puts `g/(g+1)` of a range axis inside the water-free envelope (cricondenbar,
+   cricondentherm); use >= 50 points per axis. `setInsertStandardConditions(true)`
+   makes the standard state a node; `setStandardConditions(T_K, P_bara)` changes it.
+3. **Node evaluation** - three-phase only: `setUseReferenceWaterProperties(true)`
+   takes aqueous density, its derivatives, Cp, H, S, viscosity and conductivity
+   from IAPWS-IF97 Region 1, R12-08 and R15-11 where the aqueous phase is >= 95 wt%
+   water (MEG/methanol-rich water stays on the EOS); `setWaterSalinity(value,
+   "mg/l" | "ppm" | "wt%" | "kg/kg")` applies Batzle-Wang brine ratios to density,
+   its derivatives and viscosity. Salinity cannot be combined with ion components.
+4. **Fill and checks** - `setMonotonicityCorrection(true)` (default) fills absent
+   density along P with dRho/dP and absent H/S along T with Cp, so the branch is
+   monotonic and continuous.
+
+```python
+pg = jneqsim.thermodynamicoperations.propertygenerator
+generator = pg.OLGApropertyTableGeneratorWaterKeywordFormat(fluid)
+generator.setFluidLabel("WELLSTREAM")
+generator.setPressureRange(5.0, 250.0, 50)
+generator.setTemperatureRange(253.15, 393.15, 50)
+generator.setEnvelopeRefinement(True, 5.0)
+generator.setInsertStandardConditions(True)
+generator.setProducedWater(30.0, "watercut")
+generator.setWaterSalinity(35000.0, "mg/l")
+generator.setUseReferenceWaterProperties(True)
+generator.run()
+qc = generator.getQualityReport()
+assert qc.isLoadable(), str(qc.toJson())
+generator.writeOLGAinpFile(str(task / "step2_analysis" / "wellstream.tab"))
+generator.writeTableReport(str(task / "step2_analysis" / "wellstream_table_report.md"))
+qc.writeCsv(str(task / "step2_analysis" / "wellstream_table_qc.csv"))
+```
+
+**Report the table, not just the file.** `writeTableReport` writes a Markdown
+report with fluid and composition, axes and how each was built, GOR/GLR/WC and
+standard densities, the water-free critical point and envelope, the water models
+with node counts (`getReferenceWaterNodeCount`, `getReferenceWaterSkippedNodeCount`)
+and the per-column quality table. Put it, the `.tab` and the QC CSV in the task
+folder and cite them in the study report. Plot the CSV (`pressure_bara`,
+`temperature_C`, `keyword`, `value`, `phase_exists`) to show phase-boundary
+continuity.
+
+Reading the quality report:
+
+- `isLoadable()` false - a NaN/Inf or non-positive density, compressibility,
+  viscosity, Cp or conductivity; OLGA will reject or misuse the table. Fix first.
+- `monotonicityViolationsExtrapolated > 0` - fill defect; regenerate with the
+  monotonicity correction on.
+- `monotonicityViolationsExisting > 0` on `ROHL` - usually physical: retrograde
+  condensate liquid gets lighter with pressure. Report, do not "fix".
+- `maxBoundaryJump` far above `maxInteriorJump` - discontinuous extrapolation at a
+  phase boundary; refine the grid near the envelope.
+- Several skipped reference-water nodes - inhibitor-rich or out-of-range aqueous
+  states; state which model those nodes used.
+
+`getTableFluid()` returns the feed including the produced water; use the same
+fluid for the hydrate curve and the source phase split, or the study mixes two
+fluids.
 
 **A generated table is only validated when OLGA has actually loaded it.**
 `-exitRC` does **not** read the PVT file, so a rule check passing says nothing

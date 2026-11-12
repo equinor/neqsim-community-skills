@@ -1,9 +1,9 @@
 ---
 name: neqsim-reservoir-model-builder
 calculation_basis: "screening"
-version: "0.5.0"
+version: "0.5.1"
 description: "Screening-level reservoir model from whatever data exists, on a maturity ladder from one public volume to a full static model, with ranked source ladders per ingredient. USE WHEN: a field has only open data, a best-guess structure without seismic/logs/contacts is needed, volumetrics or depth defaults, recovery and well count from analogues, static arrays to OPM Flow GRID/PROPS reconciled to P90/P50/P10, or a SimpleReservoir/WellFlow spec with provenance."
-last_verified: "2026-09-10"
+last_verified: "2026-11-11"
 requires:
   python_packages: []
   java_packages: []
@@ -319,6 +319,24 @@ best-guess deck:
   case that raises the field `GRAT` limit), report the uplift as the value of
   that added capacity. Compare it with the same capacity added topside before
   crediting the technology.
+
+### Recovery-factor and source-tracking basis
+
+Black-oil production vectors report modeled phase/component totals; they do not
+inherently identify whether produced oil originated in a particular reservoir
+region, such as an oil rim versus a gas cap. Keep total stock-tank recovery
+separate from any source-origin recovery, and state the numerator, denominator,
+and provenance method for each reported factor.
+
+Do not convert a black-oil total to source-origin oil with one fixed multiplier
+unless the mapping is validated against source-tracked reference results for
+each relevant strategy and on the same PVT basis. Report the conversion-factor
+range and carry it into the strategy comparison. If that uncertainty is as large
+as or larger than the difference between strategies, the ranking is unresolved;
+do not present the apparent winner as established. When source attribution is
+decision-critical, use a simulator/model with explicit source tracking or
+validated tracer bookkeeping, and check that the tracking method does not
+materially change the production response.
 
 ### Evaluating the injection philosophy
 

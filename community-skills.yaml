@@ -74,7 +74,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-e300-fluid-io
-    version: "0.1.0"
+    version: "0.1.1"
     description: "Read, write, and add water to Eclipse E300 fluid files for NeqSim. USE WHEN: a task needs to load an E300 file into a NeqSim fluid, write a NeqSim fluid to E300, or add water to a fluid or E300 file with the public PVTsim water parameters (volume shift 0.084004, parachor 10.0, kij 0.5)."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -441,7 +441,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reservoir-model-builder
-    version: "0.5.0"
+    version: "0.5.1"
     description: "Screening-level reservoir model from whatever data exists, on a maturity ladder from one public volume to a full static model, with ranked source ladders per ingredient. USE WHEN: a field has only open data, a best-guess structure without seismic/logs/contacts is needed, volumetrics or depth defaults, recovery and well count from analogues, static arrays to OPM Flow GRID/PROPS reconciled to P90/P50/P10, or a SimpleReservoir/WellFlow spec with provenance."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"

@@ -1,9 +1,9 @@
 ---
 name: neqsim-e300-fluid-io
 calculation_basis: "neqsim-java"
-version: "0.1.0"
+version: "0.1.1"
 description: "Read, write, and add water to Eclipse E300 fluid files for NeqSim. USE WHEN: a task needs to load an E300 file into a NeqSim fluid, write a NeqSim fluid to E300, or add water to a fluid or E300 file with the public PVTsim water parameters (volume shift 0.084004, parachor 10.0, kij 0.5)."
-last_verified: "2026-06-01"
+last_verified: "2026-11-11"
 requires:
   python_packages: []
   java_packages: []
@@ -87,6 +87,28 @@ The `BIC` block lists, for component `r` (1-based, `r = 1..n-1`), the `r`
 interaction values against components `0..r-1`. The skill reconstructs the full
 symmetric matrix with a zero diagonal.
 
+### Preserving PR `OMEGAB` on import
+
+The ordinary `EclipseFluidReadWrite.read(String)` path intentionally retains
+historical behavior and does not apply the E300 `OMEGAB` section. For a
+Peng-Robinson E300 file whose component covolumes are explicitly supplied or
+tuned in `OMEGAB`, use the dedicated NeqSim reader instead:
+
+```python
+EclipseFluidReadWrite = ns.JClass(
+    "neqsim.thermo.util.readwrite.EclipseFluidReadWrite"
+)
+fluid = EclipseFluidReadWrite.readWithPrOmegaB(str(e300_path))
+fluid.setMixingRule("classic")
+```
+
+`readWithPrOmegaB(String)` reads a PR fluid and applies its per-component
+`OMEGAB` coefficients. It does not change the file's EOS selection or the
+other import behavior. For replicated source fluids, use
+`readWithPrOmegaB(String, String[])`. This method is not a general replacement
+for `read(String)` on non-PR files. If water is needed, add it after importing
+the dry PR fluid with `addWaterToFluid`.
+
 ### Adding water
 
 Water is appended as the last component with the public PVTsim Peng-Robinson
@@ -166,6 +188,8 @@ Python package is not installed. The pure-Python functions always work.
 - [ ] Water volume shift is 0.084004 and parachor is 10.0.
 - [ ] Water binary interaction parameter is 0.5 (or the chosen `water_kij`) against all components.
 - [ ] An E300 file written by this skill reloads in NeqSim without error.
+- [ ] For PR files with an `OMEGAB` block, import with
+      `readWithPrOmegaB(String)` and verify the imported covolumes.
 - [ ] `setMixingRule("classic")` is called before NeqSim property calculations.
 
 ## Common Mistakes
@@ -178,6 +202,7 @@ Python package is not installed. The pure-Python functions always work.
 | Vector length mismatch on write | A section was edited inconsistently | Run `E300Fluid.validate()` before writing |
 | Wrong reservoir temperature in output | RTEMP defaulted to 100 °C | Pass `reservoir_temp_c` explicitly |
 | Tuned kij lost after reading a written file | `setMixingRule()` was called after `EclipseFluidReadWrite.read()` | `read()` already installs the mixing rule *and* the file `BIC` block; do not call `setMixingRule()` afterwards |
+| PR properties ignore the E300 `OMEGAB` values | The historical `read(String)` path does not apply the `OMEGAB` section | Use `EclipseFluidReadWrite.readWithPrOmegaB(String)` for PR files with explicit or tuned covolumes |
 | Saturation pressure shifts a few percent on round trip | The PR variant changed: `PRCORR` means PR-1978, plain `EOS PR` means PR-1976 | Build Eclipse-bound fluids with `SystemPrEos1978`, and check `imported.getClass().getSimpleName()` after reading |
 
 Per-component EOS tuning survives the export: `TCRIT`, `PCRIT`, `ACF`, `SSHIFT`
@@ -201,6 +226,8 @@ This skill wraps validated, rigorous NeqSim Java functionality that a qualified
 engineer should use for design-grade work:
 
 - `neqsim.thermo.util.readwrite.EclipseFluidReadWrite#read(String)` — read an E300 file into a NeqSim fluid.
+- `neqsim.thermo.util.readwrite.EclipseFluidReadWrite#readWithPrOmegaB(String)` — read a PR E300 file and apply its `OMEGAB` section.
+- `neqsim.thermo.util.readwrite.EclipseFluidReadWrite#readWithPrOmegaB(String, String[])` — read and replicate a PR E300 fluid while applying its `OMEGAB` section.
 - `neqsim.thermo.util.readwrite.EclipseFluidReadWrite#read(String, boolean, double)` — read an E300 file and add water.
 - `neqsim.thermo.util.readwrite.EclipseFluidReadWrite#addWaterToFluid(SystemInterface, double)` — add water with the PVTsim water parameters.
 - `neqsim.thermo.util.readwrite.EclipseFluidReadWrite#write(SystemInterface, String, double)` — write a NeqSim fluid to an E300 file.

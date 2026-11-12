@@ -115,6 +115,13 @@ performs the selection immediately before it writes final narrative sections.
 | Applying one style mechanically to every section | Use controlled overrides in mixed reports |
 | Rewriting values while improving prose | Preserve all technical content exactly |
 | Calling the controlled style ASD-STE100 compliant | Use the full standard and compliance workflow |
+| Verdict, status or "not an approval" statement only deep in the document | Put it on the first page, in the cover block, in the same words as the check that produced it |
+| The same number quoted on two bases (case, scenario, account, definition) without a label | State the basis next to every headline number and keep one canonical sentence per headline that every document reads |
+| A convention (exposure hours per person-year, uptime, contingency, batch versus neat volume) applied on two bases in two reports | State it once in the same words in every report that uses it; have each owner confirm it was applied once |
+| Remarks about spelling, naming or who asked in a deliverable | Use one official name; such notes belong in internal work-record files only |
+| File, path, tool or agent names in reader text | Name the document or the owner role instead |
+| An unknown shown as a value, or an empty template chapter without an owner | Label every number source, assumption or unknown; name the owner role of each open chapter |
+| Closing a review finding after editing the output file | Fix the source, regenerate, re-read, then close |
 
 ## Limitations
 

@@ -157,6 +157,8 @@ enterprise overlay, where one is installed.
 | Mixing NPV at 8 % with NPV at 10 % | One economic basis for every concept |
 | No reference case | Carry the current best or business-as-usual concept |
 | Short list of one host type | Diversity rule; justify explicitly if alternatives are infeasible |
+| Long list generated before the fluid type (oil, gas, gas-condensate) is established | Fluid-type gate first: read it from the prospect profile or take a stated owner assumption with its source; every concept declares its fluid type and none that does not fit survives |
+| Undrilled frontier prospect scored as if its pressure, temperature, fluid and host were known | Declare those assumptions (basis, owner, data that would replace them) before scoring; carry them as labelled assumptions and state that ranks and robustness inherit their uncertainty |
 
 ## Limitations
 

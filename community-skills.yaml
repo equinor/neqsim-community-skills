@@ -1049,3 +1049,30 @@ skills:
     path: "skills/engineering-data/neqsim-standard-equipment-sizes/SKILL.md"
     tags: [engineering-data, standard-sizes, piping, relief, flanges, motors, equipment, screening]
     min_neqsim_version: "3.7.0"
+
+  - name: neqsim-thermoml-experimental-data
+    version: "0.1.0"
+    description: "Fetch published experimental thermophysical data (density, VLE, viscosity, solubility, heat capacity) from the NIST/TRC ThermoML Archive by DOI with no login, flatten it into state points with expanded uncertainties, and score a NeqSim model against it with AAD, bias and within-uncertainty statistics. USE WHEN: validating or tuning an EOS or kij against measured data, finding measurements for a binary or mixture, or backing a benchmark with citable experiments rather than another model."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/pvt/neqsim-thermoml-experimental-data/SKILL.md"
+    tags: [pvt, thermoml, nist, experimental-data, benchmark, validation, eos, open-data, keyless]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-opm-open-reservoir-decks
+    version: "0.1.0"
+    description: "Open, login-free reservoir benchmark decks from the OPM opm-data repository (Norne full field, SPE1/3/5/9/10 comparative solution projects, Sleipner CO2) with per-case licence, size guard, deck summary (grid, wells, units, PVT keywords) and PVTO/PVTG/PVDG/SWOF table extraction. USE WHEN: a NeqSim reservoir, PVT, material-balance or reservoir-to-facility task needs a real published reference case, a black-oil table to compare against a NeqSim fluid, or a realistic well/schedule example that is not company data."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-opm-open-reservoir-decks/SKILL.md"
+    tags: [subsurface, reservoir, norne, spe-benchmark, opm, eclipse-deck, black-oil, open-data, keyless]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-open-incident-data
+    version: "0.1.0"
+    description: "Open, login-free offshore incident statistics from the US BSEE Data Center: accident investigations by type (fire, explosion, blowout, fatality, crane, pollution) divided by platform structure-years, with exact Poisson intervals and explicit caveats. USE WHEN: a safety, consequence or reliability task needs a sourced open order-of-magnitude frequency or trend to cross-check an assumed fire, explosion or blowout frequency, or needs to state what open incident data can and cannot support."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/neqsim-open-incident-data/SKILL.md"
+    tags: [safety, incident-data, bsee, fire, explosion, blowout, frequency, poisson, open-data, keyless, screening]
+    min_neqsim_version: "3.7.0"

@@ -251,6 +251,7 @@ class OlgaRunner:
                 text=True,
                 timeout=timeout,
                 check=False,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
             returncode = completed.returncode
             stdout = (completed.stdout or "") + (completed.stderr or "")

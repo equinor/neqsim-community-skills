@@ -559,6 +559,7 @@ class FemMeshSpec:
                     capture_output=True,
                     text=True,
                     timeout=timeout_seconds,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
             except (OSError, subprocess.SubprocessError) as error:  # pragma: no cover
                 return MeshOutcome("failed", geo_path, None, command, str(error))

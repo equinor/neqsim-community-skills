@@ -338,6 +338,38 @@ decision-critical, use a simulator/model with explicit source tracking or
 validated tracer bookkeeping, and check that the tracking method does not
 materially change the production response.
 
+### One PVT basis for every run
+
+Keep exactly one black-oil PVT variant (for example `native`, `anchored` or
+`hybrid` surface-basis scaling) for the factor calibration, the base-deck
+benchmark, the fluid replay and every strategy, slide-case, sensitivity and
+extended run. The variants differ in gas-cap gas: in one Case C study the
+`anchored` variant over-predicted base-deck gas by 14 % against the E300
+reference while the oil recovery barely moved, so a mismatch hides in the oil
+numbers and shows up when gas value is added. Write the variant into each
+strategy record, assert in the results script that it equals the calibration
+variant, and rerun every stage (not only the winners) when the default changes.
+Superseded runs stay in the run ledger; state the split between superseded and
+current invocations.
+
+### Multilateral count, gas-cap tail and total value
+
+- Treat the lateral count per well as a stated assumption: use the operator's
+  realistic count (usually two) as the base case and run three as a labelled
+  upside; a layout with more laterals can still recover less if the laterals
+  overlap in coverage.
+- Run the winners long enough to separate oil from gas: in a thin-rim case the
+  oil was complete by year 10 and only gas was added later. Report cumulative
+  gas, gas recovery against initial gas in place and the oil-equivalent split
+  (1,000 Sm3 gas = 1 Sm3 oe) next to the oil recovery factor.
+- For water or gas injection into a gas cap, integrate water and gas
+  saturation over the cap layers from a restart run (initial pore volumes from
+  the `INIT` file) and report the share of injected water that ends in the cap.
+  State that relative-permeability hysteresis is missing when it is.
+- Value comparisons need an explicit price and cost basis. When none is
+  supplied, label every number PLACEHOLDER, show the minimum economic volume
+  against a range of capital, and include a gas-export delay case.
+
 ### Evaluating the injection philosophy
 
 Run the strategies on one deck and one well set, so that only the strategy

@@ -1678,6 +1678,7 @@ def _run_foam_command(
             capture_output=True,
             text=True,
             timeout=timeout_seconds,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
     except (OSError, subprocess.SubprocessError) as error:
         return RunStep(command=command, returncode=None, stdout_tail="", stderr_tail=str(error))

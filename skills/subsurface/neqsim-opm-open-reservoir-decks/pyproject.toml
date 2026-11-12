@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-opm-open-reservoir-decks"
+version = "0.1.0"
+description = "Keyless catalog, bounded fetcher and keyword parser for the open OPM reservoir benchmark decks (Norne, SPE1/3/5/9/10, Sleipner CO2): per-case licence, size guard, deck summary and PVT/saturation table extraction for NeqSim reservoir and PVT checks."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

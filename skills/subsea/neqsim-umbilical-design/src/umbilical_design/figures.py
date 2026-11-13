@@ -283,6 +283,8 @@ def draw_checks(ax, result: DesignResult) -> None:
         ("Armour layers", "%d" % res["requiredArmorLayers"]),
         ("Weight in air, empty / filled", "%.1f / %.1f kg/m" % (w["dryWeightPerMeterKgM"], w["filledWeightPerMeterKgM"])),
         ("Weight in seawater, filled", "%.1f kg/m" % w["submergedWeightPerMeterKgM"]),
+        ("Weight ratio (air / displaced seawater)", "%.2f" % res["weightRatio"] if "weightRatio" in res else "n/a"),
+        ("Optical budget", "%.1f dB" % res["opticalBudgetDb"] if "opticalBudgetDb" in res else "no fibre"),
         ("Total dry weight", "%.0f t" % w["totalDryWeightTonnes"]),
     ]
     n_rows = len(checks) + len(headline) + 2

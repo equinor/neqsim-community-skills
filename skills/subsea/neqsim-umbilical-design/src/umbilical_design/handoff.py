@@ -47,6 +47,14 @@ def key_numbers(result: DesignResult) -> Dict[str, Dict[str, Any]]:
         slug = e["name"].lower().replace(" ", "_")
         out["umbilical_%s_friction_drop_bar" % slug] = {"value": e["frictionDropBar"], "unit": "bar", "source": src}
         out["umbilical_%s_time90_min" % slug] = {"value": e["time90PercentS"] / 60.0, "unit": "min", "source": src}
+        if "fillVolumeLitres" in e:
+            out["umbilical_%s_fill_volume_l" % slug] = {"value": e["fillVolumeLitres"], "unit": "L", "source": src}
+        if "displacementTimeHours" in e:
+            out["umbilical_%s_displacement_time_h" % slug] = {"value": e["displacementTimeHours"], "unit": "h", "source": src}
+    if "weightRatio" in res:
+        out["umbilical_weight_ratio"] = {"value": res["weightRatio"], "unit": "-", "source": src}
+    if "opticalBudgetDb" in res:
+        out["umbilical_optical_budget_db"] = {"value": res["opticalBudgetDb"], "unit": "dB", "source": src}
     pt = result.data.get("powerTransmission")
     if pt:
         out["umbilical_power_loss_mw"] = {"value": pt["lossMW"], "unit": "MW", "source": src}
@@ -119,6 +127,14 @@ def findings(result: DesignResult) -> List[str]:
             "Independent circle packing needs a %.0f %% larger bundle than the NeqSim packing estimate; check the bundle "
             "diameter, weight and bend radius." % ((lay["packing_ratio"] - 1.0) * 100.0)
         )
+    slow_change = [l for l in result.fluid_lines if l.get("displacementTimeHours", 0.0) > 72.0]
+    for l in slow_change:
+        out.append(
+            "Line '%s' needs %.0f h to displace its %.0f L volume at the design flow; check the fluid changeout and "
+            "start-up time against the operating requirement." % (l["name"], l["displacementTimeHours"], l["fillVolumeLitres"])
+        )
+    if result.data["calculatedResults"].get("weightRatio", 99.0) < 1.2:
+        out.append("Weight ratio %.2f is low; check on-bottom stability and handling." % result.data["calculatedResults"]["weightRatio"])
     pt = result.data.get("powerTransmission")
     if pt and abs(pt["voltageDropPercent"]) > 10.0:
         out.append("Power cable voltage drop %.1f %% is large; check conductor size and transmission voltage." % pt["voltageDropPercent"])

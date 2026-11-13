@@ -70,6 +70,22 @@ def test_key_numbers_are_traceable(result):
     assert "umbilical_meg_friction_drop_bar" in numbers
 
 
+def test_functional_checks_reach_key_numbers_and_findings(result):
+    numbers = key_numbers(result)
+    assert numbers["umbilical_weight_ratio"]["value"] > 1.5
+    assert numbers["umbilical_optical_budget_db"]["unit"] == "dB"
+    assert numbers["umbilical_meg_fill_volume_l"]["value"] == pytest.approx(7600.0, rel=0.01)
+    assert numbers["umbilical_meg_displacement_time_h"]["value"] == pytest.approx(15.2, rel=0.01)
+    data = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    for line in data["elementResults"]:
+        if line["name"] == "Scale inhibitor":
+            line["displacementTimeHours"] = 120.0
+    data["calculatedResults"]["weightRatio"] = 1.1
+    notes = findings(load_result(data))
+    assert any("displace" in n and "Scale inhibitor" in n for n in notes)
+    assert any("Weight ratio" in n for n in notes)
+
+
 def test_findings_flag_a_failed_check_and_a_hot_line(result):
     data = json.loads(FIXTURE.read_text(encoding="utf-8"))
     data["designChecks"]["armorCapacityCoversDesignTension"] = False

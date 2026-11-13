@@ -332,6 +332,15 @@ skills:
     tags: [process, pressure-drop, hydraulics, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-umbilical-design
+    version: "0.1.0"
+    description: "Subsea umbilical sizing and drawings with the NeqSim umbilical physics: tube wall, cross-section and weights, armour from catenary tension, chemical and hydraulic line friction and response, power cable with charging current, design checks, figures and study hand-off. USE WHEN: a SURF or tie-back task needs an umbilical sized and drawn instead of a cost-library line item, or chemical injection, hydraulic response, power step-out or bend radius must be answered."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/neqsim-umbilical-design/SKILL.md"
+    tags: [subsea, surf, umbilical, hydraulics, chemical-injection, power-cable, visualization, screening]
+    min_neqsim_version: "3.29.0"
+
   - name: neqsim-flow-induced-vibration-screening
     version: "0.1.0"
     description: "Educational flow-induced vibration (FIV) screening using a public fluid kinetic-energy (rho v^2) likelihood-of-failure index. USE WHEN: a task needs a public, screening-level check of whether a main-line flow velocity and density produce a kinetic-energy level that warrants a detailed Energy Institute style FIV assessment before piping vibration design."

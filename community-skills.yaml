@@ -565,6 +565,15 @@ skills:
     tags: [subsea, surf, field-development, layout, design, fpso, geojson, open-data, screening]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-brazil-presalt-well-reach-and-layout
+    version: "0.1.0"
+    description: "Drilling-reach constraints for Brazilian deepwater pre-salt SURF layouts: wells are near vertical (max about 30 deg) with about 500 m step-out, so templates and drill centres are replaced by loops or daisy chains of single vertical wells. USE WHEN: a Santos or Campos pre-salt layout, well count, drill-centre or template question, or well step-out check is requested. Not for the NCS or other regions."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/neqsim-brazil-presalt-well-reach-and-layout/SKILL.md"
+    tags: [subsea, surf, brazil, pre-salt, wells, step-out, layout, daisy-chain, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-pipe-route-profile
     version: "0.1.0"
     description: "Educational pipe-route length and elevation-profile screening from supplied waypoints. USE WHEN: a task needs a public, screening-level flowline or riser route length, segment list, and seabed elevation profile from a subsea map before detailed pressure-drop and flow assurance design."

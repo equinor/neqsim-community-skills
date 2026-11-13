@@ -137,7 +137,9 @@
   "requiredArmorLayers": 1,
   "armorAxialStiffnessKN": 120045.82582931926,
   "totalCrossSectionMm2": 1861.9053830167445,
-  "calculatedOuterDiameterMm": 84.23836167305022
+  "calculatedOuterDiameterMm": 84.23836167305022,
+  "weightRatio": 2.1355595150415105,
+  "opticalBudgetDb": 9.25
  },
  "elementResults": [
   {
@@ -157,7 +159,8 @@
    "hydrostaticHeadBar": 10.44408225,
    "acousticVelocityMs": 1575.129117579842,
    "acousticTransitTimeS": 9.523028831469533,
-   "time90PercentS": 399.5390839557339
+   "time90PercentS": 399.5390839557339,
+   "fillVolumeLitres": 1063.2327636992954
   },
   {
    "name": "HP hydraulic supply",
@@ -176,7 +179,8 @@
    "hydrostaticHeadBar": 10.44408225,
    "acousticVelocityMs": 1607.2205534128607,
    "acousticTransitTimeS": 9.332882141251973,
-   "time90PercentS": 858.8956319497863
+   "time90PercentS": 858.8956319497863,
+   "fillVolumeLitres": 475.03826165390404
   },
   {
    "name": "MEG",
@@ -195,7 +199,9 @@
    "hydrostaticHeadBar": 10.91480145,
    "acousticVelocityMs": 1465.221162689183,
    "acousticTransitTimeS": 10.237362373656861,
-   "time90PercentS": 212.72205334232393
+   "time90PercentS": 212.72205334232393,
+   "fillVolumeLitres": 7600.612186462465,
+   "displacementTimeHours": 15.20122437292493
   },
   {
    "name": "Methanol",
@@ -214,7 +220,9 @@
    "hydrostaticHeadBar": 7.766866799999999,
    "acousticVelocityMs": 1038.1930216776348,
    "acousticTransitTimeS": 14.448180335253294,
-   "time90PercentS": 40.61169624504663
+   "time90PercentS": 40.61169624504663,
+   "fillVolumeLitres": 1900.1530466156162,
+   "displacementTimeHours": 6.333843488718721
   },
   {
    "name": "Scale inhibitor",
@@ -233,7 +241,9 @@
    "hydrostaticHeadBar": 10.1008495,
    "acousticVelocityMs": 1400.3338510754163,
    "acousticTransitTimeS": 10.711731340694527,
-   "time90PercentS": 105.4402873341985
+   "time90PercentS": 105.4402873341985,
+   "fillVolumeLitres": 1900.1530466156162,
+   "displacementTimeHours": 38.00306093231232
   },
   {
    "name": "Power",

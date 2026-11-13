@@ -252,7 +252,8 @@ read by the enterprise agents and supply the same GeoJSON layers to this skill.
 - Companion skills: `neqsim-pipeline-survey-processing`, `neqsim-pipe-route-profile`,
   `neqsim-bathymetry-profile-screening`, `neqsim-surf-field-layout-design`,
   `neqsim-surf-cooldown-screening`, `neqsim-hydrate-margin-check`,
-  `neqsim-subsea-layout-geometry`
+  `neqsim-subsea-layout-geometry`, `neqsim-open-marine-constraints` (open fishing-effort,
+  protected-area, wind and grid layers for the route)
 - NeqSim thermal handoff: `neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvironment`,
   `neqsim.process.equipment.pipeline.PipeLineInterface` (`setBuried`, `setBurialDepth`,
   `setSoilConductivity`)

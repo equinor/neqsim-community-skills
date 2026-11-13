@@ -1,3 +1,12 @@
+
+  - name: neqsim-open-marine-constraints
+    version: "0.1.0"
+    description: "Keyless route and site screening against open marine constraint layers: fishing and trawl exposure, protected and vulnerable seabed areas (MAREANO corals and sponges), offshore wind areas, Norwegian grid, existing pipelines, wrecks, munitions and earthquakes, from EMODnet, Fiskeridirektoratet, Miljodirektoratet, NVE, NOAA and USGS. USE WHEN: a tie-back, pipeline, cable or drill-centre concept needs sourced seabed-use, environmental or grid constraints that Omnia Maps and Sodir do not hold."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/neqsim-open-marine-constraints/SKILL.md"
+    tags: [subsea, fishing, trawl, environment, mareano, protected-areas, offshore-wind, grid, power-from-shore, emodnet, route-screening, open-data, keyless, screening]
+    min_neqsim_version: "3.7.0"
 # NeqSim Community Skill Catalog Preview
 #
 # These entries mirror the format used by the main NeqSim community catalog:

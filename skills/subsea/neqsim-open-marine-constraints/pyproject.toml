@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-open-marine-constraints"
+version = "0.1.0"
+description = "Keyless client and route screening for open marine constraint layers (fishing and trawl exposure, protected and sensitive areas, offshore wind areas, onshore grid, shipwrecks and munitions, earthquakes) from EMODnet, Fiskeridirektoratet, Miljodirektoratet, NVE, NOAA and USGS."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

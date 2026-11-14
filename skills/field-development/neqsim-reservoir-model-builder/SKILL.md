@@ -384,6 +384,17 @@ high-fidelity optimum or a material-balance ceiling as an unverified lead that
 needs a run in the reference simulator. When a concept screen finds nothing
 above the twin error, report a flat optimum rather than a winner.
 
+### Check which facility limit binds, and test time-dependent decisions
+
+After a layout search plateaus, print the time series of every facility limit (liquid, gas, water injection) and the average pressure for the
+best design. In one Case C study the water-injection rate sat at its limit from year 3 and the average pressure fell by about 50 bar, while
+the liquid limit stopped binding after year 2 (so rate schedules changed nothing). Then test decisions that depend on time rather than place:
+adding laterals to existing slots at a later date (twin: as good as drilling them on day 0 and better on NPV), a lower field gas limit from
+mid-oil-phase (held pressure, +3 points RF, but gas deferred, so NPV-neutral at 20 years), injector stop and start dates, and a raised
+injection limit labelled as outside the rules. Record gas injection totals (add `FGIT`/`FGIR` to the SUMMARY section before the run; a deck
+without them cannot be scored on net gas), pay capex when each well or lateral is drilled, and report RF and NPV together, since a gas limit
+raises RF and can lower NPV.
+
 ### Evaluating the injection philosophy
 
 Run the strategies on one deck and one well set, so that only the strategy

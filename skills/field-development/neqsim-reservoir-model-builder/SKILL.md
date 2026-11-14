@@ -370,6 +370,20 @@ current invocations.
   supplied, label every number PLACEHOLDER, show the minimum economic volume
   against a range of capital, and include a gas-export delay case.
 
+### Replay published high-fidelity designs before ranking strategies
+
+When another team has published designs from a higher-fidelity model (for
+example E300 optimisation results), replay their layouts in the screening twin
+with the factors already calibrated and compare recovery. Agreement (in one
+Case C study within 1.2 points on three designs) is an independent hold-out
+that no self-calibration gives. Search the injector placement (layer, field
+position, lateral count) before comparing injection with depletion: a missed
+placement once made water injection look equal to depletion, when the better
+placement gave a 5-point lead. Flag any twin optimum that exceeds the
+high-fidelity optimum or a material-balance ceiling as an unverified lead that
+needs a run in the reference simulator. When a concept screen finds nothing
+above the twin error, report a flat optimum rather than a winner.
+
 ### Evaluating the injection philosophy
 
 Run the strategies on one deck and one well set, so that only the strategy

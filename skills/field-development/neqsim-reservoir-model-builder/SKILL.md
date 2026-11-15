@@ -805,6 +805,10 @@ assumption ladder for those inputs. It is still an interpretation, not a measure
 | The assumed structure cannot hold the reported volume | Relief, area or porosity is inconsistent with the published number | Treat the exception from `solve_contact_for_volume` as a result and move one of them |
 | Warning "No screening recovery-factor range is tabulated for (oil, gas_cap)" | Drive name not in the table (older versions had no aliases) | Use a tabulated key or an alias from `DRIVE_ALIASES`; `thin_oil_rim` for a thin rim |
 | Thin oil rim produces at the BHP floor with GOR in the thousands from day one | Rim producers on oil-rate control with only a low BHP limit cone gas and water at once | Cap gas and liquid per well, set an economic WECON (GOR, water cut, minimum oil) and a realistic drawdown |
+| A concept ranking is quoted from one rock model | Water injection and depletion respond differently to vertical permeability and streaks | Rerun the leading designs in a small scenario set (kz of the baffle and of the rim x0.1-x10, a few lognormal streak fields) and report the worst case and the NPV gap, not only the base |
+| A well-control rule (ACTIONX on water cut or GOR) shows a recovery gain | The rule made OPM shut the parked gas-cap wells at blowdown, so the run is in another regime | Scan the PRT for "will be shut as it can not operate" and compare with the matching shut-wells base; end ACTIONX rules with a `YEAR <` condition so they do not re-trigger in blowdown |
+| An EOR chemistry looks valuable | Residual oil to water was lowered without cost or core evidence | Bound it by shifting Sorw in a copy of the SWOF table (stretch the Sw axis so krow reaches zero at the new endpoint), report the gain per saturation point, and require core-flood evidence before ranking it |
+| A surrogate (Gaussian process) is trusted without checks | Training points included infeasible runs or runs with shut wells | Train only on feasible runs without simulator shut-ins, verify every proposed candidate in the simulator, and compare the gain with the model's error
 
 ## Limitations
 

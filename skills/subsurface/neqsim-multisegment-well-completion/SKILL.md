@@ -106,6 +106,10 @@ Deck route: `<python> -m msw_completion run config.json` prints `status`, device
 - Taking `a`–`f` = 1 because they are defaults. With linear mixing, a gas-oil mixture can see a lower drop than oil, so the AICD does not choke a coning zone. Use the vendor exponents.
 - Using a cubic-EOS aqueous density for water (around 20 % low; enters squared in the AICD drop).
 - Treating the zonal screening as a forecast. It holds phase split fixed; run the decks.
+- Letting `add_plain_msw` chain the laterals of a multilateral well. It makes one tubing path through all COMPDAT cells in listed order, so lateral 2 flows through lateral 1. For multilaterals write one branch per lateral (WELSEGS with branch numbers, all outlets at a shared node, COMPSEGS with the branch number) and give each branch its own `COMPLETION` row (the Grimsnes task did this in a task script, `61_msw_build.py`).
+- Reading a device gain from a homogeneous model. In flat homogeneous layers the inflow along a lateral is already even and devices only add drawdown (Grimsnes: -0.2 to -0.5 RF points); the gain appears only with permeability streaks, so run the device and the bare multi-segment well in the same streak field (lognormal multipliers per block and row) before drawing a conclusion.
+- Valuing devices on a short horizon. Devices defer gas (and add water); a 10-year NPV that sells gas penalises them, the 20-year NPV does not. Rerun the key cases on the full horizon.
+- Calling completor from an interpreter that lacks it. In the Grimsnes setup it lived in the user site-packages of the system Python; append that folder to `sys.path` rather than installing at run time.
 
 ## Limitations
 

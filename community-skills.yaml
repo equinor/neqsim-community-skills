@@ -199,6 +199,33 @@ skills:
     tags: [wells, extended-reach, torque-drag, drilling, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-well-log-reading
+    version: "0.1.0"
+    description: "Read DLIS and LIS well logs with equinor/dlisio and LAS 1.2/2.0 with a built-in parser into one model: frames, curves, units, canonical mnemonics, nulls as NaN, depth in metres, curve inventory and SHA-256 provenance. Zone statistics, event-window contrast and resampling. USE WHEN: a task has well-log files (petrophysics, formation tops, loss or fault picks, H2S vs formation, offset-well evidence)."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-well-log-reading/SKILL.md"
+    tags: [wells, well-logs, dlis, lis, las, dlisio, petrophysics, formation-tops, data-reading, provenance]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-seismic-segy-reading
+    version: "0.1.0"
+    description: "Read SEG-Y seismic with equinor/segyio: geometry (inline/crossline ranges, header-byte fallback, unstructured 2-D), scaled trace coordinates, bin spacing, CRS hints, amplitude QA, inline/crossline/slice sections, nearest trace at a well, fences along map polylines, PNG sections and seismic_dataset_evidence.v1. USE WHEN: a task has SEG-Y files and needs structural context, a well tie or a fence."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-seismic-segy-reading/SKILL.md"
+    tags: [seismic, segy, segyio, structure, fence, well-tie, subsurface, data-reading, provenance]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-seismic-structure-to-reservoir
+    version: "0.1.0"
+    description: "Seismic or mapped structure to a screening reservoir model: finds surfaces, SEG-Y, logs and ties in task folders; reads IRAP/ZMAP+/XYZ or tracks a horizon from a well seed; time-to-depth on well ties; crest, spill and closure; area and GRV per contact; builder inputs, gate records and an OPM grid. USE WHEN: a reservoir model should use seismic or interpreted horizons."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-seismic-structure-to-reservoir/SKILL.md"
+    tags: [seismic, structure, horizon, closure, spill-point, grv, depth-conversion, reservoir-model, opm-flow, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-well-design-study
     version: "0.3.0"
     description: "Screening well design study and well-plan document: pressure/fracture window, casing seats, kick tolerance, casing and tubing design (API TR 5C3) with load-basis comparison, torque and drag, ECD, offset calibration, time and cost P10/P50/P90, fail-closed validation, A3 well schematic, BOP and barrier sketches, Gantt, risk matrix and a professional Word report. USE WHEN: a concept or pre-FEED well design or well plan is needed, especially with offset wells."

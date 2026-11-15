@@ -66,6 +66,11 @@ reservoir and set its conditions.
 | Wells | `producer_count`, `injector_count`, `productivity_index_Sm3_per_day_bar`, `target_plateau_rate_Sm3_per_day`, `drainage_radius_m`, `wellbore_radius_m`, `skin_factor`, `drawdown_fraction` |
 | Provenance | `provenance`, `reference`, `field_provenance`, `field_reference` |
 
+Provenance labels, weakest first: `default`, `analogue`, `derived`, `public-reported`, `interpreted`, `measured`. Only
+`public-reported`, `interpreted` and `measured` count as data-backed in the completeness score. Label user assumptions
+`default`, values computed from other data `derived` (for example a top tracked by `neqsim-seismic-structure-to-reservoir`)
+and an interpreter's map `interpreted`. `field_provenance` overrides `provenance` per input.
+
 At minimum the builder needs:
 
 - one of `initial_pressure_bara` or `datum_depth_m_tvdmsl`, and
@@ -447,6 +452,13 @@ For the Norwegian shelf, run the open-data search first with `neqsim-sodir-open-
 their formation tops/DST/cores/oil samples, field and discovery reserves (`field_reserves`,
 `discovery_reserves`), monthly production (`profiles`), owners and pipelines. Record each read
 (`SodirOpenData.provenance()`) in the data-first gate so "no data found" is evidence, not an assumption.
+
+For the `geometry` rungs `horizons_and_faults` and `structure_map`, run `neqsim-seismic-structure-to-reservoir`
+before settling for `assumed_block`. It scans the task folders for surfaces, SEG-Y, logs and well ties
+(`seismic_structure.discover`). It then reads an interpreted top, or tracks one from seismic seeded at a well,
+converts it to depth on the ties and analyses the closure. It returns `builder_inputs` (`area_km2`, closure-equivalent
+`gross_thickness_m`, `datum_depth_m_tvdmsl`) and the geometry attempts for this gate. A `no_closure` result is
+evidence too: record the rung as `used` with that outcome, not as `absent`.
 
 ```python
 from reservoir_model_builder import data_first_gate, acquisition_plan

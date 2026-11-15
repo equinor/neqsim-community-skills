@@ -23,6 +23,10 @@ test = [
   "matplotlib>=3.7",
   "python-docx>=1.1",
   "Pillow>=10.0",
+  "dlisio>=1.0",
+  "dliswriter>=1.2",
+  "segyio>=1.9",
+  "scipy>=1.10",
 ]
 dev = [
   "pytest>=7.4",
@@ -35,6 +39,10 @@ dev = [
   "matplotlib>=3.7",
   "python-docx>=1.1",
   "Pillow>=10.0",
+  "dlisio>=1.0",
+  "dliswriter>=1.2",
+  "segyio>=1.9",
+  "scipy>=1.10",
 ]
 
 # Packages are discovered by setup.py from every skills/<category>/<skill>/src

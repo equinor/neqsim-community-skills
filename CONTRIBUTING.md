@@ -5,11 +5,18 @@ Thank you for helping build a public catalog of reusable NeqSim skills. Contribu
 ## Where Does This Belong?
 
 Before adding a skill here, confirm this is the right repository. See the
-[Where Does This Go? placement guide](docs/where-does-this-go.md): community
-skills hold **educational, screening-level** methods that reference — but do not
-replace — the validated Java classes in core NeqSim. Validated calculations
-belong in core neqsim; company-policy or confidential content belongs in the
-enterprise repos.
+[Where Does This Go? placement guide](docs/where-does-this-go.md). The rules are
+mandatory:
+
+- Equinor- or company-specific content (internal systems, shares, asset data, TRs,
+  review policy) goes in the **enterprise** repos. Skills here stay vendor-neutral.
+- Anything that is not NeqSim Java functionality goes **here** (or in community
+  agents): screening methods, file readers, data adapters, helpers.
+- Only validated NeqSim Java classes and the skills that call them go in **core neqsim**.
+  Do not mirror community skills into the core repo.
+
+Community skills hold **educational, screening-level** methods and reusable tooling that
+reference, but do not replace, the validated Java classes in core NeqSim.
 
 For company-private skills, set up paired enterprise skills and agents repositories instead of adding the content here. The main NeqSim [Enterprise Agent and Skill Repositories](https://github.com/equinor/neqsim/blob/master/docs/integration/enterprise_agent_skill_repos.md) guide explains the `enterprise-skills.yaml` / `enterprise-agents.yaml` catalogs and Engineering Harness discovery/install configuration.
 

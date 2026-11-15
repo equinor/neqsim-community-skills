@@ -5,6 +5,27 @@ NeqSim agent/skill ecosystem stays consistent over time.
 
 Use this before opening a PR for any new agent, skill, or engineering method.
 
+## The three placement rules (mandatory)
+
+1. **Equinor- or company-specific → enterprise.** Internal systems and APIs (STID, SMDA,
+   SSDL, GeoX, Wellcom, PDM, OTS, WellDB, Diskos access, SAP, ...), internal file shares,
+   real asset/facility/well names used as data, company TRs, thresholds and review policy
+   go in `neqsim-enterprise-skills` / `neqsim-enterprise-agents` (or a private repo if not
+   shareable at all). Community content must stay vendor-neutral and use generic examples
+   (`WELL-1`, `Reservoir A`).
+2. **Not NeqSim Java functionality → community.** Python methods, file readers and data
+   adapters (for example wrappers of open libraries such as dlisio or segyio), screening
+   calculations, report helpers and orchestrating agents go in `neqsim-community-skills` /
+   `neqsim-community-agents`, even when they are generic and useful in every task.
+3. **NeqSim Java functionality → core `equinor/neqsim`.** Only validated Java classes with
+   JUnit tests, plus a skill or agent under `.github/` that directly imports and calls those
+   classes, evolving in the same PR. Do not add copies of community or enterprise skills, or
+   non-Java helpers, to the core repo.
+
+Dependencies stay one-way (`core -> community -> enterprise`): an enterprise skill may
+build on a community package (for example an enterprise data provider that uses a
+community file reader), never the reverse.
+
 > This guide is the **NeqSim-ecosystem-specific** detail (core vs. community vs.
 > enterprise, and screening vs. validated). Any company can follow the same pattern:
 > keep the public community repos as the shared base and add company data and policy in
@@ -14,7 +35,7 @@ Use this before opening a PR for any new agent, skill, or engineering method.
 
 | Layer | Repository | Visibility | Holds |
 | --- | --- | --- | --- |
-| NeqSim core | [equinor/neqsim](https://github.com/equinor/neqsim) | Public | Validated, tested Java engineering classes **plus** their co-located `.github/skills` and `.github/agents` that import and call those classes |
+| NeqSim core | [equinor/neqsim](https://github.com/equinor/neqsim) | Public | Validated, tested Java engineering classes **plus** their co-located `.github/skills` and `.github/agents` that import and call those classes; nothing that is not NeqSim Java functionality |
 | Community skills | [equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills) | Public | Educational, **screening-level** methods (placeholders that reference the validated classes) |
 | Community agents | [equinor/neqsim-community-agents](https://github.com/equinor/neqsim-community-agents) | Public | Public orchestrators that chain community skills |
 | Enterprise skills | [equinor/neqsim-enterprise-skills](https://github.com/equinor/neqsim-enterprise-skills) | Private | Company-policy overlays that wrap a community screening method with a review policy |
@@ -78,8 +99,9 @@ must never depend on enterprise code, internal package names, or confidential da
 
 ## The decisive test in one line
 
-> **Validated calculation → core neqsim. Educational screening → community.
-> Company policy or confidential content → enterprise / private.**
+> **Validated NeqSim Java functionality → core neqsim. Everything else that is public
+> (screening methods, readers, adapters, orchestrators) → community.
+> Equinor/company-specific or confidential content → enterprise / private.**
 > A *skill* is a method; an *agent* is an orchestrator that has no method of its own.
 
 ## Worked example — HAZOP deviation → consequence

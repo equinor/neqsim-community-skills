@@ -117,3 +117,69 @@ def test_flat_data_is_reported_unusable(tmp_path):
 def test_missing_file_blocks(tmp_path):
     evidence = run_identification({"series": {"pv": {"path": str(tmp_path / "nope.csv")}}})
     assert evidence["status"] == "blocked" and "pv" in evidence["missing"][0]
+
+
+@needs_tsa
+def test_neqsim_physics_checks_identified_dynamics_and_separates_faults():
+    pytest.importorskip("neqsim")
+    from neqsim import jneqsim
+
+    from dynamic_identification import identify_unit
+    from dynamic_identification.neqsim_bridge import (automation_evaluator, compare_gains, physics_residuals,
+                                                      simulate_unit, steady_gains, two_residual_diagnosis)
+
+    gas = jneqsim.thermo.system.SystemSrkEos(298.15, 30.0)
+    for name, x in (("methane", 0.9), ("ethane", 0.07), ("propane", 0.03)):
+        gas.addComponent(name, x)
+    gas.setMixingRule("classic")
+    feed = jneqsim.process.equipment.stream.Stream("feed", gas)
+    feed.setFlowRate(20.0, "kg/sec")
+    comp = jneqsim.process.equipment.compressor.Compressor("comp", feed)
+    comp.setOutletPressure(90.0, "bara")
+    comp.setPolytropicEfficiency(0.78)
+    comp.setUsePolytropicCalc(True)
+    process = jneqsim.process.processmodel.ProcessSystem()
+    process.add(feed)
+    process.add(comp)
+    process.run()
+    evaluate = automation_evaluator(process, {"flow": "feed.flowRate|kg/sec", "ps": "feed.pressure|bara",
+                                              "eta": "comp.polytropicEfficiency|"},
+                                    {"power": "comp.power|kW", "tout": "comp.outletStream.temperature|C"})
+    physics = steady_gains(evaluate, {"flow": 20.0, "ps": 30.0}, {"flow": 0.5, "ps": 0.5}, ["power"])
+    assert physics["relative_step_error"] < 0.03
+    gains = physics["gains"]["power"]
+    assert gains["flow"] > 0 > gains["ps"]
+
+    # Historian from the NeqSim steady map through a 60 s lag; identification must agree with NeqSim.
+    n, dt, tau = 600, 10.0, 60.0
+    rng = np.random.default_rng(5)
+    flow = 20 + np.repeat(rng.uniform(-2, 2, n // 60 + 1), 60)[:n]
+    press = 30 + np.repeat(rng.uniform(-2, 2, n // 90 + 1), 90)[:n]
+    static = 4400.0 + gains["flow"] * (flow - 20) + gains["ps"] * (press - 30)
+    y, a = np.empty(n), math.exp(-dt / tau)
+    y[0] = static[0]
+    for k in range(1, n):
+        y[k] = a * y[k - 1] + (1 - a) * static[k]
+    y += rng.normal(0, 5, n)
+    model = identify_unit(y[:400], {"flow": flow[:400], "ps": press[:400]}, dt, estimate_delay=False)
+    assert model["method"] == "linear" and model["time_constant_s"] == pytest.approx(55.0, rel=0.2)
+    assert compare_gains(model["gains"], gains, tolerance=0.1)["all_consistent"]
+    replay = simulate_unit(model, {"flow": flow, "ps": press}, dt)
+    assert np.sqrt(np.mean((replay[400:] - y[400:]) ** 2)) < 30.0
+
+    # An efficiency drop moves power and temperature; a meter bias moves power alone.
+    w = 90
+    f2, p2 = 20 + 2 * np.sin(np.arange(w) / 7), 30 + 2 * np.cos(np.arange(w) / 11)
+    expected = np.array([[evaluate({"flow": f, "ps": p, "eta": 0.78})[k] for k in ("power", "tout")]
+                         for f, p in zip(f2, p2)])
+    observed = expected.copy()
+    for i in range(55, 70):
+        point = evaluate({"flow": f2[i], "ps": p2[i], "eta": 0.73})
+        observed[i] = [point["power"], point["tout"]]
+    observed += rng.normal(size=(w, 2)) * [20, 0.1]
+    observed[78:, 0] += 400
+    res = physics_residuals({"power": observed[:, 0], "tout": observed[:, 1]},
+                            {"power": expected[:, 0], "tout": expected[:, 1]}, slice(0, 40))
+    labels = two_residual_diagnosis(res["power"]["flag"], res["tout"]["flag"])
+    assert labels[65].startswith("physical") and labels[85].startswith("measurement")
+    assert labels[30] == "within baseline"

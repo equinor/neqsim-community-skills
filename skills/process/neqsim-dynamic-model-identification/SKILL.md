@@ -1,11 +1,11 @@
 ---
 name: neqsim-dynamic-model-identification
-calculation_basis: "screening"
-version: "0.1.0"
-description: "Dynamic model identification from imperfect plant data with equinor/TimeSeriesAnalysis: process gain, time constant and delay; PID tuning; closed-loop process model and disturbance; bad, frozen and on-change data handled; saturation for control authority; usability gate per result. USE WHEN: root cause, control-loop or trend studies need identified dynamics from historian data."
+calculation_basis: "hybrid"
+version: "0.2.0"
+description: "Dynamic model identification from plant data with equinor/TimeSeriesAnalysis, joined to NeqSim physics: gain, time constant and delay; PID tuning; closed-loop model and disturbance; NeqSim gains to check identified ones; NeqSim-expected values for physics residuals that separate equipment change from sensor fault; replay of identified models; usability gate. USE WHEN: root cause, control-loop or monitoring studies use historian data."
 last_verified: "2026-11-15"
 requires:
-  python_packages: [pythonnet, numpy, pandas, matplotlib]
+  python_packages: [pythonnet, numpy, pandas, matplotlib, neqsim]
   java_packages: []
   env: [TIMESERIESANALYSIS_ASSEMBLY_PATH]
   network: []
@@ -14,6 +14,8 @@ requires:
 # Dynamic Model Identification from Plant Data
 
 Use this skill to turn historian series into identified dynamics. Examples are how strongly and how fast a controller output moves a measurement, what PI tuning a loop actually runs, and how large the disturbance a loop rejects is. It wraps [equinor/TimeSeriesAnalysis](https://github.com/equinor/TimeSeriesAnalysis) (Apache-2.0, .NET), which is built for non-ideal industrial data, through pythonnet. Every result carries a usability verdict, so an agent cannot pass on a meaningless fit.
+
+NeqSim and TimeSeriesAnalysis do different jobs and work best together. NeqSim gives the physics at an operating point: steady gains, expected power, temperatures and phase behaviour. It has no time constants. TimeSeriesAnalysis gives the dynamics from data: lags, delays, loop behaviour and disturbances. It has no thermodynamics. The `neqsim_bridge` module joins them, following the worked example notebook [NeqSim x TimeSeriesAnalysis: large-process analytics](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb).
 
 ## When to Use
 
@@ -31,7 +33,7 @@ Config for `<python> -m dynamic_identification run config.json`:
 - `window` (`start`, `end`), `timebase_s` (default: the slowest median sample interval), `max_gap_s`, `frozen_samples` (runs of identical values to mark as frozen).
 - `analyses`:
   - `loop`: `pv`, `sp`, `out` roles, optional `out_range` (saturation and PID scaling), `pv_range`, `controller_type` (`Temperature`, `Pressure`, `Level`, `Flow`, ...), and known `pid` tuning (`kp`, `ti_s`, `td_s`).
-  - `unit`: `output` role and up to six `inputs` (open-loop: inputs not set by feedback from the output); `estimate_delay`.
+  - `unit`: `output` role and up to six `inputs` (open-loop: inputs not set by feedback from the output); `estimate_delay`; `method` (`best` by default, or `auto`, `linear`, `static`).
 - `out_dir`.
 
 Engine setup, once per machine: `<python> -m dynamic_identification setup` publishes TimeSeriesAnalysis 1.4.38 and its dependencies from NuGet with the .NET SDK into `~/.neqsim/timeseriesanalysis/1.4.38`. It is explicit and user-run, never automatic. Alternatives: set `TIMESERIESANALYSIS_ASSEMBLY_PATH`, or install equinor/timeseriesanalysis-py (Python 3.13), whose `_assemblies` folder is found. Runtime needs the .NET 8 runtime or newer.
@@ -51,7 +53,7 @@ Engine setup, once per machine: `<python> -m dynamic_identification setup` publi
 ## Engineering Method
 
 1. **Data.** Each series is put on one uniform grid. A grid point takes the latest sample within one time base; older samples are bad, except for `hold` series. Sentinels and frozen runs are bad. Bad points go to TimeSeriesAnalysis as its bad-data marker (-9999) and are skipped in fitting, not interpolated.
-2. **Unit model** (`UnitIdentifier.Identify`): `y = bias + sum_i K_i (u_i - u0_i)` through a first-order lag with time constant and time delay. Linear and static variants are compared and the best fit is kept.
+2. **Unit model**: `y = bias + sum_i K_i (u_i - u0_i)` through a first-order lag with time constant and time delay. The default `method: best` runs `UnitIdentifier.Identify` (which also tries curvature and static candidates) and `IdentifyLinear` (linear dynamic), and keeps the higher fit score. The other is recorded under `alternatives`. `Identify` alone can settle on a static model when a linear dynamic one fits better: on a lagged compressor-power test it gave a 0 s time constant at 82 % fit, where `IdentifyLinear` gave the right gains and lag at 98 %.
 3. **PID** (`PidIdentifier`): Kp, Ti, Td from measurement, setpoint and output. Kp is in engineering units unless `out_range` and `pv_range` give the controller's scaling.
 4. **Closed loop** (`ClosedLoopUnitIdentifier`): the process model from data where the input is set by feedback, and the disturbance series the controller rejected. Without given tuning, the PID is identified first and passed in; `pid_used.source` says which.
 5. **Usability gate.** A result is `usable: false` when:
@@ -63,15 +65,59 @@ Engine setup, once per machine: `<python> -m dynamic_identification setup` publi
 
 Verified on plant data: lube-oil return temperature against compressor speed in 60 s stop/start windows on five compressor trains gave gains of 5.4-7.1 °C per 1000 rpm, time constants of 1.7-2.5 min, a 1 min delay and fit scores of 95-97 %. The same site's hourly cooler-loop data was correctly rejected (dynamics below the time base, no minimum found).
 
+## Using with NeqSim
+
+`dynamic_identification.neqsim_bridge` joins a NeqSim `ProcessSystem` or `ProcessModel` to the identified dynamics. NeqSim (JPype) and TimeSeriesAnalysis (pythonnet CoreCLR) run in the same Python process. Both start orders were verified on Windows; on Linux load CoreCLR first, as the notebook does.
+
+1. **Map tags to NeqSim addresses first.** Use `process.getAutomation().getVariableList(unit)` for addresses such as `feed.flowRate` and `comp.power`.
+   - State the units and flow basis (mass, molar, standard or actual volume).
+   - Convert gauge pressures to absolute.
+   - Align clocks, and estimate transport delays before comparing measured with predicted.
+
+   `automation_evaluator(process, {"flow": "feed.flowRate|kg/sec"}, {"power": "comp.power|kW"})` returns a function that sets inputs, runs and reads outputs.
+2. **Physics residuals.** At each observed operating point, NeqSim gives the expected value of a measurement. `physics_residuals(measured, expected, calibration=slice(...))` standardises measured minus expected on a healthy calibration window and low-pass filters it.
+
+   `two_residual_diagnosis(power_flag, temperature_flag)` compares two independently measured signals:
+   - both flagged means a physical change candidate, for example an efficiency loss;
+   - one flagged means a measurement or model candidate, for example a meter bias.
+
+   The second signal must not be fitted.
+3. **Physics checks the identification.** `steady_gains(evaluate, base, steps)` gives NeqSim central-difference gains with a half-step convergence check. `compare_gains(identified["gains"], physics["gains"][output])` tests sign and size. A sign error or a ratio far from one points to one of:
+   - a wrong tag;
+   - a unit or flow-basis mismatch;
+   - closed-loop bias;
+   - an unmodelled effect.
+
+   NeqSim gains can also seed a reduced model when data cannot identify the gain; the time constants still come from data.
+4. **Replay.** `simulate_unit(model, inputs, timebase_s)` runs an identified model forward with `UnitModel.Iterate`. Use it for a chronological hold-out (train on the first part of the window, test on the rest, never shuffle) and for what-if inputs within the identified range.
+5. **Choose the fidelity.**
+   - Reduced TSA models suit stable regimes with identifiable dominant dynamics.
+   - Inventory, phase redistribution, network hydraulics and slugging need native NeqSim dynamic equipment (`neqsim-dynamic-simulation`).
+   - Calling a steady process repeatedly does not make a transient model.
+   - Revalidate after maintenance, sensor changes or operation outside the identified envelope.
+
+Verified with NeqSim: on a compressor (methane-rich gas, 30 to 90 bara, polytropic efficiency 0.78), NeqSim gave power gains of 217 kW per kg/s of flow and -161 kW per bar of suction pressure. Identification on a lagged historian generated from that map gave 216.6 and -161.8 with a 53 s time constant (55 s expected), and the replay held out within 30 kW RMS. Physics residuals labelled an efficiency drop to 0.73 as a physical change and a 400 kW meter bias as a measurement candidate.
+
+## Plant data sources
+
+Any historian works when it delivers `time,value` CSVs per tag in UTC (`neqsim-plant-data` covers PI and IP.21 through tagreader). Company-specific historian services belong in the company's own skill catalogue. A good one writes these CSVs and returns the config `series` block, marking `hold` on raw reads from exception-stored historians.
+
 ## Python Usage Pattern
 
 ```python
 from dynamic_identification import identify_unit, identify_pid, identify_closed_loop
+from dynamic_identification.neqsim_bridge import (automation_evaluator, steady_gains, compare_gains,
+                                                  physics_residuals, two_residual_diagnosis, simulate_unit)
 
-model = identify_unit(y, {"valve": u}, timebase_s=10.0)          # open loop
-print(model["gains"], model["time_constant_s"], model["time_delay_s"], model["fitting"]["fit_score_pct"])
+model = identify_unit(y, {"flow": flow, "ps": suction}, timebase_s=10.0)     # open loop, method="best"
 tuning = identify_pid(pv, sp, out, timebase_s=10.0, controller_type="Temperature")
-process = identify_closed_loop(pv, sp, out, timebase_s=10.0)     # gain and disturbance under feedback
+process_model = identify_closed_loop(pv, sp, out, timebase_s=10.0)            # gain and disturbance under feedback
+
+evaluate = automation_evaluator(process, {"flow": "feed.flowRate|kg/sec", "ps": "feed.pressure|bara"},
+                                {"power": "comp.power|kW"})
+physics = steady_gains(evaluate, {"flow": 20.0, "ps": 30.0}, {"flow": 0.5, "ps": 0.5}, ["power"])
+check = compare_gains(model["gains"], physics["gains"]["power"])            # sign and size against physics
+replay = simulate_unit(model, {"flow": flow_new, "ps": suction_new}, 10.0)
 ```
 
 ## Validation Checklist
@@ -81,6 +127,9 @@ process = identify_closed_loop(pv, sp, out, timebase_s=10.0)     # gain and dist
 - [ ] Every number used downstream has `usable: true`.
 - [ ] Closed-loop data uses `loop`, not `unit` (an open-loop fit on feedback data is biased).
 - [ ] Identified tuning is compared with the control-system configuration before conclusions about the loop.
+- [ ] Where a NeqSim model of the unit exists, identified gains agree with `steady_gains` in sign and size (`compare_gains`), or the difference is explained.
+- [ ] Physics residuals were calibrated on a window confirmed healthy, and the second signal of a two-residual diagnosis is independent of the first.
+- [ ] Hold-out validation is chronological; the identified model is used only inside its identified envelope.
 
 ## Common Mistakes
 
@@ -99,4 +148,5 @@ process = identify_closed_loop(pv, sp, out, timebase_s=10.0)     # gain and dist
 
 - equinor/TimeSeriesAnalysis (Apache-2.0): https://github.com/equinor/TimeSeriesAnalysis and API documentation https://equinor.github.io/TimeSeriesAnalysis
 - equinor/timeseriesanalysis-py: Python proxies over the same assemblies (Python 3.13).
+- Worked example: [NeqSim x TimeSeriesAnalysis: large-process analytics](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/advanced_analytics/neqsim_timeseriesanalysis_large_process.ipynb). It covers a six-train NeqSim facility, constrained load allocation, identified cooler dynamics, `PlantSimulator` networks with six PID loops, compressor diagnosis from physics residuals, and JSON process graphs projected to TSA models.
 - Related skills: `neqsim-dynamic-simulation` (use the identified model), `neqsim-plant-data` and `neqsim-model-calibration-and-data-reconciliation` (historian data), `neqsim-root-cause-analysis` (hypotheses this evidence supports or weakens).

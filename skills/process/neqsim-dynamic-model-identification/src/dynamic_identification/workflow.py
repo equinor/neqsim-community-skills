@@ -146,7 +146,8 @@ def run_identification(config: Dict[str, Any]) -> Dict[str, Any]:
         if "unit" in analyses:
             unit = analyses["unit"]
             inputs = {name: values[name] for name in unit["inputs"]}
-            result = identify_unit(values[unit["output"]], inputs, dt, bool(unit.get("estimate_delay", True)))
+            result = identify_unit(values[unit["output"]], inputs, dt, bool(unit.get("estimate_delay", True)),
+                                   str(unit.get("method", "best")))
             y_sim = result.pop("y_sim", None)
             if y_sim is not None:
                 simulated[unit["output"]] = np.array(y_sim, dtype=float)

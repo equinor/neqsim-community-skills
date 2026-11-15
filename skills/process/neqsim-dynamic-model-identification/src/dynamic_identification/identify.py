@@ -74,22 +74,44 @@ def _unit_parameters(model, names: List[str]) -> Dict[str, object]:
     }
 
 
+_UNIT_METHODS = {"auto": "Identify", "linear": "IdentifyLinear", "static": "IdentifyLinearAndStatic"}
+
+
 def identify_unit(y: Sequence[float], inputs: Dict[str, Sequence[float]], timebase_s: float,
-                  estimate_delay: bool = True) -> Dict[str, object]:
+                  estimate_delay: bool = True, method: str = "best") -> Dict[str, object]:
     """Identify an open-loop process model (gain per input, time constant, time delay, bias).
 
     Use for an output driven by inputs that are not themselves set by feedback from that output. NaN marks bad
     samples; TimeSeriesAnalysis skips them.
+
+    ``method``: ``auto`` (TimeSeriesAnalysis ``Identify``, which also tries curvature and static candidates),
+    ``linear`` (``IdentifyLinear``, a linear dynamic model), ``static``, or ``best`` (default: run ``auto`` and
+    ``linear`` and keep the higher fit score). ``auto`` can settle on a static model when a linear dynamic one fits
+    the data better, so ``best`` is the safe default.
     """
     dynamic, Array, Double = _api()
     names = list(inputs)
-    ds = _dataset(dynamic, Array, Double, timebase_s, y, [inputs[k] for k in names])
-    result = dynamic.UnitIdentifier.Identify(ds, dynamic.FittingSpecs(None, None), bool(estimate_delay))
-    model, fitted = result if isinstance(result, tuple) else (result, ds)
-    out = _unit_parameters(model, names)
-    if fitted.Y_sim is not None:
-        out["y_sim"] = [float(v) for v in fitted.Y_sim]
-    return out
+    tried = ["auto", "linear"] if method == "best" else [method]
+    candidates = []
+    for name in tried:
+        if name not in _UNIT_METHODS:
+            raise ValueError(f"method must be one of {sorted(_UNIT_METHODS) + ['best']}")
+        ds = _dataset(dynamic, Array, Double, timebase_s, y, [inputs[k] for k in names])
+        result = getattr(dynamic.UnitIdentifier, _UNIT_METHODS[name])(ds, dynamic.FittingSpecs(None, None),
+                                                                      bool(estimate_delay))
+        model, fitted = result if isinstance(result, tuple) else (result, ds)
+        out = _unit_parameters(model, names)
+        out["method"] = name
+        if fitted.Y_sim is not None:
+            out["y_sim"] = [float(v) for v in fitted.Y_sim]
+        candidates.append(out)
+    score = [c["fitting"]["fit_score_pct"] if c["fitting"]["able_to_identify"] and
+             c["fitting"]["fit_score_pct"] is not None else -math.inf for c in candidates]
+    best = candidates[int(np.argmax(score))]
+    if len(candidates) > 1:
+        best["alternatives"] = [{k: c[k] for k in ("method", "gains", "time_constant_s", "time_delay_s")} |
+                                {"fit_score_pct": c["fitting"]["fit_score_pct"]} for c in candidates if c is not best]
+    return best
 
 
 _CONTROLLER_TYPES = ("Unset", "Flow", "Pressure", "Level", "Temperature", "Duty", "AntiSurge")

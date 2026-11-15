@@ -1,8 +1,8 @@
 ---
 name: neqsim-dynamic-model-identification
 calculation_basis: "hybrid"
-version: "0.2.0"
-description: "Dynamic model identification from plant data with equinor/TimeSeriesAnalysis, joined to NeqSim physics: gain, time constant and delay; PID tuning; closed-loop model and disturbance; NeqSim gains to check identified ones; NeqSim-expected values for physics residuals that separate equipment change from sensor fault; replay of identified models; usability gate. USE WHEN: root cause, control-loop or monitoring studies use historian data."
+version: "0.3.0"
+description: "Dynamic model identification from plant data with equinor/TimeSeriesAnalysis, joined to NeqSim physics: gain, time constant and delay; PID tuning; closed-loop model and disturbance; NeqSim gains to check identified ones; physics residuals that separate equipment change from sensor fault; replay of identified models; move forecasts (NeqSim steady change, identified timing) with backtest; usability gate. USE WHEN: root cause, control-loop or monitoring studies use historian data."
 last_verified: "2026-11-15"
 requires:
   python_packages: [pythonnet, numpy, pandas, matplotlib, neqsim]
@@ -98,6 +98,35 @@ Verified on plant data: lube-oil return temperature against compressor speed in 
 
 Verified with NeqSim: on a compressor (methane-rich gas, 30 to 90 bara, polytropic efficiency 0.78), NeqSim gave power gains of 217 kW per kg/s of flow and -161 kW per bar of suction pressure. Identification on a lagged historian generated from that map gave 216.6 and -161.8 with a 53 s time constant (55 s expected), and the replay held out within 30 kW RMS. Physics residuals labelled an efficiency drop to 0.73 as a physical change and a 400 kW meter bias as a measurement candidate.
 
+## Forecasting the effect of a move
+
+To answer "what happens to output y if we move input u", without simulating the full transient, combine:
+- NeqSim for the steady change;
+- plant data for the timing.
+
+`dynamic_identification.step_prediction` provides:
+- `fit_step_dynamics`, `pooled_dynamics`: time constant and delay from past moves, with a signal-to-noise ratio per move;
+- `hybrid_step_forecast`: `y(t) = y0 + dy_NeqSim * (1 - exp(-(t - delay)/tau))`;
+- `detect_steps`: isolated moves of one manipulated variable while the others stay quiet;
+- `score_forecast`: skill against persistence, the forecast "nothing changes".
+
+1. Re-solve the steady NeqSim flowsheet at the new setting, or use `steady_gains`. Convert a valve move to the
+   quantity the model takes: for a choke in critical flow, q is proportional to Cv(z)·P_up, and the upstream pressure
+   falls as the valve opens. Measure that damping on past moves rather than assuming dq/q = dz/z.
+2. Find isolated past moves (`detect_steps`). Then reject confounded windows: every other feed of the same unit
+   (other arrival temperatures, pressures, flows) must be steady. A large "response" with a moving neighbour is not
+   evidence about the move.
+3. Backtest leave-one-out before using the forecast. Fit timing on the other moves, predict each held-out move, and
+   compare with persistence. Report how many moves rise above the measurement noise.
+4. Add the NeqSim *change* to the measured current value; the model's absolute level is usually offset.
+5. Gate the physics as well. A small trim cannot move a mixed stream by more than the trimmed stream's share times
+   its temperature difference. A larger NeqSim change is a solver branch jump, not a prediction.
+
+A data-only model (identify u → y on past moves, then `simulate_unit`) is a useful cross-check but rarely a
+forecaster on its own. With a few moves per input and noisy outputs, its gains are unstable and can have the wrong
+sign; the physics fixes magnitude and sign. If both the physics and the data say the effect is below the noise,
+that is the answer.
+
 ## Plant data sources
 
 Any historian works when it delivers `time,value` CSVs per tag in UTC (`neqsim-plant-data` covers PI and IP.21 through tagreader). Company-specific historian services belong in the company's own skill catalogue. A good one writes these CSVs and returns the config `series` block, marking `hold` on raw reads from exception-stored historians.
@@ -118,6 +147,11 @@ evaluate = automation_evaluator(process, {"flow": "feed.flowRate|kg/sec", "ps": 
 physics = steady_gains(evaluate, {"flow": 20.0, "ps": 30.0}, {"flow": 0.5, "ps": 0.5}, ["power"])
 check = compare_gains(model["gains"], physics["gains"]["power"])            # sign and size against physics
 replay = simulate_unit(model, {"flow": flow_new, "ps": suction_new}, 10.0)
+
+from dynamic_identification.step_prediction import fit_step_dynamics, pooled_dynamics, hybrid_step_forecast, score_forecast
+fits = [fit_step_dynamics(t_rel_s, y_win) for t_rel_s, y_win in past_moves]   # step at t = 0 in each window
+dyn = pooled_dynamics(fits, min_snr=3.0)
+forecast = hybrid_step_forecast(y_now, dT_neqsim, dyn["tau_s"], dyn["delay_s"], horizon_s=6 * 3600)
 ```
 
 ## Validation Checklist
@@ -129,6 +163,7 @@ replay = simulate_unit(model, {"flow": flow_new, "ps": suction_new}, 10.0)
 - [ ] Identified tuning is compared with the control-system configuration before conclusions about the loop.
 - [ ] Where a NeqSim model of the unit exists, identified gains agree with `steady_gains` in sign and size (`compare_gains`), or the difference is explained.
 - [ ] Physics residuals were calibrated on a window confirmed healthy, and the second signal of a two-residual diagnosis is independent of the first.
+- [ ] A move forecast was backtested leave-one-out on unconfounded past moves against persistence, and the number of moves above the noise is reported.
 - [ ] Hold-out validation is chronological; the identified model is used only inside its identified envelope.
 
 ## Common Mistakes

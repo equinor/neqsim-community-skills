@@ -183,3 +183,34 @@ def test_neqsim_physics_checks_identified_dynamics_and_separates_faults():
     labels = two_residual_diagnosis(res["power"]["flag"], res["tout"]["flag"])
     assert labels[65].startswith("physical") and labels[85].startswith("measurement")
     assert labels[30] == "within baseline"
+
+
+def test_step_forecast_recovers_timing_and_beats_persistence():
+    from dynamic_identification.step_prediction import (detect_steps, fit_step_dynamics, fopdt_step,
+                                                        hybrid_step_forecast, pooled_dynamics, score_forecast)
+
+    rng = np.random.default_rng(7)
+    t = np.arange(-7200.0, 21600.0 + 1.0, 300.0)
+    fits = []
+    for dy in (1.5, -2.0, 0.8):
+        y = 60.0 + fopdt_step(t, dy, 1800.0, 600.0) + rng.normal(0.0, 0.1, t.size)
+        fits.append(fit_step_dynamics(t, y))
+    for f, dy in zip(fits, (1.5, -2.0, 0.8)):
+        assert f["dy"] == pytest.approx(dy, abs=0.15) and f["snr"] > 3.0
+    dyn = pooled_dynamics(fits)
+    assert dyn["tau_s"] == pytest.approx(1800.0, rel=0.35) and dyn["delay_s"] == pytest.approx(600.0, abs=300.0)
+
+    y = 60.0 + fopdt_step(t, -1.2, 1800.0, 600.0) + rng.normal(0.0, 0.1, t.size)
+    fc = hybrid_step_forecast(60.0, -1.1, dyn["tau_s"], dyn["delay_s"], horizon_s=21600.0, timebase_s=300.0)
+    assert fc["y_final"] == pytest.approx(58.9) and fc["t95_s"] > fc["t63_s"]
+    s = score_forecast(y[t >= 0], fc["y"], 60.0)
+    assert s["skill"] > 0.5 and s["sign_agrees"]
+    with pytest.raises(ValueError):
+        pooled_dynamics([{"snr": 1.0, "tau_s": 1.0, "delay_s": 0.0}])
+
+    idx = pd.date_range("2026-01-01", periods=200, freq="5min")
+    moves = pd.DataFrame({"w1": np.r_[np.full(100, 30.0), np.full(100, 22.0)], "w2": np.full(200, 40.0)}, index=idx)
+    steps = detect_steps(moves, min_step=3.0, step_samples=6, quiet_before=24, quiet_after=72)
+    assert len(steps) == 1 and steps[0]["variable"] == "w1" and steps[0]["du"] == pytest.approx(-8.0)
+    moves.loc[idx[110], "w2"] = 45.0
+    assert detect_steps(moves, min_step=3.0, step_samples=6, quiet_before=24, quiet_after=72) == []

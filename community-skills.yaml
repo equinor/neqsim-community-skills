@@ -245,8 +245,8 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-dynamic-model-identification
-    version: "0.2.0"
-    description: "Dynamic model identification from plant data with equinor/TimeSeriesAnalysis, joined to NeqSim physics: gain, time constant and delay; PID tuning; closed-loop model and disturbance; NeqSim gains to check identified ones; NeqSim-expected values for physics residuals that separate equipment change from sensor fault; replay of identified models; usability gate. USE WHEN: root cause, control-loop or monitoring studies use historian data."
+    version: "0.3.0"
+    description: "Dynamic model identification from plant data with equinor/TimeSeriesAnalysis, joined to NeqSim physics: gain, time constant and delay; PID tuning; closed-loop model and disturbance; NeqSim gains to check identified ones; physics residuals that separate equipment change from sensor fault; replay of identified models; move forecasts (NeqSim steady change, identified timing) with backtest; usability gate. USE WHEN: root cause, control-loop or monitoring studies use historian data."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/process/neqsim-dynamic-model-identification/SKILL.md"

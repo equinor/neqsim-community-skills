@@ -390,10 +390,18 @@ After a layout search plateaus, print the time series of every facility limit (l
 best design. In one Case C study the water-injection rate sat at its limit from year 3 and the average pressure fell by about 50 bar, while
 the liquid limit stopped binding after year 2 (so rate schedules changed nothing). Then test decisions that depend on time rather than place:
 adding laterals to existing slots at a later date (twin: as good as drilling them on day 0 and better on NPV), a lower field gas limit from
-mid-oil-phase (held pressure, +3 points RF, but gas deferred, so NPV-neutral at 20 years), injector stop and start dates, and a raised
+mid-oil-phase (looked like +3 points RF but was a shut-well artefact, see the next section; like for like it was +0.7), injector stop and start dates, and a raised
 injection limit labelled as outside the rules. Record gas injection totals (add `FGIT`/`FGIR` to the SUMMARY section before the run; a deck
-without them cannot be scored on net gas), pay capex when each well or lateral is drilled, and report RF and NPV together, since a gas limit
-raises RF and can lower NPV.
+without them cannot be scored on net gas), pay capex when each well or lateral is drilled, and report RF and NPV together.
+
+### Scan the simulator log for shut wells before comparing cases
+
+A case can look better because the simulator quietly shut a well. In one Case C study the parked gas-cap wells opened at blowdown, but OPM
+shut them at once ("Well P1G will be shut as it can not operate under current reservoir conditions") in every run that held the pressure near
+350 bara; the oil wells then produced the blowdown gas and recovery rose by about 2 points. A "+3 points" gas-limit effect was this artefact:
+with the wells shut in both arms it was +0.7. After every batch, grep the PRT file for "will be shut", record the well and the report-step day,
+add well-level output (WBHP, WMCTL, WSTAT, WOPR, WGPR, connection rates COPR) for the winners, and compare cases only at equal well status.
+Changing the BHP limit of the failing wells did not help; remove them from both arms instead.
 
 ### Evaluating the injection philosophy
 

@@ -3,7 +3,7 @@ name: neqsim-reservoir-material-balance
 calculation_basis: "neqsim-java"
 version: "0.1.0"
 description: "Screen gas and oil reservoir in-place volumes with pressure-production material balance, including gas p/z, Havlena-Odeh, black-oil and volatile-oil fits, aquifer-support scenarios, uncertainty and identifiability checks. USE WHEN: an MBAL model, STOIIP/OOIP/GIIP estimate, pressure history match, lower-in-place-volume claim, gas-cap or water-drive evaluation is needed."
-last_verified: "2026-10-31"
+last_verified: "2026-11-15"
 requires:
   python_packages: [numpy, pandas, jneqsim]
   java_packages: [neqsim]
@@ -172,6 +172,33 @@ For every tank and case, report:
 
 In these cases report the limitation and the next required evidence. Do not silently substitute a
 default drive mechanism or report a single best-fit volume as a conclusion.
+
+## Partner-Memo and Cross-Estimator QC Checklist
+
+Lessons from a Tyrihans North memo QC (Nov 2026); apply when a balance feeds a partner or decision document:
+
+- **Cross-check the tank with the native estimator.** Run the same pressures, PVT and net production through
+  `GeneralizedMaterialBalance` (volume-residual estimator, `fitKnownGasCap` or `fitInitiallyGas`) next to your
+  own pressure-misfit tank. Agreement within about 0.1 GSm3 for a closed tank confirms the implementation;
+  differences that grow with water injection show an estimator effect, not an error.
+- **Report aquifer as influx, not only volume.** Give pore volume, compressibility, and cumulative influx at the
+  last pressure (`We = Waq*(cf+cw)*(pi-p)` is the infinite-productivity limit; `FetkovichAquifer` gives the finite
+  productivity case). Partner aquifers quoted in MSm3 are comparable to Mrm3 only within the water compressibility.
+- **Condition every aquifer bound on the water-support assumption** (for example, W-2 water to the tank or not);
+  the acceptable aquifer range shrinks when injected water is credited to the tank.
+- **State free gas versus total gas and the gas/oil split.** Free gas moves with the assumed gas fraction
+  (about 0.27 GSm3 per 0.01 for a gas-cap/oil-rim tank); total gas (free plus dissolved) does not. Derive the
+  fraction from the deck EQUIL contacts and state the OWC used.
+- **One rock compressibility per formation, checked per case.** A table of results for two formations must say
+  which cf each used; rerun the formation that used the other value.
+- **Name the pressure basis per row** (number and tier of points, datum). A different estimator of the same
+  formation may use a different pressure set; do not mix them in one sentence.
+- **Initial pressure and datum:** quote pressure with its depth; test a partner initial pressure on your own
+  pressures (fit RMSE and gas) before attributing a volume difference to it.
+- **Scenario posterior.** Where pressure cannot fix aquifer or W-2 share, weight explicit scenarios with
+  prior x exp(-chi2/2) (the `ReservoirHistoryEnsemble` rule), state the prior masses, and report lower-tail
+  quantiles as scenario quantiles, not confidence intervals. The compositional `ReservoirHistoryEnsemble` itself
+  needs measured component histories and a joint candidate set.
 
 ## References
 

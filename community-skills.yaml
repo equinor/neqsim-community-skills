@@ -235,6 +235,24 @@ skills:
     tags: [wells, completion, aicd, icd, dar, inflow-control, multisegment, completor, opm-flow, capacity-increase, screening]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-crs-geodetic-checks
+    version: "0.1.0"
+    description: "CRS and datum checks for map, survey and layout data: explicit, provenance-recorded transforms (equinor/geodetic-engine, else pyproj with the same rules); named operations checked against their area of use; swapped lat/lon, degrees-as-metres and non-RFC 7946 GeoJSON; datum-ambiguity shift; grid convergence, scale factor and grid against geodesic route length. USE WHEN: positions, routes or distances come from maps, surveys or GIS."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/engineering-data/neqsim-crs-geodetic-checks/SKILL.md"
+    tags: [crs, datum, epsg, proj, geodesy, gis, geojson, surf-layout, coordinates, screening]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-dynamic-model-identification
+    version: "0.1.0"
+    description: "Dynamic model identification from imperfect plant data with equinor/TimeSeriesAnalysis: process gain, time constant and delay; PID tuning; closed-loop process model and disturbance; bad, frozen and on-change data handled; saturation for control authority; usability gate per result. USE WHEN: root cause, control-loop or trend studies need identified dynamics from historian data."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/process/neqsim-dynamic-model-identification/SKILL.md"
+    tags: [system-identification, pid, closed-loop, control-authority, historian, root-cause, timeseries, dynamics, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-well-design-study
     version: "0.3.0"
     description: "Screening well design study and well-plan document: pressure/fracture window, casing seats, kick tolerance, casing and tubing design (API TR 5C3) with load-basis comparison, torque and drag, ECD, offset calibration, time and cost P10/P50/P90, fail-closed validation, A3 well schematic, BOP and barrier sketches, Gantt, risk matrix and a professional Word report. USE WHEN: a concept or pre-FEED well design or well plan is needed, especially with offset wells."

@@ -28,6 +28,8 @@ test = [
   "segyio>=1.9",
   "scipy>=1.10",
   "completor>=1.6",
+  "pyproj>=3.6",
+  "pythonnet>=3.0.3",
 ]
 dev = [
   "pytest>=7.4",
@@ -45,6 +47,8 @@ dev = [
   "segyio>=1.9",
   "scipy>=1.10",
   "completor>=1.6",
+  "pyproj>=3.6",
+  "pythonnet>=3.0.3",
 ]
 
 # Packages are discovered by setup.py from every skills/<category>/<skill>/src

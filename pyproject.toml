@@ -27,6 +27,7 @@ test = [
   "dliswriter>=1.2",
   "segyio>=1.9",
   "scipy>=1.10",
+  "completor>=1.6",
 ]
 dev = [
   "pytest>=7.4",
@@ -43,6 +44,7 @@ dev = [
   "dliswriter>=1.2",
   "segyio>=1.9",
   "scipy>=1.10",
+  "completor>=1.6",
 ]
 
 # Packages are discovered by setup.py from every skills/<category>/<skill>/src

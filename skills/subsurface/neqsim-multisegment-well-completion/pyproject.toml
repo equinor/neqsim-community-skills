@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-multisegment-well-completion"
+version = "0.1.0"
+description = "Multi-segment well completion with AICD/ICD/valve/DAR devices (equinor/completor) and OPM device equations for NeqSim agentic workflows."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = ["completor>=1.6", "matplotlib>=3.7"]
+
+[project.optional-dependencies]
+neqsim = ["neqsim>=3.0"]
+test = ["pytest>=7.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

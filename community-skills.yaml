@@ -226,6 +226,15 @@ skills:
     tags: [seismic, structure, horizon, closure, spill-point, grv, depth-conversion, reservoir-model, opm-flow, screening]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-multisegment-well-completion
+    version: "0.1.0"
+    description: "Multi-segment well completions with inflow-control devices: adds plain WELSEGS/COMPSEGS to standard wells, writes the completor case (AICD, spiral ICD, nozzle valve, DAR/density) and runs equinor/completor to an OPM/Eclipse deck; OPM device equations with NeqSim phase properties; zonal water and gas change at equal oil. USE WHEN: screening AICD/ICD/DAR completions or building a multi-segment deck."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-multisegment-well-completion/SKILL.md"
+    tags: [wells, completion, aicd, icd, dar, inflow-control, multisegment, completor, opm-flow, capacity-increase, screening]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-well-design-study
     version: "0.3.0"
     description: "Screening well design study and well-plan document: pressure/fracture window, casing seats, kick tolerance, casing and tubing design (API TR 5C3) with load-basis comparison, torque and drag, ECD, offset calibration, time and cost P10/P50/P90, fail-closed validation, A3 well schematic, BOP and barrier sketches, Gantt, risk matrix and a professional Word report. USE WHEN: a concept or pre-FEED well design or well plan is needed, especially with offset wells."

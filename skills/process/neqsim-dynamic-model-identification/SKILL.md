@@ -1,8 +1,8 @@
 ---
 name: neqsim-dynamic-model-identification
 calculation_basis: "hybrid"
-version: "0.3.0"
-description: "Dynamic model identification from plant data with equinor/TimeSeriesAnalysis, joined to NeqSim physics: gain, time constant and delay; PID tuning; closed-loop model and disturbance; NeqSim gains to check identified ones; physics residuals that separate equipment change from sensor fault; replay of identified models; move forecasts (NeqSim steady change, identified timing) with backtest; usability gate. USE WHEN: root cause, control-loop or monitoring studies use historian data."
+version: "0.4.0"
+description: "Dynamic model identification from plant data with equinor/TimeSeriesAnalysis, joined to NeqSim physics: gain, time constant and delay; PID tuning; closed-loop model and disturbance; NeqSim gains to check identified ones; physics residuals that separate equipment change from sensor fault; replay of identified models; move forecasts with backtest; advisory loop: plan, pace and verify production moves; usability gate. USE WHEN: root cause, control-loop or monitoring studies use historian data."
 last_verified: "2026-11-15"
 requires:
   python_packages: [pythonnet, numpy, pandas, matplotlib, neqsim]
@@ -127,6 +127,43 @@ forecaster on its own. With a few moves per input and noisy outputs, its gains a
 sign; the physics fixes magnitude and sign. If both the physics and the data say the effect is below the noise,
 that is the answer.
 
+## Advisory production loop (more production within limits)
+
+Use this to raise throughput on a plant that has a steady flowsheet model and historian data. The loop combines three sources:
+- the flowsheet model (well chain and topside) plans the moves;
+- the identified dynamics pace the moves and check them;
+- the measured state anchors every forecast.
+
+The `dynamic_identification.advisory` module holds the pieces:
+
+1. **Anchor.** Run the model at the day's measured rates and pressures. Always add model *changes* to the measured
+   current value; absolute model levels can be offset by several degrees or percent.
+2. **Sensitivities.** Run one case per lever, for example +10 % rate on each well group. `sensitivity_matrix` turns the
+   cases into gains. Check them with `physics_gate`: a wrong sign, or more product out than was added in, is a solver
+   branch jump and must be replaced (for example by the median of other days), not optimised on.
+3. **Plan.** `plan_moves` solves a linear programme: maximise the weighted product (for example oil + gas/1000) subject
+   to every equipment load and quality limit.
+   - A limit that is already exceeded becomes "no worse than now".
+   - Re-verify the plan with one full model run. In a week-long replay the linear plan matched the full model within
+     2 units/day, but re-verifying is still required.
+4. **Unmeasured quality.** Where the quality is not measured (for example RVP without an analyser), use
+   `linear_soft_sensor`: model sensitivities applied to the measured inputs (3rd-stage pressure and temperature).
+   Re-anchor it daily.
+5. **Pace.** `schedule_moves` makes one step at a time, best value first. Steps are spaced by the identified settling
+   time, `t95_s` from `identify_unit` or `response_time`.
+6. **Verify and learn.** After each step, compare forecast and measurement (`score_forecast`).
+   - Identify a multi-input unit model on all data so far, with every moved lever as an input.
+   - `gain_update` accepts an identified gain only with at least two moves, a good fit, a small gain uncertainty and a
+     ratio to the physics gain within a band.
+   - Weak signals and single moves gave wrong updates in testing: a lever whose effect was close to the noise was
+     overestimated by 40 %.
+7. **Guard.** Hold all moves when the quality estimate approaches its specification. Back off half a step when a
+   measured load passes the limit.
+
+The best mix of moves changes from day to day as wells and equipment margins change. Re-run the plan daily rather than
+applying a fixed rule. Report the deliverability cap of each lever as the main assumption, with a sensitivity, because
+the plan often sits on it.
+
 ## Plant data sources
 
 Any historian works when it delivers `time,value` CSVs per tag in UTC (`neqsim-plant-data` covers PI and IP.21 through tagreader). Company-specific historian services belong in the company's own skill catalogue. A good one writes these CSVs and returns the config `series` block, marking `hold` on raw reads from exception-stored historians.
@@ -164,6 +201,7 @@ forecast = hybrid_step_forecast(y_now, dT_neqsim, dyn["tau_s"], dyn["delay_s"], 
 - [ ] Where a NeqSim model of the unit exists, identified gains agree with `steady_gains` in sign and size (`compare_gains`), or the difference is explained.
 - [ ] Physics residuals were calibrated on a window confirmed healthy, and the second signal of a two-residual diagnosis is independent of the first.
 - [ ] A move forecast was backtested leave-one-out on unconfounded past moves against persistence, and the number of moves above the noise is reported.
+- [ ] Advisory moves: every lever case passed `physics_gate`, the plan was re-verified with the full model, and gain updates went through `gain_update` (moves, fit, uncertainty, band).
 - [ ] Hold-out validation is chronological; the identified model is used only inside its identified envelope.
 
 ## Common Mistakes
@@ -172,6 +210,10 @@ forecast = hybrid_step_forecast(y_now, dT_neqsim, dyn["tau_s"], dyn["delay_s"], 
 - Reading the bias as the operating level: it is the output at `u0`, the mean input of the window.
 - Concluding "no dynamics" from a zero time constant on coarse data: the dynamics are faster than the sampling.
 - Including starts and stops in a window meant for steady control: identify per regime.
+- Reading the delay and time constant separately: with first-order-plus-delay fits they can trade off (a 45 min lag reported as 65 min delay and 1 min lag). Use `t63_s` and `t95_s` for pacing.
+- Updating a gain after one move, or from a lever whose effect is close to the noise or overlaps another event (an upset, another lever).
+- Comparing absolute model output with the plant (for example model export oil with every well on-stream all day against daily allocated volumes): compare changes, or scale to measured volumes.
+- Optimising on a model case that jumped to another solution branch; gate every case first.
 
 ## Limitations
 

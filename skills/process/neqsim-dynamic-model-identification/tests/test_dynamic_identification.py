@@ -214,3 +214,39 @@ def test_step_forecast_recovers_timing_and_beats_persistence():
     assert len(steps) == 1 and steps[0]["variable"] == "w1" and steps[0]["du"] == pytest.approx(-8.0)
     moves.loc[idx[110], "w2"] = 45.0
     assert detect_steps(moves, min_step=3.0, step_samples=6, quiet_before=24, quiet_after=72) == []
+
+
+def test_advisory_loop_plans_gates_and_paces_moves():
+    from dynamic_identification.advisory import (gain_update, linear_soft_sensor, physics_gate, plan_moves,
+                                                 response_time, schedule_moves, sensitivity_matrix)
+
+    base = {"oil": 15000.0, "sep_load": 92.0, "gas_inj": 94.0}
+    G = sensitivity_matrix(base, {"subsea": (10.0, {"oil": 15600.0, "sep_load": 97.5, "gas_inj": 96.6}),
+                                  "tlp_hp": (10.0, {"oil": 15400.0, "sep_load": 95.6, "gas_inj": 100.3}),
+                                  "tlp_lp": (10.0, {"oil": 15100.0, "gas_inj": 95.4})})
+    assert G["subsea"]["oil"] == pytest.approx(60.0) and G["tlp_lp"]["sep_load"] == 0.0
+    plan = plan_moves(G, base, {"oil": 1.0}, {"sep_load": 98.0, "gas_inj": 98.0},
+                      {lv: (-10.0, 15.0) for lv in G})
+    pred = plan["predicted"]
+    assert pred["sep_load"] <= 98.0 + 1e-6 and pred["gas_inj"] <= 98.0 + 1e-6 and plan["objective_gain"] > 600.0
+    assert set(plan["binding"]) == {"sep_load", "gas_inj"}
+    over = plan_moves(G, dict(base, sep_load=101.0), {"oil": 1.0}, {"sep_load": 98.0, "gas_inj": 98.0},
+                      {lv: (-10.0, 15.0) for lv in G})
+    assert over["predicted"]["sep_load"] <= 101.0 + 1e-6          # exceeded limit may not get worse
+
+    steps = schedule_moves({"tlp_lp": 7.5, "subsea": 10.0}, {"subsea": 60.0, "tlp_lp": 10.0}, 5.0, 3 * 3600.0)
+    assert [s["lever"] for s in steps] == ["subsea", "subsea", "tlp_lp", "tlp_lp"]
+    assert steps[-1]["step"] == pytest.approx(2.5) and steps[2]["time_s"] == pytest.approx(6 * 3600.0)
+
+    assert not gain_update(50.0, 60.0, n_moves=1, fit_pct=80.0)["accept"]
+    assert not gain_update(50.0, 60.0, n_moves=3, fit_pct=80.0, uncertainty=25.0)["accept"]
+    assert not gain_update(150.0, 60.0, n_moves=3, fit_pct=80.0)["accept"]
+    assert gain_update(50.0, 60.0, n_moves=3, fit_pct=80.0, uncertainty=5.0)["accept"]
+    assert physics_gate(-344.0, 536.0)[0] is False and physics_gate(1157.0, 492.0)[0] is False
+    assert physics_gate(603.0, 578.0)[0]
+
+    rt = response_time({"time_constant_s": 60.0, "time_delay_s": 3900.0})
+    assert rt["t63_s"] == pytest.approx(3960.0)
+    meas = pd.DataFrame({"P3": [0.86, 1.06], "T3": [57.8, 57.8]})
+    rvp = linear_soft_sensor(0.566, {"P3": 0.86, "T3": 57.8}, {"P3": 0.26, "T3": -0.009}, meas)
+    assert rvp.iloc[1] == pytest.approx(0.566 + 0.052)

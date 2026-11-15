@@ -71,6 +71,9 @@ def _unit_parameters(model, names: List[str]) -> Dict[str, object]:
         "u0": dict(zip(names, u0)),
         "fitting": _fitting(p.Fitting),
         "model_form": "y = bias + sum(gain_i (u_i - u0_i)) through a first-order lag with time constant and delay",
+        # delay and lag can trade off in the fit; their sum is the robust response time
+        "t63_s": (_num(p.TimeDelay_s) or 0.0) + (_num(p.TimeConstant_s) or 0.0),
+        "t95_s": (_num(p.TimeDelay_s) or 0.0) + 3.0 * (_num(p.TimeConstant_s) or 0.0),
     }
 
 

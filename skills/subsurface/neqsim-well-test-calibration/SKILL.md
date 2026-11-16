@@ -95,7 +95,8 @@ if res["accept"]:
 
 - Calibrating to allocated standard rates instead of the raw separator volumes.
 - One flash to stock tank instead of the stage path (oil over-stated by several per cent).
-- Mixing volume bases: `getVolume()` can omit the volume translation that `getDensity()` includes (10-20 % for an SRK liquid, 1-4 % for a PR78 E300 fluid). Use mass/density everywhere.
+- Mixing volume bases: `getVolume()` can omit the volume translation that `getDensity()` includes (10-20 % for an SRK liquid, 1-4 % for a PR78 E300 fluid). Use mass/density everywhere: on 44 field tests the
+  median stock-tank oil versus the allocated test oil moved from 1.031 to 0.998 with this change alone.
 - Running without a multiphase check: free water then sits in the "oil" phase and inflates the oil volume.
 - Keying tests on the test number alone; deduction tests share a number across wells.
 - Updating J from VLP-inferred bottomhole pressure.

@@ -1,0 +1,30 @@
+repos:
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        entry: uv run black
+        language: system
+        types: [python]
+
+      # Fixer: propagates the SKILL.md version to pyproject.toml and the catalog.
+      - id: sync-skill-versions
+        name: sync skill versions (SKILL.md -> pyproject.toml, catalog)
+        entry: uv run python scripts/sync_catalog_metadata.py --apply
+        language: system
+        pass_filenames: false
+        files: ^(skills/.*/(SKILL\.md|pyproject\.toml)|community-skills\.yaml)$
+
+      - id: validate-skill-manifests
+        name: validate skill manifests
+        entry: uv run python scripts/validate_skill_manifests.py
+        language: system
+        pass_filenames: false
+        files: ^(skills/.*/SKILL\.md|schemas/skill-manifest\.schema\.json|scripts/validate_skill_manifests\.py)$
+
+      - id: calculation-basis
+        name: every skill declares calculation_basis
+        entry: uv run python scripts/classify_calculation_basis.py --check
+        language: system
+        pass_filenames: false
+        files: ^(skills/.*/SKILL\.md|scripts/classify_calculation_basis\.py)$

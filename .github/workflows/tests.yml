@@ -11,30 +11,36 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install test dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[test]"
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run pre-commit hooks (Black, skill metadata, manifest schema, calculation_basis)
+        env:
+          PRE_COMMIT_FROM_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+          PRE_COMMIT_TO_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: uv run pre-commit run --from-ref "$PRE_COMMIT_FROM_REF" --to-ref "$PRE_COMMIT_TO_REF"
+
+      - name: Ensure pre-commit did not modify files
+        run: git diff --exit-code
 
       - name: Run tests
-        run: python -m pytest
+        run: uv run pytest
 
       - name: Run catalog metadata tests
-        run: python -m pytest skills/test_skill_metadata.py
+        run: uv run pytest skills/test_skill_metadata.py
 
       - name: Consolidation pass (advisory — near-duplicate & orphan skills)
-        run: python scripts/find_skill_overlap.py --threshold 0.82
-
-      - name: Every skill declares calculation_basis
-        run: python scripts/classify_calculation_basis.py --check
+        run: uv run python scripts/find_skill_overlap.py --threshold 0.82

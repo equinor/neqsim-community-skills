@@ -77,21 +77,21 @@ These skills are intentionally simple and public. They are suitable for learning
 
 ## Install and Run
 
-Use Python 3.10 or newer.
-
-```bash
-python -m venv .venv
-python -m pip install --upgrade pip
-python -m pip install -e ".[test]"
-python -m pytest
-```
-
-Install a specific example skill in editable mode:
+Users do not need `uv` to install or run skills. For example, install a skill
+with pip in your Python environment:
 
 ```bash
 python -m pip install -e skills/process/neqsim-separator-modelling
 python skills/process/neqsim-separator-modelling/examples/basic_separator_screening.py
 ```
+
+Individual skill packages specify their own Python and dependency requirements.
+The NeqSim CLI installation described above also does not require `uv`.
+
+### Repository development
+
+For repository development and validation, use Python 3.11 or newer and `uv`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and checks.
 
 The Python examples do not require confidential data. They detect whether the optional `neqsim` Python package is available and fall back to public placeholder logic when it is not installed.
 

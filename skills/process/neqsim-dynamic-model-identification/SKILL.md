@@ -1,9 +1,9 @@
 ---
 name: neqsim-dynamic-model-identification
 calculation_basis: "hybrid"
-version: "0.4.0"
+version: "0.4.1"
 description: "Dynamic model identification from plant data with equinor/TimeSeriesAnalysis, joined to NeqSim physics: gain, time constant and delay; PID tuning; closed-loop model and disturbance; NeqSim gains to check identified ones; physics residuals that separate equipment change from sensor fault; replay of identified models; move forecasts with backtest; advisory loop: plan, pace and verify production moves; usability gate. USE WHEN: root cause, control-loop or monitoring studies use historian data."
-last_verified: "2026-11-15"
+last_verified: "2026-11-17"
 requires:
   python_packages: [pythonnet, numpy, pandas, matplotlib, neqsim]
   java_packages: []
@@ -163,6 +163,25 @@ The `dynamic_identification.advisory` module holds the pieces:
 The best mix of moves changes from day to day as wells and equipment margins change. Re-run the plan daily rather than
 applying a fixed rule. Report the deliverability cap of each lever as the main assumption, with a sensitivity, because
 the plan often sits on it.
+
+### Event responses as calibration observations
+
+Daily allocated rates are a weak teacher: in a two-week test on a 40-well platform, learning well inflow gains from the
+daily choke moves gave no improvement over fixed curves (running error 49 vs 47 Sm3/d). The short-term choke steps in
+the historian carry far more information. Use them as observations for the ensemble calibration of the flowsheet model:
+
+1. Detect choke steps in 1-5 min data (`detect_steps`); keep steps of at least a few per cent with a settled window
+   before and after.
+2. Identify the wellhead-pressure response with `identify_unit` and several inputs: the well's own choke, the pressure
+   between the choke and the manifold (it removes header and separator effects) and the chokes of wells on the same
+   line.
+3. Gate on physics: the own-choke gain on wellhead pressure must be negative and the fit above about 30 %. Reject the
+   event when another lever moved in the same window (confounded).
+4. The steady wellhead-pressure change for the identified step is one observation (sigma about 2 bar); the model
+   prediction is the well network solved with the same relative choke step and the downstream pressure held. Report
+   observations the model cannot predict (well not in the network that day) as dropped rather than passing them on.
+
+On the same platform this gave about ten accepted responses per day against two or three usable daily moves.
 
 ## Plant data sources
 

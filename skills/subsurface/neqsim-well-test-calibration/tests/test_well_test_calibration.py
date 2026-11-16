@@ -90,18 +90,36 @@ def test_window_mean_drops_settling_period_and_flags():
     assert quality_flags(0.2, None, None)["too_short"]
 
 
+_RECOMBINE_SCRIPT = """
+import json, sys
+sys.path.insert(0, sys.argv[1])
+from neqsim import jneqsim
+from well_test_calibration import recombine_separator_volumes
+fl = jneqsim.thermo.system.SystemSrkEos(298.15, 10.0)
+for name, x in (("nitrogen", 0.005), ("CO2", 0.01), ("methane", 0.40), ("ethane", 0.06), ("propane", 0.05),
+                ("n-butane", 0.03), ("n-pentane", 0.03), ("n-hexane", 0.04), ("n-heptane", 0.10), ("n-octane", 0.10),
+                ("nC10", 0.175), ("water", 0.0)):
+    fl.addComponent(name, max(x, 1e-12))
+fl.setMixingRule("classic")
+r = recombine_separator_volumes(fl, p_sep_barg=8.0, t_oil_c=60.0, gas_act_m3h=900.0, oil_act_m3h=50.0, water_m3h=20.0,
+                                train=((0.8, 50.0), (0.0, 15.0)))
+print(json.dumps({k: r[k] for k in ("oil_Sm3d", "gas_Sm3d", "sep_gas_Sm3d", "shrinkage", "water_m3d")} | {"zsum": sum(r["z"])}))
+"""
+
+
 @needs_neqsim
 def test_recombination_closes_separator_gas_and_gives_plausible_shrinkage():
-    from neqsim import jneqsim
-    fl = jneqsim.thermo.system.SystemSrkEos(298.15, 10.0)
-    for name, x in (("nitrogen", 0.005), ("CO2", 0.01), ("methane", 0.40), ("ethane", 0.06), ("propane", 0.05),
-                    ("n-butane", 0.03), ("n-pentane", 0.03), ("n-hexane", 0.04), ("n-heptane", 0.10), ("n-octane", 0.10),
-                    ("n-decane", 0.175), ("water", 0.0)):
-        fl.addComponent(name, max(x, 1e-12))
-    fl.setMixingRule("classic")
-    r = recombine_separator_volumes(fl, p_sep_barg=8.0, t_oil_c=60.0, gas_act_m3h=900.0, oil_act_m3h=50.0, water_m3h=20.0,
-                                    train=((0.8, 50.0), (0.0, 15.0)))
-    assert abs(sum(r["z"]) - 1.0) < 1e-9
+    # A fresh JVM: some NeqSim workflows in the same pytest session leave global component-database state behind.
+    import json
+    import pathlib
+    import subprocess
+    import sys
+
+    src = str(pathlib.Path(__file__).resolve().parents[1] / "src")
+    out = subprocess.run([sys.executable, "-c", _RECOMBINE_SCRIPT, src], capture_output=True, text=True, timeout=300,
+                         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), check=True)
+    r = json.loads(out.stdout.strip().splitlines()[-1])
+    assert abs(r["zsum"] - 1.0) < 1e-9
     assert 0.6 < r["shrinkage"] < 1.0
     assert r["gas_Sm3d"] > r["sep_gas_Sm3d"] > 0      # stage gas adds to the separator gas
     assert abs(r["water_m3d"] - 480.0) < 1e-9

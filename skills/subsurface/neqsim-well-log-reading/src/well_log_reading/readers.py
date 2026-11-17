@@ -172,7 +172,10 @@ def _read_dlis(path: Path, log: WellLog, null_values, tolerant: bool) -> None:
                         if values
                         else ""
                     )
-                except Exception:  # noqa: BLE001 - parameter values may be undecodable
+                except Exception as exc:  # noqa: BLE001
+                    log.warnings.append(
+                        f"parameter {key}: values could not be read ({exc})"
+                    )
                     continue
                 if values:
                     log.metadata.setdefault(f"param.{key}", f"{values} {unit}".strip())
@@ -239,7 +242,8 @@ def _lis_wellsite(logical_file, log: WellLog) -> None:
             if not record.isstructured():
                 continue
             table = record.table(simple=True)
-        except Exception:  # noqa: BLE001 - malformed component blocks are common
+        except Exception as exc:  # noqa: BLE001 - malformed component blocks are common
+            log.warnings.append(f"LIS wellsite record could not be read ({exc})")
             continue
         names = table.dtype.names or ()
         if "MNEM" not in names or "VALU" not in names:

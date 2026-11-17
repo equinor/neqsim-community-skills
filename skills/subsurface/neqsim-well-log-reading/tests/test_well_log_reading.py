@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -17,6 +18,7 @@ from well_log_reading import (
     zone_statistics,
 )
 from well_log_reading.__main__ import main
+from well_log_reading.readers import _lis_wellsite
 
 LAS_TEXT = """~VERSION INFORMATION
  VERS.                  2.0 : CWLS LOG ASCII STANDARD - VERSION 2.0
@@ -66,6 +68,17 @@ def _write(tmp_path, name, text):
     path = tmp_path / name
     path.write_text(text, encoding="utf-8")
     return path
+
+
+def test_unreadable_lis_record_is_reported():
+    class BrokenRecord:
+        def isstructured(self):
+            raise ValueError("malformed record")
+
+    log = SimpleNamespace(warnings=[])
+    logical_file = SimpleNamespace(wellsite_data=lambda: [BrokenRecord()])
+    _lis_wellsite(logical_file, log)
+    assert log.warnings == ["LIS wellsite record could not be read (malformed record)"]
 
 
 def test_las_header_curves_nulls_and_duplicates(tmp_path):

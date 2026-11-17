@@ -12,9 +12,12 @@ element size and time step that follow from them.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from math import isfinite, log, pi, sqrt
 from typing import Any
+
+_LOGGER = logging.getLogger(__name__)
 
 _LAMINAR_REYNOLDS = 2300.0
 _TURBULENT_REYNOLDS = 3000.0
@@ -142,7 +145,11 @@ def fluid_state_from_neqsim(
         try:
             getattr(system, initialiser)()
         except Exception:  # pragma: no cover - depends on the NeqSim build in use
-            continue
+            _LOGGER.warning(
+                "NeqSim %s failed; attempting the remaining property initializers",
+                initialiser,
+                exc_info=True,
+            )
 
     wanted = (phase or "").strip().lower()
     phases: list[tuple[str, Any]] = []
@@ -493,7 +500,11 @@ def _read_diffusion_coefficients(
                 )
             )
         except Exception:  # pragma: no cover - component absent or model unsupported
-            continue
+            _LOGGER.warning(
+                "Diffusion coefficient unavailable for component %s",
+                component,
+                exc_info=True,
+            )
     return values
 
 

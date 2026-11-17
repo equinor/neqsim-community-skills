@@ -17,7 +17,7 @@ def calibrate_well(
     prior_std: Sequence[float],
     bounds: Sequence[Sequence[float]],
     sigma: dict[str, float],
-    steps: Sequence[float] = None,
+    steps: Sequence[float] | None = None,
     iters: int = 4,
 ) -> dict[str, object]:
     """Fit the lift-model parameters of one well to its clean tests and decide whether to use them.

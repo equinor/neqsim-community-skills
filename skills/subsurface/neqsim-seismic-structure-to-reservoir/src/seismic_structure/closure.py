@@ -16,6 +16,7 @@ makes the trap fault-bounded, which is an interpretation decision.
 from __future__ import annotations
 
 import heapq
+import itertools
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
@@ -296,7 +297,7 @@ def contact_for_volume(
         or target_grv_mm3 < rows[0]["grv_mm3"]
     ):
         return None
-    for previous, row in zip(rows, rows[1:]):
+    for previous, row in itertools.pairwise(rows):
         if previous["grv_mm3"] <= target_grv_mm3 <= row["grv_mm3"]:
             span = row["grv_mm3"] - previous["grv_mm3"]
             t = 0.0 if span == 0 else (target_grv_mm3 - previous["grv_mm3"]) / span

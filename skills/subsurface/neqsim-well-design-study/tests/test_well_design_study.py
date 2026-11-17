@@ -1,3 +1,4 @@
+import itertools
 import math
 
 import numpy as np
@@ -72,7 +73,7 @@ def test_collapse_regimes_are_continuous():
     vals = [
         collapse_rating_psi(9.625, 9.625 / dt, yp) for dt in np.linspace(8, 60, 400)
     ]
-    assert all(b <= a * 1.01 for a, b in zip(vals, vals[1:]))
+    assert all(b <= a * 1.01 for a, b in itertools.pairwise(vals))
 
 
 def test_pipe_weight_matches_catalogue_ppf():

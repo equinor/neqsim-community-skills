@@ -13,6 +13,7 @@ comp.json: {"eos": "srk", "components": {"methane": 0.7, "ethane": 0.1, "n-hepta
 """
 
 import argparse
+import itertools
 import json
 import math
 import sys
@@ -58,7 +59,7 @@ def parse_stages(text):
     stages = [tuple(float(x) for x in item.split(":")) for item in text.split(",")]
     if any(p <= STD_P_BARA for p, _ in stages):
         sys.exit("Stage pressures must be above standard pressure (1.01325 bara).")
-    if any(a[0] <= b[0] for a, b in zip(stages, stages[1:])):
+    if any(a[0] <= b[0] for a, b in itertools.pairwise(stages)):
         sys.exit("Stage pressures must decrease along the train.")
     return stages
 

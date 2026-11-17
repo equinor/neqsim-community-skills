@@ -8,6 +8,7 @@ host ranks where it does. Every weight is an input.
 
 from __future__ import annotations
 
+import itertools
 import math
 from collections.abc import Iterable, Mapping, Sequence
 
@@ -59,7 +60,7 @@ def point_to_polyline_km(
         return d, (float(line[0][0]), float(line[0][1])), 0.0
     best = (float("inf"), (0.0, 0.0), 0.0)
     along = 0.0
-    for (ax, ay), (bx, by) in zip(pts[:-1], pts[1:]):
+    for (ax, ay), (bx, by) in itertools.pairwise(pts):
         dx, dy = bx - ax, by - ay
         seg2 = dx * dx + dy * dy
         t = 0.0 if seg2 == 0 else max(0.0, min(1.0, -(ax * dx + ay * dy) / seg2))

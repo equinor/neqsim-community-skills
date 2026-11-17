@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import math
 from collections.abc import Iterable, Iterator, Sequence
 from typing import Any
@@ -58,7 +59,7 @@ def densify(route: Sequence[LonLat], step_m: float) -> list[tuple[LonLat, float]
         return [(tuple(route[0]), 0.0)] if route else []
     out: list[tuple[LonLat, float]] = [(tuple(route[0]), 0.0)]
     chain = 0.0
-    for a, b in zip(route[:-1], route[1:]):
+    for a, b in itertools.pairwise(route):
         seg = haversine_m(a, b)
         n = max(1, math.ceil(seg / step_m))
         for i in range(1, n + 1):

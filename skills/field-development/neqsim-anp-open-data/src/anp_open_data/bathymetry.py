@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import hashlib
+import itertools
 import json
 import math
 from collections.abc import Callable, Sequence
@@ -223,7 +224,7 @@ def profile_along_route(
     """
     rows: list[dict] = []
     kp = 0.0
-    for (lo0, la0), (lo1, la1) in zip(waypoints[:-1], waypoints[1:]):
+    for (lo0, la0), (lo1, la1) in itertools.pairwise(waypoints):
         seg = haversine_km(lo0, la0, lo1, la1)
         n = max(1, math.ceil(seg / step_km))
         start = 0 if not rows else 1
@@ -238,7 +239,7 @@ def profile_along_route(
                 }
             )
         kp += seg
-    for a, b in zip(rows[:-1], rows[1:]):
+    for a, b in itertools.pairwise(rows):
         dx = (b["kp_km"] - a["kp_km"]) * 1000.0
         b["slope_deg"] = (
             round(math.degrees(math.atan2(abs(b["depth_m"] - a["depth_m"]), dx)), 2)
@@ -266,7 +267,7 @@ def flag_slopes(
     }
     for lim in limits_deg:
         km = 0.0
-        for a, b in zip(profile[:-1], profile[1:]):
+        for a, b in itertools.pairwise(profile):
             if b["slope_deg"] > lim:
                 km += b["kp_km"] - a["kp_km"]
         out["length_above_%gdeg_km" % lim] = round(km, 2)

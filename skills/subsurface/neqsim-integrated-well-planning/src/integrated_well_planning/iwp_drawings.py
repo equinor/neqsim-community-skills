@@ -368,7 +368,7 @@ def well_schematic_sheet(
             ax_w.text(
                 -half - 0.12,
                 (top + shoe) / 2 if k else shoe * 0.5,
-                c["name"] if k == 0 or True else "",
+                c["name"],
                 fontsize=6.0,
                 rotation=90,
                 ha="right",

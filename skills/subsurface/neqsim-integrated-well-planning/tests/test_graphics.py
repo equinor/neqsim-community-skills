@@ -425,7 +425,7 @@ def test_sheet_pdf_embeds_truetype_fonts_and_svg_is_vector(out_dir):
     pdf = Path(files["pdf"]).read_bytes()
     assert b"/FontFile2" in pdf or b"/FontFile3" in pdf
     svg = Path(files["svg"]).read_text(encoding="utf-8", errors="ignore")
-    assert "<path" in svg and "SYNTHETIC" not in "" and svg.count("<g") > 10
+    assert "<path" in svg and svg.count("<g") > 10
 
 
 def test_sheet_has_title_block_and_synthetic_stamp_in_provenance(out_dir):

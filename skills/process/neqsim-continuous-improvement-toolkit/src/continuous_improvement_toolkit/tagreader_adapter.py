@@ -12,11 +12,20 @@ import os
 from .results import SourceResult
 
 
-class TagreaderAdapter(object):
+class TagreaderAdapter:
     """Pull ``tags`` (logical name -> historian tag) from one tagreader source."""
 
-    def __init__(self, source, tags, imstype="piwebapi", step_seconds=3600, name="historian",
-                 read_type="INT", client=None, **_ignored):
+    def __init__(
+        self,
+        source,
+        tags,
+        imstype="piwebapi",
+        step_seconds=3600,
+        name="historian",
+        read_type="INT",
+        client=None,
+        **_ignored,
+    ):
         if not tags:
             raise ValueError("TagreaderAdapter needs a non-empty 'tags' mapping")
         self.source = source
@@ -31,6 +40,7 @@ class TagreaderAdapter(object):
         if self._client is not None:
             return self._client
         import tagreader  # noqa: WPS433 - optional dependency
+
         client = tagreader.IMSClient(self.source, self.imstype)
         client.connect()
         return client
@@ -43,17 +53,28 @@ class TagreaderAdapter(object):
             return SourceResult("not_installed", message="tagreader is not installed")
         except Exception as error:  # connection or authentication problems
             text = str(error)
-            return SourceResult("failed", message=text,
-                                interaction_required="auth" in text.lower() or "401" in text)
+            return SourceResult(
+                "failed",
+                message=text,
+                interaction_required="auth" in text.lower() or "401" in text,
+            )
         try:
             read_type = self.read_type
             try:
                 import tagreader
-                read_type = getattr(tagreader.ReaderType, self.read_type, self.read_type)
+
+                read_type = getattr(
+                    tagreader.ReaderType, self.read_type, self.read_type
+                )
             except ImportError:
                 pass
-            frame = client.read(list(self.tags.values()), since, until, self.step_seconds,
-                                read_type=read_type)
+            frame = client.read(
+                list(self.tags.values()),
+                since,
+                until,
+                self.step_seconds,
+                read_type=read_type,
+            )
         except Exception as error:
             return SourceResult("failed", message=str(error))
         if frame is None or len(frame) == 0:
@@ -61,9 +82,13 @@ class TagreaderAdapter(object):
         reverse = {tag: logical for logical, tag in self.tags.items()}
         frame = frame.rename(columns=reverse)
         missing = [logical for logical in self.tags if logical not in frame.columns]
-        folder = os.path.join(str(out_dir), self.name, since.strftime("%Y"), since.strftime("%m"))
+        folder = os.path.join(
+            str(out_dir), self.name, since.strftime("%Y"), since.strftime("%m")
+        )
         os.makedirs(folder, exist_ok=True)
-        path = os.path.join(folder, "part_{}.csv".format(since.strftime("%Y%m%dT%H%M%S")))
+        path = os.path.join(
+            folder, "part_{}.csv".format(since.strftime("%Y%m%dT%H%M%S"))
+        )
         with open(path, "w", encoding="utf-8", newline="") as f:
             writer = csv.writer(f)
             columns = [c for c in self.tags if c in frame.columns]
@@ -72,5 +97,10 @@ class TagreaderAdapter(object):
                 writer.writerow([stamp.isoformat()] + [row[c] for c in columns])
         last = frame.index.max()
         status = "partial" if missing else "ok"
-        return SourceResult(status, rows=len(frame), watermark=last.isoformat(), gaps=missing,
-                            outputs=[path])
+        return SourceResult(
+            status,
+            rows=len(frame),
+            watermark=last.isoformat(),
+            gaps=missing,
+            outputs=[path],
+        )

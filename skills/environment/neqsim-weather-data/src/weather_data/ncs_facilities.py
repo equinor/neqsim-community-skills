@@ -18,19 +18,26 @@ from __future__ import annotations
 import json
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 Fetch = Callable[[str, float], bytes]
 
-USER_AGENT = "neqsim-weather-data/0.1 (+https://github.com/equinor/neqsim-community-skills)"
-FACILITY_QUERY_URL = "https://factmaps.sodir.no/api/rest/services/DataService/Data/MapServer/6000/query"
+USER_AGENT = (
+    "neqsim-weather-data/0.1 (+https://github.com/equinor/neqsim-community-skills)"
+)
+FACILITY_QUERY_URL = (
+    "https://factmaps.sodir.no/api/rest/services/DataService/Data/MapServer/6000/query"
+)
 
 
 def default_fetch(url: str, timeout: float = 60.0) -> bytes:
     """Perform a bounded, read-only GET and return the body."""
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed https host
+    request = urllib.request.Request(
+        url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"}
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         return response.read()
 
 
@@ -41,7 +48,7 @@ class FacilityLocation:
     name: str
     latitude: float
     longitude: float
-    attributes: Dict[str, Any]
+    attributes: dict[str, Any]
     source_url: str = "https://factmaps.sodir.no/"
     licence: str = "NLOD 2.0 (Sodir)"
 
@@ -49,18 +56,24 @@ class FacilityLocation:
 class SodirFacilityLocator:
     """Best-effort name -> WGS84 coordinate lookup for NCS installations."""
 
-    def __init__(self, fetch: Fetch = default_fetch, *, timeout: float = 60.0,
-                 page_size: int = 1000, max_pages: int = 20) -> None:
+    def __init__(
+        self,
+        fetch: Fetch = default_fetch,
+        *,
+        timeout: float = 60.0,
+        page_size: int = 1000,
+        max_pages: int = 20,
+    ) -> None:
         self.fetch = fetch
         self.timeout = timeout
         self.page_size = page_size
         self.max_pages = max_pages
-        self._cache: Optional[List[Dict[str, Any]]] = None
+        self._cache: list[dict[str, Any]] | None = None
 
-    def _fetch_all(self) -> List[Dict[str, Any]]:
+    def _fetch_all(self) -> list[dict[str, Any]]:
         if self._cache is not None:
             return self._cache
-        rows: List[Dict[str, Any]] = []
+        rows: list[dict[str, Any]] = []
         offset = 0
         for _ in range(self.max_pages):
             params = {
@@ -87,22 +100,24 @@ class SodirFacilityLocator:
         return rows
 
     @staticmethod
-    def _name_of(attributes: Dict[str, Any]) -> Optional[str]:
+    def _name_of(attributes: dict[str, Any]) -> str | None:
         for key, value in attributes.items():
             if "name" in key.lower() and isinstance(value, str) and value.strip():
                 return value.strip()
         return None
 
-    def find(self, name: str) -> List[FacilityLocation]:
+    def find(self, name: str) -> list[FacilityLocation]:
         """Return every facility whose attributes contain ``name`` (case-insensitive)."""
         needle = name.strip().lower()
         if not needle:
             return []
-        matches: List[FacilityLocation] = []
+        matches: list[FacilityLocation] = []
         for feature in self._fetch_all():
             attributes = feature.get("attributes", {}) or {}
             geometry = feature.get("geometry") or {}
-            haystack = " ".join(str(v) for v in attributes.values() if isinstance(v, (str, int, float)))
+            haystack = " ".join(
+                str(v) for v in attributes.values() if isinstance(v, (str, int, float))
+            )
             if needle not in haystack.lower():
                 continue
             longitude, latitude = geometry.get("x"), geometry.get("y")

@@ -40,7 +40,11 @@ basis = build_design_basis(
         {
             "source": "tag_register",
             "reference": "tag register line 20-P-001",
-            "values": {"inside_diameter_m": 0.3048, "length_m": 6.0, "material": "carbon steel"},
+            "values": {
+                "inside_diameter_m": 0.3048,
+                "length_m": 6.0,
+                "material": "carbon steel",
+            },
         },
         {
             "source": "process_datasheet",
@@ -56,7 +60,9 @@ basis = build_design_basis(
 
 print(f"Design basis for {basis.tag} ({basis.component_kind})")
 for row in basis.traceability_rows():
-    print(f"  {row['field']:<24} {row['value']!s:<16} {row['source']:<20} {row['reference']}")
+    print(
+        f"  {row['field']:<24} {row['value']!s:<16} {row['source']:<20} {row['reference']}"
+    )
 print(f"  missing fields : {basis.missing_fields or 'none'}")
 print(f"  conflicts      : {len(basis.conflicts)}")
 print(f"  ready to mesh  : {basis.ready_for_meshing}")

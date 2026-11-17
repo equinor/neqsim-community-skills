@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import pytest
-
-from benchmark_reference_data.comparison import STATUS_FAIL, STATUS_PASS, STATUS_WARN, compare
+from benchmark_reference_data.comparison import (
+    STATUS_FAIL,
+    STATUS_PASS,
+    STATUS_WARN,
+    compare,
+)
 from benchmark_reference_data.reference_data import find_anchor
 from benchmark_reference_data.report import BenchmarkReport
 
@@ -124,7 +128,9 @@ def test_counts_tally_every_status_bucket():
 def test_extend_appends_a_batch():
     report = BenchmarkReport()
     point = find_anchor("co2", "critical_pressure")
-    report.extend([compare("p1", point.value, point), compare("p2", point.value, point)])
+    report.extend(
+        [compare("p1", point.value, point), compare("p2", point.value, point)]
+    )
     assert len(report.results) == 2
 
 

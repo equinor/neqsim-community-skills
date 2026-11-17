@@ -2,11 +2,25 @@ import math
 
 import numpy as np
 import pytest
-
-from well_trajectory_anticollision import (ErrorModel, SFRule, Wellpath, add_model_covariance, check_slot,
-                                           compare_growth, curve_hold, dogleg_severity, governing, group_by_surface,
-                                           minimum_curvature, plan_from_surface, plan_sidetrack, pull_back_search,
-                                           scan, separation_factor, summarize)
+from well_trajectory_anticollision import (
+    ErrorModel,
+    SFRule,
+    Wellpath,
+    add_model_covariance,
+    check_slot,
+    compare_growth,
+    curve_hold,
+    dogleg_severity,
+    governing,
+    group_by_surface,
+    minimum_curvature,
+    plan_from_surface,
+    plan_sidetrack,
+    pull_back_search,
+    scan,
+    separation_factor,
+    summarize,
+)
 
 MODEL = ErrorModel()
 RULE = SFRule()
@@ -14,7 +28,9 @@ RULE = SFRule()
 
 def vertical(name, e, n, top=0.0, depth=2500.0, step=30.0, cov=True):
     md = np.arange(0.0, depth + 1e-9, step)
-    wp = Wellpath.from_survey(name, md, np.zeros_like(md), np.zeros_like(md), start_xyz=(e, n, top))
+    wp = Wellpath.from_survey(
+        name, md, np.zeros_like(md), np.zeros_like(md), start_xyz=(e, n, top)
+    )
     return add_model_covariance(wp, MODEL) if cov else wp
 
 
@@ -27,7 +43,9 @@ def test_minimum_curvature_matches_circular_arc():
     assert pos[-1, 0] == pytest.approx(r * (1 - math.cos(th)), abs=1e-6)
     assert pos[-1, 2] == pytest.approx(r * math.sin(th), abs=1e-6)
     assert pos[-1, 1] == pytest.approx(0.0, abs=1e-9)
-    assert dogleg_severity(md, inc, np.full_like(md, 90.0))[1:] == pytest.approx(3.0, rel=1e-9)
+    assert dogleg_severity(md, inc, np.full_like(md, 90.0))[1:] == pytest.approx(
+        3.0, rel=1e-9
+    )
 
 
 def test_curve_hold_hits_target_with_constant_dls():
@@ -36,7 +54,9 @@ def test_curve_hold_hits_target_with_constant_dls():
     assert np.linalg.norm(wp.xyz[-1] - target) < 0.05
     s = summarize(wp)
     assert s["max_dls_deg_per_30m"] == pytest.approx(2.5, abs=0.02)
-    assert s["hold_az_deg"] == pytest.approx(math.degrees(math.atan2(1200.0, 900.0)), abs=0.01)
+    assert s["hold_az_deg"] == pytest.approx(
+        math.degrees(math.atan2(1200.0, 900.0)), abs=0.01
+    )
 
 
 def test_unreachable_target_raises():
@@ -46,10 +66,20 @@ def test_unreachable_target_raises():
 
 
 def test_separation_factor_formula():
-    rule = SFRule(k_sigma=3.5, surface_margin_m=0.3, sigma_pa_m=0.5, ref_radius_m=0.1, offset_radius_m=0.1)
+    rule = SFRule(
+        k_sigma=3.5,
+        surface_margin_m=0.3,
+        sigma_pa_m=0.5,
+        ref_radius_m=0.1,
+        offset_radius_m=0.1,
+    )
     sf = separation_factor(20.0, 4.0, rule)
     assert sf == pytest.approx((20.0 - 0.5) / (3.5 * math.sqrt(4.25)))
-    assert rule.classify(0.9) == "STOP" and rule.classify(1.2) == "CAUTION" and rule.classify(2.0) == "OK"
+    assert (
+        rule.classify(0.9) == "STOP"
+        and rule.classify(1.2) == "CAUTION"
+        and rule.classify(2.0) == "OK"
+    )
 
 
 def test_parallel_vertical_wells_sf_decreases_with_depth():
@@ -73,10 +103,21 @@ def test_offset_without_covariance_is_modelled_with_warning():
 
 
 def test_sidetrack_parent_exit_and_governing_excludes_parent():
-    parent = add_model_covariance(plan_from_surface((0.0, 0.0, 0.0), 400.0, (300.0, 1500.0, 2000.0), 2.0,
-                                                    name="P-1 H", step=30.0), MODEL)
+    parent = add_model_covariance(
+        plan_from_surface(
+            (0.0, 0.0, 0.0),
+            400.0,
+            (300.0, 1500.0, 2000.0),
+            2.0,
+            name="P-1 H",
+            step=30.0,
+        ),
+        MODEL,
+    )
     tie = float(parent.md[np.argmin(abs(parent.md - 700.0))])
-    st = add_model_covariance(plan_sidetrack(parent, tie, (1500.0, 1200.0, 2000.0), 3.0, name="P-1 AH"), MODEL)
+    st = add_model_covariance(
+        plan_sidetrack(parent, tie, (1500.0, 1200.0, 2000.0), 3.0, name="P-1 AH"), MODEL
+    )
     assert st.parent == "P-1 H" and st.tie_md == tie
     res = scan(st, [parent, vertical("Far", 4000.0, 4000.0)], RULE)
     prow = next(r for r in res["offsets"] if r["wellbore"] == "P-1 H")
@@ -90,30 +131,72 @@ def test_pull_back_clears_close_offset():
     target = np.array([990.0, 990.0, 2000.0])
 
     def plan(t):
-        return add_model_covariance(plan_from_surface((0.0, 0.0, 0.0), 400.0, t, 3.0), MODEL)
+        return add_model_covariance(
+            plan_from_surface((0.0, 0.0, 0.0), 400.0, t, 3.0), MODEL
+        )
 
-    out = pull_back_search(plan, target, (0.0, 0.0), [blocker], RULE, distances=(0, 50, 100, 200, 300, 400))
+    out = pull_back_search(
+        plan, target, (0.0, 0.0), [blocker], RULE, distances=(0, 50, 100, 200, 300, 400)
+    )
     assert out["sweep"][0]["governing_sf"] < 1.0
     assert out["chosen"] is not None and out["chosen"]["pull_back_m"] > 0
     assert out["chosen"]["governing_sf"] >= RULE.caution_below
 
 
 def test_compare_growth_identity_and_scaled_model():
-    ref = add_model_covariance(plan_from_surface((0.0, 0.0, 0.0), 300.0, (800.0, 800.0, 1800.0), 2.0), MODEL)
+    ref = add_model_covariance(
+        plan_from_surface((0.0, 0.0, 0.0), 300.0, (800.0, 800.0, 1800.0), 2.0), MODEL
+    )
     rows = compare_growth(ref, MODEL)
     assert all(r["ratio"] == pytest.approx(1.0, abs=0.01) for r in rows)
-    loose = ErrorModel(terms={k: (kind, 2 * sig) for k, (kind, sig) in MODEL._resolved.items()})
-    assert all(r["ratio"] == pytest.approx(2.0, abs=0.02) for r in compare_growth(ref, loose))
+    loose = ErrorModel(
+        terms={k: (kind, 2 * sig) for k, (kind, sig) in MODEL._resolved.items()}
+    )
+    assert all(
+        r["ratio"] == pytest.approx(2.0, abs=0.02) for r in compare_growth(ref, loose)
+    )
 
 
 def test_slot_occupancy():
-    slots = group_by_surface([
-        {"name": "S-1 H", "easting": 0.0, "northing": 0.0, "status": "producing", "slot": "01"},
-        {"name": "S-2 H", "easting": 2.4, "northing": 0.0, "status": "closed", "slot": "02"},
-        {"name": "S-2 AH", "easting": 2.4, "northing": 0.1, "status": "plugged", "parent": "S-2 H"},
-        {"name": "S-3 H", "easting": 5.0, "northing": 0.0, "status": "plugged", "slot": "03"},
-        {"name": "S-3 AH", "easting": 5.0, "northing": 0.0, "status": "planning", "parent": "S-3 H"},
-    ])
+    slots = group_by_surface(
+        [
+            {
+                "name": "S-1 H",
+                "easting": 0.0,
+                "northing": 0.0,
+                "status": "producing",
+                "slot": "01",
+            },
+            {
+                "name": "S-2 H",
+                "easting": 2.4,
+                "northing": 0.0,
+                "status": "closed",
+                "slot": "02",
+            },
+            {
+                "name": "S-2 AH",
+                "easting": 2.4,
+                "northing": 0.1,
+                "status": "plugged",
+                "parent": "S-2 H",
+            },
+            {
+                "name": "S-3 H",
+                "easting": 5.0,
+                "northing": 0.0,
+                "status": "plugged",
+                "slot": "03",
+            },
+            {
+                "name": "S-3 AH",
+                "easting": 5.0,
+                "northing": 0.0,
+                "status": "planning",
+                "parent": "S-3 H",
+            },
+        ]
+    )
     assert len(slots) == 3
     assert check_slot(slots, slot="01")["status"] == "OCCUPIED"
     assert check_slot(slots, slot="02")["status"] == "RECOVERABLE"

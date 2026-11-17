@@ -13,14 +13,33 @@ mechanical-design workflows and to a qualified subsea engineering review.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from math import ceil, cos, hypot, pi, radians, sin
-from typing import Sequence
 
-from .geo import LocalFrame, feature_collection, line_feature, point_feature, polygon_feature
+from .geo import (
+    LocalFrame,
+    feature_collection,
+    line_feature,
+    point_feature,
+    polygon_feature,
+)
 
 #: Nominal line sizes commonly available for subsea flowlines and risers, inches.
-NOMINAL_SIZES_INCH = (4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 24.0, 28.0, 30.0)
+NOMINAL_SIZES_INCH = (
+    4.0,
+    6.0,
+    8.0,
+    10.0,
+    12.0,
+    14.0,
+    16.0,
+    18.0,
+    20.0,
+    24.0,
+    28.0,
+    30.0,
+)
 
 #: Screening diameter-to-wall-thickness ratio for a subsea flowline.
 DIAMETER_TO_WALL_RATIO = 20.0
@@ -32,7 +51,9 @@ SERVICES = ("production", "water_injection", "gas_injection", "service", "umbili
 ARCHITECTURES = ("dual_loop", "single_line", "daisy_chain")
 
 
-def erosional_velocity_m_per_s(mixture_density_kg_m3: float, c_factor: float = EROSIONAL_C_FACTOR) -> float:
+def erosional_velocity_m_per_s(
+    mixture_density_kg_m3: float, c_factor: float = EROSIONAL_C_FACTOR
+) -> float:
     """API RP 14E erosional velocity in SI units."""
     if mixture_density_kg_m3 <= 0.0:
         raise ValueError("mixture_density_kg_m3 must be positive")
@@ -205,8 +226,13 @@ class SurfLayout:
             point_feature(
                 item.latitude_deg,
                 item.longitude_deg,
-                {"tag": item.tag, "name": item.name, "kind": item.kind,
-                 "water_depth_m": round(item.water_depth_m, 1), "parent": item.parent},
+                {
+                    "tag": item.tag,
+                    "name": item.name,
+                    "kind": item.kind,
+                    "water_depth_m": round(item.water_depth_m, 1),
+                    "parent": item.parent,
+                },
             )
             for item in self.nodes
         ]
@@ -227,7 +253,10 @@ class SurfLayout:
             features.append(
                 polygon_feature(
                     self.summary["reservoir_outline"],
-                    {"name": "%s reservoir outline" % self.field_name, "kind": "reservoir_outline"},
+                    {
+                        "name": "%s reservoir outline" % self.field_name,
+                        "kind": "reservoir_outline",
+                    },
                 )
             )
         return feature_collection(features, name="%s SURF layout" % self.field_name)
@@ -249,7 +278,9 @@ class SurfLayout:
         }
 
 
-def _place(along_m: float, across_m: float, axis_bearing_deg: float) -> tuple[float, float]:
+def _place(
+    along_m: float, across_m: float, axis_bearing_deg: float
+) -> tuple[float, float]:
     """Along-axis / across-axis offsets in metres -> local east, north."""
     angle = radians(axis_bearing_deg)
     east = along_m * sin(angle) + across_m * cos(angle)
@@ -318,7 +349,9 @@ def design_surf_layout(
 
     def add_node(tag, name, kind, east, north, depth, parent="", **attributes) -> Node:
         latitude, longitude = frame.to_geographic(east, north)
-        node = Node(tag, name, kind, east, north, latitude, longitude, depth, parent, attributes)
+        node = Node(
+            tag, name, kind, east, north, latitude, longitude, depth, parent, attributes
+        )
         nodes.append(node)
         return node
 
@@ -414,7 +447,9 @@ def design_surf_layout(
         host_north,
         depth_at(host_east, host_north),
         host_type=host_type,
-        station_keeping="internal turret mooring, weathervaning" if host_type == "FPSO" else "fixed",
+        station_keeping=(
+            "internal turret mooring, weathervaning" if host_type == "FPSO" else "fixed"
+        ),
     )
 
     back_bearing = (host_bearing_deg + 180.0) % 360.0
@@ -435,7 +470,9 @@ def design_surf_layout(
     def route_length(a: Node, b: Node) -> float:
         return hypot(b.east_m - a.east_m, b.north_m - a.north_m)
 
-    def add_line(tag, service, line_type, a: Node, b: Node, size: LineSize | None, **attributes):
+    def add_line(
+        tag, service, line_type, a: Node, b: Node, size: LineSize | None, **attributes
+    ):
         lines.append(
             Line(
                 tag=tag,
@@ -444,7 +481,10 @@ def design_surf_layout(
                 from_tag=a.tag,
                 to_tag=b.tag,
                 length_m=route_length(a, b),
-                route=((a.latitude_deg, a.longitude_deg), (b.latitude_deg, b.longitude_deg)),
+                route=(
+                    (a.latitude_deg, a.longitude_deg),
+                    (b.latitude_deg, b.longitude_deg),
+                ),
                 size=size,
                 attributes=attributes,
             )
@@ -452,7 +492,9 @@ def design_surf_layout(
 
     production_centres = drill_centres["production"]
     if design_liquid_rate_m3_per_s > 0.0 and production_centres:
-        parallel = 2 if production_architecture == "dual_loop" else len(production_centres)
+        parallel = (
+            2 if production_architecture == "dual_loop" else len(production_centres)
+        )
         per_line = design_liquid_rate_m3_per_s / max(parallel, 1)
         production_size = select_line_size(
             per_line, liquid_density_kg_m3, target_liquid_velocity_m_per_s
@@ -467,9 +509,13 @@ def design_surf_layout(
     if production_architecture == "dual_loop":
         for leg, label in ((0, "A"), (1, "B")):
             previous = riser_base
-            ordered = production_centres if leg == 0 else list(reversed(production_centres))
+            ordered = (
+                production_centres if leg == 0 else list(reversed(production_centres))
+            )
             for centre in ordered:
-                plem = next(item for item in nodes if item.tag == "%s-PLEM" % centre.tag)
+                plem = next(
+                    item for item in nodes if item.tag == "%s-PLEM" % centre.tag
+                )
                 add_line(
                     "FL-PROD-%s-%s" % (label, centre.tag),
                     "production",
@@ -509,20 +555,36 @@ def design_surf_layout(
             )
 
     injection_specs = (
-        ("water_injection", "FL-WI", design_water_injection_rate_m3_per_s,
-         injection_water_density_kg_m3, target_liquid_velocity_m_per_s, "carbon steel injection flowline"),
-        ("gas_injection", "FL-GI", design_gas_injection_rate_am3_per_s,
-         injection_gas_density_kg_m3, target_gas_velocity_m_per_s, "carbon steel injection flowline"),
+        (
+            "water_injection",
+            "FL-WI",
+            design_water_injection_rate_m3_per_s,
+            injection_water_density_kg_m3,
+            target_liquid_velocity_m_per_s,
+            "carbon steel injection flowline",
+        ),
+        (
+            "gas_injection",
+            "FL-GI",
+            design_gas_injection_rate_am3_per_s,
+            injection_gas_density_kg_m3,
+            target_gas_velocity_m_per_s,
+            "carbon steel injection flowline",
+        ),
     )
     for service, prefix, rate, density, target, line_type in injection_specs:
         centres = drill_centres[service]
         if not centres:
             continue
         size = (
-            select_line_size(rate / len(centres), density, target) if rate > 0.0 else None
+            select_line_size(rate / len(centres), density, target)
+            if rate > 0.0
+            else None
         )
         if rate <= 0.0:
-            warnings.append("no design rate supplied for %s, lines routed but not sized" % service)
+            warnings.append(
+                "no design rate supplied for %s, lines routed but not sized" % service
+            )
         for centre in centres:
             plem = next(item for item in nodes if item.tag == "%s-PLEM" % centre.tag)
             add_line(
@@ -548,7 +610,11 @@ def design_surf_layout(
             )
 
     riser_services = [
-        ("production", "PR", len([item for item in lines if item.service == "production"])),
+        (
+            "production",
+            "PR",
+            len([item for item in lines if item.service == "production"]),
+        ),
         ("water_injection", "WIR", 1 if drill_centres["water_injection"] else 0),
         ("gas_injection", "GIR", 1 if drill_centres["gas_injection"] else 0),
     ]
@@ -579,13 +645,18 @@ def design_surf_layout(
     outline = []
     for along_sign, across_sign in ((1, 1), (1, -1), (-1, -1), (-1, 1)):
         east, north = place(
-            along_sign * reservoir_length_km * 500.0, across_sign * reservoir_width_km * 500.0
+            along_sign * reservoir_length_km * 500.0,
+            across_sign * reservoir_width_km * 500.0,
         )
         outline.append(frame.to_geographic(east, north))
 
-    max_step_out_km = max(
-        hypot(item.east_m - host.east_m, item.north_m - host.north_m) for item in nodes
-    ) / 1000.0
+    max_step_out_km = (
+        max(
+            hypot(item.east_m - host.east_m, item.north_m - host.north_m)
+            for item in nodes
+        )
+        / 1000.0
+    )
 
     summary = {
         "host_type": host_type,
@@ -601,25 +672,26 @@ def design_surf_layout(
             "total": producers + water_injectors + gas_injectors,
         },
         "xmas_trees": producers + water_injectors + gas_injectors,
-        "drill_centres": {service: len(items) for service, items in drill_centres.items()},
+        "drill_centres": {
+            service: len(items) for service, items in drill_centres.items()
+        },
         "templates": sum(len(items) for items in drill_centres.values()),
         "plems": len([item for item in nodes if item.kind == "plem"]),
         "production_architecture": production_architecture,
         "max_step_out_km": round(max_step_out_km, 3),
         "flowline_length_km": round(
-            sum(
-                item.length_m
-                for item in lines
-                if item.line_type.endswith("flowline")
-            )
+            sum(item.length_m for item in lines if item.line_type.endswith("flowline"))
             / 1000.0,
             3,
         ),
         "umbilical_length_km": round(
-            sum(item.length_m for item in lines if item.service == "umbilical") / 1000.0, 3
+            sum(item.length_m for item in lines if item.service == "umbilical")
+            / 1000.0,
+            3,
         ),
         "riser_length_km": round(
-            sum(item.length_m for item in lines if "riser" in item.line_type) / 1000.0, 3
+            sum(item.length_m for item in lines if "riser" in item.line_type) / 1000.0,
+            3,
         ),
         "reservoir_outline": outline,
     }

@@ -6,5 +6,15 @@ from .sodir import LAYERS, SodirClient
 
 __version__ = "0.1.0"
 
-__all__ = ["OwnershipReader", "OwnershipRecord", "Stake", "PortfolioItem", "OwnershipError", "portfolio_net",
-           "scale", "SodirClient", "LAYERS", "__version__"]
+__all__ = [
+    "LAYERS",
+    "OwnershipError",
+    "OwnershipReader",
+    "OwnershipRecord",
+    "PortfolioItem",
+    "SodirClient",
+    "Stake",
+    "__version__",
+    "portfolio_net",
+    "scale",
+]

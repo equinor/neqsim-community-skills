@@ -15,7 +15,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-import validate_skill_manifests as validator  # noqa: E402
+import validate_skill_manifests as validator
 
 
 class SkillManifestSchemaTests(unittest.TestCase):
@@ -29,7 +29,9 @@ class SkillManifestSchemaTests(unittest.TestCase):
     def test_use_when_clause_is_required(self):
         self.assertTrue(validator.check_use_when({"description": "no trigger here"}))
         self.assertEqual(
-            validator.check_use_when({"description": "Screening. USE WHEN: a task needs it."}),
+            validator.check_use_when(
+                {"description": "Screening. USE WHEN: a task needs it."}
+            ),
             [],
         )
 

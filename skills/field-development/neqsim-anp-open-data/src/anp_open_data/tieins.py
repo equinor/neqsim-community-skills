@@ -9,7 +9,7 @@ host ranks where it does. Every weight is an input.
 from __future__ import annotations
 
 import math
-from typing import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 from .tools import haversine_km
 
@@ -202,7 +202,9 @@ def rank_tie_in_hosts(
             d = haversine_km(lon0, lat0, float(h["lon"]), float(h["lat"]))
         s_dist = max(0.0, 1.0 - d / max_step_out_km)
 
-        def ullage(cap_key: str, cur_key: str, req: float | None, label: str) -> float | None:
+        def ullage(
+            cap_key: str, cur_key: str, req: float | None, label: str
+        ) -> float | None:
             cap, cur = h.get(cap_key), h.get(cur_key)
             if req is None:
                 return None
@@ -218,8 +220,15 @@ def rank_tie_in_hosts(
             parts = [
                 v
                 for v in (
-                    ullage("oil_capacity_m3d", "oil_m3d_current", required_oil_m3d, "oil"),
-                    ullage("gas_capacity_mm3d", "gas_mm3d_current", required_gas_mm3d, "gas"),
+                    ullage(
+                        "oil_capacity_m3d", "oil_m3d_current", required_oil_m3d, "oil"
+                    ),
+                    ullage(
+                        "gas_capacity_mm3d",
+                        "gas_mm3d_current",
+                        required_gas_mm3d,
+                        "gas",
+                    ),
                 )
                 if v is not None
             ]

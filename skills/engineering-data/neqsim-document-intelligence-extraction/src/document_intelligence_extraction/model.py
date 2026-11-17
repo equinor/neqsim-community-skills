@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
-
+from typing import Any
 
 _NATIVE_TEXT_EXTENSIONS = {".txt", ".md", ".rtf", ".html", ".xml", ".json"}
 _TABLE_EXTENSIONS = {".csv", ".tsv", ".xls", ".xlsx", ".xlsm", ".ods"}
@@ -26,7 +26,7 @@ class ExtractionStep:
     required: bool = True
 
 
-def _markdown_normalize_step(purpose: str) -> "ExtractionStep":
+def _markdown_normalize_step(purpose: str) -> ExtractionStep:
     """Return the optional token-efficient Markdown rendition step."""
     return ExtractionStep("markdown_normalize", purpose, required=False)
 
@@ -113,9 +113,13 @@ class ExtractionResult:
         if not self.facts:
             return 0.0
         confidence = sum(fact.confidence for fact in self.facts) / len(self.facts)
-        accepted = sum(fact.review_status == "accepted" for fact in self.facts) / len(self.facts)
+        accepted = sum(fact.review_status == "accepted" for fact in self.facts) / len(
+            self.facts
+        )
         gap_penalty = min(0.4, 0.05 * len(self.gaps))
-        return round(max(0.0, 100.0 * (0.7 * confidence + 0.3 * accepted - gap_penalty)), 1)
+        return round(
+            max(0.0, 100.0 * (0.7 * confidence + 0.3 * accepted - gap_penalty)), 1
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Return the stable evidence-package shape used by downstream agents."""
@@ -165,12 +169,31 @@ class DocumentIntelligenceExtractor:
 
         if extension == ".pdf":
             steps = [ExtractionStep("native_text", "Extract the embedded text layer")]
-            if embedded_text_chars is None or embedded_text_chars < self.minimum_embedded_text_chars:
-                steps.append(ExtractionStep("ocr", "Recover text from scanned or low-yield pages"))
-                warnings.append("PDF has unknown or low embedded-text yield; OCR is required.")
-            steps.append(ExtractionStep("native_tables", "Recover table cells and reading order"))
-            steps.append(ExtractionStep("render_pages", "Render pages for layout-preserving review"))
-            steps.append(ExtractionStep("vision", "Interpret drawings, charts, symbols, and annotations"))
+            if (
+                embedded_text_chars is None
+                or embedded_text_chars < self.minimum_embedded_text_chars
+            ):
+                steps.append(
+                    ExtractionStep(
+                        "ocr", "Recover text from scanned or low-yield pages"
+                    )
+                )
+                warnings.append(
+                    "PDF has unknown or low embedded-text yield; OCR is required."
+                )
+            steps.append(
+                ExtractionStep("native_tables", "Recover table cells and reading order")
+            )
+            steps.append(
+                ExtractionStep(
+                    "render_pages", "Render pages for layout-preserving review"
+                )
+            )
+            steps.append(
+                ExtractionStep(
+                    "vision", "Interpret drawings, charts, symbols, and annotations"
+                )
+            )
             steps.append(
                 _markdown_normalize_step(
                     "Produce a token-efficient Markdown rendition for reading and triage only"
@@ -180,7 +203,9 @@ class DocumentIntelligenceExtractor:
                 "A Markdown rendition of a PDF loses page boundaries; cite pages from "
                 "native_text, native_tables, or ocr output."
             )
-            return ExtractionPlan(str(path), "pdf", "mixed_document", tuple(steps), tuple(warnings))
+            return ExtractionPlan(
+                str(path), "pdf", "mixed_document", tuple(steps), tuple(warnings)
+            )
 
         if extension in _IMAGE_EXTENSIONS:
             return ExtractionPlan(
@@ -188,9 +213,13 @@ class DocumentIntelligenceExtractor:
                 extension.lstrip("."),
                 "image",
                 (
-                    ExtractionStep("image_metadata", "Read dimensions, orientation, and metadata"),
+                    ExtractionStep(
+                        "image_metadata", "Read dimensions, orientation, and metadata"
+                    ),
                     ExtractionStep("ocr", "Recover visible text with coordinates"),
-                    ExtractionStep("vision", "Interpret layout, symbols, charts, and relationships"),
+                    ExtractionStep(
+                        "vision", "Interpret layout, symbols, charts, and relationships"
+                    ),
                 ),
             )
 
@@ -199,15 +228,25 @@ class DocumentIntelligenceExtractor:
                 str(path),
                 extension.lstrip("."),
                 "table",
-                (ExtractionStep("structured_tables", "Read sheets, cells, formulas, and headers"),),
+                (
+                    ExtractionStep(
+                        "structured_tables", "Read sheets, cells, formulas, and headers"
+                    ),
+                ),
             )
 
         if extension in _WORD_EXTENSIONS or extension in _PRESENTATION_EXTENSIONS:
-            steps = [ExtractionStep("native_document", "Read paragraphs, tables, and metadata")]
+            steps = [
+                ExtractionStep(
+                    "native_document", "Read paragraphs, tables, and metadata"
+                )
+            ]
             if contains_visuals is not False:
                 steps.extend(
                     (
-                        ExtractionStep("extract_media", "Extract embedded images and charts"),
+                        ExtractionStep(
+                            "extract_media", "Extract embedded images and charts"
+                        ),
                         ExtractionStep("vision", "Interpret extracted visual content"),
                     )
                 )
@@ -216,7 +255,9 @@ class DocumentIntelligenceExtractor:
                     "Produce a token-efficient Markdown rendition for reading and triage only"
                 )
             )
-            return ExtractionPlan(str(path), extension.lstrip("."), "office_document", tuple(steps))
+            return ExtractionPlan(
+                str(path), extension.lstrip("."), "office_document", tuple(steps)
+            )
 
         if extension in _NATIVE_TEXT_EXTENSIONS:
             return ExtractionPlan(
@@ -235,7 +276,11 @@ class DocumentIntelligenceExtractor:
             str(path),
             extension.lstrip(".") or "unknown",
             "unknown",
-            (ExtractionStep("manual_triage", "Identify a safe parser or conversion route"),),
+            (
+                ExtractionStep(
+                    "manual_triage", "Identify a safe parser or conversion route"
+                ),
+            ),
             ("Unsupported source format; do not infer content before manual triage.",),
         )
 
@@ -267,8 +312,14 @@ def find_conflicts(results: Iterable[ExtractionResult]) -> list[dict[str, Any]]:
     seen: dict[str, list[tuple[str, Any, str | None]]] = {}
     for result in results:
         for fact in result.facts:
-            value = fact.normalized_value if fact.normalized_value is not None else fact.value
-            unit = fact.normalized_unit if fact.normalized_unit is not None else fact.unit
+            value = (
+                fact.normalized_value
+                if fact.normalized_value is not None
+                else fact.value
+            )
+            unit = (
+                fact.normalized_unit if fact.normalized_unit is not None else fact.unit
+            )
             seen.setdefault(fact.field, []).append((result.source_path, value, unit))
 
     conflicts: list[dict[str, Any]] = []

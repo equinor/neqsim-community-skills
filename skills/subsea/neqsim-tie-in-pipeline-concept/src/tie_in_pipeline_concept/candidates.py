@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Sequence
 
 EARTH_RADIUS_KM = 6371.0088
 
@@ -29,19 +29,19 @@ class TieInCandidate:
     distance_km: float = 0.0
     feeders: int = 0
     reaches_terminal: bool = False
-    spare_capacity_fraction: Optional[float] = None
+    spare_capacity_fraction: float | None = None
     score: float = 0.0
-    rationale: List[str] = field(default_factory=list)
+    rationale: list[str] = field(default_factory=list)
 
 
 def rank_candidates(
-    source: Dict[str, float],
-    hosts: Iterable[Dict[str, object]],
-    feeds_into: Optional[Dict[str, Sequence[str]]] = None,
-    terminal_hosts: Optional[Iterable[str]] = None,
-    spare_capacity_fraction: Optional[Dict[str, float]] = None,
+    source: dict[str, float],
+    hosts: Iterable[dict[str, object]],
+    feeds_into: dict[str, Sequence[str]] | None = None,
+    terminal_hosts: Iterable[str] | None = None,
+    spare_capacity_fraction: dict[str, float] | None = None,
     max_km: float = 120.0,
-) -> List[TieInCandidate]:
+) -> list[TieInCandidate]:
     """Rank hosts as landing points for a new line from ``source``.
 
     The score is a transparent sum, not an optimum: shorter lines score higher, hosts that already receive
@@ -62,20 +62,31 @@ def rank_candidates(
     feeds_into = feeds_into or {}
     terminals = set(terminal_hosts or [])
     spare = spare_capacity_fraction or {}
-    feeder_count: Dict[str, int] = {}
+    feeder_count: dict[str, int] = {}
     for _feeder, targets in feeds_into.items():
         for target in targets:
             feeder_count[target] = feeder_count.get(target, 0) + 1
-    out: List[TieInCandidate] = []
+    out: list[TieInCandidate] = []
     for host in hosts:
         name = str(host["name"])
-        dist = haversine_km(float(source["lat"]), float(source["lon"]), float(host["lat"]), float(host["lon"]))
+        dist = haversine_km(
+            float(source["lat"]),
+            float(source["lon"]),
+            float(host["lat"]),
+            float(host["lon"]),
+        )
         if dist > max_km or dist < 0.05:
             continue
-        cand = TieInCandidate(name=name, lat=float(host["lat"]), lon=float(host["lon"]),
-                              kind=str(host.get("kind", "host")), distance_km=round(dist, 1),
-                              feeders=feeder_count.get(name, 0), reaches_terminal=name in terminals,
-                              spare_capacity_fraction=spare.get(name))
+        cand = TieInCandidate(
+            name=name,
+            lat=float(host["lat"]),
+            lon=float(host["lon"]),
+            kind=str(host.get("kind", "host")),
+            distance_km=round(dist, 1),
+            feeders=feeder_count.get(name, 0),
+            reaches_terminal=name in terminals,
+            spare_capacity_fraction=spare.get(name),
+        )
         d_term = 3.0 * (1.0 - dist / max_km)
         score = d_term
         cand.rationale.append(f"distance {dist:.1f} km -> {d_term:.2f}")

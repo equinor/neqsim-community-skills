@@ -1,5 +1,4 @@
 import pytest
-
 from acoustic_induced_vibration_screening import AcousticInducedVibrationModel
 
 

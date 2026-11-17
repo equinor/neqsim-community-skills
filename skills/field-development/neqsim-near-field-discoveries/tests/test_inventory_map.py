@@ -1,23 +1,50 @@
 import json
 
 import pytest
-
 from near_field_discoveries import Discovery, area_clusters, near_field, plot_near_field
-from near_field_discoveries.geo import cluster_points, haversine_km, point_in_rings, point_to_rings_km
+from near_field_discoveries.geo import (
+    cluster_points,
+    haversine_km,
+    point_in_rings,
+    point_to_rings_km,
+)
 
 
 def rec(name, lon, lat, stage="not_evaluated", oe=None, kind="discovery", rings=None):
-    return Discovery(country="NO", id=name, name=name, kind=kind, stage=stage, lon=lon, lat=lat,
-                     volumes={"oe_msm3": oe} if oe is not None else {}, rings=rings or [], source="test", gaps=["gap A"])
+    return Discovery(
+        country="NO",
+        id=name,
+        name=name,
+        kind=kind,
+        stage=stage,
+        lon=lon,
+        lat=lat,
+        volumes={"oe_msm3": oe} if oe is not None else {},
+        rings=rings or [],
+        source="test",
+        gaps=["gap A"],
+    )
 
 
-HOSTS = [{"name": "Host 1", "lon": 2.0, "lat": 60.0, "kind": "FPSO"}, {"name": "Host 2", "lon": 3.0, "lat": 60.5}]
+HOSTS = [
+    {"name": "Host 1", "lon": 2.0, "lat": 60.0, "kind": "FPSO"},
+    {"name": "Host 2", "lon": 3.0, "lat": 60.5},
+]
 RECORDS = [
     rec("Near", 2.1, 60.0, "in_clarification", 20.0),
     rec("Mid", 2.3, 60.1, "not_evaluated"),
     rec("Far", 6.0, 62.0, "producing"),
-    rec("Poly", 2.0, 59.8, "in_development", 5.0, kind="field",
-        rings=[[(1.95, 59.75), (2.05, 59.75), (2.05, 59.85), (1.95, 59.85), (1.95, 59.75)]]),
+    rec(
+        "Poly",
+        2.0,
+        59.8,
+        "in_development",
+        5.0,
+        kind="field",
+        rings=[
+            [(1.95, 59.75), (2.05, 59.75), (2.05, 59.85), (1.95, 59.85), (1.95, 59.75)]
+        ],
+    ),
 ]
 
 
@@ -53,14 +80,30 @@ def test_clusters_sum_known_volumes() -> None:
 
 
 def test_outputs_csv_geojson_and_map(tmp_path) -> None:
-    inv = near_field((2.0, 60.0), 60.0, RECORDS, name="Target X", hosts=HOSTS,
-                     pipelines=[{"name": "P", "medium": "Gas", "parts": [[(2.0, 60.0), (2.2, 60.1)]]}])
+    inv = near_field(
+        (2.0, 60.0),
+        60.0,
+        RECORDS,
+        name="Target X",
+        hosts=HOSTS,
+        pipelines=[
+            {"name": "P", "medium": "Gas", "parts": [[(2.0, 60.0), (2.2, 60.1)]]}
+        ],
+    )
     paths = inv.write(tmp_path)
-    gj = json.loads((tmp_path / "near_field_discoveries.geojson").read_text(encoding="utf-8"))
+    gj = json.loads(
+        (tmp_path / "near_field_discoveries.geojson").read_text(encoding="utf-8")
+    )
     roles = {f["properties"]["role"] for f in gj["features"]}
     assert {"target", "study_radius", "discovery", "field", "host", "pipeline"} <= roles
-    assert "Target X" in (tmp_path / "near_field_discoveries.md").read_text(encoding="utf-8")
-    assert (tmp_path / "near_field_discoveries.csv").read_text(encoding="utf-8-sig").startswith("country,kind,name")
+    assert "Target X" in (tmp_path / "near_field_discoveries.md").read_text(
+        encoding="utf-8"
+    )
+    assert (
+        (tmp_path / "near_field_discoveries.csv")
+        .read_text(encoding="utf-8-sig")
+        .startswith("country,kind,name")
+    )
     assert set(paths) == {"csv", "json", "geojson", "markdown"}
 
 
@@ -75,8 +118,24 @@ def test_prospect_records_are_listed_apart_and_drawn(tmp_path) -> None:
 
 def test_map_is_written(tmp_path) -> None:
     pytest.importorskip("matplotlib")
-    inv = near_field((2.0, 60.0), 60.0, RECORDS, name="Target X", hosts=HOSTS,
-                     pipelines=[{"name": "P", "medium": "Gas", "parts": [[(2.0, 60.0), (2.2, 60.1)]]}])
-    png = plot_near_field(inv, tmp_path / "map.png", dpi=60,
-                          bathymetry={"lats": [59.0, 61.0], "lons": [1.0, 4.0], "z": [[-100.0, -200.0], [-300.0, -400.0]]})
+    inv = near_field(
+        (2.0, 60.0),
+        60.0,
+        RECORDS,
+        name="Target X",
+        hosts=HOSTS,
+        pipelines=[
+            {"name": "P", "medium": "Gas", "parts": [[(2.0, 60.0), (2.2, 60.1)]]}
+        ],
+    )
+    png = plot_near_field(
+        inv,
+        tmp_path / "map.png",
+        dpi=60,
+        bathymetry={
+            "lats": [59.0, 61.0],
+            "lons": [1.0, 4.0],
+            "z": [[-100.0, -200.0], [-300.0, -400.0]],
+        },
+    )
     assert png.exists() and png.stat().st_size > 5000

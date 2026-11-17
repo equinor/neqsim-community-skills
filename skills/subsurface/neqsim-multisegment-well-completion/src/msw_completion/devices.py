@@ -17,12 +17,12 @@ Equations (OPM Flow ``MultisegmentWellSegments``):
 from __future__ import annotations
 
 from dataclasses import MISSING, asdict, dataclass
-from typing import Tuple, Union
+from typing import Union
 
 SECONDS_PER_DAY = 86400.0
 PA_PER_BAR = 1.0e5
 
-Fractions = Tuple[float, float, float]
+Fractions = tuple[float, float, float]
 
 
 @dataclass(frozen=True)
@@ -96,7 +96,7 @@ class DensityValve:
     gvf_high: float
     kind: str = "DENSITY"
 
-    def active_area(self, fractions: Fractions) -> Tuple[float, str]:
+    def active_area(self, fractions: Fractions) -> tuple[float, str]:
         """Area and state for a steady segment (closing thresholds, no hysteresis)."""
         _, fw, fg = _check_fractions(fractions)
         if fg > self.gvf_high:
@@ -112,25 +112,33 @@ Device = Union[Aicd, Sicd, Valve, DensityValve]
 def _check_fractions(fractions: Fractions) -> Fractions:
     fo, fw, fg = (float(v) for v in fractions)
     if min(fo, fw, fg) < -1e-12 or abs(fo + fw + fg - 1.0) > 1e-6:
-        raise ValueError(f"phase fractions must be non-negative and sum to 1, got {fractions}")
+        raise ValueError(
+            f"phase fractions must be non-negative and sum to 1, got {fractions}"
+        )
     return max(fo, 0.0), max(fw, 0.0), max(fg, 0.0)
 
 
 def _pow(base: float, exponent: float) -> float:
-    return base ** exponent if base > 0.0 else 0.0
+    return base**exponent if base > 0.0 else 0.0
 
 
-def _wio_viscosity(oil_viscosity: float, water_liquid_fraction: float, max_ratio: float) -> float:
+def _wio_viscosity(
+    oil_viscosity: float, water_liquid_fraction: float, max_ratio: float
+) -> float:
     ratio = (1.0 / (1.0 - (0.8415 / 0.7480) * water_liquid_fraction)) ** 2.5
     return oil_viscosity * min(ratio, max_ratio)
 
 
-def _oiw_viscosity(water_viscosity: float, water_liquid_fraction: float, max_ratio: float) -> float:
+def _oiw_viscosity(
+    water_viscosity: float, water_liquid_fraction: float, max_ratio: float
+) -> float:
     ratio = (1.0 / (1.0 - (0.6019 / 0.6410) * (1.0 - water_liquid_fraction))) ** 2.5
     return water_viscosity * min(ratio, max_ratio)
 
 
-def emulsion_viscosity(fo: float, fw: float, props: PhaseProperties, device: Sicd) -> float:
+def emulsion_viscosity(
+    fo: float, fw: float, props: PhaseProperties, device: Sicd
+) -> float:
     """Liquid emulsion viscosity used by the spiral ICD (OPM ``emulsionViscosity``)."""
     liquid = fo + fw
     if liquid <= 0.0:
@@ -147,17 +155,27 @@ def emulsion_viscosity(fo: float, fw: float, props: PhaseProperties, device: Sic
     return (v_start * (end - wlf) + v_end * (wlf - start)) / device.width
 
 
-def aicd_mixture(device: Aicd, fractions: Fractions, props: PhaseProperties) -> Tuple[float, float]:
+def aicd_mixture(
+    device: Aicd, fractions: Fractions, props: PhaseProperties
+) -> tuple[float, float]:
     """AICD mixture density (kg/m3) and viscosity (cP)."""
     fo, fw, fg = _check_fractions(fractions)
-    rho = (_pow(fo, device.a) * props.oil_density + _pow(fw, device.b) * props.water_density
-           + _pow(fg, device.c) * props.gas_density)
-    mu = (_pow(fo, device.d) * props.oil_viscosity + _pow(fw, device.e) * props.water_viscosity
-          + _pow(fg, device.f) * props.gas_viscosity)
+    rho = (
+        _pow(fo, device.a) * props.oil_density
+        + _pow(fw, device.b) * props.water_density
+        + _pow(fg, device.c) * props.gas_density
+    )
+    mu = (
+        _pow(fo, device.d) * props.oil_viscosity
+        + _pow(fw, device.e) * props.water_viscosity
+        + _pow(fg, device.f) * props.gas_viscosity
+    )
     return rho, mu
 
 
-def pressure_drop_bar(device: Device, rate_rm3_day: float, fractions: Fractions, props: PhaseProperties) -> float:
+def pressure_drop_bar(
+    device: Device, rate_rm3_day: float, fractions: Fractions, props: PhaseProperties
+) -> float:
     """Pressure drop across one device for a reservoir volume rate through that device."""
     q = abs(float(rate_rm3_day))
     if q == 0.0:
@@ -166,27 +184,50 @@ def pressure_drop_bar(device: Device, rate_rm3_day: float, fractions: Fractions,
     if isinstance(device, Aicd):
         rho, mu = aicd_mixture(device, fractions, props)
         if rho <= 0.0 or mu <= 0.0:
-            raise ValueError("AICD mixture density and viscosity must be positive; check exponents and fractions")
-        return (device.strength * rho * (rho / device.rho_cal) ** device.z * (device.mu_cal / mu) ** device.y
-                * q ** device.x)
+            raise ValueError(
+                "AICD mixture density and viscosity must be positive; check exponents and fractions"
+            )
+        return (
+            device.strength
+            * rho
+            * (rho / device.rho_cal) ** device.z
+            * (device.mu_cal / mu) ** device.y
+            * q**device.x
+        )
     if isinstance(device, Sicd):
         rho = props.mixture_density(fractions)
         liquid = fo + fw
         if liquid < 1e-30:
             mu = fg * props.gas_viscosity
         else:
-            mu = liquid * emulsion_viscosity(fo, fw, props, device) + fg * props.gas_viscosity
-        return device.strength * (rho / device.rho_cal) ** 0.75 * (mu / device.mu_cal) ** 0.25 * q * q
+            mu = (
+                liquid * emulsion_viscosity(fo, fw, props, device)
+                + fg * props.gas_viscosity
+            )
+        return (
+            device.strength
+            * (rho / device.rho_cal) ** 0.75
+            * (mu / device.mu_cal) ** 0.25
+            * q
+            * q
+        )
     if isinstance(device, (Valve, DensityValve)):
-        area = device.ac if isinstance(device, Valve) else device.active_area(fractions)[0]
+        area = (
+            device.ac if isinstance(device, Valve) else device.active_area(fractions)[0]
+        )
         rho = props.mixture_density(fractions)
         velocity = q / SECONDS_PER_DAY / area
         return rho * velocity * velocity / (2.0 * device.cv * device.cv) / PA_PER_BAR
     raise TypeError(f"unsupported device {type(device).__name__}")
 
 
-def rate_for_pressure_drop(device: Device, dp_bar: float, fractions: Fractions, props: PhaseProperties,
-                           upper_rm3_day: float = 1.0e6) -> float:
+def rate_for_pressure_drop(
+    device: Device,
+    dp_bar: float,
+    fractions: Fractions,
+    props: PhaseProperties,
+    upper_rm3_day: float = 1.0e6,
+) -> float:
     """Reservoir rate per device that gives ``dp_bar`` (bisection; the drop rises monotonically with rate)."""
     if dp_bar <= 0.0:
         return 0.0
@@ -206,20 +247,30 @@ def rate_for_pressure_drop(device: Device, dp_bar: float, fractions: Fractions, 
     return 0.5 * (lo + hi)
 
 
-def single_phase_drops(device: Device, rate_rm3_day: float, props: PhaseProperties) -> dict:
+def single_phase_drops(
+    device: Device, rate_rm3_day: float, props: PhaseProperties
+) -> dict:
     """Pressure drop for pure oil, water and gas at the same rate, and the water and gas choking ratios."""
     oil = pressure_drop_bar(device, rate_rm3_day, (1.0, 0.0, 0.0), props)
     water = pressure_drop_bar(device, rate_rm3_day, (0.0, 1.0, 0.0), props)
     gas = pressure_drop_bar(device, rate_rm3_day, (0.0, 0.0, 1.0), props)
     return {
-        "rate_rm3_day": rate_rm3_day, "dp_oil_bar": oil, "dp_water_bar": water, "dp_gas_bar": gas,
+        "rate_rm3_day": rate_rm3_day,
+        "dp_oil_bar": oil,
+        "dp_water_bar": water,
+        "dp_gas_bar": gas,
         "water_to_oil_dp_ratio": water / oil if oil > 0 else None,
         "gas_to_oil_dp_ratio": gas / oil if oil > 0 else None,
     }
 
 
-def calibrate_strength(device: Device, design_rate_rm3_day: float, design_dp_bar: float,
-                       props: PhaseProperties, fractions: Fractions = (1.0, 0.0, 0.0)) -> Device:
+def calibrate_strength(
+    device: Device,
+    design_rate_rm3_day: float,
+    design_dp_bar: float,
+    props: PhaseProperties,
+    fractions: Fractions = (1.0, 0.0, 0.0),
+) -> Device:
     """Return a copy of an AICD or spiral ICD whose strength gives ``design_dp_bar`` at the design rate.
 
     The exponents stay as given; only the strength is scaled. Use it to size a screening device from a design
@@ -242,10 +293,15 @@ def device_from_dict(kind: str, values: dict) -> Device:
     """Build a device from a dict whose keys match the dataclass fields (``number`` and others are ignored)."""
     cls = DEVICE_CLASSES.get(kind.upper())
     if cls is None:
-        raise ValueError(f"device type {kind} is not supported (AICD, ICD, VALVE, DENSITY)")
+        raise ValueError(
+            f"device type {kind} is not supported (AICD, ICD, VALVE, DENSITY)"
+        )
     allowed = set(cls.__dataclass_fields__) - {"kind"}
-    missing = [f for f, spec in cls.__dataclass_fields__.items()
-               if f != "kind" and spec.default is MISSING and f not in values]
+    missing = [
+        f
+        for f, spec in cls.__dataclass_fields__.items()
+        if f != "kind" and spec.default is MISSING and f not in values
+    ]
     if missing:
         raise ValueError(f"{kind} device needs {', '.join(missing)}")
     return cls(**{k: float(v) for k, v in values.items() if k in allowed})

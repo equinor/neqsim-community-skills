@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -10,7 +10,22 @@ def main() -> None:
     model = AgeingLifeExtensionModel()
 
     # A population observed for 18 years whose failures cluster towards the end.
-    failures = [3.1, 6.4, 9.0, 11.2, 12.4, 13.1, 14.0, 14.8, 15.5, 16.1, 16.6, 17.0, 17.5, 17.9]
+    failures = [
+        3.1,
+        6.4,
+        9.0,
+        11.2,
+        12.4,
+        13.1,
+        14.0,
+        14.8,
+        15.5,
+        16.1,
+        16.6,
+        17.0,
+        17.5,
+        17.9,
+    ]
 
     result = model.evaluate(
         failure_times_years=failures,
@@ -34,7 +49,9 @@ def main() -> None:
     print("Rate at target (per item-year):", round(result.rate_at_target_per_year, 5))
     print("Rate ratio target/now:", round(result.rate_ratio_target_over_now, 3))
     print("Expected failures to target:", round(result.expected_failures_to_target, 1))
-    print("  of which excess from ageing:", round(result.excess_failures_from_ageing, 1))
+    print(
+        "  of which excess from ageing:", round(result.excess_failures_from_ageing, 1)
+    )
     print("Ageing verdict:", result.ageing_verdict)
     print("Life-extension verdict:", result.life_extension_verdict)
     print("Replacement crossover (years):", result.replacement_crossover_year)

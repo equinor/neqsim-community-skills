@@ -1,5 +1,4 @@
 import pytest
-
 from line_velocity_check import LineVelocityModel
 
 

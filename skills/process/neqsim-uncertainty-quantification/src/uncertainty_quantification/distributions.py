@@ -15,7 +15,7 @@ from __future__ import annotations
 import math
 import statistics
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 _NORMAL = statistics.NormalDist()
 
@@ -30,7 +30,7 @@ class DistributionError(ValueError):
 
 def _check_unit_interval(u: float) -> float:
     if not 0.0 <= u <= 1.0:
-        raise DistributionError("quantile must be in [0, 1], got {!r}".format(u))
+        raise DistributionError(f"quantile must be in [0, 1], got {u!r}")
     # Keep unbounded distributions finite at the ends of the unit hypercube.
     return min(max(u, 1.0e-12), 1.0 - 1.0e-12)
 
@@ -64,7 +64,7 @@ class Distribution:
         """High value shown in the report table."""
         return self.ppf(REPORT_HIGH_QUANTILE)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Row for the ``uncertainty.input_parameters`` table."""
         return {
             "name": self.name,
@@ -101,7 +101,7 @@ class Uniform(Distribution):
     def __post_init__(self) -> None:
         if self.high < self.low:
             raise DistributionError(
-                "{}: high ({}) must be >= low ({})".format(self.name, self.high, self.low)
+                f"{self.name}: high ({self.high}) must be >= low ({self.low})"
             )
 
     def ppf(self, u: float) -> float:
@@ -130,12 +130,10 @@ class Triangular(Distribution):
     def __post_init__(self) -> None:
         if not self.low <= self.base_value <= self.high:
             raise DistributionError(
-                "{}: require low <= base <= high, got {}, {}, {}".format(
-                    self.name, self.low, self.base_value, self.high
-                )
+                f"{self.name}: require low <= base <= high, got {self.low}, {self.base_value}, {self.high}"
             )
         if self.high == self.low:
-            raise DistributionError("{}: low and high must differ".format(self.name))
+            raise DistributionError(f"{self.name}: low and high must differ")
 
     def ppf(self, u: float) -> float:
         u = _check_unit_interval(u)
@@ -164,7 +162,7 @@ class Normal(Distribution):
 
     def __post_init__(self) -> None:
         if self.sigma <= 0.0:
-            raise DistributionError("{}: sigma must be > 0".format(self.name))
+            raise DistributionError(f"{self.name}: sigma must be > 0")
 
     def ppf(self, u: float) -> float:
         u = _check_unit_interval(u)
@@ -187,7 +185,7 @@ class LogNormal(Distribution):
 
     def __post_init__(self) -> None:
         if self.sigma_log <= 0.0:
-            raise DistributionError("{}: sigma_log must be > 0".format(self.name))
+            raise DistributionError(f"{self.name}: sigma_log must be > 0")
 
     def ppf(self, u: float) -> float:
         u = _check_unit_interval(u)
@@ -199,12 +197,12 @@ class LogNormal(Distribution):
     @classmethod
     def from_p10_p90(
         cls, name: str, p10: float, p90: float, unit: str = "", kind: str = "technical"
-    ) -> "LogNormal":
+    ) -> LogNormal:
         """Fit a log-normal to a stated 10th and 90th percentile."""
         if p10 <= 0.0 or p90 <= 0.0:
-            raise DistributionError("{}: log-normal requires positive quantiles".format(name))
+            raise DistributionError(f"{name}: log-normal requires positive quantiles")
         if p90 <= p10:
-            raise DistributionError("{}: p90 must exceed p10".format(name))
+            raise DistributionError(f"{name}: p90 must exceed p10")
         z = _NORMAL.inv_cdf(0.9)
         sigma_log = (math.log(p90) - math.log(p10)) / (2.0 * z)
         mu_log = 0.5 * (math.log(p90) + math.log(p10))
@@ -240,21 +238,27 @@ _SPEC_BUILDERS = {
         mu=float(s.get("mu", s.get("base"))),
         sigma=float(s["sigma"]),
     ),
-    "lognormal": lambda s: LogNormal.from_p10_p90(
-        s["name"], float(s["low"]), float(s["high"]), s.get("unit", ""), s.get("kind", "technical")
-    )
-    if "low" in s
-    else LogNormal(
-        name=s["name"],
-        unit=s.get("unit", ""),
-        kind=s.get("kind", "technical"),
-        mu_log=float(s["mu_log"]),
-        sigma_log=float(s["sigma_log"]),
+    "lognormal": lambda s: (
+        LogNormal.from_p10_p90(
+            s["name"],
+            float(s["low"]),
+            float(s["high"]),
+            s.get("unit", ""),
+            s.get("kind", "technical"),
+        )
+        if "low" in s
+        else LogNormal(
+            name=s["name"],
+            unit=s.get("unit", ""),
+            kind=s.get("kind", "technical"),
+            mu_log=float(s["mu_log"]),
+            sigma_log=float(s["sigma_log"]),
+        )
     ),
 }
 
 
-def from_spec(spec: Dict[str, Any]) -> Distribution:
+def from_spec(spec: dict[str, Any]) -> Distribution:
     """Build a distribution from a JSON/YAML-style specification dictionary.
 
     ``spec`` needs ``name`` and ``distribution``; the remaining keys depend on
@@ -263,7 +267,7 @@ def from_spec(spec: Dict[str, Any]) -> Distribution:
     "high": 1.45, "unit": "GSm3"}``.
     """
     kind_name = str(spec.get("distribution", "triangular")).strip().lower()
-    builder: Optional[Any] = _SPEC_BUILDERS.get(kind_name)
+    builder: Any | None = _SPEC_BUILDERS.get(kind_name)
     if builder is None:
         raise DistributionError(
             "unknown distribution '{}' — supported: {}".format(

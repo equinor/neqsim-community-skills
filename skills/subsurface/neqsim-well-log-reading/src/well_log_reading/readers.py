@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence
 
 import numpy as np
 
@@ -74,7 +74,7 @@ def _clean(values: np.ndarray, null_values: Sequence[float]) -> np.ndarray:
 
 def read_well_log(
     path,
-    fmt: Optional[str] = None,
+    fmt: str | None = None,
     null_values: Sequence[float] = DEFAULT_NULL_VALUES,
     tolerant: bool = True,
 ) -> WellLog:
@@ -111,13 +111,16 @@ def read_well_log(
     elif kind == "las":
         _read_las(file_path, log, null_values)
     else:
-        raise ValueError(f"unsupported well-log format {fmt!r}; use 'dlis', 'lis' or 'las'")
+        raise ValueError(
+            f"unsupported well-log format {fmt!r}; use 'dlis', 'lis' or 'las'"
+        )
     if not log.frames:
         log.warnings.append("no curve data found in the file")
     return log
 
 
 # ---------------------------------------------------------------- DLIS
+
 
 def _text(value) -> str:
     """Return a dlisio attribute (string, Longname object, list or None) as text."""
@@ -130,8 +133,8 @@ def _text(value) -> str:
 
 def _read_dlis(path: Path, log: WellLog, null_values, tolerant: bool) -> None:
     try:
-        from dlisio import dlis  # noqa: PLC0415
-        from dlisio.common import Actions, ErrorHandler  # noqa: PLC0415
+        from dlisio import dlis
+        from dlisio.common import Actions, ErrorHandler
     except ImportError as exc:  # pragma: no cover - depends on environment
         raise ImportError(_DLISIO_MISSING.format(fmt="DLIS")) from exc
 
@@ -143,7 +146,13 @@ def _read_dlis(path: Path, log: WellLog, null_values, tolerant: bool) -> None:
                 log.well_name = log.well_name or _text(origin.well_name)
                 log.field_name = log.field_name or _text(origin.field_name)
                 log.company = log.company or _text(origin.company)
-                for attr in ("well_id", "producer_name", "product", "creation_time", "run_nr"):
+                for attr in (
+                    "well_id",
+                    "producer_name",
+                    "product",
+                    "creation_time",
+                    "run_nr",
+                ):
                     value = _text(getattr(origin, attr, None))
                     if value and attr not in log.metadata:
                         log.metadata[attr] = value
@@ -152,8 +161,17 @@ def _read_dlis(path: Path, log: WellLog, null_values, tolerant: bool) -> None:
                 if key not in DEPTH_REFERENCE_KEYS:
                     continue
                 try:
-                    values = _text([v.strip() if isinstance(v, str) else v for v in parameter.values])
-                    unit = _text(getattr(parameter.attic["VALUES"], "units", "")) if values else ""
+                    values = _text(
+                        [
+                            v.strip() if isinstance(v, str) else v
+                            for v in parameter.values
+                        ]
+                    )
+                    unit = (
+                        _text(getattr(parameter.attic["VALUES"], "units", ""))
+                        if values
+                        else ""
+                    )
                 except Exception:  # noqa: BLE001 - parameter values may be undecodable
                     continue
                 if values:
@@ -162,12 +180,20 @@ def _read_dlis(path: Path, log: WellLog, null_values, tolerant: bool) -> None:
                 try:
                     data = frame.curves()
                 except Exception as exc:  # noqa: BLE001 - dlisio raises many types
-                    log.warnings.append(f"frame {frame.name}: curves could not be read ({exc})")
+                    log.warnings.append(
+                        f"frame {frame.name}: curves could not be read ({exc})"
+                    )
                     continue
                 channels = {ch.name: ch for ch in frame.channels}
-                index_name = frame.index if frame.index in data.dtype.names else "FRAMENO"
+                index_name = (
+                    frame.index if frame.index in data.dtype.names else "FRAMENO"
+                )
                 index_channel = channels.get(index_name)
-                name = frame.name if len(logical_files) == 1 else f"{frame.name}@LF{lf_number}"
+                name = (
+                    frame.name
+                    if len(logical_files) == 1
+                    else f"{frame.name}@LF{lf_number}"
+                )
                 log_frame = LogFrame(
                     name=name,
                     index_name=index_name,
@@ -229,9 +255,10 @@ def _lis_wellsite(logical_file, log: WellLog) -> None:
             elif attr is None and mnem and mnem.lower() not in log.metadata:
                 log.metadata[mnem.lower()] = value
 
+
 def _read_lis(path: Path, log: WellLog, null_values) -> None:
     try:
-        from dlisio import lis  # noqa: PLC0415
+        from dlisio import lis
     except ImportError as exc:  # pragma: no cover - depends on environment
         raise ImportError(_DLISIO_MISSING.format(fmt="LIS")) from exc
 
@@ -240,11 +267,15 @@ def _read_lis(path: Path, log: WellLog, null_values) -> None:
             _lis_wellsite(logical_file, log)
             for spec_number, dfsr in enumerate(logical_file.data_format_specs()):
                 absent = getattr(dfsr, "absent_value", None)
-                nulls = tuple(null_values) + ((absent,) if isinstance(absent, (int, float)) else ())
+                nulls = tuple(null_values) + (
+                    (absent,) if isinstance(absent, (int, float)) else ()
+                )
                 units = {sb.mnemonic.strip(): _text(sb.units) for sb in dfsr.specs}
                 for rate in sorted(set(dfsr.sample_rates())):
                     try:
-                        data = lis.curves(logical_file, dfsr, sample_rate=rate, strict=False)
+                        data = lis.curves(
+                            logical_file, dfsr, sample_rate=rate, strict=False
+                        )
                     except (ValueError, NotImplementedError) as exc:
                         log.warnings.append(
                             f"LIS file {lf_number} spec {spec_number} rate {rate}: {exc}"
@@ -258,7 +289,8 @@ def _read_lis(path: Path, log: WellLog, null_values) -> None:
                     log_frame = LogFrame(
                         name=f"LF{lf_number}-DFSR{spec_number}-x{rate}",
                         index_name=index_name.strip(),
-                        index_unit=_text(dfsr.index_units) or units.get(index_name.strip(), ""),
+                        index_unit=_text(dfsr.index_units)
+                        or units.get(index_name.strip(), ""),
                         index=np.asarray(data[index_name], dtype=float),
                         index_type="DEPTH",
                     )
@@ -281,7 +313,7 @@ def _read_lis(path: Path, log: WellLog, null_values) -> None:
 _LAS_LINE = re.compile(r"^\s*([^.\s]+)\s*\.(\S*)\s*(.*?)\s*:\s*(.*)$")
 
 
-def _parse_las_header(lines: Iterable[str]) -> List[tuple]:
+def _parse_las_header(lines: Iterable[str]) -> list[tuple]:
     """Parse ``MNEM.UNIT  VALUE : DESCRIPTION`` lines into tuples."""
     rows = []
     for line in lines:
@@ -305,7 +337,9 @@ def _read_las(path: Path, log: WellLog, null_values) -> None:
         if current is not None:
             sections[current].append(line)
 
-    version = {row[0].upper(): row[2] for row in _parse_las_header(sections.get("V", []))}
+    version = {
+        row[0].upper(): row[2] for row in _parse_las_header(sections.get("V", []))
+    }
     if version.get("VERS", "").startswith("3"):
         raise ValueError(f"{path} is LAS 3.0; only LAS 1.2 and 2.0 are supported")
     wrapped = version.get("WRAP", "NO").upper().startswith("Y")
@@ -318,10 +352,19 @@ def _read_las(path: Path, log: WellLog, null_values) -> None:
     log.well_name = well.get("WELL", ("", ""))[1]
     log.field_name = well.get("FLD", ("", ""))[1]
     log.company = well.get("COMP", ("", ""))[1]
-    placeholders = [k for k, v in (("WELL", log.well_name), ("FLD", log.field_name), ("COMP", log.company))
-                    if v.strip().upper() in ("WELL", "FIELD", "COMPANY", "UNKNOWN", "N/A", "NA")]
+    placeholders = [
+        k
+        for k, v in (
+            ("WELL", log.well_name),
+            ("FLD", log.field_name),
+            ("COMP", log.company),
+        )
+        if v.strip().upper() in ("WELL", "FIELD", "COMPANY", "UNKNOWN", "N/A", "NA")
+    ]
     if placeholders:
-        log.warnings.append(f"placeholder header values for {placeholders}; confirm the well identity")
+        log.warnings.append(
+            f"placeholder header values for {placeholders}; confirm the well identity"
+        )
     for key in ("UWI", "API", "CTRY", "SRVC", "DATE", "STRT", "STOP", "STEP"):
         if key in well and well[key][1]:
             unit = f" {well[key][0]}" if well[key][0] else ""
@@ -342,7 +385,9 @@ def _read_las(path: Path, log: WellLog, null_values) -> None:
     try:
         numbers = np.array([float(t) for t in tokens], dtype=float)
     except ValueError as exc:
-        raise ValueError(f"{path}: non-numeric value in ~ASCII section ({exc})") from exc
+        raise ValueError(
+            f"{path}: non-numeric value in ~ASCII section ({exc})"
+        ) from exc
     n_curves = len(curves)
     if numbers.size % n_curves:
         log.warnings.append(
@@ -360,7 +405,9 @@ def _read_las(path: Path, log: WellLog, null_values) -> None:
         index_name=index_mnem,
         index_unit=index_unit,
         index=data[:, 0].copy(),
-        index_type="BOREHOLE-DEPTH" if index_unit.lower() not in ("s", "ms", "min") else "TIME",
+        index_type=(
+            "BOREHOLE-DEPTH" if index_unit.lower() not in ("s", "ms", "min") else "TIME"
+        ),
     )
     for column, (mnem, unit, _value, description) in enumerate(curves[1:], start=1):
         name = mnem

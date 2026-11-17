@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -34,7 +34,9 @@ def main() -> None:
     print("Field layout import result")
     print(f"node_count={result.node_count}")
     for node in result.nodes:
-        print(f"  {node.name}: ({node.x}, {node.y}) depth={node.water_depth_m} kind={node.kind}")
+        print(
+            f"  {node.name}: ({node.x}, {node.y}) depth={node.water_depth_m} kind={node.kind}"
+        )
     print(f"issues={result.issues}")
     print(f"neqsim_available={result.neqsim_available}")
 

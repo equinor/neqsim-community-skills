@@ -10,16 +10,16 @@ closes.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping, Optional, Sequence
+from typing import Any
 
 import pandas as pd
-
 
 COUNT = "__detail_lines__"
 
 
-def to_number(value: Any) -> Optional[float]:
+def to_number(value: Any) -> float | None:
     """Convert a spreadsheet cell to a float.
 
     Args:
@@ -47,7 +47,7 @@ def to_number(value: Any) -> Optional[float]:
     return -number if negative else number
 
 
-def _clean(value: Any) -> Optional[str]:
+def _clean(value: Any) -> str | None:
     """Return a stripped string label or ``None`` when blank."""
     if value is None:
         return None
@@ -78,7 +78,7 @@ def parse_hierarchical_rows(
     rows: Iterable[Sequence[Any]],
     label_cols: Sequence[int],
     value_cols: Mapping[str, int],
-    extra_cols: Optional[Mapping[str, int]] = None,
+    extra_cols: Mapping[str, int] | None = None,
     first_row: int = 1,
     total_prefix: str = "TOTAL",
 ) -> ParsedStatement:
@@ -115,7 +115,12 @@ def parse_hierarchical_rows(
     total_rows: list = []
 
     def width_needed() -> int:
-        return max(list(label_cols) + list(value_cols.values()) + list(extra_cols.values())) + 1
+        return (
+            max(
+                list(label_cols) + list(value_cols.values()) + list(extra_cols.values())
+            )
+            + 1
+        )
 
     need = width_needed()
     for offset, raw in enumerate(rows):
@@ -124,7 +129,11 @@ def parse_hierarchical_rows(
         values = {n: to_number(row[c]) for n, c in value_cols.items()}
         has_values = any(v is not None for v in values.values())
         total_level = next(
-            (i for i, lab in enumerate(labels) if lab and lab.lower().startswith(prefix)),
+            (
+                i
+                for i, lab in enumerate(labels)
+                if lab and lab.lower().startswith(prefix)
+            ),
             None,
         )
         for i, lab in enumerate(labels):
@@ -156,10 +165,7 @@ def parse_hierarchical_rows(
                 record[f"{n}_expected"] = acc[total_level][n]
             # A total with no detail lines since the previous total at its level
             # is a grand total of the sibling totals that preceded it.
-            is_grand = (
-                sibling_count[total_level] > 0
-                and acc[total_level][COUNT] == 0
-            )
+            is_grand = sibling_count[total_level] > 0 and acc[total_level][COUNT] == 0
             record["kind"] = "grand_total" if is_grand else "subtotal"
             if is_grand:
                 for n in names:

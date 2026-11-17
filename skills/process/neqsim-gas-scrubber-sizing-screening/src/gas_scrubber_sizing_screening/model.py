@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite, pi, sqrt
-from typing import Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -12,15 +11,15 @@ class GasScrubberSizingResult:
     gas_volumetric_flow_m3_s: float
     required_area_m2: float
     required_diameter_m: float
-    actual_velocity_m_s: Optional[float]
-    velocity_utilisation: Optional[float]
-    gas_load_factor: Optional[float]
+    actual_velocity_m_s: float | None
+    velocity_utilisation: float | None
+    gas_load_factor: float | None
     demister_velocity_limit_m_s: float
-    demister_utilisation: Optional[float]
+    demister_utilisation: float | None
     sizing_warning: str
     demister_warning: str
     neqsim_available: bool
-    assumptions: Tuple[str, ...]
+    assumptions: tuple[str, ...]
 
 
 class GasScrubberSizingModel:
@@ -53,7 +52,7 @@ class GasScrubberSizingModel:
         gas_density_kg_m3: float,
         liquid_density_kg_m3: float,
         k_factor_m_s: float = 0.107,
-        vessel_inside_diameter_m: Optional[float] = None,
+        vessel_inside_diameter_m: float | None = None,
         mist_eliminator_k_factor: float = 0.12,
         demister_present: bool = True,
     ) -> GasScrubberSizingResult:
@@ -83,13 +82,13 @@ class GasScrubberSizingModel:
         # Demister Souders-Brown limit.
         demister_limit = mist_eliminator_k_factor * density_factor
 
-        actual_velocity: Optional[float] = None
-        velocity_utilisation: Optional[float] = None
-        gas_load_factor: Optional[float] = None
-        demister_utilisation: Optional[float] = None
+        actual_velocity: float | None = None
+        velocity_utilisation: float | None = None
+        gas_load_factor: float | None = None
+        demister_utilisation: float | None = None
 
         if vessel_inside_diameter_m is not None:
-            actual_area = pi / 4.0 * vessel_inside_diameter_m ** 2.0
+            actual_area = pi / 4.0 * vessel_inside_diameter_m**2.0
             actual_velocity = q_gas / actual_area
             velocity_utilisation = actual_velocity / v_max
             # Effective K-factor from the actual velocity.
@@ -135,7 +134,7 @@ class GasScrubberSizingModel:
             ),
         )
 
-    def _sizing_warning(self, velocity_utilisation: Optional[float]) -> str:
+    def _sizing_warning(self, velocity_utilisation: float | None) -> str:
         if velocity_utilisation is None:
             return "ok"
         if velocity_utilisation > 1.0:
@@ -148,7 +147,7 @@ class GasScrubberSizingModel:
 
     @staticmethod
     def _demister_warning(
-        demister_present: bool, demister_utilisation: Optional[float]
+        demister_present: bool, demister_utilisation: float | None
     ) -> str:
         if not demister_present:
             return "no-demister"

@@ -20,9 +20,10 @@ but the required fields differ: CFD needs a flow area, FEM needs a layer build-u
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from math import isfinite
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 # Highest authority first. A value from an earlier source wins a conflict.
 SOURCE_PRECEDENCE: tuple[str, ...] = (
@@ -189,7 +190,9 @@ class FemDesignBasis:
         )
 
 
-def required_fields(model_kind: str, *, include_stress: bool = False) -> tuple[str, ...]:
+def required_fields(
+    model_kind: str, *, include_stress: bool = False
+) -> tuple[str, ...]:
     """Return the fields a finite-element model of this kind needs.
 
     Raises ``ValueError`` for an unknown model kind so an agent is forced to
@@ -230,7 +233,8 @@ def build_design_basis(
 
     needed = tuple(
         dict.fromkeys(
-            required_fields(model_kind, include_stress=include_stress) + tuple(extra_required)
+            required_fields(model_kind, include_stress=include_stress)
+            + tuple(extra_required)
         )
     )
     unit_map = dict(units or {})

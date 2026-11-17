@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from norwegian_continental_shelf_data import (
     ArpsFit,
     fit_arps_decline,
@@ -18,9 +17,7 @@ def _exponential_series(qi, decline, years):
 
 
 def _hyperbolic_series(qi, di, b, years):
-    return [
-        (float(t), qi / ((1.0 + b * di * t) ** (1.0 / b))) for t in range(years)
-    ]
+    return [(float(t), qi / ((1.0 + b * di * t) ** (1.0 / b))) for t in range(years)]
 
 
 def test_fit_exponential_recovers_parameters():
@@ -46,7 +43,15 @@ def test_fit_uses_decline_from_peak():
         qi=100.0, decline=0.12, years=8
     )[1:]
     # Reindex times for the declining tail after the peak at t=2.
-    series = [(0.0, 50.0), (1.0, 80.0), (2.0, 100.0), (3.0, 88.7), (4.0, 78.7), (5.0, 69.8), (6.0, 61.9)]
+    series = [
+        (0.0, 50.0),
+        (1.0, 80.0),
+        (2.0, 100.0),
+        (3.0, 88.7),
+        (4.0, 78.7),
+        (5.0, 69.8),
+        (6.0, 61.9),
+    ]
     fit = fit_arps_decline(series, from_peak=True)
     assert fit.peak_time == pytest.approx(2.0)
     assert fit.decline_rate_per_year > 0.0

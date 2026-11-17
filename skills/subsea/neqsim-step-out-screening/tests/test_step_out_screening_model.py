@@ -1,5 +1,4 @@
 import pytest
-
 from step_out_screening import StepOutScreeningModel
 
 

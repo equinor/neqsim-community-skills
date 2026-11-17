@@ -23,20 +23,23 @@ from __future__ import annotations
 import json
 import urllib.parse
 import urllib.request
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from datetime import UTC, datetime
+from typing import Any
 
 Fetch = Callable[[str, float], bytes]
 
-USER_AGENT = "neqsim-weather-data/0.1 (+https://github.com/equinor/neqsim-community-skills)"
+USER_AGENT = (
+    "neqsim-weather-data/0.1 (+https://github.com/equinor/neqsim-community-skills)"
+)
 
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 MARINE_URL = "https://marine-api.open-meteo.com/v1/marine"
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
-DEFAULT_HOURLY_VARS: List[str] = [
+DEFAULT_HOURLY_VARS: list[str] = [
     "temperature_2m",
     "relative_humidity_2m",
     "surface_pressure",
@@ -47,7 +50,7 @@ DEFAULT_HOURLY_VARS: List[str] = [
     "precipitation",
 ]
 
-DEFAULT_MARINE_VARS: List[str] = [
+DEFAULT_MARINE_VARS: list[str] = [
     "wave_height",
     "wave_direction",
     "wave_period",
@@ -59,8 +62,10 @@ DEFAULT_MARINE_VARS: List[str] = [
 
 def default_fetch(url: str, timeout: float = 30.0) -> bytes:
     """Perform a bounded, read-only GET and return the body."""
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed https hosts
+    request = urllib.request.Request(
+        url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         return response.read()
 
 
@@ -71,17 +76,19 @@ class WeatherSeries:
     source: str
     latitude: float
     longitude: float
-    elevation_m: Optional[float]
+    elevation_m: float | None
     timezone: str
-    hourly_time: List[str] = field(default_factory=list)
-    hourly: Dict[str, List[Optional[float]]] = field(default_factory=dict)
-    hourly_units: Dict[str, str] = field(default_factory=dict)
-    current: Dict[str, Any] = field(default_factory=dict)
-    current_units: Dict[str, str] = field(default_factory=dict)
+    hourly_time: list[str] = field(default_factory=list)
+    hourly: dict[str, list[float | None]] = field(default_factory=dict)
+    hourly_units: dict[str, str] = field(default_factory=dict)
+    current: dict[str, Any] = field(default_factory=dict)
+    current_units: dict[str, str] = field(default_factory=dict)
     url: str = ""
-    retrieved_utc: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    retrieved_utc: str = field(
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
+    )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
 
 
@@ -92,10 +99,10 @@ class GeocodeResult:
     name: str
     latitude: float
     longitude: float
-    country: Optional[str]
-    admin1: Optional[str]
-    elevation_m: Optional[float]
-    timezone: Optional[str]
+    country: str | None
+    admin1: str | None
+    elevation_m: float | None
+    timezone: str | None
 
 
 class OpenMeteoClient:
@@ -105,7 +112,7 @@ class OpenMeteoClient:
         self.fetch = fetch
         self.timeout = timeout
 
-    def _get(self, base_url: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _get(self, base_url: str, params: dict[str, Any]) -> dict[str, Any]:
         query = {k: v for k, v in params.items() if v is not None}
         url = base_url + "?" + urllib.parse.urlencode(query, doseq=True)
         payload = json.loads(self.fetch(url, self.timeout).decode("utf-8"))
@@ -115,7 +122,7 @@ class OpenMeteoClient:
         return payload
 
     @staticmethod
-    def _to_series(source: str, payload: Dict[str, Any]) -> WeatherSeries:
+    def _to_series(source: str, payload: dict[str, Any]) -> WeatherSeries:
         hourly = payload.get("hourly", {}) or {}
         hourly_time = list(hourly.get("time", []))
         hourly_values = {k: v for k, v in hourly.items() if k != "time"}
@@ -141,8 +148,8 @@ class OpenMeteoClient:
         latitude: float,
         longitude: float,
         *,
-        hourly: Optional[Sequence[str]] = None,
-        current: Optional[Sequence[str]] = None,
+        hourly: Sequence[str] | None = None,
+        current: Sequence[str] | None = None,
         forecast_days: int = 7,
         past_days: int = 0,
         wind_speed_unit: str = "ms",
@@ -151,7 +158,7 @@ class OpenMeteoClient:
     ) -> WeatherSeries:
         """Forward-looking forecast up to 16 days ahead, worldwide."""
         hourly_vars = list(hourly) if hourly is not None else DEFAULT_HOURLY_VARS
-        params: Dict[str, Any] = {
+        params: dict[str, Any] = {
             "latitude": latitude,
             "longitude": longitude,
             "hourly": ",".join(hourly_vars),
@@ -173,14 +180,14 @@ class OpenMeteoClient:
         start_date: str,
         end_date: str,
         *,
-        hourly: Optional[Sequence[str]] = None,
+        hourly: Sequence[str] | None = None,
         wind_speed_unit: str = "ms",
         temperature_unit: str = "celsius",
         timezone_name: str = "UTC",
     ) -> WeatherSeries:
         """Backward-looking reanalysis (ERA5/ERA5-Land/IFS), worldwide, back to 1940."""
         hourly_vars = list(hourly) if hourly is not None else DEFAULT_HOURLY_VARS
-        params: Dict[str, Any] = {
+        params: dict[str, Any] = {
             "latitude": latitude,
             "longitude": longitude,
             "start_date": start_date,
@@ -198,13 +205,13 @@ class OpenMeteoClient:
         latitude: float,
         longitude: float,
         *,
-        hourly: Optional[Sequence[str]] = None,
+        hourly: Sequence[str] | None = None,
         forecast_days: int = 7,
         cell_selection: str = "sea",
     ) -> WeatherSeries:
         """Wave and sea-surface conditions (current plus up to 8-day forecast)."""
         hourly_vars = list(hourly) if hourly is not None else DEFAULT_MARINE_VARS
-        params: Dict[str, Any] = {
+        params: dict[str, Any] = {
             "latitude": latitude,
             "longitude": longitude,
             "hourly": ",".join(hourly_vars),
@@ -214,11 +221,13 @@ class OpenMeteoClient:
         payload = self._get(MARINE_URL, params)
         return self._to_series("open-meteo-marine", payload)
 
-    def geocode(self, name: str, *, count: int = 5, language: str = "en") -> List[GeocodeResult]:
+    def geocode(
+        self, name: str, *, count: int = 5, language: str = "en"
+    ) -> list[GeocodeResult]:
         """Resolve a place/installation name to coordinates, worldwide."""
         params = {"name": name, "count": count, "language": language, "format": "json"}
         payload = self._get(GEOCODING_URL, params)
-        results: List[GeocodeResult] = []
+        results: list[GeocodeResult] = []
         for row in payload.get("results", []) or []:
             results.append(
                 GeocodeResult(

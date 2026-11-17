@@ -11,9 +11,10 @@ from __future__ import annotations
 import csv
 import datetime as _dt
 import json
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any
 
 PROVENANCE_CLASSES = ("SUPPLIED", "MEASURED", "FITTED", "CALCULATED", "ASSUMED")
 GAP_SEVERITIES = ("BLOCKING", "MAJOR", "MINOR")
@@ -38,15 +39,17 @@ class RegisterItem:
     synthetic: bool = False
     note: str = ""
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Return problems with this item (empty list when fine)."""
         problems = []
         if self.provenance not in PROVENANCE_CLASSES:
-            problems.append("{}: provenance '{}' not in {}".format(self.key, self.provenance, PROVENANCE_CLASSES))
+            problems.append(
+                f"{self.key}: provenance '{self.provenance}' not in {PROVENANCE_CLASSES}"
+            )
         if self.provenance in ("SUPPLIED", "MEASURED", "FITTED") and not self.source:
-            problems.append("{}: {} value needs a source".format(self.key, self.provenance))
+            problems.append(f"{self.key}: {self.provenance} value needs a source")
         if self.synthetic and self.provenance == "MEASURED":
-            problems.append("{}: synthetic data cannot be MEASURED".format(self.key))
+            problems.append(f"{self.key}: synthetic data cannot be MEASURED")
         return problems
 
 
@@ -71,11 +74,11 @@ class Decision:
     title: str
     decision: str
     rationale: str
-    alternatives_considered: List[str] = field(default_factory=list)
+    alternatives_considered: list[str] = field(default_factory=list)
     status: str = "PROPOSED"
     decided_by: str = ""
     date: str = field(default_factory=_today)
-    evidence: List[str] = field(default_factory=list)
+    evidence: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -95,22 +98,41 @@ class Registers:
     """Container for the source register, gap register and decision/action log."""
 
     def __init__(self) -> None:
-        self.items: Dict[str, RegisterItem] = {}
-        self.gaps: List[DataGap] = []
-        self.decisions: List[Decision] = []
-        self.actions: List[Action] = []
+        self.items: dict[str, RegisterItem] = {}
+        self.gaps: list[DataGap] = []
+        self.decisions: list[Decision] = []
+        self.actions: list[Action] = []
 
-    def add_item(self, key: str, value: Any, unit: str = "", provenance: str = "ASSUMED", source: str = "", synthetic: bool = False,
-                 note: str = "", date: str = "") -> RegisterItem:
+    def add_item(
+        self,
+        key: str,
+        value: Any,
+        unit: str = "",
+        provenance: str = "ASSUMED",
+        source: str = "",
+        synthetic: bool = False,
+        note: str = "",
+        date: str = "",
+    ) -> RegisterItem:
         """Add or replace a register item."""
-        item = RegisterItem(key, value, unit, provenance, source, date or _today(), synthetic, note)
+        item = RegisterItem(
+            key, value, unit, provenance, source, date or _today(), synthetic, note
+        )
         self.items[key] = item
         return item
 
-    def add_gap(self, key: str, description: str, consequence: str, severity: str = "MAJOR", owner: str = "", resolution: str = "") -> DataGap:
+    def add_gap(
+        self,
+        key: str,
+        description: str,
+        consequence: str,
+        severity: str = "MAJOR",
+        owner: str = "",
+        resolution: str = "",
+    ) -> DataGap:
         """Record a data gap (idempotent by key)."""
         if severity not in GAP_SEVERITIES:
-            raise ValueError("severity must be one of {}".format(GAP_SEVERITIES))
+            raise ValueError(f"severity must be one of {GAP_SEVERITIES}")
         for g in self.gaps:
             if g.key == key:
                 return g
@@ -118,19 +140,50 @@ class Registers:
         self.gaps.append(gap)
         return gap
 
-    def add_decision(self, title: str, decision: str, rationale: str, alternatives: Optional[List[str]] = None, status: str = "PROPOSED",
-                     decided_by: str = "", evidence: Optional[List[str]] = None) -> Decision:
+    def add_decision(
+        self,
+        title: str,
+        decision: str,
+        rationale: str,
+        alternatives: list[str] | None = None,
+        status: str = "PROPOSED",
+        decided_by: str = "",
+        evidence: list[str] | None = None,
+    ) -> Decision:
         """Append a decision with a sequential D-nnn id."""
         if status not in DECISION_STATUS:
-            raise ValueError("decision status must be one of {}".format(DECISION_STATUS))
-        d = Decision("D-{:03d}".format(len(self.decisions) + 1), title, decision, rationale, list(alternatives or []), status, decided_by,
-                     evidence=list(evidence or []))
+            raise ValueError(f"decision status must be one of {DECISION_STATUS}")
+        d = Decision(
+            f"D-{len(self.decisions) + 1:03d}",
+            title,
+            decision,
+            rationale,
+            list(alternatives or []),
+            status,
+            decided_by,
+            evidence=list(evidence or []),
+        )
         self.decisions.append(d)
         return d
 
-    def add_action(self, description: str, owner: str = "", due: str = "", linked_gap: str = "", discipline: str = "") -> Action:
+    def add_action(
+        self,
+        description: str,
+        owner: str = "",
+        due: str = "",
+        linked_gap: str = "",
+        discipline: str = "",
+    ) -> Action:
         """Append an action with a sequential A-nnn id."""
-        a = Action("A-{:03d}".format(len(self.actions) + 1), description, owner, due, "OPEN", linked_gap, discipline)
+        a = Action(
+            f"A-{len(self.actions) + 1:03d}",
+            description,
+            owner,
+            due,
+            "OPEN",
+            linked_gap,
+            discipline,
+        )
         self.actions.append(a)
         return a
 
@@ -142,29 +195,29 @@ class Registers:
                 return
         raise KeyError(action_id)
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Return all register problems."""
-        problems: List[str] = []
+        problems: list[str] = []
         for item in self.items.values():
             problems.extend(item.validate())
         return problems
 
-    def provenance_counts(self) -> Dict[str, int]:
+    def provenance_counts(self) -> dict[str, int]:
         """Count items per provenance class."""
         counts = {c: 0 for c in PROVENANCE_CLASSES}
         for item in self.items.values():
             counts[item.provenance] = counts.get(item.provenance, 0) + 1
         return counts
 
-    def open_actions(self) -> List[Action]:
+    def open_actions(self) -> list[Action]:
         """Return actions that are not closed."""
         return [a for a in self.actions if a.status != "CLOSED"]
 
-    def blocking_gaps(self) -> List[DataGap]:
+    def blocking_gaps(self) -> list[DataGap]:
         """Return open blocking gaps."""
         return [g for g in self.gaps if g.severity == "BLOCKING" and g.status == "OPEN"]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return the full register as a JSON-friendly dictionary."""
         return {
             "schema": "iwp_registers.v1",
@@ -176,7 +229,7 @@ class Registers:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Registers":
+    def from_dict(cls, data: dict[str, Any]) -> Registers:
         """Rebuild a register from :meth:`to_dict` output."""
         reg = cls()
         for i in data.get("items", []):
@@ -190,19 +243,66 @@ class Registers:
         """Write registers.json and CSV views into ``folder``."""
         folder = Path(folder)
         folder.mkdir(parents=True, exist_ok=True)
-        (folder / "registers.json").write_text(json.dumps(self.to_dict(), indent=2, default=str), encoding="utf-8")
-        _write_csv(folder / "source_register.csv", [asdict(i) for i in self.items.values()],
-                   ["key", "value", "unit", "provenance", "source", "date", "synthetic", "note"])
-        _write_csv(folder / "data_gaps.csv", [asdict(g) for g in self.gaps],
-                   ["key", "description", "consequence", "severity", "owner", "resolution", "status"])
-        _write_csv(folder / "decision_log.csv", [asdict(d) | {"alternatives_considered": "; ".join(d.alternatives_considered),
-                                                              "evidence": "; ".join(d.evidence)} for d in self.decisions],
-                   ["id", "title", "decision", "rationale", "alternatives_considered", "status", "decided_by", "date", "evidence"])
-        _write_csv(folder / "action_log.csv", [asdict(a) for a in self.actions],
-                   ["id", "description", "owner", "due", "status", "linked_gap", "discipline"])
+        (folder / "registers.json").write_text(
+            json.dumps(self.to_dict(), indent=2, default=str), encoding="utf-8"
+        )
+        _write_csv(
+            folder / "source_register.csv",
+            [asdict(i) for i in self.items.values()],
+            [
+                "key",
+                "value",
+                "unit",
+                "provenance",
+                "source",
+                "date",
+                "synthetic",
+                "note",
+            ],
+        )
+        _write_csv(
+            folder / "data_gaps.csv",
+            [asdict(g) for g in self.gaps],
+            [
+                "key",
+                "description",
+                "consequence",
+                "severity",
+                "owner",
+                "resolution",
+                "status",
+            ],
+        )
+        _write_csv(
+            folder / "decision_log.csv",
+            [
+                asdict(d)
+                | {
+                    "alternatives_considered": "; ".join(d.alternatives_considered),
+                    "evidence": "; ".join(d.evidence),
+                }
+                for d in self.decisions
+            ],
+            [
+                "id",
+                "title",
+                "decision",
+                "rationale",
+                "alternatives_considered",
+                "status",
+                "decided_by",
+                "date",
+                "evidence",
+            ],
+        )
+        _write_csv(
+            folder / "action_log.csv",
+            [asdict(a) for a in self.actions],
+            ["id", "description", "owner", "due", "status", "linked_gap", "discipline"],
+        )
 
     @classmethod
-    def load(cls, folder: Path) -> "Registers":
+    def load(cls, folder: Path) -> Registers:
         """Load registers.json from ``folder`` (empty register when absent)."""
         p = Path(folder) / "registers.json"
         if not p.exists():
@@ -210,7 +310,7 @@ class Registers:
         return cls.from_dict(json.loads(p.read_text(encoding="utf-8")))
 
 
-def _write_csv(path: Path, rows: Iterable[Dict[str, Any]], fields: List[str]) -> None:
+def _write_csv(path: Path, rows: Iterable[dict[str, Any]], fields: list[str]) -> None:
     with path.open("w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
         w.writeheader()
@@ -218,7 +318,7 @@ def _write_csv(path: Path, rows: Iterable[Dict[str, Any]], fields: List[str]) ->
             w.writerow({k: r.get(k, "") for k in fields})
 
 
-def registers_from_basis(basis: Dict[str, Any]) -> Registers:
+def registers_from_basis(basis: dict[str, Any]) -> Registers:
     """Build the source register from the ``provenance`` map of a planning basis.
 
     The basis carries ``provenance: {dotted.path: {class, source, unit, synthetic, note}}``. Each
@@ -228,12 +328,19 @@ def registers_from_basis(basis: Dict[str, Any]) -> Registers:
     reg = Registers()
     for path, meta in (basis.get("provenance") or {}).items():
         value = get_path(basis, path)
-        reg.add_item(path, value, meta.get("unit", ""), meta.get("class", "ASSUMED"), meta.get("source", ""),
-                     bool(meta.get("synthetic", basis.get("study", {}).get("synthetic", False))), meta.get("note", ""))
+        reg.add_item(
+            path,
+            value,
+            meta.get("unit", ""),
+            meta.get("class", "ASSUMED"),
+            meta.get("source", ""),
+            bool(meta.get("synthetic", basis.get("study", {}).get("synthetic", False))),
+            meta.get("note", ""),
+        )
     return reg
 
 
-def get_path(data: Dict[str, Any], dotted: str, default: Any = None) -> Any:
+def get_path(data: dict[str, Any], dotted: str, default: Any = None) -> Any:
     """Resolve ``a.b.c`` (dict keys; integer tokens index lists) inside nested data."""
     cur: Any = data
     for token in dotted.split("."):

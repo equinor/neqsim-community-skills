@@ -19,10 +19,10 @@ from .scale import (
 
 __all__ = [
     "PRESETS",
+    "MixIncompatibility",
     "ProducedWater",
     "ProducedWaterBuilder",
+    "ScaleResult",
     "ScaleScreener",
     "ScaleScreening",
-    "ScaleResult",
-    "MixIncompatibility",
 ]

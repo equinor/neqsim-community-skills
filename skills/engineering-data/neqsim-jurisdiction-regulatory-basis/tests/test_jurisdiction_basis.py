@@ -1,12 +1,18 @@
 import pytest
-
 from jurisdiction_basis import jurisdiction_block, resolve_profile
 from jurisdiction_basis.profiles import ALIASES, PROFILES
 
 
 @pytest.mark.parametrize(
     "text,key",
-    [("Norway", "NO"), (" ncs ", "NO"), ("UKCS", "GB"), ("Gulf of Mexico", "US"), ("brasil", "BR"), ("Denmark", "EU")],
+    [
+        ("Norway", "NO"),
+        (" ncs ", "NO"),
+        ("UKCS", "GB"),
+        ("Gulf of Mexico", "US"),
+        ("brasil", "BR"),
+        ("Denmark", "EU"),
+    ],
 )
 def test_resolve_profile_aliases(text, key):
     assert resolve_profile(text) == key
@@ -23,7 +29,13 @@ def test_every_alias_points_to_a_profile():
 
 def test_profiles_have_required_fields():
     for profile in PROFILES.values():
-        for field in ("authorities", "laws", "safety_regulations", "recognised_standards", "data_sources"):
+        for field in (
+            "authorities",
+            "laws",
+            "safety_regulations",
+            "recognised_standards",
+            "data_sources",
+        ):
             assert profile[field], field
 
 
@@ -84,7 +96,10 @@ def test_activity_basis_norway_well_and_surf():
 def test_activity_basis_us_has_verified_part_250_rows():
     block = activity_basis("Gulf of Mexico", ("well",))
     rows = block["activities"]["well"]["well_design_integrity"]["instruments"]
-    assert any(r["status"] == "verified-public-source" and "Subpart D" in r["instrument"] for r in rows)
+    assert any(
+        r["status"] == "verified-public-source" and "Subpart D" in r["instrument"]
+        for r in rows
+    )
 
 
 def test_gaps_are_reported_not_hidden():

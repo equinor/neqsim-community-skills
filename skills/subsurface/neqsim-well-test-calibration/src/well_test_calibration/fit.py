@@ -2,25 +2,33 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Callable, List, Sequence
 
 import numpy as np
 
 
 @dataclass
 class FitResult:
-    theta: List[float]
-    objective: List[float]                 # sum of squared weighted residuals per iteration (incl. prior terms)
-    singular_values: List[float]           # of the data Jacobian (prior rows excluded)
+    theta: list[float]
+    objective: list[
+        float
+    ]  # sum of squared weighted residuals per iteration (incl. prior terms)
+    singular_values: list[float]  # of the data Jacobian (prior rows excluded)
     identifiable: bool
     n_data: int
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
 
-def fit_with_priors(residual_fn: Callable[[np.ndarray], np.ndarray], prior: Sequence[float], prior_std: Sequence[float],
-                    bounds: Sequence[Sequence[float]], steps: Sequence[float] = None, iters: int = 4,
-                    min_singular: float = 0.3) -> FitResult:
+def fit_with_priors(
+    residual_fn: Callable[[np.ndarray], np.ndarray],
+    prior: Sequence[float],
+    prior_std: Sequence[float],
+    bounds: Sequence[Sequence[float]],
+    steps: Sequence[float] = None,
+    iters: int = 4,
+    min_singular: float = 0.3,
+) -> FitResult:
     """Fit ``theta`` so that ``residual_fn(theta)`` (data residuals already divided by their measurement std) is small,
     pulled towards ``prior`` with standard deviations ``prior_std``.
 
@@ -32,10 +40,15 @@ def fit_with_priors(residual_fn: Callable[[np.ndarray], np.ndarray], prior: Sequ
     sd = np.asarray(prior_std, dtype=float)
     lo = np.array([b[0] for b in bounds], dtype=float)
     hi = np.array([b[1] for b in bounds], dtype=float)
-    steps = np.asarray(steps if steps is not None else 0.1 * np.maximum(np.abs(prior), 1.0), dtype=float)
+    steps = np.asarray(
+        steps if steps is not None else 0.1 * np.maximum(np.abs(prior), 1.0),
+        dtype=float,
+    )
 
     def full(th):
-        return np.concatenate([np.asarray(residual_fn(th), dtype=float), (th - prior) / sd])
+        return np.concatenate(
+            [np.asarray(residual_fn(th), dtype=float), (th - prior) / sd]
+        )
 
     th = prior.copy()
     r = full(th)
@@ -62,8 +75,16 @@ def fit_with_priors(residual_fn: Callable[[np.ndarray], np.ndarray], prior: Sequ
         if hist[-2] - hist[-1] < 0.01 * hist[-2]:
             break
     n_data = len(r) - len(th)
-    sv = np.linalg.svd(jac[:n_data], compute_uv=False) if jac is not None and n_data > 0 else np.array([])
+    sv = (
+        np.linalg.svd(jac[:n_data], compute_uv=False)
+        if jac is not None and n_data > 0
+        else np.array([])
+    )
     ident = bool(len(sv) == len(th) and sv.min() > min_singular)
     if not ident:
-        notes.append("parameters not separately identifiable from these data; result leans on the prior")
-    return FitResult([float(x) for x in th], hist, [float(s) for s in sv], ident, int(n_data), notes)
+        notes.append(
+            "parameters not separately identifiable from these data; result leans on the prior"
+        )
+    return FitResult(
+        [float(x) for x in th], hist, [float(s) for s in sv], ident, int(n_data), notes
+    )

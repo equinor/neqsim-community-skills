@@ -7,13 +7,15 @@ links; the reader still checks every header.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 VERIFIED_ON = "2026-11-02"
 
-ANP_FILES_BASE = "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos"
+ANP_FILES_BASE = (
+    "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos"
+)
 
-FAMILIES: Dict[str, Dict[str, Any]] = {
+FAMILIES: dict[str, dict[str, Any]] = {
     "well_monthly_rates": {
         "title": "Produção de petróleo e gás natural por poço (monthly files, 2005 onward)",
         "page": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/producao-de-petroleo-e-gas-natural-por-poco",
@@ -79,15 +81,29 @@ FAMILIES: Dict[str, Dict[str, Any]] = {
 }
 """The four public well-level file families and their verified traits."""
 
-MODEL_READINESS: Dict[str, Dict[str, Any]] = {
+MODEL_READINESS: dict[str, dict[str, Any]] = {
     "decline_and_eur": {
-        "public": ["monthly rate history per well and field", "hours on stream", "well status and lift method"],
-        "missing": ["reservoir pressure", "completion and workover timing per well beyond status dates"],
+        "public": [
+            "monthly rate history per well and field",
+            "hours on stream",
+            "well status and lift method",
+        ],
+        "missing": [
+            "reservoir pressure",
+            "completion and workover timing per well beyond status dates",
+        ],
         "next": "Fit with neqsim-norwegian-continental-shelf-data fit_arps_decline on decline_series; label as screening.",
     },
     "gor_and_water_cut_trends": {
-        "public": ["gas, oil and water per well and month", "API gravity", "gas composition"],
-        "missing": ["separator conditions", "allocation basis between wells on one installation"],
+        "public": [
+            "gas, oil and water per well and month",
+            "API gravity",
+            "gas composition",
+        ],
+        "missing": [
+            "separator conditions",
+            "allocation basis between wells on one installation",
+        ],
         "next": "Use ratios and aggregate; check well_flags for shut-in and partial months first.",
     },
     "field_aggregation": {
@@ -97,24 +113,43 @@ MODEL_READINESS: Dict[str, Dict[str, Any]] = {
     },
     "material_balance": {
         "public": ["production history", "zone production from October 2014"],
-        "missing": ["static and flowing reservoir pressure", "PVT (Bo, Rs, Bg, saturation pressure)", "aquifer data"],
+        "missing": [
+            "static and flowing reservoir pressure",
+            "PVT (Bo, Rs, Bg, saturation pressure)",
+            "aquifer data",
+        ],
         "next": "Pressure and PVT need operator data or ANP BDEP (some items confidential or paid); hand the history to neqsim-reservoir-material-balance only with that data.",
     },
     "well_flow_and_vfp": {
         "public": ["lift method", "base coordinates", "installation"],
-        "missing": ["tubing and casing geometry", "wellhead pressure and temperature", "choke settings", "reservoir pressure"],
+        "missing": [
+            "tubing and casing geometry",
+            "wellhead pressure and temperature",
+            "choke settings",
+            "reservoir pressure",
+        ],
         "next": "Geometry and pressures come from the operator or BDEP well records; without them only a declared-assumption model is possible.",
     },
     "process_feed_fluid": {
-        "public": ["API gravity", "gas composition C1-C11, N2, CO2, O2", "gross calorific value", "GOR from rates"],
-        "missing": ["separator P and T", "C7+ properties", "recombined wellstream composition", "PVT report"],
+        "public": [
+            "API gravity",
+            "gas composition C1-C11, N2, CO2, O2",
+            "gross calorific value",
+            "GOR from rates",
+        ],
+        "missing": [
+            "separator P and T",
+            "C7+ properties",
+            "recombined wellstream composition",
+            "PVT report",
+        ],
         "next": "Use fluid_basis and hand it to fluid-characterization-agent; state that the basis is a declared best guess.",
     },
 }
 """What the open data supports for each downstream NeqSim model, and what is missing."""
 
 
-def readiness(model: str) -> Dict[str, Any]:
+def readiness(model: str) -> dict[str, Any]:
     """Return the readiness record of a model type.
 
     Args:
@@ -129,10 +164,12 @@ def readiness(model: str) -> Dict[str, Any]:
     try:
         return MODEL_READINESS[model]
     except KeyError:
-        raise KeyError("Unknown model %r; known: %s" % (model, ", ".join(sorted(MODEL_READINESS))))
+        raise KeyError(
+            "Unknown model %r; known: %s" % (model, ", ".join(sorted(MODEL_READINESS)))
+        )
 
 
-def families() -> List[str]:
+def families() -> list[str]:
     """Return the family names in catalog order.
 
     Returns:

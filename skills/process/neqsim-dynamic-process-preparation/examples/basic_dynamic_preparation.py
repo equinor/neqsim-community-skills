@@ -1,6 +1,5 @@
 from dynamic_process_preparation import DynamicProcessPreparationModel
 
-
 model = DynamicProcessPreparationModel()
 plan = model.evaluate(
     process_name="public separator train",

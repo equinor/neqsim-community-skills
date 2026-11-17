@@ -6,10 +6,11 @@ import hashlib
 import io
 import urllib.request
 import zipfile
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from .sources import HOST, SOURCES, TERMS
 
@@ -23,10 +24,14 @@ class SourceError(RuntimeError):
     """The download is not the expected zip (the server answers HTML for unknown paths) or is too large."""
 
 
-def default_fetch(url: str, timeout: float = 120.0, max_bytes: int = MAX_ZIP_BYTES) -> bytes:
+def default_fetch(
+    url: str, timeout: float = 120.0, max_bytes: int = MAX_ZIP_BYTES
+) -> bytes:
     """Perform a GET and read at most ``max_bytes``; raises ``SourceError`` when the body is longer."""
-    request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 " + USER_AGENT, "Accept": "*/*"})
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed https host
+    request = urllib.request.Request(
+        url, headers={"User-Agent": "Mozilla/5.0 " + USER_AGENT, "Accept": "*/*"}
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         body = response.read(max_bytes + 1)
     if len(body) > max_bytes:
         raise SourceError(f"{url} is larger than {max_bytes} bytes")
@@ -43,9 +48,11 @@ class ReadRecord:
     size: int
     cached: bool = False
     terms: str = TERMS
-    retrieved_utc: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    retrieved_utc: str = field(
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
+    )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return the record as a plain dict."""
         return dict(self.__dict__)
 
@@ -53,11 +60,17 @@ class ReadRecord:
 class BseeClient:
     """Download and unpack the allow-listed BSEE files."""
 
-    def __init__(self, fetch: Fetch = default_fetch, cache_dir: Optional[Path] = None, *, timeout: float = 120.0) -> None:
+    def __init__(
+        self,
+        fetch: Fetch = default_fetch,
+        cache_dir: Path | None = None,
+        *,
+        timeout: float = 120.0,
+    ) -> None:
         self.fetch = fetch
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.timeout = timeout
-        self.records: List[ReadRecord] = []
+        self.records: list[ReadRecord] = []
 
     def get_text(self, source: str) -> str:
         """Return the unpacked CSV text of ``source`` (``"investigations"`` or ``"structures"``)."""
@@ -65,26 +78,49 @@ class BseeClient:
             raise KeyError(f"unknown source {source!r}; choose from {sorted(SOURCES)}")
         spec = SOURCES[source]
         url = HOST + spec["path"]
-        cache_file = self.cache_dir / (spec["path"].rsplit("/", 1)[1]) if self.cache_dir else None
+        cache_file = (
+            self.cache_dir / (spec["path"].rsplit("/", 1)[1])
+            if self.cache_dir
+            else None
+        )
         cached = cache_file is not None and cache_file.exists()
-        body = cache_file.read_bytes() if cached else self.fetch(url, self.timeout, MAX_ZIP_BYTES)
+        body = (
+            cache_file.read_bytes()
+            if cached
+            else self.fetch(url, self.timeout, MAX_ZIP_BYTES)
+        )
         try:
             archive = zipfile.ZipFile(io.BytesIO(body))
         except zipfile.BadZipFile as error:
-            raise SourceError(f"{url} did not return a zip file (the server sends HTML for a wrong path)") from error
+            raise SourceError(
+                f"{url} did not return a zip file (the server sends HTML for a wrong path)"
+            ) from error
         if cache_file is not None and not cached:
             cache_file.parent.mkdir(parents=True, exist_ok=True)
             cache_file.write_bytes(body)
-        member = next((n for n in archive.namelist() if n.replace("\\", "/").rsplit("/", 1)[-1] == spec["member"]), None)
+        member = next(
+            (
+                n
+                for n in archive.namelist()
+                if n.replace("\\", "/").rsplit("/", 1)[-1] == spec["member"]
+            ),
+            None,
+        )
         if member is None:
-            raise SourceError(f"{spec['member']} missing from {url}; BSEE may have changed the file")
+            raise SourceError(
+                f"{spec['member']} missing from {url}; BSEE may have changed the file"
+            )
         info = archive.getinfo(member)
         if info.file_size > MAX_MEMBER_BYTES:
-            raise SourceError(f"{spec['member']} unpacks to {info.file_size} bytes, above the limit")
+            raise SourceError(
+                f"{spec['member']} unpacks to {info.file_size} bytes, above the limit"
+            )
         text = archive.read(info).decode("utf-8-sig", errors="replace")
-        self.records.append(ReadRecord(source, url, hashlib.sha256(body).hexdigest(), len(body), cached))
+        self.records.append(
+            ReadRecord(source, url, hashlib.sha256(body).hexdigest(), len(body), cached)
+        )
         return text
 
-    def provenance(self) -> List[Dict[str, Any]]:
+    def provenance(self) -> list[dict[str, Any]]:
         """All read records as dicts."""
         return [r.to_dict() for r in self.records]

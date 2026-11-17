@@ -24,7 +24,9 @@ SORBENTS = [
 def main():
     model = CapillaryCondensationScreeningModel()
     print(f"Bulk methanol saturation: {Y_SAT * 1e6:.0f} ppmv\n")
-    print(f"{'sorbent':32s} {'r [nm]':>7} {'a_c':>7} {'limit [ppmv]':>13} {'Kelvin ok':>10}")
+    print(
+        f"{'sorbent':32s} {'r [nm]':>7} {'a_c':>7} {'limit [ppmv]':>13} {'Kelvin ok':>10}"
+    )
     for name, radius in SORBENTS:
         result = model.evaluate(
             temperature=TEMPERATURE,
@@ -33,16 +35,24 @@ def main():
             pore_radius_nm=radius,
             saturation_mole_fraction=Y_SAT,
         )
-        print(f"{name:32s} {radius:7.2f} {result.onset_relative_saturation:7.3f} "
-              f"{result.max_ppmv:13.0f} {str(result.kelvin_valid):>10}")
+        print(
+            f"{name:32s} {radius:7.2f} {result.onset_relative_saturation:7.3f} "
+            f"{result.max_ppmv:13.0f} {result.kelvin_valid!s:>10}"
+        )
 
     print("\nMicropore volume filling (Dubinin-Radushkevich), beta*E0 = 8 kJ/mol:")
     for ppmv in (25, 100, 250, 500, 1000):
         activity = ppmv * 1e-6 / Y_SAT
-        filling = micropore_filling_fraction(activity, TEMPERATURE, characteristic_energy=8000.0)
-        print(f"  {ppmv:5d} ppmv -> activity {activity:6.4f} -> {filling * 100:5.1f} % of micropore volume filled")
+        filling = micropore_filling_fraction(
+            activity, TEMPERATURE, characteristic_energy=8000.0
+        )
+        print(
+            f"  {ppmv:5d} ppmv -> activity {activity:6.4f} -> {filling * 100:5.1f} % of micropore volume filled"
+        )
 
-    print("\nFor a microporous sorbent the micropore filling limit is one to two orders")
+    print(
+        "\nFor a microporous sorbent the micropore filling limit is one to two orders"
+    )
     print("of magnitude tighter than the Kelvin limit, which is why guard bed methanol")
     print("specifications sit in the tens to low hundreds of ppmv.")
 

@@ -43,8 +43,8 @@ __version__ = "0.1.0"
 
 __all__ = [
     "EXIT_CODES",
-    "GenkeyStatement",
     "LICENSE_ENV_VARS",
+    "GenkeyStatement",
     "OlgaBranch",
     "OlgaInstallation",
     "OlgaNotFoundError",

@@ -1,5 +1,4 @@
 import pytest
-
 from co2_emissions_screening import CombustionCO2Model
 
 

@@ -21,9 +21,9 @@ from __future__ import annotations
 
 import csv
 import math
+from collections.abc import Iterable
 from functools import lru_cache
 from importlib import resources
-from typing import Dict, Iterable, List, Optional, Tuple
 
 MIN_SHARE = 0.01
 MAX_SHARE = 1.0
@@ -33,23 +33,28 @@ RATE_STEP_BBLD = 500.0
 class ProfitOilTable:
     """Lookup of the Annex XX adjustment (percentage points) by Brent price and rate per producer."""
 
-    def __init__(self, rows: Iterable[Tuple[float, Optional[float], float, float]]) -> None:
+    def __init__(
+        self, rows: Iterable[tuple[float, float | None, float, float]]
+    ) -> None:
         """Build from ``(price_lo, price_hi_or_None, rate_lo, adjustment_pp)`` rows, grid complete."""
-        cells: Dict[Tuple[Tuple[float, float], float], float] = {}
+        cells: dict[tuple[tuple[float, float], float], float] = {}
         for price_lo, price_hi, rate_lo, pp in rows:
             band = (float(price_lo), math.inf if price_hi is None else float(price_hi))
             cells[(band, float(rate_lo))] = float(pp)
-        self._bands: List[Tuple[float, float]] = sorted({band for band, _ in cells})
-        self._rate_lo: List[float] = sorted({rate for _, rate in cells})
+        self._bands: list[tuple[float, float]] = sorted({band for band, _ in cells})
+        self._rate_lo: list[float] = sorted({rate for _, rate in cells})
         if len(cells) != len(self._bands) * len(self._rate_lo):
-            raise ValueError("profit-oil grid is not complete: {} cells for {} bands x {} rates".format(
-                len(cells), len(self._bands), len(self._rate_lo)))
-        self._grid: Dict[Tuple[int, float], float] = {
-            (i, rate): cells[(band, rate)] for i, band in enumerate(self._bands) for rate in self._rate_lo
+            raise ValueError(
+                f"profit-oil grid is not complete: {len(cells)} cells for {len(self._bands)} bands x {len(self._rate_lo)} rates"
+            )
+        self._grid: dict[tuple[int, float], float] = {
+            (i, rate): cells[(band, rate)]
+            for i, band in enumerate(self._bands)
+            for rate in self._rate_lo
         }
 
     @classmethod
-    def from_csv(cls, path) -> "ProfitOilTable":
+    def from_csv(cls, path) -> ProfitOilTable:
         """Load a CSV with columns price_lo_usd, price_hi_usd (blank = open), rate_lo_bbld, adjustment_pp."""
         with open(path, newline="", encoding="utf-8") as handle:
             rows = [
@@ -64,12 +69,12 @@ class ProfitOilTable:
         return cls(rows)
 
     @classmethod
-    def constant(cls, pp: float = 0.0) -> "ProfitOilTable":
+    def constant(cls, pp: float = 0.0) -> ProfitOilTable:
         """A one-cell-per-band table with the same adjustment everywhere (for cross-checks)."""
         return cls([(0.0, None, 0.0, pp)])
 
     @property
-    def price_bands(self) -> List[Tuple[float, float]]:
+    def price_bands(self) -> list[tuple[float, float]]:
         """Price bands as ``(lo, hi)`` in order; the last ``hi`` is infinity."""
         return list(self._bands)
 
@@ -96,17 +101,24 @@ class ProfitOilTable:
 
     def adjustment_pp(self, price: float, rate_bbld: float) -> float:
         """Adjustment in percentage points at Dated Brent ``price`` (USD/bbl) and ``rate_bbld`` per producer."""
-        return self._grid[(self._band_of_price(price), self._rate_lo[self._rate_index(rate_bbld)])]
+        return self._grid[
+            (self._band_of_price(price), self._rate_lo[self._rate_index(rate_bbld)])
+        ]
 
     def effective_share(self, offer: float, price: float, rate_bbld: float) -> float:
         """Union profit-oil share paid: offer plus adjustment, floored at 1 % and capped at 100 %."""
-        return min(MAX_SHARE, max(MIN_SHARE, offer + self.adjustment_pp(price, rate_bbld) / 100.0))
+        return min(
+            MAX_SHARE,
+            max(MIN_SHARE, offer + self.adjustment_pp(price, rate_bbld) / 100.0),
+        )
 
 
 @lru_cache(maxsize=1)
 def load_annex_xx() -> ProfitOilTable:
     """Packaged Annex XX grid of the ANP OPP edital (versions 2026; check the edital of the round)."""
-    path = resources.files(__package__).joinpath("data", "annex_xx_profit_oil_adjustment.csv")
+    path = resources.files(__package__).joinpath(
+        "data", "annex_xx_profit_oil_adjustment.csv"
+    )
     with resources.as_file(path) as real_path:
         return ProfitOilTable.from_csv(real_path)
 

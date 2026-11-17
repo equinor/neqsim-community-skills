@@ -4,13 +4,32 @@ Sodir (NLOD 2.0) lists facilities, pipelines and their phase but **not** free sl
 returned as ``estimated`` (nominal slots minus connected wells) and never ``documented``; pipelines in service are
 ``in_use``, pipelines with a non-service phase are ``abandoned`` or ``unknown``, so nothing is called spare from open data.
 """
+
 from __future__ import annotations
 
 from .inventory import normalize_item
 
-_KIND_BY_FACILITY = (("TEMPLATE", "template"), ("MANIFOLD", "manifold"), ("PLEM", "plem"), ("PLET", "plet"), ("RISER", "riser_slot"))
-_SERVICE_BY_MEDIUM = {"OIL": "oil", "GAS": "gas", "CONDENSATE": "oil", "OIL/GAS": "multiphase", "MULTIPHASE": "multiphase", "WATER": "water_injection",
-                      "NGL": "oil", "LPG": "oil", "CO2": "gas_injection", "METHANOL": "meg", "MEG": "meg", "CHEMICAL": "chemical"}
+_KIND_BY_FACILITY = (
+    ("TEMPLATE", "template"),
+    ("MANIFOLD", "manifold"),
+    ("PLEM", "plem"),
+    ("PLET", "plet"),
+    ("RISER", "riser_slot"),
+)
+_SERVICE_BY_MEDIUM = {
+    "OIL": "oil",
+    "GAS": "gas",
+    "CONDENSATE": "oil",
+    "OIL/GAS": "multiphase",
+    "MULTIPHASE": "multiphase",
+    "WATER": "water_injection",
+    "NGL": "oil",
+    "LPG": "oil",
+    "CO2": "gas_injection",
+    "METHANOL": "meg",
+    "MEG": "meg",
+    "CHEMICAL": "chemical",
+}
 
 
 def _status_from_phase(phase):
@@ -24,7 +43,13 @@ def _status_from_phase(phase):
     return "unknown"
 
 
-def items_from_sodir(facilities=(), pipelines=(), wells_per_facility=None, nominal_slots=None, as_of_year=None):
+def items_from_sodir(
+    facilities=(),
+    pipelines=(),
+    wells_per_facility=None,
+    nominal_slots=None,
+    as_of_year=None,
+):
     """Convert raw Sodir rows (dicts with ``fcl*`` / ``ppl*`` attributes) to normalized inventory items.
 
     Args:
@@ -46,17 +71,48 @@ def items_from_sodir(facilities=(), pipelines=(), wells_per_facility=None, nomin
         used = wells_per_facility.get(name)
         free = (total - used) if total is not None and used is not None else None
         start = str(row.get("fclStartupDate") or "")[:4]
-        items.append(normalize_item({
-            "id": name, "name": name, "kind": kind, "status": _status_from_phase(row.get("fclPhase")), "service": "unknown",
-            "water_depth_m": row.get("fclWaterDepth"), "install_year": int(start) if start.isdigit() else None,
-            "design_life_years": row.get("fclDesignLifetime"), "total_slots": total, "free_slots": free,
-            "verification": "estimated" if free is not None else "unknown", "source": "Sodir facility %s" % name,
-            "notes": "slot numbers are not published by Sodir; count is nominal minus connected wells" if free is not None else "slot data not in open data"}, as_of_year))
+        items.append(
+            normalize_item(
+                {
+                    "id": name,
+                    "name": name,
+                    "kind": kind,
+                    "status": _status_from_phase(row.get("fclPhase")),
+                    "service": "unknown",
+                    "water_depth_m": row.get("fclWaterDepth"),
+                    "install_year": int(start) if start.isdigit() else None,
+                    "design_life_years": row.get("fclDesignLifetime"),
+                    "total_slots": total,
+                    "free_slots": free,
+                    "verification": "estimated" if free is not None else "unknown",
+                    "source": "Sodir facility %s" % name,
+                    "notes": (
+                        "slot numbers are not published by Sodir; count is nominal minus connected wells"
+                        if free is not None
+                        else "slot data not in open data"
+                    ),
+                },
+                as_of_year,
+            )
+        )
     for row in pipelines:
         medium = str(row.get("pplMedium") or "").upper()
-        items.append(normalize_item({
-            "id": row.get("pplName"), "name": row.get("pplName"), "kind": "pipeline", "status": _status_from_phase(row.get("pplCurrentPhase")),
-            "service": _SERVICE_BY_MEDIUM.get(medium, "unknown"), "size_in": row.get("pplDimension"),
-            "connects": [x for x in (row.get("fclNameFrom"), row.get("fclNameTo")) if x], "verification": "documented",
-            "source": "Sodir pipeline %s" % row.get("pplName")}, as_of_year))
+        items.append(
+            normalize_item(
+                {
+                    "id": row.get("pplName"),
+                    "name": row.get("pplName"),
+                    "kind": "pipeline",
+                    "status": _status_from_phase(row.get("pplCurrentPhase")),
+                    "service": _SERVICE_BY_MEDIUM.get(medium, "unknown"),
+                    "size_in": row.get("pplDimension"),
+                    "connects": [
+                        x for x in (row.get("fclNameFrom"), row.get("fclNameTo")) if x
+                    ],
+                    "verification": "documented",
+                    "source": "Sodir pipeline %s" % row.get("pplName"),
+                },
+                as_of_year,
+            )
+        )
     return items

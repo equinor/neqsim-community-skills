@@ -13,7 +13,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from reservoir_model_builder import (  # noqa: E402
+from reservoir_model_builder import (
     REQUIRED_KEYWORDS,
     GridDimensions,
     StaticModelArrays,
@@ -179,8 +179,9 @@ def test_a_zero_based_region_blocks_unless_rebasing_is_requested():
 
     model = good_model()
     model.add("FIPNUM", [0] * N, unit="index")
-    report = build_static_model_deck_input(model, kv_kh=0.1,
-                                           rebase_zero_based_regions=True)
+    report = build_static_model_deck_input(
+        model, kv_kh=0.1, rebase_zero_based_regions=True
+    )
     assert report["deck_writable"] is True
     assert any(a["action"] == "rebase_regions" for a in report["adjustments"])
 
@@ -219,8 +220,12 @@ def test_a_hundredfold_error_is_flagged_and_diagnosed():
 
 
 def test_the_p90_p10_range_is_reported_when_published():
-    result = reconcile_volume(computed_stoiip_m3=19.0e6, reported_p50_m3=19.3e6,
-                              reported_p90_m3=15.8e6, reported_p10_m3=22.9e6)
+    result = reconcile_volume(
+        computed_stoiip_m3=19.0e6,
+        reported_p50_m3=19.3e6,
+        reported_p90_m3=15.8e6,
+        reported_p10_m3=22.9e6,
+    )
     assert result["within_p90_p10"] is True
 
 
@@ -231,5 +236,11 @@ def test_a_zero_reported_volume_is_refused():
 
 def test_the_checklist_covers_the_named_failure_modes():
     checks = {item["check"] for item in static_model_checklist()}
-    assert {"array length", "units", "region base", "vertical permeability",
-            "geometry", "volume reconciliation"} <= checks
+    assert {
+        "array length",
+        "units",
+        "region base",
+        "vertical permeability",
+        "geometry",
+        "volume reconciliation",
+    } <= checks

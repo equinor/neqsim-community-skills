@@ -24,7 +24,11 @@ _PROSPECTIVE_STAGES = {
     "lead": "RC9",
     "play": "RC9",
 }
-_HISTORICAL_STAGES = {"historical_production", "produced_and_sold", "sold_and_delivered"}
+_HISTORICAL_STAGES = {
+    "historical_production",
+    "produced_and_sold",
+    "sold_and_delivered",
+}
 _PRMS_ONLY_CONTINGENT_STAGES = {"development_on_hold", "development_unclarified"}
 _SODIR_CLASSES = {
     "rc0": ("historical-production", "not applicable"),

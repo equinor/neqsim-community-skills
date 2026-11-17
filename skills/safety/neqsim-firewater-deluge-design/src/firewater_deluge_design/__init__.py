@@ -6,8 +6,8 @@ from .model import (
 )
 
 __all__ = [
+    "DelugeLayoutResult",
     "FireWaterCoverageModel",
     "FireWaterDemandResult",
-    "DelugeLayoutResult",
     "MonitorScreeningResult",
 ]

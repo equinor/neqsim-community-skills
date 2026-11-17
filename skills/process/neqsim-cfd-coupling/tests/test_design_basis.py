@@ -1,5 +1,4 @@
 import pytest
-
 from cfd_coupling import (
     CfdDesignBasis,
     build_design_basis,
@@ -32,7 +31,9 @@ def _sources():
 
 
 def test_higher_precedence_source_wins() -> None:
-    basis = build_design_basis(tag="20-P-001", component_kind="pipe", sources=_sources())
+    basis = build_design_basis(
+        tag="20-P-001", component_kind="pipe", sources=_sources()
+    )
 
     # tag register outranks the P&ID, so the tag register diameter is the accepted value.
     assert basis.value("inside_diameter_m") == pytest.approx(0.3048)

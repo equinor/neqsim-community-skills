@@ -8,8 +8,8 @@ positive to negative with increasing rate; the reverse crossing is the unstable 
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Sequence
 
 import numpy as np
 
@@ -27,15 +27,15 @@ class Intersection:
 class NodalResult:
     """Result of :func:`solve_nodal`."""
 
-    rates: List[float]
-    inflow_pwf: List[float]
-    outflow_pwf: List[float]
-    intersections: List[Intersection] = field(default_factory=list)
-    operating_point: Optional[Intersection] = None
+    rates: list[float]
+    inflow_pwf: list[float]
+    outflow_pwf: list[float]
+    intersections: list[Intersection] = field(default_factory=list)
+    operating_point: Intersection | None = None
     status: str = "NO_INTERSECTION"
-    outflow_min_rate: Optional[float] = None
+    outflow_min_rate: float | None = None
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         """Return a JSON-friendly dictionary."""
         return {
             "status": self.status,
@@ -43,13 +43,21 @@ class NodalResult:
             "inflow_pwf_bara": self.inflow_pwf,
             "outflow_pwf_bara": self.outflow_pwf,
             "intersections": [i.__dict__ for i in self.intersections],
-            "operating_point": self.operating_point.__dict__ if self.operating_point else None,
+            "operating_point": (
+                self.operating_point.__dict__ if self.operating_point else None
+            ),
             "outflow_min_rate": self.outflow_min_rate,
         }
 
 
-def solve_nodal(inflow_pwf: Callable[[float], float], outflow_pwf: Callable[[float], float], q_min: float, q_max: float, n_scan: int = 14,
-                refine: int = 6) -> NodalResult:
+def solve_nodal(
+    inflow_pwf: Callable[[float], float],
+    outflow_pwf: Callable[[float], float],
+    q_min: float,
+    q_max: float,
+    n_scan: int = 14,
+    refine: int = 6,
+) -> NodalResult:
     """Scan, bracket and refine all inflow/outflow intersections.
 
     Args:
@@ -99,12 +107,18 @@ def solve_nodal(inflow_pwf: Callable[[float], float], outflow_pwf: Callable[[flo
     return res
 
 
-def surplus_at(inflow_pwf: Callable[[float], float], outflow_pwf: Callable[[float], float], q: float) -> float:
+def surplus_at(
+    inflow_pwf: Callable[[float], float],
+    outflow_pwf: Callable[[float], float],
+    q: float,
+) -> float:
     """Inflow minus outflow bottom-hole pressure at rate ``q`` (positive = the well can deliver ``q``)."""
     return float(inflow_pwf(q)) - float(outflow_pwf(q))
 
 
-def composite_oil_ipr(p_res: float, p_bubble: float, pi_sm3d_per_bar: float) -> Dict[str, Callable[[float], float]]:
+def composite_oil_ipr(
+    p_res: float, p_bubble: float, pi_sm3d_per_bar: float
+) -> dict[str, Callable[[float], float]]:
     """Linear (above bubble point) / Vogel (below) composite IPR after Standing.
 
     Returns:
@@ -133,7 +147,7 @@ def composite_oil_ipr(p_res: float, p_bubble: float, pi_sm3d_per_bar: float) -> 
         # solve qv (1 - 0.2x - 0.8x^2) = q - qb for x = pwf/pb
         c = (q - qb) / qv
         disc = 0.04 + 3.2 * (1.0 - c)
-        x = (-0.2 + disc ** 0.5) / 1.6
+        x = (-0.2 + disc**0.5) / 1.6
         return max(0.0, x * pb)
 
     return {"rate": rate, "pwf": pwf, "aof": aof}

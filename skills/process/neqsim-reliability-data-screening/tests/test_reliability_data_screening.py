@@ -1,5 +1,4 @@
 import pytest
-
 from reliability_data_screening import ReliabilityDataModel
 
 
@@ -19,20 +18,28 @@ def test_single_unit_availability():
     )
     # A = 8760 / (8760 + 24) ~= 0.99727
     assert result.unit_availability == pytest.approx(8760.0 / (8760.0 + 24.0), rel=1e-6)
-    assert result.system_availability == pytest.approx(result.unit_availability, rel=1e-6)
+    assert result.system_availability == pytest.approx(
+        result.unit_availability, rel=1e-6
+    )
 
 
 def test_redundancy_improves_availability():
     model = ReliabilityDataModel()
-    single = model.evaluate(failure_rate_per_year=2.0, mean_time_to_repair_h=100.0, redundancy=1)
-    dual = model.evaluate(failure_rate_per_year=2.0, mean_time_to_repair_h=100.0, redundancy=2)
+    single = model.evaluate(
+        failure_rate_per_year=2.0, mean_time_to_repair_h=100.0, redundancy=1
+    )
+    dual = model.evaluate(
+        failure_rate_per_year=2.0, mean_time_to_repair_h=100.0, redundancy=2
+    )
     assert dual.system_availability > single.system_availability
 
 
 def test_planned_downtime_reduces_availability():
     model = ReliabilityDataModel()
     without = model.evaluate(failure_rate_per_year=0.5, planned_downtime_h_per_year=0.0)
-    with_dt = model.evaluate(failure_rate_per_year=0.5, planned_downtime_h_per_year=87.6)
+    with_dt = model.evaluate(
+        failure_rate_per_year=0.5, planned_downtime_h_per_year=87.6
+    )
     assert with_dt.system_availability < without.system_availability
 
 

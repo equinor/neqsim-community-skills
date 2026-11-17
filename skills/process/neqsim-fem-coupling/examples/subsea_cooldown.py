@@ -45,7 +45,7 @@ def fluid_properties() -> tuple[float, float, float]:
     the thermodynamics, not to the finite-element model.
     """
     try:
-        from neqsim.thermo import TPflash, fluid, hydt  # noqa: PLC0415
+        from neqsim.thermo import TPflash, fluid, hydt
 
         wet_gas = fluid("cpa")
         wet_gas.addComponent("methane", 0.85)
@@ -103,9 +103,11 @@ def main() -> None:
         outer_film_coefficient_w_per_m2k=EXTERNAL_FILM_W_PER_M2K,
         outer_bulk_temperature_c=SEABED_TEMPERATURE_C,
     )
-    print(f"steady heat loss before shutdown: "
-          f"{steady.heat_flow_per_length_w_per_m:.1f} W/m "
-          f"(U = {steady.overall_u_inner_w_per_m2k:.2f} W/m2K)")
+    print(
+        f"steady heat loss before shutdown: "
+        f"{steady.heat_flow_per_length_w_per_m:.1f} W/m "
+        f"(U = {steady.overall_u_inner_w_per_m2k:.2f} W/m2K)"
+    )
 
     # The bore inventory the wall has to cool, per unit length.
     inventory_capacity = density * heat_capacity * pi * inner_radius**2
@@ -127,9 +129,13 @@ def main() -> None:
     if no_touch is None:
         print("\nthe fluid does not reach the hydrate temperature within 48 h")
     else:
-        print(f"\nno-touch time to {hydrate_temperature_c:.1f} degC: "
-              f"{no_touch / 3600.0:.1f} h")
-    print(f"fluid temperature after 48 h: {cooldown.inner_fluid_history_c[-1]:.1f} degC")
+        print(
+            f"\nno-touch time to {hydrate_temperature_c:.1f} degC: "
+            f"{no_touch / 3600.0:.1f} h"
+        )
+    print(
+        f"fluid temperature after 48 h: {cooldown.inner_fluid_history_c[-1]:.1f} degC"
+    )
     for warning in cooldown.warnings:
         print("  !", warning)
 

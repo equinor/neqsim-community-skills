@@ -1,5 +1,4 @@
 import pytest
-
 from fem_coupling import (
     evaluate_wall_stress,
     material,
@@ -10,8 +9,12 @@ from fem_coupling import (
 
 
 def test_free_expansion_produces_no_stress():
-    assert thermal_stress(material("carbon-steel"), delta_temperature_k=80.0,
-                          restraint="free") == 0.0
+    assert (
+        thermal_stress(
+            material("carbon-steel"), delta_temperature_k=80.0, restraint="free"
+        )
+        == 0.0
+    )
 
 
 def test_axial_restraint_is_e_alpha_delta_t():
@@ -35,9 +38,7 @@ def test_restraint_ordering_is_physical():
 
 def test_a_material_without_mechanical_properties_is_refused():
     with pytest.raises(ValueError, match="no modulus"):
-        thermal_stress(
-            material("polyurethane-insulation"), delta_temperature_k=50.0
-        )
+        thermal_stress(material("polyurethane-insulation"), delta_temperature_k=50.0)
 
 
 def test_lame_hoop_stress_exceeds_the_thin_wall_value_at_the_bore():

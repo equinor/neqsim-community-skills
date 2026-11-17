@@ -11,7 +11,9 @@ RATE = FireWaterCoverageModel.NORSOK_PROCESS_AREA_LPM_M2
 
 cooler = FireWaterCoverageModel.horizontal_vessel_surface_m2(0.72, 6.606)
 
-blanket = model.demand(protected_area_m2=AREA_M2, area_rate_lpm_per_m2=RATE, duration_min=30.0)
+blanket = model.demand(
+    protected_area_m2=AREA_M2, area_rate_lpm_per_m2=RATE, duration_min=30.0
+)
 selective = model.demand(
     protected_area_m2=0.0,
     area_rate_lpm_per_m2=0.0,
@@ -19,10 +21,14 @@ selective = model.demand(
     duration_min=30.0,
 )
 
-print(f"blanket area coverage : {blanket.total_demand_lpm:8.0f} l/min "
-      f"({blanket.total_demand_m3_per_h:6.1f} m3/h)")
-print(f"one dedicated cooler  : {selective.total_demand_lpm:8.0f} l/min "
-      f"({selective.total_demand_m3_per_h:6.1f} m3/h)")
+print(
+    f"blanket area coverage : {blanket.total_demand_lpm:8.0f} l/min "
+    f"({blanket.total_demand_m3_per_h:6.1f} m3/h)"
+)
+print(
+    f"one dedicated cooler  : {selective.total_demand_lpm:8.0f} l/min "
+    f"({selective.total_demand_m3_per_h:6.1f} m3/h)"
+)
 
 layout = model.deluge_layout(
     protected_area_m2=AREA_M2,

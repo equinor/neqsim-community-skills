@@ -9,20 +9,20 @@ which it is valid, so a reference can be rejected before it is quoted.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Tuple
 
 # Authority tiers, most authoritative first. A benchmark reference must rank
 # strictly above the model basis it is used to test.
-TIER_ORDER: Tuple[str, ...] = (
+TIER_ORDER: tuple[str, ...] = (
     "primary_standard",  # internationally adopted standard reference formulation
-    "reference_eos",     # high-accuracy multiparameter EOS for a specific fluid
-    "measured_data",     # peer-reviewed experimental data with stated uncertainty
-    "published_case",    # textbook or standard worked example with published answer
-    "correlation",       # engineering correlation of the same class as the model
+    "reference_eos",  # high-accuracy multiparameter EOS for a specific fluid
+    "measured_data",  # peer-reviewed experimental data with stated uncertainty
+    "published_case",  # textbook or standard worked example with published answer
+    "correlation",  # engineering correlation of the same class as the model
 )
 
-_TIER_RANK: Dict[str, int] = {tier: rank for rank, tier in enumerate(TIER_ORDER)}
+_TIER_RANK: dict[str, int] = {tier: rank for rank, tier in enumerate(TIER_ORDER)}
 
 
 class UnknownSourceError(KeyError):
@@ -37,15 +37,15 @@ class ApplicabilityRange:
     bound means the source imposes no limit on that variable.
     """
 
-    fluids: Tuple[str, ...] = ()
-    temperature_K: Optional[Tuple[float, float]] = None
-    pressure_Pa: Optional[Tuple[float, float]] = None
+    fluids: tuple[str, ...] = ()
+    temperature_K: tuple[float, float] | None = None
+    pressure_Pa: tuple[float, float] | None = None
 
     def covers(
         self,
-        fluid: Optional[str] = None,
-        temperature_K: Optional[float] = None,
-        pressure_Pa: Optional[float] = None,
+        fluid: str | None = None,
+        temperature_K: float | None = None,
+        pressure_Pa: float | None = None,
     ) -> bool:
         """Return True when the requested state lies inside the validated range."""
         if fluid is not None and self.fluids:
@@ -71,14 +71,14 @@ class ReferenceSource:
     tier: str
     citation: str
     applicability: ApplicabilityRange = field(default_factory=ApplicabilityRange)
-    uncertainty_pct: Dict[str, float] = field(default_factory=dict)
+    uncertainty_pct: dict[str, float] = field(default_factory=dict)
 
     @property
     def tier_rank(self) -> int:
         """Lower rank means higher authority."""
         return _TIER_RANK.get(self.tier, len(TIER_ORDER))
 
-    def property_uncertainty_pct(self, property_name: str) -> Optional[float]:
+    def property_uncertainty_pct(self, property_name: str) -> float | None:
         """Stated relative uncertainty for a property, or the source default."""
         if property_name in self.uncertainty_pct:
             return self.uncertainty_pct[property_name]
@@ -91,15 +91,15 @@ class ReferenceSource:
 
     def covers(
         self,
-        fluid: Optional[str] = None,
-        temperature_K: Optional[float] = None,
-        pressure_Pa: Optional[float] = None,
+        fluid: str | None = None,
+        temperature_K: float | None = None,
+        pressure_Pa: float | None = None,
     ) -> bool:
         """Delegate to the applicability range."""
         return self.applicability.covers(fluid, temperature_K, pressure_Pa)
 
 
-_REGISTRY: Dict[str, ReferenceSource] = {}
+_REGISTRY: dict[str, ReferenceSource] = {}
 
 
 def register_source(source: ReferenceSource) -> ReferenceSource:
@@ -120,17 +120,17 @@ def get_source(key: str) -> ReferenceSource:
         )
 
 
-def list_sources() -> List[ReferenceSource]:
+def list_sources() -> list[ReferenceSource]:
     """All registered sources, most authoritative first."""
     return sorted(_REGISTRY.values(), key=lambda s: (s.tier_rank, s.key))
 
 
 def sources_for(
-    fluid: Optional[str] = None,
-    temperature_K: Optional[float] = None,
-    pressure_Pa: Optional[float] = None,
-    model_tier: Optional[str] = None,
-) -> List[ReferenceSource]:
+    fluid: str | None = None,
+    temperature_K: float | None = None,
+    pressure_Pa: float | None = None,
+    model_tier: str | None = None,
+) -> list[ReferenceSource]:
     """Sources valid at a state, optionally filtered to those outranking a model."""
     found: Iterable[ReferenceSource] = (
         s for s in list_sources() if s.covers(fluid, temperature_K, pressure_Pa)

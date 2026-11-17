@@ -1,5 +1,4 @@
 import pytest
-
 from water_dewpoint_dehydration_screening import WaterDewpointModel
 
 

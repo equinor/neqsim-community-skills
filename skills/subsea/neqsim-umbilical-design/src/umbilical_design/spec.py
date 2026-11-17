@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 STATUS_USER = "user"
 STATUS_DEFAULT = "screening default"
@@ -21,9 +21,13 @@ class FluidLine:
 
     def __post_init__(self) -> None:
         if self.kind not in ("hydraulic", "chemical"):
-            raise ValueError("kind must be 'hydraulic' or 'chemical', got %r" % self.kind)
+            raise ValueError(
+                "kind must be 'hydraulic' or 'chemical', got %r" % self.kind
+            )
         if self.inner_diameter_mm <= 0 or self.design_pressure_bar <= 0:
-            raise ValueError("inner diameter and design pressure must be positive for %s" % self.name)
+            raise ValueError(
+                "inner diameter and design pressure must be positive for %s" % self.name
+            )
 
 
 @dataclass
@@ -33,7 +37,7 @@ class PowerCable:
     name: str
     cores: int
     voltage_v: float
-    conductor_area_mm2: Optional[float] = None
+    conductor_area_mm2: float | None = None
 
 
 @dataclass
@@ -43,16 +47,16 @@ class UmbilicalSpec:
     name: str
     length_m: float
     water_depth_m: float
-    lines: List[FluidLine] = field(default_factory=list)
-    cables: List[PowerCable] = field(default_factory=list)
-    fibers: List[Dict[str, Any]] = field(default_factory=list)
+    lines: list[FluidLine] = field(default_factory=list)
+    cables: list[PowerCable] = field(default_factory=list)
+    fibers: list[dict[str, Any]] = field(default_factory=list)
     power_load_mw: float = 0.0
     power_factor: float = 0.9
     seawater_temperature_c: float = 4.0
     dynamic_service: bool = False
-    touchdown_offset_m: Optional[float] = None
-    max_installation_tension_kn: Optional[float] = None
-    evidence: Dict[str, str] = field(default_factory=dict)
+    touchdown_offset_m: float | None = None
+    max_installation_tension_kn: float | None = None
+    evidence: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.length_m <= 0 or self.water_depth_m <= 0:
@@ -65,7 +69,7 @@ class UmbilicalSpec:
         return self.evidence.get(key, STATUS_USER)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "UmbilicalSpec":
+    def from_dict(cls, data: dict[str, Any]) -> UmbilicalSpec:
         """Build from a plain dictionary (JSON friendly, lengths in km or m)."""
         length_m = data.get("length_m")
         if length_m is None and data.get("length_km") is not None:
@@ -111,7 +115,7 @@ class UmbilicalSpec:
         )
 
     @classmethod
-    def from_common_basis(cls, basis: Dict[str, Any]) -> "UmbilicalSpec":
+    def from_common_basis(cls, basis: dict[str, Any]) -> UmbilicalSpec:
         """Read the ``umbilical`` block of a study COMMON_BASIS style dictionary.
 
         The block uses the same keys as :meth:`from_dict`. Missing keys raise a

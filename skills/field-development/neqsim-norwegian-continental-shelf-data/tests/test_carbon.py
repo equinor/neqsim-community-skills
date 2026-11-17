@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from norwegian_continental_shelf_data import (
     CO2_SOURCE_SPLIT_2024,
     GAS_CO2_FACTOR_KG_PER_SM3,
@@ -105,7 +104,12 @@ def test_abatement_screening_with_explicit_co2_and_added_energy_cost():
     assert result.co2_avoided_tonnes_per_year == pytest.approx(200_000.0)
     assert result.added_energy_cost_nok_per_year == pytest.approx(150_000_000.0)
     assert isinstance(result.npv_nok, float)
-    assert result.verdict in {"attractive", "marginal_positive", "review", "unattractive"}
+    assert result.verdict in {
+        "attractive",
+        "marginal_positive",
+        "review",
+        "unattractive",
+    }
 
 
 def test_abatement_screening_requires_positive_capex():

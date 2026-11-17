@@ -1,13 +1,15 @@
 from datetime import date
 
-import pytest
-
 import brazil_offshore_infrastructure_market as bim
+import pytest
 
 
 def test_datasets_load_with_sources_and_as_of() -> None:
     infra, market = bim.load_infrastructure(), bim.load_market()
-    assert infra["meta"]["as_of"] == "2026-10-14" and market["meta"]["as_of"] == "2026-10-14"
+    assert (
+        infra["meta"]["as_of"] == "2026-10-14"
+        and market["meta"]["as_of"] == "2026-10-14"
+    )
     assert len(infra["pipelines"]) >= 8 and len(infra["plants"]) >= 4
     assert market["marketing"] and market["cost_benchmarks"] and market["declared"]
 
@@ -31,7 +33,9 @@ def test_every_entry_has_confidence_and_as_of() -> None:
 
 def test_unknowns_are_explicit_not_zero() -> None:
     unknown = bim.unknown_entries()
-    labels = " | ".join(str(e.get("name") or e.get("attribute")) for _d, _s, e in unknown)
+    labels = " | ".join(
+        str(e.get("name") or e.get("attribute")) for _d, _s, e in unknown
+    )
     assert "Numeric Rota 1/2/3 offshore export tariff" in labels
     assert "Numeric UTGCA/UTGCAB/Boaventura processing tariff" in labels
     tariff = bim.find("Numeric Rota 1/2/3", section="tariffs")[0][2]
@@ -58,7 +62,9 @@ def test_dataset_age_flags_stale_data() -> None:
 def test_co2_removal_fraction() -> None:
     assert bim.co2_removal_fraction(19.5) == pytest.approx((0.195 - 0.03) / 0.97)
     assert bim.co2_removal_fraction(2.0) == 0.0
-    assert bim.co2_removal_fraction(34.1, spec_mol_pct=3.0) == pytest.approx(0.3206, abs=1e-3)
+    assert bim.co2_removal_fraction(34.1, spec_mol_pct=3.0) == pytest.approx(
+        0.3206, abs=1e-3
+    )
     with pytest.raises(ValueError):
         bim.co2_removal_fraction(120.0)
 
@@ -71,7 +77,9 @@ def test_wellhead_netback_uses_mme_share() -> None:
 
 
 def test_gas_export_upside_is_small_vs_oil() -> None:
-    r = bim.gas_export_upside(350.0, 325.0, 0.5, bim.wellhead_netback(11.0), oil_net_price_usd_bbl=65.0)
+    r = bim.gas_export_upside(
+        350.0, 325.0, 0.5, bim.wellhead_netback(11.0), oil_net_price_usd_bbl=65.0
+    )
     assert r["gas_produced_gsm3"] == pytest.approx(350e6 * 0.158987 * 325 / 1e9)
     assert 5.0 < r["gas_pct_of_oil_revenue"] < 12.0
     assert bim.gas_export_upside(0.0, 325.0, 0.5, 5.9)["gross_gas_revenue_musd"] == 0.0
@@ -81,12 +89,21 @@ def test_gas_export_upside_is_small_vs_oil() -> None:
 
 def test_host_capacity_compression_binds_before_nameplate() -> None:
     plain = bim.host_capacity_check(220.0, 102.5)
-    assert plain["binding_constraint"] == "oil_nameplate" and plain["ullage_kbd"] == pytest.approx(117.5)
-    limited = bim.host_capacity_check(220.0, 102.5, compression_limit_kbd=123.0, additional_demand_kbd=30.0)
+    assert plain["binding_constraint"] == "oil_nameplate" and plain[
+        "ullage_kbd"
+    ] == pytest.approx(117.5)
+    limited = bim.host_capacity_check(
+        220.0, 102.5, compression_limit_kbd=123.0, additional_demand_kbd=30.0
+    )
     assert limited["binding_constraint"] == "gas_compression"
     assert limited["ullage_kbd"] == pytest.approx(20.5)
     assert limited["ullage_overstatement_kbd"] == pytest.approx(97.0)
     assert limited["fits"] is False
     assert bim.host_capacity_check(220.0, 300.0)["ullage_kbd"] == 0.0
     # a limit above nameplate does not relax nameplate
-    assert bim.host_capacity_check(100.0, 50.0, compression_limit_kbd=500.0)["effective_limit_kbd"] == 100.0
+    assert (
+        bim.host_capacity_check(100.0, 50.0, compression_limit_kbd=500.0)[
+            "effective_limit_kbd"
+        ]
+        == 100.0
+    )

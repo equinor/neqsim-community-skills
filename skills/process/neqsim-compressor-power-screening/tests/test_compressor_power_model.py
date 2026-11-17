@@ -1,5 +1,4 @@
 import pytest
-
 from compressor_power_screening import CompressorPowerModel
 
 

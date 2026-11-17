@@ -1,6 +1,12 @@
 """Build a reviewable jurisdiction block for a study from the public profiles."""
 
-from .activity_register import ACTIVITY_TOPICS, DESIGN_QUESTIONS, ORIENTATION, REGISTER, TOPICS
+from .activity_register import (
+    ACTIVITY_TOPICS,
+    DESIGN_QUESTIONS,
+    ORIENTATION,
+    REGISTER,
+    TOPICS,
+)
 from .profiles import ALIASES, PROFILES
 
 LAYER_RULE = (
@@ -65,12 +71,19 @@ def jurisdiction_block(country, facility_scope="", user_confirmed=False):
     )
     if not user_confirmed:
         block["assumptions"].append(
-            "Jurisdiction %s was inferred from the request and not confirmed by the user." % key
+            "Jurisdiction %s was inferred from the request and not confirmed by the user."
+            % key
         )
     return block
 
 
-def activity_basis(country, activities=("well", "surf"), facility_scope="", user_confirmed=False, operator=""):
+def activity_basis(
+    country,
+    activities=("well", "surf"),
+    facility_scope="",
+    user_confirmed=False,
+    operator="",
+):
     """Build the well and SURF regulatory basis for a country.
 
     Extends :func:`jurisdiction_block` with the instruments to check per design topic, the
@@ -95,7 +108,10 @@ def activity_basis(country, activities=("well", "surf"), facility_scope="", user
     """
     for activity in activities:
         if activity not in ACTIVITY_TOPICS:
-            raise ValueError("activity must be one of %s, got %r" % (sorted(ACTIVITY_TOPICS), activity))
+            raise ValueError(
+                "activity must be one of %s, got %r"
+                % (sorted(ACTIVITY_TOPICS), activity)
+            )
     block = jurisdiction_block(country, facility_scope, user_confirmed)
     block["schema"] = "jurisdiction_activity_basis.v1"
     block["layer_rule"] = LAYER_RULE
@@ -116,20 +132,28 @@ def activity_basis(country, activities=("well", "surf"), facility_scope="", user
                 "design_questions": list(DESIGN_QUESTIONS.get(topic, [])),
             }
             if not rows:
-                gap = "No %s instrument is registered for %s (%s): research the authority source before design." % (
-                    TOPICS[topic].lower(), key, activity)
+                gap = (
+                    "No %s instrument is registered for %s (%s): research the authority source before design."
+                    % (TOPICS[topic].lower(), key, activity)
+                )
                 block["coverage_gaps"].append(gap)
         block["activities"][activity] = topics
     unverified = sum(
-        1 for act in block["activities"].values() for t in act.values() for r in t["instruments"] if r["status"] == ORIENTATION
+        1
+        for act in block["activities"].values()
+        for t in act.values()
+        for r in t["instruments"]
+        if r["status"] == ORIENTATION
     )
     if unverified:
         block["data_gaps"].append(
-            "%d registered instruments are orientation entries; fetch the current text at the source before quoting them." % unverified
+            "%d registered instruments are orientation entries; fetch the current text at the source before quoting them."
+            % unverified
         )
     block["data_gaps"].extend(block["coverage_gaps"])
     if operator and "equinor" not in operator.lower():
         block["assumptions"].append(
-            "Asset operated by %s: the operator's design basis and authority interface govern; Equinor requirements apply as a partner review basis only." % operator
+            "Asset operated by %s: the operator's design basis and authority interface govern; Equinor requirements apply as a partner review basis only."
+            % operator
         )
     return block

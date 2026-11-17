@@ -21,7 +21,6 @@ import os
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
 
 WELLPLANNING_PKG = "neqsim.process.fielddevelopment.wellplanning."
 WELLPLANNING_CLASSES = (
@@ -49,7 +48,7 @@ CORE_CLASSES = {
     "SourServiceAssessment": "neqsim.process.corrosion.SourServiceAssessment",
 }
 
-_STATE: Dict[str, object] = {"status": None}
+_STATE: dict[str, object] = {"status": None}
 
 
 @dataclass
@@ -58,9 +57,9 @@ class RuntimeStatus:
 
     jvm_started: bool = False
     reason: str = ""
-    classpath: List[str] = field(default_factory=list)
-    wellplanning: Dict[str, bool] = field(default_factory=dict)
-    core: Dict[str, bool] = field(default_factory=dict)
+    classpath: list[str] = field(default_factory=list)
+    wellplanning: dict[str, bool] = field(default_factory=dict)
+    core: dict[str, bool] = field(default_factory=dict)
 
     @property
     def wellplanning_available(self) -> bool:
@@ -71,7 +70,7 @@ class RuntimeStatus:
         """Return True when a wellplanning or core class (short name) is loadable."""
         return bool(self.wellplanning.get(name) or self.core.get(name))
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         """Return a JSON-friendly dictionary."""
         return {
             "jvm_started": self.jvm_started,
@@ -83,8 +82,8 @@ class RuntimeStatus:
         }
 
 
-def _candidate_roots() -> List[Path]:
-    roots: List[Path] = []
+def _candidate_roots() -> list[Path]:
+    roots: list[Path] = []
     env = os.environ.get("NEQSIM_PROJECT_ROOT")
     if env:
         roots.append(Path(env))
@@ -102,7 +101,7 @@ def _candidate_roots() -> List[Path]:
     return out
 
 
-def _pip_jars() -> List[Path]:
+def _pip_jars() -> list[Path]:
     env_jar = os.environ.get("NEQSIM_JAR")
     if env_jar:
         p = Path(env_jar)
@@ -124,7 +123,7 @@ def _pip_jars() -> List[Path]:
     return []
 
 
-def resolve_classpath() -> List[str]:
+def resolve_classpath() -> list[str]:
     """Return the classpath that :func:`ensure_runtime` would start the JVM with."""
     explicit = os.environ.get("IWP_NEQSIM_CLASSPATH")
     if explicit:
@@ -135,7 +134,13 @@ def resolve_classpath() -> List[str]:
             cp = [str(classes)]
             cp_file = root / "target" / "neqsim-dev-classpath.txt"
             if cp_file.exists():
-                cp.extend(p for p in cp_file.read_text(encoding="utf-8").strip().split(os.pathsep) if p)
+                cp.extend(
+                    p
+                    for p in cp_file.read_text(encoding="utf-8")
+                    .strip()
+                    .split(os.pathsep)
+                    if p
+                )
             else:
                 cp.extend(str(j) for j in _pip_jars())
             return cp
@@ -174,7 +179,9 @@ def ensure_runtime(start: bool = True) -> RuntimeStatus:
     try:
         import jpype
     except ImportError:
-        st = RuntimeStatus(reason="jpype is not installed; NeqSim-backed calculations are unavailable")
+        st = RuntimeStatus(
+            reason="jpype is not installed; NeqSim-backed calculations are unavailable"
+        )
         _STATE["status"] = st
         return st
     if not jpype.isJVMStarted():
@@ -182,21 +189,37 @@ def ensure_runtime(start: bool = True) -> RuntimeStatus:
             return RuntimeStatus(reason="JVM not started")
         classpath = resolve_classpath()
         if not classpath:
-            st = RuntimeStatus(reason="no NeqSim classpath found (set IWP_NEQSIM_CLASSPATH, NEQSIM_PROJECT_ROOT or install neqsim)")
+            st = RuntimeStatus(
+                reason="no NeqSim classpath found (set IWP_NEQSIM_CLASSPATH, NEQSIM_PROJECT_ROOT or install neqsim)"
+            )
             _STATE["status"] = st
             return st
         os.environ.setdefault("NEQSIM_JVM_AUTOSTART", "0")
         try:
-            jpype.startJVM("-Xmx1g", "--enable-native-access=ALL-UNNAMED", classpath=classpath, convertStrings=True)
+            jpype.startJVM(
+                "-Xmx1g",
+                "--enable-native-access=ALL-UNNAMED",
+                classpath=classpath,
+                convertStrings=True,
+            )
         except Exception as exc:  # noqa: BLE001
             try:
-                sys.path.insert(0, str(next(r for r in _candidate_roots() if (r / "devtools").is_dir()) / "devtools"))
+                sys.path.insert(
+                    0,
+                    str(
+                        next(r for r in _candidate_roots() if (r / "devtools").is_dir())
+                        / "devtools"
+                    ),
+                )
                 from java_locator import ensure_java_home  # type: ignore
 
                 ensure_java_home()
                 jpype.startJVM("-Xmx1g", classpath=classpath, convertStrings=True)
             except Exception as exc2:  # noqa: BLE001
-                st = RuntimeStatus(reason="JVM start failed: {} / {}".format(exc, exc2), classpath=classpath)
+                st = RuntimeStatus(
+                    reason=f"JVM start failed: {exc} / {exc2}",
+                    classpath=classpath,
+                )
                 _STATE["status"] = st
                 return st
         used = classpath
@@ -207,7 +230,8 @@ def ensure_runtime(start: bool = True) -> RuntimeStatus:
     if not st.wellplanning_available:
         missing = [k for k, v in st.wellplanning.items() if not v]
         st.reason = "wellplanning classes missing: {} (NeqSim build older than the well-planning physics)".format(
-            ", ".join(missing))
+            ", ".join(missing)
+        )
     _STATE["status"] = st
     return st
 
@@ -229,8 +253,8 @@ def jclass(short_or_full: str):
         full = CORE_CLASSES.get(short_or_full, short_or_full)
     try:
         return jpype.JClass(full)
-    except Exception as exc:  # noqa: BLE001
-        raise RuntimeError("NeqSim class not available: {}".format(full)) from exc
+    except Exception as exc:
+        raise RuntimeError(f"NeqSim class not available: {full}") from exc
 
 
 def reset_runtime_cache() -> None:
@@ -238,7 +262,7 @@ def reset_runtime_cache() -> None:
     _STATE["status"] = None
 
 
-def runtime_skip_reason() -> Optional[str]:
+def runtime_skip_reason() -> str | None:
     """Return None when the wellplanning chain can run, else a human-readable skip reason."""
     st = ensure_runtime()
     if st.wellplanning_available:

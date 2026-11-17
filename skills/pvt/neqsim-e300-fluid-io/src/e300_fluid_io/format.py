@@ -17,7 +17,6 @@ loads such files into rigorous NeqSim fluids when NeqSim is available.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 # Per-component vector keywords that hold one numeric value per component.
 _VECTOR_KEYWORDS = (
@@ -67,26 +66,26 @@ class E300Fluid:
     ``bic`` is the full symmetric binary interaction parameter matrix.
     """
 
-    names: List[str] = field(default_factory=list)
+    names: list[str] = field(default_factory=list)
     eos: str = "PR"
-    eos_correction: Optional[str] = "PRCORR"
+    eos_correction: str | None = "PRCORR"
     reservoir_temp_c: float = 100.0
     standard_temp_c: float = 15.0
     standard_pressure_bara: float = 1.01325
-    tcrit: List[float] = field(default_factory=list)
-    pcrit: List[float] = field(default_factory=list)
-    acf: List[float] = field(default_factory=list)
-    omegaa: List[float] = field(default_factory=list)
-    omegab: List[float] = field(default_factory=list)
-    mw: List[float] = field(default_factory=list)
-    tboil: List[float] = field(default_factory=list)
-    vcrit: List[float] = field(default_factory=list)
-    zcrit: List[float] = field(default_factory=list)
-    sshift: List[float] = field(default_factory=list)
-    parachor: List[float] = field(default_factory=list)
-    zi: List[float] = field(default_factory=list)
-    sshifts: List[float] = field(default_factory=list)
-    bic: List[List[float]] = field(default_factory=list)
+    tcrit: list[float] = field(default_factory=list)
+    pcrit: list[float] = field(default_factory=list)
+    acf: list[float] = field(default_factory=list)
+    omegaa: list[float] = field(default_factory=list)
+    omegab: list[float] = field(default_factory=list)
+    mw: list[float] = field(default_factory=list)
+    tboil: list[float] = field(default_factory=list)
+    vcrit: list[float] = field(default_factory=list)
+    zcrit: list[float] = field(default_factory=list)
+    sshift: list[float] = field(default_factory=list)
+    parachor: list[float] = field(default_factory=list)
+    zi: list[float] = field(default_factory=list)
+    sshifts: list[float] = field(default_factory=list)
+    bic: list[list[float]] = field(default_factory=list)
     pedersen: bool = False
 
     @property
@@ -98,21 +97,19 @@ class E300Fluid:
         """Return True when a water component (H2O) is already present."""
         return any(_is_water_name(name) for name in self.names)
 
-    def _vector(self, keyword: str) -> List[float]:
+    def _vector(self, keyword: str) -> list[float]:
         return getattr(self, keyword.lower())
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Return a list of structural problems, empty when the fluid is valid."""
-        problems: List[str] = []
+        problems: list[str] = []
         n = self.ncomps
         if n == 0:
             problems.append("fluid has no components")
         for keyword in _VECTOR_KEYWORDS:
             values = self._vector(keyword)
             if values and len(values) != n:
-                problems.append(
-                    f"{keyword} has {len(values)} values but expected {n}"
-                )
+                problems.append(f"{keyword} has {len(values)} values but expected {n}")
         if self.bic:
             if len(self.bic) != n or any(len(row) != n for row in self.bic):
                 problems.append("BIC matrix is not square with one row per component")
@@ -199,7 +196,7 @@ def parse_e300(text: str) -> E300Fluid:
     return fluid
 
 
-def _read_tokens(lines: List[str], start: int):
+def _read_tokens(lines: list[str], start: int):
     """Read whitespace-separated tokens until a ``/`` terminator or comment.
 
     Args:
@@ -209,7 +206,7 @@ def _read_tokens(lines: List[str], start: int):
     Returns:
         Tuple of (token list, next line index). The ``/`` terminator is removed.
     """
-    tokens: List[str] = []
+    tokens: list[str] = []
     i = start
     n_lines = len(lines)
     while i < n_lines:
@@ -229,7 +226,7 @@ def _read_tokens(lines: List[str], start: int):
     return tokens, i
 
 
-def _build_bic_matrix(values: List[float], n: int) -> List[List[float]]:
+def _build_bic_matrix(values: list[float], n: int) -> list[list[float]]:
     """Build a symmetric BIC matrix from lower-triangular values.
 
     The E300 BIC block lists, for component ``r`` (1-based, r = 1..n-1), the
@@ -298,7 +295,7 @@ def add_water(fluid: E300Fluid, water_kij: float = 0.5) -> E300Fluid:
     return fluid
 
 
-def _append_if_present(vector: List[float], value: float, target_len: int) -> None:
+def _append_if_present(vector: list[float], value: float, target_len: int) -> None:
     """Append ``value`` to ``vector`` only when the vector was populated.
 
     Args:
@@ -322,7 +319,7 @@ def serialize_e300(fluid: E300Fluid) -> str:
     Returns:
         E300 file content as a string.
     """
-    out: List[str] = []
+    out: list[str] = []
     out.append("-- Eclipse 300 Compositional EOS File")
     out.append("-- Generated by neqsim-e300-fluid-io")
     out.append("-- Units")
@@ -355,9 +352,13 @@ def serialize_e300(fluid: E300Fluid) -> str:
     _write_vector(out, "-- OmegaB", "OMEGAB", fluid.omegab, "{:.5f}")
     _write_vector(out, "-- Molecular weights", "MW", fluid.mw, "{:.4f}")
     _write_vector(out, "-- Boiling points (K)", "TBOIL", fluid.tboil, "{:.3f}")
-    _write_vector(out, "-- Critical volumes (m3/kg-mole)", "VCRIT", fluid.vcrit, "{:.6f}")
+    _write_vector(
+        out, "-- Critical volumes (m3/kg-mole)", "VCRIT", fluid.vcrit, "{:.6f}"
+    )
     _write_vector(out, "-- Critical Z-factors", "ZCRIT", fluid.zcrit, "{:.5f}")
-    _write_vector(out, "-- Volume translation/co-volume", "SSHIFT", fluid.sshift, "{:.6f}")
+    _write_vector(
+        out, "-- Volume translation/co-volume", "SSHIFT", fluid.sshift, "{:.6f}"
+    )
     _write_vector(out, "-- Parachors (dyn/cm)", "PARACHOR", fluid.parachor, "{:.4f}")
     _write_vector(out, "-- Overall composition", "ZI", fluid.zi, "{:.10f}")
 
@@ -385,7 +386,9 @@ def serialize_e300(fluid: E300Fluid) -> str:
     return "\n".join(out) + "\n"
 
 
-def _write_vector(out: List[str], comment: str, keyword: str, values: List[float], fmt: str) -> None:
+def _write_vector(
+    out: list[str], comment: str, keyword: str, values: list[float], fmt: str
+) -> None:
     if not values:
         return
     out.append(comment)

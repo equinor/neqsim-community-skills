@@ -8,16 +8,16 @@ never zero. Source ids are prefixed per file: ``INF-S<n>`` and ``MKT-S<n>``.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from datetime import date
-from functools import lru_cache
+from functools import cache
 from importlib import resources
-from typing import Dict, Iterator, List, Optional, Tuple
 
 INFRA_SECTIONS = ("pipelines", "plants", "tariffs", "market", "regulation")
 MARKET_SECTIONS = ("market", "marketing", "cost_benchmarks", "fields", "declared")
 
 
-@lru_cache(maxsize=None)
+@cache
 def _load(name: str) -> dict:
     path = resources.files(__package__).joinpath("data", name)
     return json.loads(path.read_text(encoding="utf-8"))
@@ -33,9 +33,9 @@ def load_market() -> dict:
     return _load("brazil_market_analogues.json")
 
 
-def sources() -> Dict[str, dict]:
+def sources() -> dict[str, dict]:
     """Merged source table keyed by ``INF-S<n>`` and ``MKT-S<n>`` (MKT values are URL strings)."""
-    merged: Dict[str, dict] = {}
+    merged: dict[str, dict] = {}
     for key, val in load_infrastructure()["sources"].items():
         merged[key] = dict(val)
     for key, val in load_market()["sources"].items():
@@ -43,7 +43,7 @@ def sources() -> Dict[str, dict]:
     return merged
 
 
-def source_url(source_id: Optional[str]) -> Optional[str]:
+def source_url(source_id: str | None) -> str | None:
     """Resolve a source id to its URL or citation, or ``None`` when the id is empty or unknown."""
     if not source_id:
         return None
@@ -56,7 +56,7 @@ def _entry_label(entry: dict) -> str:
     return " ".join(p for p in parts if p).lower()
 
 
-def iter_entries() -> Iterator[Tuple[str, str, dict]]:
+def iter_entries() -> Iterator[tuple[str, str, dict]]:
     """Yield ``(dataset, section, entry)`` for every entry of both datasets."""
     infra = load_infrastructure()
     for section in INFRA_SECTIONS:
@@ -68,7 +68,7 @@ def iter_entries() -> Iterator[Tuple[str, str, dict]]:
             yield "market", section, entry
 
 
-def find(text: str, section: Optional[str] = None) -> List[Tuple[str, str, dict]]:
+def find(text: str, section: str | None = None) -> list[tuple[str, str, dict]]:
     """Case-insensitive substring search over entry name, entity and attribute."""
     needle = text.lower()
     return [
@@ -89,12 +89,12 @@ def is_unknown(entry: dict) -> bool:
     return False
 
 
-def unknown_entries() -> List[Tuple[str, str, dict]]:
+def unknown_entries() -> list[tuple[str, str, dict]]:
     """All entries that are explicit gaps. Quote them as UNKNOWN in any report."""
     return [(ds, sec, e) for ds, sec, e in iter_entries() if is_unknown(e)]
 
 
-def dataset_age_days(today: Optional[date] = None) -> int:
+def dataset_age_days(today: date | None = None) -> int:
     """Days between the dataset ``as_of`` date and today; use it to warn that data is stale."""
     as_of = date.fromisoformat(load_infrastructure()["meta"]["as_of"])
     return ((today or date.today()) - as_of).days

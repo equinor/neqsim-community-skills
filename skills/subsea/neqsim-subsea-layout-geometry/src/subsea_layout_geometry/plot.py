@@ -148,27 +148,54 @@ def plot_subsea_layout(
     # --- connection lines (drawn first so markers sit on top) ---
     if flowlines:
         for from_name, to_name in flowlines:
-            _draw_segment(ax, node_by_name, from_name, to_name, system,
-                          style="-", colour="dimgray", lw=1.6, label="Flowline")
+            _draw_segment(
+                ax,
+                node_by_name,
+                from_name,
+                to_name,
+                system,
+                style="-",
+                colour="dimgray",
+                lw=1.6,
+                label="Flowline",
+            )
     else:
         # Default schematic: dashed star tie-back from host to each node.
         for name, node in node_by_name.items():
             if name == host_name:
                 continue
             nx, ny = _scaled_coords(node, system)
-            ax.plot([host_x, nx], [host_y, ny], ls="--", c="gray", lw=1.0,
-                    zorder=1, label="Tie-back (schematic)")
+            ax.plot(
+                [host_x, nx],
+                [host_y, ny],
+                ls="--",
+                c="gray",
+                lw=1.0,
+                zorder=1,
+                label="Tie-back (schematic)",
+            )
             if show_step_out and name in result.step_out_km:
                 ax.annotate(
                     f"{result.step_out_km[name]:.1f} km",
                     ((host_x + nx) / 2.0, (host_y + ny) / 2.0),
-                    color="gray", fontsize=8, zorder=2,
+                    color="gray",
+                    fontsize=8,
+                    zorder=2,
                 )
 
     if umbilical:
         for from_name, to_name in umbilical:
-            _draw_segment(ax, node_by_name, from_name, to_name, system,
-                          style=":", colour="tab:green", lw=1.4, label="Umbilical")
+            _draw_segment(
+                ax,
+                node_by_name,
+                from_name,
+                to_name,
+                system,
+                style=":",
+                colour="tab:green",
+                lw=1.4,
+                label="Umbilical",
+            )
 
     # --- node markers ---
     seen_kinds = set()
@@ -178,10 +205,25 @@ def plot_subsea_layout(
         nx, ny = _scaled_coords(node, system)
         legend_label = label if kind not in seen_kinds else None
         seen_kinds.add(kind)
-        ax.scatter(nx, ny, marker=marker, s=130, c=colour, edgecolors="black",
-                   linewidths=0.6, zorder=3, label=legend_label)
-        ax.annotate(name, (nx, ny), textcoords="offset points", xytext=(7, 6),
-                    fontsize=9, zorder=4)
+        ax.scatter(
+            nx,
+            ny,
+            marker=marker,
+            s=130,
+            c=colour,
+            edgecolors="black",
+            linewidths=0.6,
+            zorder=3,
+            label=legend_label,
+        )
+        ax.annotate(
+            name,
+            (nx, ny),
+            textcoords="offset points",
+            xytext=(7, 6),
+            fontsize=9,
+            zorder=4,
+        )
 
     x_label, y_label = _axis_labels(system)
     ax.set_xlabel(x_label)
@@ -198,8 +240,9 @@ def plot_subsea_layout(
         if label and label not in unique:
             unique[label] = handle
     if unique:
-        ax.legend(unique.values(), unique.keys(), loc="best", fontsize=8,
-                  framealpha=0.9)
+        ax.legend(
+            unique.values(), unique.keys(), loc="best", fontsize=8, framealpha=0.9
+        )
 
     fig.tight_layout()
     if save_path is not None:
@@ -207,8 +250,9 @@ def plot_subsea_layout(
     return fig
 
 
-def _draw_segment(ax, node_by_name, from_name, to_name, system, *, style, colour,
-                  lw, label):
+def _draw_segment(
+    ax, node_by_name, from_name, to_name, system, *, style, colour, lw, label
+):
     """Draw a single connection segment between two named nodes.
 
     :param ax: matplotlib Axes to draw into.
@@ -230,5 +274,12 @@ def _draw_segment(ax, node_by_name, from_name, to_name, system, *, style, colour
         raise ValueError(f"segment endpoint {to_name!r} not found in nodes")
     ax_from = _scaled_coords(node_by_name[from_name], system)
     ax_to = _scaled_coords(node_by_name[to_name], system)
-    ax.plot([ax_from[0], ax_to[0]], [ax_from[1], ax_to[1]], ls=style, c=colour,
-            lw=lw, zorder=1, label=label)
+    ax.plot(
+        [ax_from[0], ax_to[0]],
+        [ax_from[1], ax_to[1]],
+        ls=style,
+        c=colour,
+        lw=lw,
+        zorder=1,
+        label=label,
+    )

@@ -12,10 +12,11 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from .parser import ThermomlReport, parse_thermoml
 
@@ -32,9 +33,11 @@ class ThermomlUnavailable(RuntimeError):
 
 def default_fetch(url: str, timeout: float = 60.0) -> bytes:
     """Perform a bounded GET and return the body."""
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
+    request = urllib.request.Request(
+        url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"}
+    )
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed https host
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             return response.read()
     except urllib.error.HTTPError as error:
         raise ThermomlUnavailable(f"{url} -> HTTP {error.code}") from error
@@ -61,10 +64,14 @@ class ReadRecord:
     url: str
     doi: str = ""
     cached: bool = False
-    retrieved_utc: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
-    note: str = "Public archive, no login. Cite the article DOI and NIST/TRC; do not redistribute the files."
+    retrieved_utc: str = field(
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
+    )
+    note: str = (
+        "Public archive, no login. Cite the article DOI and NIST/TRC; do not redistribute the files."
+    )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return the record as a plain dict."""
         return dict(self.__dict__)
 
@@ -72,25 +79,37 @@ class ReadRecord:
 class ThermomlClient:
     """Fetch and parse ThermoML articles by DOI."""
 
-    def __init__(self, fetch: Fetch = default_fetch, cache_dir: Optional[Path] = None, *,
-                 timeout: float = 60.0, max_requests: int = 50) -> None:
+    def __init__(
+        self,
+        fetch: Fetch = default_fetch,
+        cache_dir: Path | None = None,
+        *,
+        timeout: float = 60.0,
+        max_requests: int = 50,
+    ) -> None:
         self.fetch = fetch
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.timeout = timeout
         self.max_requests = max_requests
         self.requests = 0
-        self.records: List[ReadRecord] = []
+        self.records: list[ReadRecord] = []
 
     def _get(self, url: str) -> bytes:
         if self.requests >= self.max_requests:
-            raise RuntimeError(f"request cap of {self.max_requests} reached; raise max_requests deliberately")
+            raise RuntimeError(
+                f"request cap of {self.max_requests} reached; raise max_requests deliberately"
+            )
         self.requests += 1
         return self.fetch(url, self.timeout)
 
     def get_xml(self, doi: str) -> bytes:
         """Return the ThermoML XML of a DOI, using the on-disk cache when configured."""
         url = thermoml_url(doi)
-        cache_file = self.cache_dir / (validate_doi(doi).replace("/", "__") + ".xml") if self.cache_dir else None
+        cache_file = (
+            self.cache_dir / (validate_doi(doi).replace("/", "__") + ".xml")
+            if self.cache_dir
+            else None
+        )
         if cache_file is not None and cache_file.exists():
             self.records.append(ReadRecord(SOURCE, url, doi, cached=True))
             return cache_file.read_bytes()
@@ -105,7 +124,9 @@ class ThermomlClient:
         """Fetch and parse one article."""
         return parse_thermoml(self.get_xml(doi))
 
-    def search(self, query: str, page_size: int = 10, page: int = 0) -> List[Dict[str, Any]]:
+    def search(
+        self, query: str, page_size: int = 10, page: int = 0
+    ) -> list[dict[str, Any]]:
         """Best-effort Lucene-style search (compound name, InChIKey, author) of the archive.
 
         Returns ``[{"doi", "title", "year", "journal", "compounds"}]``. The archive's search API is intermittently
@@ -113,8 +134,12 @@ class ThermomlClient:
         archive's browse page or a literature search, and fetch it with ``get_report``.
         """
         if not query.strip() or re.search(r"[&\r\n]", query):
-            raise ValueError("query must be non-empty and must not contain '&' or line breaks")
-        context = json.dumps({"Citation": True, "data_summary": False, "Compound": True})
+            raise ValueError(
+                "query must be non-empty and must not contain '&' or line breaks"
+            )
+        context = json.dumps(
+            {"Citation": True, "data_summary": False, "Compound": True}
+        )
         url = (
             f"{ARCHIVE_HOST}/ThermoML-API/objects?query="
             + urllib.parse.quote(f"type:TRCTml4 AND ({query})")
@@ -127,15 +152,20 @@ class ThermomlClient:
         for item in payload.get("results", []):
             content = item.get("content", {})
             citation = content.get("Citation", {})
-            hits.append({
-                "doi": citation.get("sDOI", ""),
-                "title": citation.get("sTitle", ""),
-                "year": citation.get("yrPubYr", ""),
-                "journal": citation.get("sPubName", ""),
-                "compounds": [c.get("sCommonName", [""])[0] for c in content.get("Compound", [])],
-            })
+            hits.append(
+                {
+                    "doi": citation.get("sDOI", ""),
+                    "title": citation.get("sTitle", ""),
+                    "year": citation.get("yrPubYr", ""),
+                    "journal": citation.get("sPubName", ""),
+                    "compounds": [
+                        c.get("sCommonName", [""])[0]
+                        for c in content.get("Compound", [])
+                    ],
+                }
+            )
         return hits
 
-    def provenance(self) -> List[Dict[str, Any]]:
+    def provenance(self) -> list[dict[str, Any]]:
         """All read records as dicts."""
         return [r.to_dict() for r in self.records]

@@ -1,5 +1,4 @@
 import pytest
-
 from wax_margin_check import WaxMarginModel
 
 

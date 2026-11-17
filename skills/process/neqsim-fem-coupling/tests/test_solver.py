@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from fem_coupling import (
     BoundaryCondition,
     ConductionProblem,
@@ -69,7 +68,9 @@ def test_two_dimensional_scalar_problems_go_to_scikit_fem():
 
 def test_coupled_and_nonlinear_problems_go_to_fenicsx():
     assert (
-        recommend_backend(dimension=2, physics="thermo_mechanical", coupled=True).backend
+        recommend_backend(
+            dimension=2, physics="thermo_mechanical", coupled=True
+        ).backend
         == "fenicsx"
     )
     assert (
@@ -214,7 +215,9 @@ def test_generated_case_reproduces_the_one_dimensional_heat_flow(tmp_path):
     assert results.energy_balance_error_percent < 0.01
 
     steel = custom_material(
-        "carbon-steel", conductivity_w_per_mk=50.0, conductivity_temp_coeff_w_per_mk2=0.0
+        "carbon-steel",
+        conductivity_w_per_mk=50.0,
+        conductivity_temp_coeff_w_per_mk2=0.0,
     )
     insulation = custom_material(
         "polyurethane-insulation",

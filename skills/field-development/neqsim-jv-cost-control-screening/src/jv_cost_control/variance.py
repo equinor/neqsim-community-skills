@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
@@ -33,13 +33,19 @@ def variance_table(
         ``direction`` (``over`` or ``under`` for costs), ``material`` and
         ``unbudgeted`` columns.
     """
-    grouped = df.groupby(list(keys), dropna=False)[[actual, reference]].sum().reset_index()
+    grouped = (
+        df.groupby(list(keys), dropna=False)[[actual, reference]].sum().reset_index()
+    )
     grouped["variance"] = grouped[actual] - grouped[reference]
     ref_abs = grouped[reference].abs()
-    grouped["variance_pct"] = np.where(ref_abs > 0, grouped["variance"] / ref_abs.where(ref_abs > 0), np.nan)
+    grouped["variance_pct"] = np.where(
+        ref_abs > 0, grouped["variance"] / ref_abs.where(ref_abs > 0), np.nan
+    )
     grouped["unbudgeted"] = (ref_abs == 0) & (grouped[actual].abs() >= abs_threshold)
     pct_ok = grouped["variance_pct"].abs() >= pct_threshold
-    grouped["material"] = (grouped["variance"].abs() >= abs_threshold) & (pct_ok | grouped["unbudgeted"])
+    grouped["material"] = (grouped["variance"].abs() >= abs_threshold) & (
+        pct_ok | grouped["unbudgeted"]
+    )
     grouped["direction"] = np.where(grouped["variance"] >= 0, "over", "under")
     order = grouped["variance"].abs().sort_values(ascending=False).index
     return grouped.loc[order].reset_index(drop=True)
@@ -52,7 +58,7 @@ def variance_commentary(
     reference: str,
     unit: str = "MUSD",
     top_n: int = 10,
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """Draft fact-only commentary lines for the largest material variances.
 
     The sentence states only numbers taken from the table. The cause is left as
@@ -81,13 +87,15 @@ def variance_commentary(
             f"{row[reference]:,.1f} {unit} ({row['variance']:+,.1f} {unit}, {pct_text}, "
             f"{row['direction']})."
         )
-        items.append({"line": name, "fact": fact, "reason": "TO BE CONFIRMED WITH OPERATOR"})
+        items.append(
+            {"line": name, "fact": fact, "reason": "TO BE CONFIRMED WITH OPERATOR"}
+        )
     return items
 
 
 def price_volume_split(
     cost_actual: float, volume_actual: float, cost_ref: float, volume_ref: float
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Split a cost variance into volume and unit-rate effects.
 
     ``volume_effect = (V_act - V_ref) * unit_ref`` and
@@ -123,8 +131,11 @@ def price_volume_split(
 
 
 def run_rate_outlook(
-    ytd: float, months_elapsed: int, full_year_ref: float | None = None, months_in_year: int = 12
-) -> Dict[str, float]:
+    ytd: float,
+    months_elapsed: int,
+    full_year_ref: float | None = None,
+    months_in_year: int = 12,
+) -> dict[str, float]:
     """Linear run-rate full-year outlook compared with a full-year reference.
 
     Args:
@@ -146,7 +157,11 @@ def run_rate_outlook(
     result = {"run_rate_full_year": run_rate}
     if full_year_ref is not None:
         result["vs_reference"] = run_rate - full_year_ref
-        result["vs_reference_pct"] = (run_rate - full_year_ref) / abs(full_year_ref) if full_year_ref else float("nan")
+        result["vs_reference_pct"] = (
+            (run_rate - full_year_ref) / abs(full_year_ref)
+            if full_year_ref
+            else float("nan")
+        )
     return result
 
 

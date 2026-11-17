@@ -11,14 +11,14 @@ Install with::
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Optional, Sequence
+from collections.abc import Iterable, Sequence
 
 from .reference_data import ReferencePoint, normalise_fluid
 
 INSTALL_HINT = "install the optional backend with: python -m pip install CoolProp"
 
 #: Skill property name -> (CoolProp output key, SI unit).
-PROPERTY_MAP: Dict[str, tuple] = {
+PROPERTY_MAP: dict[str, tuple] = {
     "density": ("D", "kg/m3"),
     "molar_density": ("Dmolar", "mol/m3"),
     "enthalpy": ("Hmass", "J/kg"),
@@ -37,7 +37,7 @@ PROPERTY_MAP: Dict[str, tuple] = {
 }
 
 #: Skill fluid name -> CoolProp fluid name.
-FLUID_MAP: Dict[str, str] = {
+FLUID_MAP: dict[str, str] = {
     "water": "Water",
     "co2": "CarbonDioxide",
     "methane": "Methane",
@@ -74,7 +74,7 @@ def is_available() -> bool:
     return _import_coolprop() is not None
 
 
-def coolprop_version() -> Optional[str]:
+def coolprop_version() -> str | None:
     """CoolProp version string, or None when unavailable."""
     module = _import_coolprop()
     if module is None:
@@ -91,7 +91,7 @@ def coolprop_fluid_name(fluid: str) -> str:
     return FLUID_MAP.get(key, fluid)
 
 
-def supported_properties() -> List[str]:
+def supported_properties() -> list[str]:
     """Properties this skill knows how to request from CoolProp."""
     return sorted(PROPERTY_MAP)
 
@@ -100,8 +100,8 @@ def _require_backend():
     module = _import_coolprop()
     if module is None:
         raise CoolPropUnavailableError(
-            "CoolProp is not installed — {}. Use the offline anchor table in "
-            "benchmark_reference_data.reference_data instead.".format(INSTALL_HINT)
+            f"CoolProp is not installed — {INSTALL_HINT}. Use the offline anchor table in "
+            "benchmark_reference_data.reference_data instead."
         )
     return module
 
@@ -123,7 +123,7 @@ def reference_point(
             )
         )
     output_key, unit = PROPERTY_MAP[property_name]
-    fluid_id = "{}::{}".format(backend, coolprop_fluid_name(fluid))
+    fluid_id = f"{backend}::{coolprop_fluid_name(fluid)}"
     value = float(
         module.PropsSI(output_key, "T", temperature_K, "P", pressure_Pa, fluid_id)
     )
@@ -144,12 +144,12 @@ def reference_grid(
     temperatures_K: Sequence[float],
     pressures_Pa: Sequence[float],
     backend: str = "HEOS",
-) -> List[ReferencePoint]:
+) -> list[ReferencePoint]:
     """Evaluate a property over the full (T x P) grid.
 
     Use this to build the three-or-more benchmark points a task report requires.
     """
-    points: List[ReferencePoint] = []
+    points: list[ReferencePoint] = []
     for temperature in temperatures_K:
         for pressure in pressures_Pa:
             points.append(
@@ -163,9 +163,9 @@ def reference_grid(
 def reference_states(
     fluid: str,
     property_name: str,
-    states: Iterable[Dict[str, float]],
+    states: Iterable[dict[str, float]],
     backend: str = "HEOS",
-) -> List[ReferencePoint]:
+) -> list[ReferencePoint]:
     """Evaluate a property at an explicit list of ``{temperature_K, pressure_Pa}``."""
     return [
         reference_point(

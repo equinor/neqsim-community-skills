@@ -75,13 +75,9 @@ class DesignBasisModel:
         temperature_margin_c = design_temperature_c - operating_temperature_c
 
         flow_flag = "ok" if flow_margin >= self.min_flow_margin else "low"
-        pressure_flag = (
-            "ok" if pressure_margin >= self.min_pressure_margin else "low"
-        )
+        pressure_flag = "ok" if pressure_margin >= self.min_pressure_margin else "low"
         temperature_flag = (
-            "ok"
-            if temperature_margin_c >= self.min_temperature_margin_c
-            else "low"
+            "ok" if temperature_margin_c >= self.min_temperature_margin_c else "low"
         )
 
         flags: list[str] = []

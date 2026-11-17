@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Optional, Sequence
 
 from .candidates import rank_candidates
 from .profile import build_profile, profile_statistics
@@ -11,20 +11,20 @@ from .sizing import OilProperties, PipelineDesignBasis, size_pipeline
 
 
 def run_concept(
-    source: Dict[str, object],
-    landing: Dict[str, object],
+    source: dict[str, object],
+    landing: dict[str, object],
     props: OilProperties,
-    rates_sm3d: Dict[str, float],
+    rates_sm3d: dict[str, float],
     design_case: str,
     turndown_case: str,
-    hosts: Optional[Iterable[Dict[str, object]]] = None,
-    feeds_into: Optional[Dict[str, Sequence[str]]] = None,
-    terminal_hosts: Optional[Iterable[str]] = None,
-    basis_overrides: Optional[Dict[str, float]] = None,
-    fetch: Optional[Callable[[str], dict]] = None,
-    cache_path: Optional[Path] = None,
+    hosts: Iterable[dict[str, object]] | None = None,
+    feeds_into: dict[str, Sequence[str]] | None = None,
+    terminal_hosts: Iterable[str] | None = None,
+    basis_overrides: dict[str, float] | None = None,
+    fetch: Callable[[str], dict] | None = None,
+    cache_path: Path | None = None,
     spacing_km: float = 0.5,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Screen a new export line from ``source`` to ``landing``.
 
     Args:
@@ -45,8 +45,13 @@ def run_concept(
     Returns:
         Dictionary with ``candidates``, ``profile``, ``statistics``, ``sizing``, ``basis`` and ``assumptions``.
     """
-    profile = build_profile((float(source["lon"]), float(source["lat"])),
-                            (float(landing["lon"]), float(landing["lat"])), spacing_km, fetch, cache_path)
+    profile = build_profile(
+        (float(source["lon"]), float(source["lat"])),
+        (float(landing["lon"]), float(landing["lat"])),
+        spacing_km,
+        fetch,
+        cache_path,
+    )
     stats = profile_statistics(profile)
     basis = PipelineDesignBasis(length_m=profile.length_km * 1000.0)
     basis.net_elevation_m = profile.depth_m[0] - profile.depth_m[-1]
@@ -58,10 +63,18 @@ def run_concept(
     sizing = size_pipeline(props, basis, rates_sm3d, design_case, turndown_case)
     ranking = []
     if hosts is not None:
-        ranking = [c.__dict__ for c in rank_candidates(source, hosts, feeds_into, terminal_hosts)]
+        ranking = [
+            c.__dict__
+            for c in rank_candidates(source, hosts, feeds_into, terminal_hosts)
+        ]
     return {
         "candidates": ranking,
-        "profile": {"kp_km": profile.kp_km, "lon": profile.lon, "lat": profile.lat, "depth_m": profile.depth_m},
+        "profile": {
+            "kp_km": profile.kp_km,
+            "lon": profile.lon,
+            "lat": profile.lat,
+            "depth_m": profile.depth_m,
+        },
         "statistics": stats,
         "sizing": sizing,
         "basis": {k: v for k, v in basis.__dict__.items() if k != "standard_wt_mm"},

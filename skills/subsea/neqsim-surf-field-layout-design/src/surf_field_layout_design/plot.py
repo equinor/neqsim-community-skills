@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from .layout import SurfLayout
 
@@ -37,7 +37,9 @@ def plot_layout_map(
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ImportError as error:  # pragma: no cover - optional dependency
-        raise RuntimeError("plotting requires matplotlib; install the 'plot' extra") from error
+        raise RuntimeError(
+            "plotting requires matplotlib; install the 'plot' extra"
+        ) from error
 
     figure, axis = plt.subplots(figsize=(11, 9))
 
@@ -73,7 +75,9 @@ def plot_layout_map(
 
     drawn_kinds = set()
     for node in layout.nodes:
-        marker, colour, size, label = _KIND_STYLE.get(node.kind, ("x", "#555555", 20, node.kind))
+        marker, colour, size, label = _KIND_STYLE.get(
+            node.kind, ("x", "#555555", 20, node.kind)
+        )
         axis.scatter(
             node.longitude_deg,
             node.latitude_deg,

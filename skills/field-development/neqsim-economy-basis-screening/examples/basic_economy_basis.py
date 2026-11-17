@@ -16,8 +16,12 @@ def main() -> None:
     )
 
     print(f"Currency:             {result.currency}")
-    print(f"Discount rate:        {result.discount_rate:.3f} [{result.discount_rate_flag}]")
-    print(f"Tax regime:           {result.tax_regime} (recognized={result.tax_regime_recognized})")
+    print(
+        f"Discount rate:        {result.discount_rate:.3f} [{result.discount_rate_flag}]"
+    )
+    print(
+        f"Tax regime:           {result.tax_regime} (recognized={result.tax_regime_recognized})"
+    )
     print(f"Basis warning:        {result.basis_warning}")
     if result.flags:
         print("Flags:")

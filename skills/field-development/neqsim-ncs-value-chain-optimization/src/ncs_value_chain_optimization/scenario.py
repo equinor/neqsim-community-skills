@@ -10,11 +10,11 @@ Every default below is a stated public screening assumption, overridable.
 from __future__ import annotations
 
 import copy
-from typing import Any, Dict, List
+from typing import Any
 
 SCHEMA = "ncs_value_chain_scenario.v1"
 
-DEFAULT_SCENARIO: Dict[str, Any] = {
+DEFAULT_SCENARIO: dict[str, Any] = {
     "schema": SCHEMA,
     "name": "public screening base case",
     "years": [2026, 2040],
@@ -25,8 +25,15 @@ DEFAULT_SCENARIO: Dict[str, Any] = {
         "gas_nok_per_sm3": 3.0,
         "liquid_nok_per_sm3": 4500.0,
         # relative gas price by exit market (1.0 = hub parity)
-        "gas_exit_factor": {"MARKET_DE": 1.0, "MARKET_BE": 1.0, "MARKET_FR": 1.0, "MARKET_UK": 1.0,
-                            "MARKET_DK_PL": 1.0, "MARKET_LNG": 1.0, "MARKET_NO_GAS": 0.9},
+        "gas_exit_factor": {
+            "MARKET_DE": 1.0,
+            "MARKET_BE": 1.0,
+            "MARKET_FR": 1.0,
+            "MARKET_UK": 1.0,
+            "MARKET_DK_PL": 1.0,
+            "MARKET_LNG": 1.0,
+            "MARKET_NO_GAS": 0.9,
+        },
     },
     "tariffs": {
         # screening transport + processing cost per unit shipped; Gassled tariffs are
@@ -36,27 +43,30 @@ DEFAULT_SCENARIO: Dict[str, Any] = {
         "liquid_nok_per_sm3_default": 30.0,
         "liquid_nok_per_sm3_by_arc": {},
     },
-    "capacity_overrides": {},     # {element_id: capacity}
-    "outages": [],                # [{"element": id, "years": [y..], "available_fraction": 0.5}]
-    "forecast_overrides": {},     # {entity: {"gas_msm3d": {year: v}, "liquid_sm3d": {...}}}
+    "capacity_overrides": {},  # {element_id: capacity}
+    "outages": [],  # [{"element": id, "years": [y..], "available_fraction": 0.5}]
+    "forecast_overrides": {},  # {entity: {"gas_msm3d": {year: v}, "liquid_sm3d": {...}}}
     "field_cost_nok_per_sm3oe": {},  # {entity: NOK per Sm3 oe} e.g. CO2 tax x intensity, or OPEX
     "include_discoveries": True,
     "include_not_evaluated": False,
     "tieback_max_km": 60.0,
     "max_paths_per_entity": 20,
-    "provenance": {"prices": "public screening default", "tariffs": "public screening default",
-                   "forecast": "Arps decline capped by Sodir remaining reserves"},
+    "provenance": {
+        "prices": "public screening default",
+        "tariffs": "public screening default",
+        "forecast": "Arps decline capped by Sodir remaining reserves",
+    },
 }
 
 
-def make_scenario(**overrides: Any) -> Dict[str, Any]:
+def make_scenario(**overrides: Any) -> dict[str, Any]:
     """Deep-merge overrides into the default scenario."""
     scenario = copy.deepcopy(DEFAULT_SCENARIO)
     _merge(scenario, overrides)
     return scenario
 
 
-def _merge(base: Dict[str, Any], extra: Dict[str, Any]) -> None:
+def _merge(base: dict[str, Any], extra: dict[str, Any]) -> None:
     for key, value in extra.items():
         if isinstance(value, dict) and isinstance(base.get(key), dict):
             _merge(base[key], value)
@@ -64,7 +74,7 @@ def _merge(base: Dict[str, Any], extra: Dict[str, Any]) -> None:
             base[key] = value
 
 
-def validate_scenario(scenario: Dict[str, Any]) -> List[str]:
+def validate_scenario(scenario: dict[str, Any]) -> list[str]:
     """Return a list of problems; empty means usable."""
     problems = []
     if scenario.get("schema") != SCHEMA:
@@ -79,5 +89,7 @@ def validate_scenario(scenario: Dict[str, Any]) -> List[str]:
             problems.append(f"prices.{key} must be positive")
     for outage in scenario.get("outages", []):
         if not 0 <= float(outage.get("available_fraction", 0)) <= 1:
-            problems.append(f"outage {outage.get('element')}: available_fraction must be in [0, 1]")
+            problems.append(
+                f"outage {outage.get('element')}: available_fraction must be in [0, 1]"
+            )
     return problems

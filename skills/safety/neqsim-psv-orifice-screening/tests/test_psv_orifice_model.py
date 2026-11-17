@@ -1,5 +1,4 @@
 import pytest
-
 from psv_orifice_screening import PsvOrificeModel
 
 

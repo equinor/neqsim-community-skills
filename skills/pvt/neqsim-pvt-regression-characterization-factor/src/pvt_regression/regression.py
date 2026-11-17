@@ -10,8 +10,8 @@ per-target weights, and NeqSim's characterization plus PVT-simulation workflow.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Callable, Dict, Mapping, Sequence, Tuple
 
 
 @dataclass(frozen=True)
@@ -48,11 +48,15 @@ def weighted_ssr(
     total = 0.0
     for target in targets:
         if target.weight < 0.0 or not math.isfinite(target.weight):
-            raise ValueError(f"weight for {target.name} must be non-negative and finite")
+            raise ValueError(
+                f"weight for {target.name} must be non-negative and finite"
+            )
         if target.name not in predicted:
             raise ValueError(f"predicted value for target '{target.name}' is missing")
         if target.measured == 0.0:
-            raise ValueError(f"measured value for target '{target.name}' must be non-zero")
+            raise ValueError(
+                f"measured value for target '{target.name}' must be non-zero"
+            )
         rel = (float(predicted[target.name]) - target.measured) / target.measured
         total += target.weight * rel * rel
     return total
@@ -72,8 +76,8 @@ class RegressionResult:
 
     factor: float
     objective: float
-    residuals: Dict[str, float]
-    predicted: Dict[str, float]
+    residuals: dict[str, float]
+    predicted: dict[str, float]
     iterations: int
     converged: bool
 

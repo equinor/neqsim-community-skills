@@ -106,7 +106,10 @@ def test_make_fetch_sets_descriptive_user_agent():
 
     urllib.request.urlopen = fake_urlopen
     try:
-        fetch("https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=1&lon=2", 10.0)
+        fetch(
+            "https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=1&lon=2",
+            10.0,
+        )
     finally:
         urllib.request.urlopen = original_urlopen
 

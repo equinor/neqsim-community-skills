@@ -17,29 +17,31 @@ mining of public prose, not an as-built line list.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Tuple
 
 from .topology import ALIASES, norm
 
-_GAS = re.compile(r"\b(rich gas|dry gas|gas)\b", re.I)
-_LIQ = re.compile(r"\b(oil|condensate|ngl|liquids?|crude)\b", re.I)
-_BOTH = re.compile(r"\b(well ?stream|oil and gas|gas and oil|hydrocarbons|production)\b", re.I)
-_HISTORIC = re.compile(r"\b(was|were|had been)\b", re.I)
+_GAS = re.compile(r"\b(rich gas|dry gas|gas)\b", re.IGNORECASE)
+_LIQ = re.compile(r"\b(oil|condensate|ngl|liquids?|crude)\b", re.IGNORECASE)
+_BOTH = re.compile(
+    r"\b(well ?stream|oil and gas|gas and oil|hydrocarbons|production)\b", re.IGNORECASE
+)
+_HISTORIC = re.compile(r"\b(was|were|had been)\b", re.IGNORECASE)
 _END_NODES = {"TANKER_EXPORT", "GAS_REINJECTION"}
 # Proper names that contain commodity words ("Shell-Esso Gas and Liquid", "Troll Oil
 # Pipeline"); masked before a clause is classified as gas or liquid.
 _NAME_MASK = re.compile(
     r"gas and liquids?|liquids and (associated )?gas( system)?|\b(gas|oil|condensate) (transport|pipeline|export|"
     r"evacuation|system|terminal|pipe)s?\b|scottish area gas|rich gas pipeline",
-    re.I,
+    re.IGNORECASE,
 )
 _CLAUSE_SPLIT = re.compile(
     # never split "oil and condensate" / "Gas and Liquid": no commodity word right before
     r"(?<!oil)(?<!gas)(?<!condensate)(?<!ngl)(?<!liquid)"
     r"(?:,|;)?\s+(?=(?:and|while|whereas)\s+(?:the\s+)?(?:excess\s+|processed\s+|rich\s+|dry\s+)?"
     r"(?:oil|gas|condensate|ngl|liquids?|well ?stream)\b)",
-    re.I,
+    re.IGNORECASE,
 )
 
 
@@ -47,13 +49,13 @@ _CLAUSE_SPLIT = re.compile(
 class ParsedRoute:
     field: str
     medium: str  # "gas" | "liquid"
-    nodes: List[str]
+    nodes: list[str]
     sentence: str
     confidence: str
     needs_review: bool
     historic: bool = False
 
-    def arcs(self) -> List[Tuple[str, str]]:
+    def arcs(self) -> list[tuple[str, str]]:
         return [(a, b) for a, b in zip(self.nodes, self.nodes[1:]) if a != b]
 
 
@@ -61,22 +63,22 @@ class ParsedRoute:
 class Gazetteer:
     """Alias -> node id, matched on normalised text, longest alias first."""
 
-    aliases: Dict[str, str] = field(default_factory=dict)
+    aliases: dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def build(cls, extra: Optional[Dict[str, str]] = None) -> "Gazetteer":
-        table: Dict[str, str] = {}
+    def build(cls, extra: dict[str, str] | None = None) -> Gazetteer:
+        table: dict[str, str] = {}
         for alias, node in {**ALIASES, **(extra or {})}.items():
             key = norm(alias)
             if key and len(key) >= 3:
                 table.setdefault(key, node)
         return cls(table)
 
-    def find(self, text: str) -> List[Tuple[int, str, str]]:
+    def find(self, text: str) -> list[tuple[int, str, str]]:
         """Return (position, alias, node) mentions in reading order without overlaps."""
         hay = " " + norm(text) + " "
         taken = [False] * len(hay)
-        hits: List[Tuple[int, str, str]] = []
+        hits: list[tuple[int, str, str]] = []
         for alias in sorted(self.aliases, key=len, reverse=True):
             needle = " " + alias + " "
             start = 0
@@ -94,17 +96,23 @@ class Gazetteer:
         return hits
 
 
-def split_clauses(text: str) -> List[str]:
+def split_clauses(text: str) -> list[str]:
     sentences = re.split(r"(?<=[.!?])\s+", (text or "").replace("\n", " ").strip())
-    clauses: List[str] = []
+    clauses: list[str] = []
     for sentence in sentences:
-        clauses.extend(part.strip() for part in _CLAUSE_SPLIT.split(sentence) if part.strip())
+        clauses.extend(
+            part.strip() for part in _CLAUSE_SPLIT.split(sentence) if part.strip()
+        )
     return clauses
 
 
-def _medium(clause: str) -> Optional[str]:
+def _medium(clause: str) -> str | None:
     clause = _NAME_MASK.sub(" ", clause)
-    gas, liq, both = bool(_GAS.search(clause)), bool(_LIQ.search(clause)), bool(_BOTH.search(clause))
+    gas, liq, both = (
+        bool(_GAS.search(clause)),
+        bool(_LIQ.search(clause)),
+        bool(_BOTH.search(clause)),
+    )
     if both or (gas and liq):
         return "both"
     if gas:
@@ -114,13 +122,17 @@ def _medium(clause: str) -> Optional[str]:
     return None
 
 
-def parse_transport_text(field_id: str, text: str, gazetteer: Gazetteer) -> List[ParsedRoute]:
+def parse_transport_text(
+    field_id: str, text: str, gazetteer: Gazetteer
+) -> list[ParsedRoute]:
     """Parse one field's Transport text into gas and liquid routes."""
-    routes: Dict[str, List[str]] = {"gas": [field_id], "liquid": [field_id]}
-    evidence: Dict[str, List[str]] = {"gas": [], "liquid": []}
-    unresolved: Dict[str, bool] = {"gas": False, "liquid": False}
-    historic = bool(_HISTORIC.search(text or "")) and not re.search(r"\b(is|are|will be)\b", text or "")
-    current: Optional[str] = None
+    routes: dict[str, list[str]] = {"gas": [field_id], "liquid": [field_id]}
+    evidence: dict[str, list[str]] = {"gas": [], "liquid": []}
+    unresolved: dict[str, bool] = {"gas": False, "liquid": False}
+    historic = bool(_HISTORIC.search(text or "")) and not re.search(
+        r"\b(is|are|will be)\b", text or ""
+    )
+    current: str | None = None
     for clause in split_clauses(text):
         medium = _medium(clause) or current
         current = medium if medium != "both" else current
@@ -139,9 +151,11 @@ def parse_transport_text(field_id: str, text: str, gazetteer: Gazetteer) -> List
                 if routes[target][-1] != node:
                     routes[target].append(node)
             evidence[target].append(clause)
-            if not mentions and re.search(r"\b(to|via|through)\b", clause, re.I):
+            if not mentions and re.search(
+                r"\b(to|via|through)\b", clause, re.IGNORECASE
+            ):
                 unresolved[target] = True
-    out: List[ParsedRoute] = []
+    out: list[ParsedRoute] = []
     for medium, nodes in routes.items():
         # collapse revisits of the field itself (e.g. "Troll A" inside the Troll text)
         cleaned = [nodes[0]] + [n for n in nodes[1:] if n != nodes[0]]
@@ -149,13 +163,24 @@ def parse_transport_text(field_id: str, text: str, gazetteer: Gazetteer) -> List
             continue
         long_route = len(cleaned) > 4
         confidence = "high" if not (unresolved[medium] or long_route) else "medium"
-        out.append(ParsedRoute(field_id, medium, cleaned, " ".join(evidence[medium]), confidence,
-                               needs_review=confidence != "high" or historic, historic=historic))
+        out.append(
+            ParsedRoute(
+                field_id,
+                medium,
+                cleaned,
+                " ".join(evidence[medium]),
+                confidence,
+                needs_review=confidence != "high" or historic,
+                historic=historic,
+            )
+        )
     return out
 
 
-def parse_many(texts: Iterable[Tuple[str, str]], gazetteer: Gazetteer) -> List[ParsedRoute]:
-    routes: List[ParsedRoute] = []
+def parse_many(
+    texts: Iterable[tuple[str, str]], gazetteer: Gazetteer
+) -> list[ParsedRoute]:
+    routes: list[ParsedRoute] = []
     for field_id, text in texts:
         routes.extend(parse_transport_text(field_id, text, gazetteer))
     return routes

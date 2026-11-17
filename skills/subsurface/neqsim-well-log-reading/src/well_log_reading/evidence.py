@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import List, Optional
 
 import numpy as np
 
@@ -42,7 +41,9 @@ def to_evidence(log: WellLog) -> dict:
                 "index_unit": frame.index_unit,
                 "index_type": frame.index_type,
                 "depth_indexed": depth_indexed,
-                "depth_from_channel": depth_curve.name if depth_curve is not None else None,
+                "depth_from_channel": (
+                    depth_curve.name if depth_curve is not None else None
+                ),
                 "index_range": index_range,
                 "depth_range_m": depth_range,
                 "samples": int(frame.index.size),
@@ -53,15 +54,18 @@ def to_evidence(log: WellLog) -> dict:
         "schema": SCHEMA,
         "status": "unverified",
         "depth_reference_hints": {
-            key: value for key, value in log.metadata.items()
+            key: value
+            for key, value in log.metadata.items()
             if key.startswith("param.") and key[6:].upper() in DEPTH_REFERENCE_KEYS
         },
         "source": {
             "path": log.source_path,
             "format": log.source_format,
             "sha256": log.sha256,
-            "read_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "reader": "dlisio" if log.source_format in ("dlis", "lis") else "built-in LAS 2.0",
+            "read_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+            "reader": (
+                "dlisio" if log.source_format in ("dlis", "lis") else "built-in LAS 2.0"
+            ),
         },
         "well_name": log.well_name,
         "field_name": log.field_name,
@@ -77,7 +81,7 @@ def to_evidence(log: WellLog) -> dict:
     }
 
 
-def write_frame_csv(log: WellLog, out_dir, frame_name: Optional[str] = None) -> Path:
+def write_frame_csv(log: WellLog, out_dir, frame_name: str | None = None) -> Path:
     """Write one frame's scalar curves as CSV (depth in metres when depth indexed)."""
     frame = log.frame(frame_name)
     out = Path(out_dir)
@@ -88,7 +92,7 @@ def write_frame_csv(log: WellLog, out_dir, frame_name: Optional[str] = None) -> 
     return path
 
 
-def scan_folder(folder, recursive: bool = True, max_files: int = 500) -> List[dict]:
+def scan_folder(folder, recursive: bool = True, max_files: int = 500) -> list[dict]:
     """Read every DLIS/LIS/LAS file in a folder and return one evidence record each.
 
     The folder is only read. Files that fail are reported with an ``error``
@@ -96,17 +100,32 @@ def scan_folder(folder, recursive: bool = True, max_files: int = 500) -> List[di
     """
     root = Path(folder)
     pattern = "**/*" if recursive else "*"
-    files = sorted(p for p in root.glob(pattern) if p.is_file() and p.suffix.lower() in LOG_SUFFIXES)
+    files = sorted(
+        p
+        for p in root.glob(pattern)
+        if p.is_file() and p.suffix.lower() in LOG_SUFFIXES
+    )
     records = []
     for path in files[:max_files]:
         try:
             records.append(to_evidence(read_well_log(path)))
         except Exception as exc:  # noqa: BLE001 - report every failure and continue
-            records.append({"schema": SCHEMA, "status": "error", "source": {"path": str(path)},
-                            "error": f"{type(exc).__name__}: {exc}"})
+            records.append(
+                {
+                    "schema": SCHEMA,
+                    "status": "error",
+                    "source": {"path": str(path)},
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+            )
     if len(files) > max_files:
-        records.append({"schema": SCHEMA, "status": "truncated",
-                        "note": f"{len(files) - max_files} more files not read (max_files={max_files})"})
+        records.append(
+            {
+                "schema": SCHEMA,
+                "status": "truncated",
+                "note": f"{len(files) - max_files} more files not read (max_files={max_files})",
+            }
+        )
     return records
 
 

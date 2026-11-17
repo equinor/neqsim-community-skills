@@ -64,7 +64,10 @@ class CompressorOperatingWindowModel:
     def _operating_warning(self, surge_margin: float, stonewall_margin: float) -> str:
         if surge_margin <= 0.0 or stonewall_margin <= 0.0:
             return "high"
-        if surge_margin < self.min_surge_margin or stonewall_margin < self.min_stonewall_margin:
+        if (
+            surge_margin < self.min_surge_margin
+            or stonewall_margin < self.min_stonewall_margin
+        ):
             return "watch"
         return "ok"
 

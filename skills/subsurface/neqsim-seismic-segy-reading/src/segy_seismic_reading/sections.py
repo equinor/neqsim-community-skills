@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -21,16 +21,18 @@ class Section:
     y: np.ndarray
     trace_index: np.ndarray
     label: str
-    distance: Optional[np.ndarray] = None
-    snap_distance: Optional[np.ndarray] = None
+    distance: np.ndarray | None = None
+    snap_distance: np.ndarray | None = None
 
 
 def _nearest(tx: np.ndarray, ty: np.ndarray, px: np.ndarray, py: np.ndarray):
     """Index of and distance to the nearest trace for every point."""
     try:
-        from scipy.spatial import cKDTree  # noqa: PLC0415  (optional speed-up)
+        from scipy.spatial import cKDTree
 
-        distance, index = cKDTree(np.column_stack([tx, ty])).query(np.column_stack([px, py]))
+        distance, index = cKDTree(np.column_stack([tx, ty])).query(
+            np.column_stack([px, py])
+        )
         return np.asarray(index), np.asarray(distance)
     except ImportError:
         index = np.empty(px.size, dtype=int)
@@ -45,19 +47,34 @@ def _nearest(tx: np.ndarray, ty: np.ndarray, px: np.ndarray, py: np.ndarray):
 def _section(handle, traces: np.ndarray, label: str, source: str) -> Section:
     tx, ty, _ = trace_coordinates(handle, source)
     data = np.stack([np.asarray(handle.trace[int(i)], dtype=float) for i in traces])
-    return Section(data, np.asarray(handle.samples, dtype=float), tx[traces], ty[traces],
-                   np.asarray(traces), label)
+    return Section(
+        data,
+        np.asarray(handle.samples, dtype=float),
+        tx[traces],
+        ty[traces],
+        np.asarray(traces),
+        label,
+    )
 
 
-def _line_traces(handle, used, inline: Optional[int] = None, crossline: Optional[int] = None,
-                 offset: Optional[int] = None) -> np.ndarray:
+def _line_traces(
+    handle,
+    used,
+    inline: int | None = None,
+    crossline: int | None = None,
+    offset: int | None = None,
+) -> np.ndarray:
     """Trace indices on one inline or crossline, ordered along the line, one offset only."""
     segyio = segyio_module()
     il = np.asarray(handle.attributes(used[0])[:])
     xl = np.asarray(handle.attributes(used[1])[:])
     offsets = np.asarray(handle.attributes(segyio.TraceField.offset)[:])
     wanted_offset = int(handle.offsets[0]) if offset is None else int(offset)
-    mask = offsets == wanted_offset if len(handle.offsets) > 1 else np.ones(il.size, dtype=bool)
+    mask = (
+        offsets == wanted_offset
+        if len(handle.offsets) > 1
+        else np.ones(il.size, dtype=bool)
+    )
     if inline is not None:
         mask &= il == inline
         order_key = xl
@@ -68,8 +85,13 @@ def _line_traces(handle, used, inline: Optional[int] = None, crossline: Optional
     return traces[np.argsort(order_key[traces], kind="stable")]
 
 
-def read_inline(path, inline: int, header_bytes=DEFAULT_HEADER_BYTES, source: str = "cdp",
-                offset: Optional[int] = None) -> Section:
+def read_inline(
+    path,
+    inline: int,
+    header_bytes=DEFAULT_HEADER_BYTES,
+    source: str = "cdp",
+    offset: int | None = None,
+) -> Section:
     """Return one inline as a section (crosslines x samples).
 
     For pre-stack files the first offset is used unless ``offset`` is given.
@@ -79,16 +101,29 @@ def read_inline(path, inline: int, header_bytes=DEFAULT_HEADER_BYTES, source: st
     """
     with open_segy(path, header_bytes) as (handle, used, note):
         if used is None:
-            raise ValueError(f"{path} has no inline geometry ({note}); use extract_fence")
+            raise ValueError(
+                f"{path} has no inline geometry ({note}); use extract_fence"
+            )
         ilines = list(handle.ilines)
         if inline not in ilines:
-            raise ValueError(f"inline {inline} not in survey range {ilines[0]}-{ilines[-1]}")
-        return _section(handle, _line_traces(handle, used, inline=inline, offset=offset),
-                        f"inline {inline}", source)
+            raise ValueError(
+                f"inline {inline} not in survey range {ilines[0]}-{ilines[-1]}"
+            )
+        return _section(
+            handle,
+            _line_traces(handle, used, inline=inline, offset=offset),
+            f"inline {inline}",
+            source,
+        )
 
 
-def read_crossline(path, crossline: int, header_bytes=DEFAULT_HEADER_BYTES, source: str = "cdp",
-                   offset: Optional[int] = None) -> Section:
+def read_crossline(
+    path,
+    crossline: int,
+    header_bytes=DEFAULT_HEADER_BYTES,
+    source: str = "cdp",
+    offset: int | None = None,
+) -> Section:
     """Return one crossline as a section (inlines x samples).
 
     For pre-stack files the first offset is used unless ``offset`` is given.
@@ -98,12 +133,20 @@ def read_crossline(path, crossline: int, header_bytes=DEFAULT_HEADER_BYTES, sour
     """
     with open_segy(path, header_bytes) as (handle, used, note):
         if used is None:
-            raise ValueError(f"{path} has no crossline geometry ({note}); use extract_fence")
+            raise ValueError(
+                f"{path} has no crossline geometry ({note}); use extract_fence"
+            )
         xlines = list(handle.xlines)
         if crossline not in xlines:
-            raise ValueError(f"crossline {crossline} not in survey range {xlines[0]}-{xlines[-1]}")
-        return _section(handle, _line_traces(handle, used, crossline=crossline, offset=offset),
-                        f"crossline {crossline}", source)
+            raise ValueError(
+                f"crossline {crossline} not in survey range {xlines[0]}-{xlines[-1]}"
+            )
+        return _section(
+            handle,
+            _line_traces(handle, used, crossline=crossline, offset=offset),
+            f"crossline {crossline}",
+            source,
+        )
 
 
 def read_slice(path, sample_value: float, header_bytes=DEFAULT_HEADER_BYTES):
@@ -118,12 +161,15 @@ def read_slice(path, sample_value: float, header_bytes=DEFAULT_HEADER_BYTES):
         k = int(np.argmin(np.abs(samples - sample_value)))
         if used is not None:
             return np.asarray(handle.depth_slice[k], dtype=float), float(samples[k])
-        values = np.array([handle.trace[i][k] for i in range(handle.tracecount)], dtype=float)
+        values = np.array(
+            [handle.trace[i][k] for i in range(handle.tracecount)], dtype=float
+        )
         return values, float(samples[k])
 
 
-def trace_at_xy(path, x: float, y: float, header_bytes=DEFAULT_HEADER_BYTES,
-                source: str = "cdp") -> Tuple[np.ndarray, np.ndarray, dict]:
+def trace_at_xy(
+    path, x: float, y: float, header_bytes=DEFAULT_HEADER_BYTES, source: str = "cdp"
+) -> tuple[np.ndarray, np.ndarray, dict]:
     """Return the trace nearest to a map point (for example a well location).
 
     Returns:
@@ -134,8 +180,12 @@ def trace_at_xy(path, x: float, y: float, header_bytes=DEFAULT_HEADER_BYTES,
         tx, ty, _ = trace_coordinates(handle, source)
         index, distance = _nearest(tx, ty, np.array([x]), np.array([y]))
         i = int(index[0])
-        info = {"trace_index": i, "x": float(tx[i]), "y": float(ty[i]),
-                "snap_distance": float(distance[0])}
+        info = {
+            "trace_index": i,
+            "x": float(tx[i]),
+            "y": float(ty[i]),
+            "snap_distance": float(distance[0]),
+        }
         if used is not None:
             header = handle.header[i]
             info["inline"] = int(header[used[0]])
@@ -144,7 +194,7 @@ def trace_at_xy(path, x: float, y: float, header_bytes=DEFAULT_HEADER_BYTES,
         return trace, np.asarray(handle.samples, dtype=float), info
 
 
-def densify_polyline(points: Sequence[Tuple[float, float]], spacing: float):
+def densify_polyline(points: Sequence[tuple[float, float]], spacing: float):
     """Return x, y and along-line distance at a regular spacing along a polyline.
 
     Raises:
@@ -166,9 +216,9 @@ def densify_polyline(points: Sequence[Tuple[float, float]], spacing: float):
 
 def extract_fence(
     path,
-    points: Sequence[Tuple[float, float]],
+    points: Sequence[tuple[float, float]],
     spacing: float = 25.0,
-    max_snap: Optional[float] = None,
+    max_snap: float | None = None,
     header_bytes=DEFAULT_HEADER_BYTES,
     source: str = "cdp",
 ) -> Section:
@@ -209,8 +259,8 @@ def write_cube(
     inlines: Sequence[int],
     crosslines: Sequence[int],
     sample_interval_ms: float,
-    origin: Tuple[float, float] = (0.0, 0.0),
-    bin_size: Tuple[float, float] = (25.0, 25.0),
+    origin: tuple[float, float] = (0.0, 0.0),
+    bin_size: tuple[float, float] = (25.0, 25.0),
     rotation_deg: float = 0.0,
     text: str = "",
     coordinate_scalar: int = -100,
@@ -226,13 +276,19 @@ def write_cube(
     cube = np.asarray(data, dtype=np.float32)
     ilines, xlines = np.asarray(inlines, dtype=int), np.asarray(crosslines, dtype=int)
     if cube.shape[:2] != (ilines.size, xlines.size):
-        raise ValueError(f"data shape {cube.shape} does not match {ilines.size} x {xlines.size}")
+        raise ValueError(
+            f"data shape {cube.shape} does not match {ilines.size} x {xlines.size}"
+        )
     spec = segyio.spec()
     spec.ilines, spec.xlines = ilines, xlines
     spec.samples = np.arange(cube.shape[2]) * float(sample_interval_ms)
     spec.format = 5  # 4-byte IEEE float
     spec.sorting = 2  # inline sorted
-    scale = abs(coordinate_scalar) if coordinate_scalar < 0 else 1.0 / max(coordinate_scalar, 1)
+    scale = (
+        abs(coordinate_scalar)
+        if coordinate_scalar < 0
+        else 1.0 / max(coordinate_scalar, 1)
+    )
     cos_r, sin_r = np.cos(np.radians(rotation_deg)), np.sin(np.radians(rotation_deg))
     tf = segyio.TraceField
     out = Path(path)
@@ -255,29 +311,48 @@ def write_cube(
                 }
                 handle.trace[trace] = cube[i, j]
                 trace += 1
-        handle.bin.update(hdt=int(round(sample_interval_ms * 1000)), hns=int(cube.shape[2]), format=5,
-                          mfeet=1)
+        handle.bin.update(
+            hdt=int(round(sample_interval_ms * 1000)),
+            hns=int(cube.shape[2]),
+            format=5,
+            mfeet=1,
+        )
         lines = {n + 1: line for n, line in enumerate(text.splitlines()[:40]) if line}
-        handle.text[0] = segyio.tools.create_text_header(lines or {1: "written by segy_seismic_reading"})
+        handle.text[0] = segyio.tools.create_text_header(
+            lines or {1: "written by segy_seismic_reading"}
+        )
     return out
 
 
-def save_section_png(section: Section, out_path, title: str = "", clip_percentile: float = 99.0,
-                     sample_label: str = "TWT (ms)") -> Path:
+def save_section_png(
+    section: Section,
+    out_path,
+    title: str = "",
+    clip_percentile: float = 99.0,
+    sample_label: str = "TWT (ms)",
+) -> Path:
     """Plot a section with a symmetric grey-scale clip and save it as PNG."""
-    import matplotlib  # noqa: PLC0415  (optional dependency)
+    import matplotlib
 
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt  # noqa: PLC0415
+    import matplotlib.pyplot as plt
 
     data = section.data
     finite = np.abs(data[np.isfinite(data)])
     clip = float(np.percentile(finite, clip_percentile)) if finite.size else 1.0
     clip = clip or 1.0
-    horizontal = section.distance if section.distance is not None else np.arange(data.shape[0])
+    horizontal = (
+        section.distance if section.distance is not None else np.arange(data.shape[0])
+    )
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.imshow(data.T, cmap="gray_r", vmin=-clip, vmax=clip, aspect="auto",
-              extent=[horizontal[0], horizontal[-1], section.samples[-1], section.samples[0]])
+    ax.imshow(
+        data.T,
+        cmap="gray_r",
+        vmin=-clip,
+        vmax=clip,
+        aspect="auto",
+        extent=[horizontal[0], horizontal[-1], section.samples[-1], section.samples[0]],
+    )
     ax.set_xlabel("distance along line" if section.distance is not None else "trace")
     ax.set_ylabel(sample_label)
     ax.set_title(title or section.label)

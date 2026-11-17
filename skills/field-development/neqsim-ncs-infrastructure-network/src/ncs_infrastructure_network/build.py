@@ -17,12 +17,24 @@ Snapshot schema ``ncs_network_snapshot.v1``::
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import UTC, datetime
+from typing import Any
 
-from .open_api import (NORSKPETROLEUM_TABLES, EntsogTransparency, SodirDataService, default_fetch,
-                       read_norskpetroleum_capacity_xlsx)
-from .topology import ARC_OVERRIDES, CURATED_ARCS, CURATED_NODES, MARKET_LINKS, node_id, norm
+from .open_api import (
+    NORSKPETROLEUM_TABLES,
+    EntsogTransparency,
+    SodirDataService,
+    default_fetch,
+    read_norskpetroleum_capacity_xlsx,
+)
+from .topology import (
+    ARC_OVERRIDES,
+    CURATED_ARCS,
+    CURATED_NODES,
+    MARKET_LINKS,
+    node_id,
+    norm,
+)
 from .transport_parser import Gazetteer, parse_transport_text
 
 SCHEMA = "ncs_network_snapshot.v1"
@@ -32,31 +44,47 @@ SODIR_DISCOVERY_URL = "https://factpages.sodir.no/discovery/pageview/all/{npdid}
 
 # Discovery statuses that are candidates for future tie-in / development.
 CANDIDATE_DISCOVERY_STATUSES = {
-    "Production decided", "Approved for production", "Production in clarification phase",
-    "Production likely, but unclarified", "Production likely but unclarified", "Production not evaluated",
+    "Production decided",
+    "Approved for production",
+    "Production in clarification phase",
+    "Production likely, but unclarified",
+    "Production likely but unclarified",
+    "Production not evaluated",
     "Production is unlikely",
 }
 
 
-def fetch_raw(fetch=default_fetch, *, timeout: float = 120.0) -> Dict[str, Any]:
+def fetch_raw(fetch=default_fetch, *, timeout: float = 120.0) -> dict[str, Any]:
     """Read every open source the snapshot needs. Network, bounded, read-only."""
     ds = SodirDataService(fetch, timeout=timeout)
-    raw: Dict[str, Any] = {
+    raw: dict[str, Any] = {
         "field": ds.query("field", return_geometry=True, out_sr=4326, max_offset=0.05),
-        "discovery": ds.query("discovery", return_geometry=True, out_sr=4326, max_offset=0.05),
-        "field_description": ds.query("field_description",
-                                       where="fldDescriptionHeading='Transport' AND fldCultureCode='en'"),
+        "discovery": ds.query(
+            "discovery", return_geometry=True, out_sr=4326, max_offset=0.05
+        ),
+        "field_description": ds.query(
+            "field_description",
+            where="fldDescriptionHeading='Transport' AND fldCultureCode='en'",
+        ),
         "field_reserves": ds.query("field_reserves"),
         "discovery_reserves": ds.query("discovery_reserves"),
         "facility": ds.query("facility", return_geometry=True, out_sr=4326),
         "profiles": ds.query("profiles", where="prfPeriod='year'"),
         "pipeline": ds.query("pipeline"),
     }
-    raw["gas_pipelines"] = read_norskpetroleum_capacity_xlsx(fetch(NORSKPETROLEUM_TABLES["gas_pipelines"], timeout))
-    raw["oil_pipelines"] = read_norskpetroleum_capacity_xlsx(fetch(NORSKPETROLEUM_TABLES["oil_pipelines"], timeout))
+    raw["gas_pipelines"] = read_norskpetroleum_capacity_xlsx(
+        fetch(NORSKPETROLEUM_TABLES["gas_pipelines"], timeout)
+    )
+    raw["oil_pipelines"] = read_norskpetroleum_capacity_xlsx(
+        fetch(NORSKPETROLEUM_TABLES["oil_pipelines"], timeout)
+    )
     raw["sources"] = [r.to_dict() for r in ds.records] + [
-        {"source": "norskpetroleum", "url": url, "rows": len(raw[key]),
-         "licence": "norskpetroleum.no - reuse with attribution and link"}
+        {
+            "source": "norskpetroleum",
+            "url": url,
+            "rows": len(raw[key]),
+            "licence": "norskpetroleum.no - reuse with attribution and link",
+        }
         for key, url in NORSKPETROLEUM_TABLES.items()
     ]
     return raw
@@ -64,7 +92,8 @@ def fetch_raw(fetch=default_fetch, *, timeout: float = 120.0) -> Dict[str, Any]:
 
 # --------------------------------------------------------------------------- helpers
 
-def _num(value: Any) -> Optional[float]:
+
+def _num(value: Any) -> float | None:
     if value in (None, ""):
         return None
     try:
@@ -73,13 +102,15 @@ def _num(value: Any) -> Optional[float]:
         return None
 
 
-def parse_capacity(raw: Any) -> Tuple[Optional[float], Optional[List[float]]]:
+def parse_capacity(raw: Any) -> tuple[float | None, list[float] | None]:
     """Return (conservative capacity, [low, high]) from '46', 46, '10-27' or '10–27'."""
     if raw in (None, ""):
         return None, None
     if isinstance(raw, (int, float)):
         return float(raw), None
-    numbers = [float(x.replace(",", ".")) for x in re.findall(r"\d+(?:[.,]\d+)?", str(raw))]
+    numbers = [
+        float(x.replace(",", ".")) for x in re.findall(r"\d+(?:[.,]\d+)?", str(raw))
+    ]
     if not numbers:
         return None, None
     if len(numbers) >= 2:
@@ -87,7 +118,9 @@ def parse_capacity(raw: Any) -> Tuple[Optional[float], Optional[List[float]]]:
     return numbers[0], None
 
 
-def _centroid(geometry: Optional[Dict[str, Any]]) -> Tuple[Optional[float], Optional[float]]:
+def _centroid(
+    geometry: dict[str, Any] | None,
+) -> tuple[float | None, float | None]:
     if not geometry:
         return None, None
     if "x" in geometry and "y" in geometry:
@@ -96,7 +129,10 @@ def _centroid(geometry: Optional[Dict[str, Any]]) -> Tuple[Optional[float], Opti
     points = [pt for ring in rings for pt in ring]
     if not points:
         return None, None
-    return (round(sum(p[1] for p in points) / len(points), 4), round(sum(p[0] for p in points) / len(points), 4))
+    return (
+        round(sum(p[1] for p in points) / len(points), 4),
+        round(sum(p[0] for p in points) / len(points), 4),
+    )
 
 
 def resolve_name(name: str, gazetteer: Gazetteer) -> str:
@@ -104,13 +140,19 @@ def resolve_name(name: str, gazetteer: Gazetteer) -> str:
     return gazetteer.aliases.get(key) or node_id(name)
 
 
-def _reachable_by_table(arcs: List[Dict[str, Any]], src: str, dst: str, medium: str, max_hops: int = 4) -> bool:
+def _reachable_by_table(
+    arcs: list[dict[str, Any]], src: str, dst: str, medium: str, max_hops: int = 4
+) -> bool:
     """True when table/curated arcs already connect src to dst in 2+ hops.
 
     Prose often says "exported via Statpipe to Karsto"; a direct text arc
     src->dst would bypass the capacitated trunk, so it is dropped.
     """
-    table = [a for a in arcs if a["medium"] == medium and a.get("source") in ("norskpetroleum", "curated")]
+    table = [
+        a
+        for a in arcs
+        if a["medium"] == medium and a.get("source") in ("norskpetroleum", "curated")
+    ]
     frontier, seen = {src}, {src}
     for hop in range(max_hops):
         nxt = {a["to"] for a in table if a["from"] in frontier} - seen
@@ -125,22 +167,29 @@ def _reachable_by_table(arcs: List[Dict[str, Any]], src: str, dst: str, medium: 
 
 # --------------------------------------------------------------------------- build
 
-def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) -> Dict[str, Any]:
+
+def build_snapshot(
+    raw: dict[str, Any], *, generated_utc: str | None = None
+) -> dict[str, Any]:
     field_rows = raw.get("field", [])
     field_names = {r["fldName"] for r in field_rows if r.get("fldName")}
     base = Gazetteer.build()
     field_ids = {name: resolve_name(name, base) for name in field_names}
     gazetteer = Gazetteer.build({name: fid for name, fid in field_ids.items()})
 
-    nodes: Dict[str, Dict[str, Any]] = {n["id"]: dict(n) for n in CURATED_NODES}
-    arcs: List[Dict[str, Any]] = []
+    nodes: dict[str, dict[str, Any]] = {n["id"]: dict(n) for n in CURATED_NODES}
+    arcs: list[dict[str, Any]] = []
     arc_keys = set()
 
-    def ensure_node(nid: str, name: Optional[str] = None, kind: str = "hub") -> None:
+    def ensure_node(nid: str, name: str | None = None, kind: str = "hub") -> None:
         if nid not in nodes:
-            nodes[nid] = {"id": nid, "name": name or nid.replace("_", " ").title(), "kind": kind}
+            nodes[nid] = {
+                "id": nid,
+                "name": name or nid.replace("_", " ").title(),
+                "kind": kind,
+            }
 
-    def add_arc(arc: Dict[str, Any]) -> None:
+    def add_arc(arc: dict[str, Any]) -> None:
         key = (arc["from"], arc["to"], arc["medium"])
         if key in arc_keys or arc["from"] == arc["to"]:
             return
@@ -153,37 +202,77 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
         arcs.append(arc)
 
     # 1) capacity tables (norskpetroleum) - primary arcs
-    for table, medium, unit in (("gas_pipelines", "gas", "MSm3/d"), ("oil_pipelines", "liquid", "Sm3/d")):
+    for table, medium, unit in (
+        ("gas_pipelines", "gas", "MSm3/d"),
+        ("oil_pipelines", "liquid", "Sm3/d"),
+    ):
         for row in raw.get(table, []):
             name = str(row.get("name") or "").strip()
             src = resolve_name(str(row.get("from") or ""), gazetteer)
             dst = resolve_name(str(row.get("to") or ""), gazetteer)
             capacity, cap_range = parse_capacity(row.get("capacity_raw"))
             common = {
-                "name": name, "medium": medium, "capacity": capacity, "capacity_range": cap_range,
-                "capacity_unit": unit, "diameter_in": _num(row.get("diameter_in")),
-                "length_km": _num(row.get("length_km")), "start_year": row.get("start_year"),
-                "operator": row.get("operator"), "source": "norskpetroleum", "primary": True,
-                "source_url": NORSKPETROLEUM_TABLES[table], "confidence": "high" if capacity else "medium",
+                "name": name,
+                "medium": medium,
+                "capacity": capacity,
+                "capacity_range": cap_range,
+                "capacity_unit": unit,
+                "diameter_in": _num(row.get("diameter_in")),
+                "length_km": _num(row.get("length_km")),
+                "start_year": row.get("start_year"),
+                "operator": row.get("operator"),
+                "source": "norskpetroleum",
+                "primary": True,
+                "source_url": NORSKPETROLEUM_TABLES[table],
+                "confidence": "high" if capacity else "medium",
             }
             override = ARC_OVERRIDES.get(name)
             if override:
-                add_arc({**common, "id": node_id(name) + "_A", "from": src, "to": override["to"]})
-                add_arc({**common, "id": node_id(name) + "_B", "from": override["to"], "to": override["continue_to"],
-                         "shared_segment": True})
+                add_arc(
+                    {
+                        **common,
+                        "id": node_id(name) + "_A",
+                        "from": src,
+                        "to": override["to"],
+                    }
+                )
+                add_arc(
+                    {
+                        **common,
+                        "id": node_id(name) + "_B",
+                        "from": override["to"],
+                        "to": override["continue_to"],
+                        "shared_segment": True,
+                    }
+                )
             else:
-                add_arc({**common, "id": node_id(name) + "__" + src + "__" + dst, "from": src, "to": dst})
+                add_arc(
+                    {
+                        **common,
+                        "id": node_id(name) + "__" + src + "__" + dst,
+                        "from": src,
+                        "to": dst,
+                    }
+                )
 
     # 2) curated arcs and market links
     for arc in CURATED_ARCS:
         add_arc({**arc, "source": "curated", "primary": True, "capacity_range": None})
     for link in MARKET_LINKS:
-        add_arc({**link, "id": f"{link['from']}__{link['to']}", "capacity": None,
-                 "capacity_unit": "MSm3/d" if link["medium"] == "gas" else "Sm3/d",
-                 "source": "curated", "primary": True, "kind": "market_link"})
+        add_arc(
+            {
+                **link,
+                "id": f"{link['from']}__{link['to']}",
+                "capacity": None,
+                "capacity_unit": "MSm3/d" if link["medium"] == "gas" else "Sm3/d",
+                "source": "curated",
+                "primary": True,
+                "kind": "market_link",
+            }
+        )
 
     # 3) fields
-    fields: Dict[str, Dict[str, Any]] = {}
+    fields: dict[str, dict[str, Any]] = {}
     for row in field_rows:
         name = row.get("fldName")
         if not name:
@@ -191,24 +280,41 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
         fid = field_ids[name]
         lat, lon = _centroid(row.get("_geometry"))
         fields[fid] = {
-            "id": fid, "name": name, "npdid": row.get("fldNpdidField"),
-            "status": row.get("fldCurrentActivitySatus"), "hc_type": row.get("fldHcType"),
-            "area": row.get("fldMainArea"), "operator": row.get("cmpLongName"),
-            "discovery_year": row.get("fldDiscoveryYear"), "lat": lat, "lon": lon,
+            "id": fid,
+            "name": name,
+            "npdid": row.get("fldNpdidField"),
+            "status": row.get("fldCurrentActivitySatus"),
+            "hc_type": row.get("fldHcType"),
+            "area": row.get("fldMainArea"),
+            "operator": row.get("cmpLongName"),
+            "discovery_year": row.get("fldDiscoveryYear"),
+            "lat": lat,
+            "lon": lon,
             "source_url": SODIR_FIELD_URL.format(npdid=row.get("fldNpdidField")),
-            "reserves": {}, "recoverable": {}, "production": {}, "routes": [],
+            "reserves": {},
+            "recoverable": {},
+            "production": {},
+            "routes": [],
         }
         node = nodes.setdefault(fid, {"id": fid, "name": name})
-        node.update({"kind": "field", "name": name, "status": row.get("fldCurrentActivitySatus"),
-                     "npdid": row.get("fldNpdidField")})
+        node.update(
+            {
+                "kind": "field",
+                "name": name,
+                "status": row.get("fldCurrentActivitySatus"),
+                "npdid": row.get("fldNpdidField"),
+            }
+        )
 
     by_npdid = {f["npdid"]: fid for fid, f in fields.items()}
 
     # reserves: latest version per field (Sodir: oil/cond MSm3, gas GSm3, NGL Mtonn, OE MSm3oe)
-    latest: Dict[Any, Dict[str, Any]] = {}
+    latest: dict[Any, dict[str, Any]] = {}
     for row in raw.get("field_reserves", []):
         npd = row.get("fldNpdidField")
-        if npd not in latest or (row.get("fldVersion") or 0) >= (latest[npd].get("fldVersion") or 0):
+        if npd not in latest or (row.get("fldVersion") or 0) >= (
+            latest[npd].get("fldVersion") or 0
+        ):
             latest[npd] = row
     for npd, row in latest.items():
         fid = by_npdid.get(npd)
@@ -219,17 +325,19 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
             "remaining_gas_bsm3": _num(row.get("fldRemainingGas")),
             "remaining_ngl_mt": _num(row.get("fldRemainingNGL")),
             "remaining_condensate_msm3": _num(row.get("fldRemainingCondensate")),
-            "remaining_oe_msm3": _num(row.get("fldRemainingOE")), "version": row.get("fldVersion"),
+            "remaining_oe_msm3": _num(row.get("fldRemainingOE")),
+            "version": row.get("fldVersion"),
         }
         fields[fid]["recoverable"] = {
-            "oil_msm3": _num(row.get("fldRecoverableOil")), "gas_bsm3": _num(row.get("fldRecoverableGas")),
+            "oil_msm3": _num(row.get("fldRecoverableOil")),
+            "gas_bsm3": _num(row.get("fldRecoverableGas")),
             "ngl_mt": _num(row.get("fldRecoverableNGL")),
             "condensate_msm3": _num(row.get("fldRecoverableCondensate")),
             "oe_msm3": _num(row.get("fldRecoverableOE")),
         }
 
     # yearly production (Sodir: oil/NGL/cond MSm3, gas GSm3)
-    discovery_profiles: Dict[Any, Dict[str, Any]] = {}
+    discovery_profiles: dict[Any, dict[str, Any]] = {}
     for row in raw.get("profiles", []):
         if row.get("prfPeriod", "year") != "year":
             continue
@@ -253,15 +361,23 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
             continue
         if row.get("fldCultureCode", "en") != "en":  # the parser reads English prose
             continue
-        fid = by_npdid.get(row.get("fldNpdidField")) or field_ids.get(row.get("fldName"))
+        fid = by_npdid.get(row.get("fldNpdidField")) or field_ids.get(
+            row.get("fldName")
+        )
         if not fid:
             continue
         text = row.get("fldDescriptionText") or ""
         fields[fid]["transport_text"] = text
         for route in parse_transport_text(fid, text, gazetteer):
-            fields[fid]["routes"].append({"medium": route.medium, "nodes": route.nodes,
-                                          "confidence": route.confidence, "needs_review": route.needs_review,
-                                          "historic": route.historic})
+            fields[fid]["routes"].append(
+                {
+                    "medium": route.medium,
+                    "nodes": route.nodes,
+                    "confidence": route.confidence,
+                    "needs_review": route.needs_review,
+                    "historic": route.historic,
+                }
+            )
             if route.historic:
                 continue
             for a, b in route.arcs():
@@ -269,15 +385,27 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
                     continue  # outlets of plants/terminals come from tables, never from field prose
                 if _reachable_by_table(arcs, a, b, route.medium):
                     continue  # prose skipped an intermediate trunk; keep the capacitated table path
-                add_arc({"from": a, "to": b, "medium": route.medium, "capacity": None,
-                         "capacity_unit": "MSm3/d" if route.medium == "gas" else "Sm3/d",
-                         "source": "sodir-field-description", "reported_by": fid,
-                         "primary": a == fid, "confidence": route.confidence,
-                         "needs_review": route.needs_review, "source_url": fields[fid]["source_url"]})
+                add_arc(
+                    {
+                        "from": a,
+                        "to": b,
+                        "medium": route.medium,
+                        "capacity": None,
+                        "capacity_unit": "MSm3/d" if route.medium == "gas" else "Sm3/d",
+                        "source": "sodir-field-description",
+                        "reported_by": fid,
+                        "primary": a == fid,
+                        "confidence": route.confidence,
+                        "needs_review": route.needs_review,
+                        "source_url": fields[fid]["source_url"],
+                    }
+                )
 
     # 4) discoveries
-    reserves_by_disc = {r.get("dscNpdidDiscovery"): r for r in raw.get("discovery_reserves", [])}
-    discoveries: Dict[str, Dict[str, Any]] = {}
+    reserves_by_disc = {
+        r.get("dscNpdidDiscovery"): r for r in raw.get("discovery_reserves", [])
+    }
+    discoveries: dict[str, dict[str, Any]] = {}
     for row in raw.get("discovery", []):
         status = row.get("dscCurrentActivityStatus")
         if status not in CANDIDATE_DISCOVERY_STATUSES:
@@ -287,14 +415,22 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
         res = reserves_by_disc.get(npd, {})
         did = "DSC_" + node_id(row.get("dscName") or str(npd))
         discoveries[did] = {
-            "id": did, "name": row.get("dscName"), "npdid": npd, "status": status,
-            "hc_type": row.get("dscHcType"), "area": row.get("nmaName"), "operator": row.get("cmpLongName"),
-            "discovery_year": row.get("dscDiscoveryYear"), "lat": lat, "lon": lon,
+            "id": did,
+            "name": row.get("dscName"),
+            "npdid": npd,
+            "status": status,
+            "hc_type": row.get("dscHcType"),
+            "area": row.get("nmaName"),
+            "operator": row.get("cmpLongName"),
+            "discovery_year": row.get("dscDiscoveryYear"),
+            "lat": lat,
+            "lon": lon,
             "linked_field": row.get("fldName"),
             "source_url": SODIR_DISCOVERY_URL.format(npdid=npd),
             "reserves": {
                 "rc": res.get("dscReservesRC"),
-                "oil_msm3": _num(res.get("dscRecoverableOil")), "gas_bsm3": _num(res.get("dscRecoverableGas")),
+                "oil_msm3": _num(res.get("dscRecoverableOil")),
+                "gas_bsm3": _num(res.get("dscRecoverableGas")),
                 "ngl_mt": _num(res.get("dscRecoverableNGL")),
                 "condensate_msm3": _num(res.get("dscRecoverableCondensate")),
                 "oe_msm3": _num(res.get("dscRecoverableOe")),
@@ -303,7 +439,7 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
         }
 
     # 5) host facilities (surface, processing, in service) for tie-back screening
-    hosts: List[Dict[str, Any]] = []
+    hosts: list[dict[str, Any]] = []
     for row in raw.get("facility", []):
         functions = str(row.get("fclFunctions") or "")
         if row.get("fclPhase") != "IN SERVICE" or "PROCESSING" not in functions:
@@ -312,37 +448,74 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
         if lat is None:
             continue
         fid = by_npdid.get(row.get("fclNpdidBelongsTo"))
-        hosts.append({"name": row.get("fclName"), "field_id": fid, "kind": row.get("fclKind"),
-                      "lat": round(lat, 4), "lon": round(lon, 4), "water_depth_m": _num(row.get("fclWaterDepth")),
-                      "functions": functions, "operator": row.get("fclCurrentOperatorName"),
-                      "npdid": row.get("fclNpdidFacility"),
-                      "surface": row.get("fclSurface") == "Y", "design_lifetime_y": row.get("fclDesignLifetime")})
+        hosts.append(
+            {
+                "name": row.get("fclName"),
+                "field_id": fid,
+                "kind": row.get("fclKind"),
+                "lat": round(lat, 4),
+                "lon": round(lon, 4),
+                "water_depth_m": _num(row.get("fclWaterDepth")),
+                "functions": functions,
+                "operator": row.get("fclCurrentOperatorName"),
+                "npdid": row.get("fclNpdidFacility"),
+                "surface": row.get("fclSurface") == "Y",
+                "design_lifetime_y": row.get("fclDesignLifetime"),
+            }
+        )
 
     # 6) raw Sodir pipeline segments (in service) for cross-checks
-    segments = [{"name": r.get("pplName"), "system": r.get("pplBelongsToName"), "label": r.get("pplMapLabel"),
-                 "from_facility": r.get("fclNameFrom"), "to_facility": r.get("fclNameTo"),
-                 "medium": r.get("pplMedium"), "diameter_in": r.get("pplDimension"),
-                 "phase": r.get("pplCurrentPhase"), "operator": r.get("cmpLongName"),
-                 "source_url": r.get("pplFactPageUrl")}
-                for r in raw.get("pipeline", []) if r.get("pplCurrentPhase") == "IN SERVICE"]
+    segments = [
+        {
+            "name": r.get("pplName"),
+            "system": r.get("pplBelongsToName"),
+            "label": r.get("pplMapLabel"),
+            "from_facility": r.get("fclNameFrom"),
+            "to_facility": r.get("fclNameTo"),
+            "medium": r.get("pplMedium"),
+            "diameter_in": r.get("pplDimension"),
+            "phase": r.get("pplCurrentPhase"),
+            "operator": r.get("cmpLongName"),
+            "source_url": r.get("pplFactPageUrl"),
+        }
+        for r in raw.get("pipeline", [])
+        if r.get("pplCurrentPhase") == "IN SERVICE"
+    ]
 
     return {
         "schema": SCHEMA,
-        "generated_utc": generated_utc or datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_utc": generated_utc
+        or datetime.now(UTC).isoformat(timespec="seconds"),
         "licence": "Sodir data NLOD 2.0; norskpetroleum.no and gassco.eu reused with attribution",
-        "units": {"gas_capacity": "MSm3/d", "liquid_capacity": "Sm3/d", "reserves_oil": "MSm3",
-                  "reserves_gas": "GSm3", "reserves_ngl": "Mtonn", "production_gas": "GSm3/yr",
-                  "production_liquids": "MSm3/yr"},
-        "nodes": nodes, "arcs": arcs, "fields": fields, "discoveries": discoveries,
-        "hosts": hosts, "pipeline_segments": segments, "sources": raw.get("sources", []),
+        "units": {
+            "gas_capacity": "MSm3/d",
+            "liquid_capacity": "Sm3/d",
+            "reserves_oil": "MSm3",
+            "reserves_gas": "GSm3",
+            "reserves_ngl": "Mtonn",
+            "production_gas": "GSm3/yr",
+            "production_liquids": "MSm3/yr",
+        },
+        "nodes": nodes,
+        "arcs": arcs,
+        "fields": fields,
+        "discoveries": discoveries,
+        "hosts": hosts,
+        "pipeline_segments": segments,
+        "sources": raw.get("sources", []),
     }
 
 
-def fetch_entsog_calibration(date_from: str, date_to: str, fetch=default_fetch) -> Dict[str, Any]:
+def fetch_entsog_calibration(
+    date_from: str, date_to: str, fetch=default_fetch
+) -> dict[str, Any]:
     """Observed daily entry flows per Norwegian receiving terminal (for calibration)."""
     from .open_api import summarise_entry_flows
 
     client = EntsogTransparency(fetch)
     rows = client.norwegian_entry_flows(date_from, date_to)
-    return {"window": [date_from, date_to], "by_terminal": summarise_entry_flows(rows),
-            "records": [r.to_dict() for r in client.records]}
+    return {
+        "window": [date_from, date_to],
+        "by_terminal": summarise_entry_flows(rows),
+        "records": [r.to_dict() for r in client.records],
+    }

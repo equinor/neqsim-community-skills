@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from olga_multiphase_simulator.geometry import (
     DiscretizationError,
     discretize_route,
@@ -41,8 +40,13 @@ def test_neighbour_ratio_is_enforced_across_a_pipe_boundary():
     """A short pipe next to a long one must not create a large section jump."""
     x = [0.0, 100.0, 5100.0]
     y = [0.0, 0.0, 0.0]
-    mesh = discretize_route(x, y, target_section_length=100.0,
-                            max_section_length=5000.0, max_adjacent_ratio=2.0)
+    mesh = discretize_route(
+        x,
+        y,
+        target_section_length=100.0,
+        max_section_length=5000.0,
+        max_adjacent_ratio=2.0,
+    )
 
     assert mesh.max_adjacent_ratio <= 2.0 + 1e-9
 
@@ -51,8 +55,9 @@ def test_max_section_length_is_respected():
     """No section may exceed the stated maximum."""
     x = [0.0, 10000.0]
     y = [0.0, 0.0]
-    mesh = discretize_route(x, y, target_section_length=5000.0,
-                            max_section_length=500.0)
+    mesh = discretize_route(
+        x, y, target_section_length=5000.0, max_section_length=500.0
+    )
 
     assert max(mesh.section_lengths) <= 500.0 + 1e-9
 
@@ -61,9 +66,13 @@ def test_boundary_refinement_grades_toward_both_ends():
     """Inlet and outlet sections should be the short ones."""
     x = [0.0, 2000.0, 4000.0, 6000.0]
     y = [0.0, 0.0, 0.0, 0.0]
-    mesh = discretize_route(x, y, target_section_length=250.0,
-                            boundary_section_length=50.0,
-                            max_adjacent_ratio=1.5)
+    mesh = discretize_route(
+        x,
+        y,
+        target_section_length=250.0,
+        boundary_section_length=50.0,
+        max_adjacent_ratio=1.5,
+    )
 
     lengths = mesh.section_lengths
     assert lengths[0] < lengths[len(lengths) // 2]
@@ -74,10 +83,13 @@ def test_boundary_refinement_grades_toward_both_ends():
 
 def test_boundary_section_keeps_its_requested_length():
     """The boundary section must not be rescaled away by the grading."""
-    mesh = discretize_route([0.0, 4000.0], [0.0, 0.0],
-                            target_section_length=500.0,
-                            boundary_section_length=100.0,
-                            max_adjacent_ratio=1.5)
+    mesh = discretize_route(
+        [0.0, 4000.0],
+        [0.0, 0.0],
+        target_section_length=500.0,
+        boundary_section_length=100.0,
+        max_adjacent_ratio=1.5,
+    )
 
     assert mesh.pipes[0].section_lengths[0] == pytest.approx(100.0)
     assert sum(mesh.pipes[0].section_lengths) == pytest.approx(4000.0)
@@ -87,10 +99,14 @@ def test_graded_mesh_still_respects_the_neighbour_ratio():
     """Boundary grading must not create a section jump larger than the limit."""
     x = [0.0, 3692.0, 7385.0, 11077.0, 14769.0]
     y = [-307.4, -294.8, -272.1, -255.7, -270.0]
-    mesh = discretize_route(x, y, target_section_length=500.0,
-                            boundary_section_length=100.0,
-                            max_adjacent_ratio=1.5,
-                            refine_low_points=True)
+    mesh = discretize_route(
+        x,
+        y,
+        target_section_length=500.0,
+        boundary_section_length=100.0,
+        max_adjacent_ratio=1.5,
+        refine_low_points=True,
+    )
 
     assert mesh.max_adjacent_ratio <= 1.5 + 1e-6
     for pipe in mesh.pipes:
@@ -103,9 +119,13 @@ def test_low_point_refinement_adds_sections_around_a_dip():
     y = [0.0, -50.0, 0.0, 0.0]
 
     coarse = discretize_route(x, y, target_section_length=250.0)
-    refined = discretize_route(x, y, target_section_length=250.0,
-                               refine_low_points=True,
-                               low_point_section_length=50.0)
+    refined = discretize_route(
+        x,
+        y,
+        target_section_length=250.0,
+        refine_low_points=True,
+        low_point_section_length=50.0,
+    )
 
     assert refined.total_sections > coarse.total_sections
     assert refined.pipes[0].nsegments > coarse.pipes[0].nsegments
@@ -121,7 +141,7 @@ def test_genkey_rendering_contains_the_expected_keywords():
     assert "NSEGMENT=2" in text
     assert "LSEGMENT=(" in text
     assert "DIAMETER=0.3550 m" in text
-    assert "WALL=\"PIPEWALL\"" in text
+    assert 'WALL="PIPEWALL"' in text
     assert "YEND=10.000 m" in text
 
 
@@ -140,8 +160,9 @@ def test_summary_reports_mesh_quality():
 def test_rejects_a_non_monotonic_route():
     """A route that goes backwards is a data error, not a mesh to build."""
     with pytest.raises(DiscretizationError):
-        discretize_route([0.0, 500.0, 400.0], [0.0, 0.0, 0.0],
-                         target_section_length=100.0)
+        discretize_route(
+            [0.0, 500.0, 400.0], [0.0, 0.0, 0.0], target_section_length=100.0
+        )
 
 
 def test_rejects_mismatched_or_degenerate_input():

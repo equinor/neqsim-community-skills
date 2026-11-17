@@ -7,9 +7,9 @@ metre over the few tens of kilometres a subsea field spans.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from math import asin, cos, degrees, radians, sin, sqrt
-from typing import Iterable, Mapping, Sequence
 
 EARTH_RADIUS_M = 6_371_008.8
 #: Metres per degree of latitude on the WGS84 ellipsoid at mid latitudes.
@@ -36,13 +36,19 @@ class LocalFrame:
     def to_geographic(self, east_m: float, north_m: float) -> tuple[float, float]:
         """Local east/north offsets in metres -> (latitude, longitude) in degrees."""
         latitude = self.origin_latitude_deg + north_m / METRES_PER_DEGREE_LATITUDE
-        longitude = self.origin_longitude_deg + east_m / self.metres_per_degree_longitude
+        longitude = (
+            self.origin_longitude_deg + east_m / self.metres_per_degree_longitude
+        )
         return latitude, longitude
 
-    def to_local(self, latitude_deg: float, longitude_deg: float) -> tuple[float, float]:
+    def to_local(
+        self, latitude_deg: float, longitude_deg: float
+    ) -> tuple[float, float]:
         """(latitude, longitude) in degrees -> local east/north offsets in metres."""
         north = (latitude_deg - self.origin_latitude_deg) * METRES_PER_DEGREE_LATITUDE
-        east = (longitude_deg - self.origin_longitude_deg) * self.metres_per_degree_longitude
+        east = (
+            longitude_deg - self.origin_longitude_deg
+        ) * self.metres_per_degree_longitude
         return east, north
 
 
@@ -153,7 +159,10 @@ def point_feature(latitude: float, longitude: float, properties: Mapping) -> dic
     """A GeoJSON point feature (longitude first, per RFC 7946)."""
     return {
         "type": "Feature",
-        "geometry": {"type": "Point", "coordinates": [round(longitude, 7), round(latitude, 7)]},
+        "geometry": {
+            "type": "Point",
+            "coordinates": [round(longitude, 7), round(latitude, 7)],
+        },
         "properties": dict(properties),
     }
 

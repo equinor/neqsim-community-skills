@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from olga_multiphase_simulator import OlgaRunner, describe_exit_code
 from olga_multiphase_simulator.discovery import find_olga
 from olga_multiphase_simulator.runner import collect_outputs
@@ -35,7 +34,9 @@ def test_options_are_rendered(runner: OlgaRunner, tmp_path: Path) -> None:
         console_log=True,
     )
     assert "-nthreads" in command and command[command.index("-nthreads") + 1] == "4"
-    assert "-outDir" in command and command[command.index("-outDir") + 1] == str(out_dir.resolve())
+    assert "-outDir" in command and command[command.index("-outDir") + 1] == str(
+        out_dir.resolve()
+    )
     assert "-noppl" in command and "-noplt" in command
     assert "-consoleLog" in command
 

@@ -1,5 +1,4 @@
 import pytest
-
 from compressor_operating_window import CompressorOperatingWindowModel
 
 

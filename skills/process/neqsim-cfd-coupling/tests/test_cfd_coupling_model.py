@@ -1,5 +1,4 @@
 import pytest
-
 from cfd_coupling import CfdCouplingModel
 
 
@@ -81,7 +80,8 @@ def test_single_mesh_cannot_demonstrate_independence() -> None:
 
 
 @pytest.mark.parametrize(
-    "spelling", ["kOmegaSST", "k-omega-sst", "k omega SST", "kOmegaSSTLM", "realizable k-epsilon"]
+    "spelling",
+    ["kOmegaSST", "k-omega-sst", "k omega SST", "kOmegaSSTLM", "realizable k-epsilon"],
 )
 def test_model_names_are_recognised_whatever_the_separator_style(spelling: str) -> None:
     # derive_boundary_conditions recommends "kOmegaSST"; the gate must accept the
@@ -162,7 +162,9 @@ def test_tonal_noise_case_fails_closed_without_source_evidence() -> None:
     assert readiness.verdict == "not_ready"
     assert "verified component tag and flow-path topology" in readiness.missing_inputs
     assert any("transient compressible" in step for step in readiness.solver_sequence)
-    assert any("fluid-structure interaction" in step for step in readiness.solver_sequence)
+    assert any(
+        "fluid-structure interaction" in step for step in readiness.solver_sequence
+    )
     assert any("Steady RANS" in finding for finding in readiness.findings)
 
 
@@ -222,12 +224,18 @@ def test_poor_grid_convergence_index_fails_mesh_check() -> None:
 def test_wall_resolution_gives_a_finer_cell_for_a_lower_target_y_plus() -> None:
     model = CfdCouplingModel()
     coarse = model.plan_wall_resolution(
-        density=931.0, viscosity=0.487e-3, velocity=2.66,
-        hydraulic_diameter=0.035, target_y_plus=30.0,
+        density=931.0,
+        viscosity=0.487e-3,
+        velocity=2.66,
+        hydraulic_diameter=0.035,
+        target_y_plus=30.0,
     )
     fine = model.plan_wall_resolution(
-        density=931.0, viscosity=0.487e-3, velocity=2.66,
-        hydraulic_diameter=0.035, target_y_plus=1.0,
+        density=931.0,
+        viscosity=0.487e-3,
+        velocity=2.66,
+        hydraulic_diameter=0.035,
+        target_y_plus=1.0,
     )
 
     assert fine.first_cell_height_m < coarse.first_cell_height_m
@@ -241,8 +249,11 @@ def test_wall_resolution_gives_a_finer_cell_for_a_lower_target_y_plus() -> None:
 
 def test_laminar_flow_is_flagged_in_wall_resolution() -> None:
     result = CfdCouplingModel().plan_wall_resolution(
-        density=1000.0, viscosity=1.0, velocity=0.001,
-        hydraulic_diameter=0.01, target_y_plus=1.0,
+        density=1000.0,
+        viscosity=1.0,
+        velocity=0.001,
+        hydraulic_diameter=0.01,
+        target_y_plus=1.0,
     )
 
     assert result.reynolds < 2300.0

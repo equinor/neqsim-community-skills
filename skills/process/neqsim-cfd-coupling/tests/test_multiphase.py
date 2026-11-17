@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from cfd_coupling import (
     FluidState,
     MeshSpec,
@@ -39,7 +38,9 @@ class _FakePhase:
         return 395.0
 
     def getFlowRate(self, unit):
-        return {"m3/sec": self._volumetric, "kg/sec": self._volumetric * self._density}[unit]
+        return {"m3/sec": self._volumetric, "kg/sec": self._volumetric * self._density}[
+            unit
+        ]
 
 
 class _FakeSystem:
@@ -143,15 +144,21 @@ def test_superficial_velocities_sum_to_the_mixture_velocity() -> None:
     conditions = derive_multiphase_conditions(state(), hydraulic_diameter_m=0.3048)
 
     area = math.pi * 0.3048**2 / 4.0
-    assert conditions.superficial_continuous_velocity_m_per_s == pytest.approx(0.8 / area)
-    assert conditions.superficial_dispersed_velocity_m_per_s == pytest.approx(0.2 / area)
+    assert conditions.superficial_continuous_velocity_m_per_s == pytest.approx(
+        0.8 / area
+    )
+    assert conditions.superficial_dispersed_velocity_m_per_s == pytest.approx(
+        0.2 / area
+    )
     assert conditions.mixture_velocity_m_per_s == pytest.approx(1.0 / area)
 
 
 def test_mixture_properties_use_the_no_slip_volume_average() -> None:
     conditions = derive_multiphase_conditions(state(0.25), hydraulic_diameter_m=0.3048)
 
-    assert conditions.mixture_density_kg_per_m3 == pytest.approx(0.25 * 720.0 + 0.75 * 52.4)
+    assert conditions.mixture_density_kg_per_m3 == pytest.approx(
+        0.25 * 720.0 + 0.75 * 52.4
+    )
     assert any("no-slip" in note for note in conditions.assumptions)
 
 
@@ -194,8 +201,12 @@ def test_missing_flow_regime_is_declared_as_a_weaker_basis() -> None:
 
 def test_phases_without_a_flow_rate_are_rejected() -> None:
     bare = MultiphaseState(
-        continuous=FluidState(name="g", phase="gas", density_kg_per_m3=52.4, viscosity_pa_s=1.4e-5),
-        dispersed=FluidState(name="o", phase="oil", density_kg_per_m3=720.0, viscosity_pa_s=6e-4),
+        continuous=FluidState(
+            name="g", phase="gas", density_kg_per_m3=52.4, viscosity_pa_s=1.4e-5
+        ),
+        dispersed=FluidState(
+            name="o", phase="oil", density_kg_per_m3=720.0, viscosity_pa_s=6e-4
+        ),
         interfacial_tension_n_per_m=0.012,
         continuous_volume_fraction=0.8,
         dispersed_volume_fraction=0.2,

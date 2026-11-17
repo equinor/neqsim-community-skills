@@ -14,7 +14,6 @@ CoolProp, lab data, or a published case relevant to the fluid actually modelled.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
 
 from .sources import ReferenceSource, get_source
 
@@ -32,8 +31,8 @@ class ReferencePoint:
     value: float
     unit: str
     source_key: str
-    state: Dict[str, float] = field(default_factory=dict)
-    uncertainty_pct: Optional[float] = None
+    state: dict[str, float] = field(default_factory=dict)
+    uncertainty_pct: float | None = None
     note: str = ""
 
     @property
@@ -46,7 +45,7 @@ class ReferencePoint:
         """Full citation string for the report."""
         return self.source.citation
 
-    def effective_uncertainty_pct(self) -> Optional[float]:
+    def effective_uncertainty_pct(self) -> float | None:
         """Point uncertainty, falling back to the source's stated uncertainty."""
         if self.uncertainty_pct is not None:
             return self.uncertainty_pct
@@ -57,7 +56,7 @@ class ReferencePoint:
         if not self.state:
             return "-"
         return ", ".join(
-            "{}={:g}".format(key, value) for key, value in sorted(self.state.items())
+            f"{key}={value:g}" for key, value in sorted(self.state.items())
         )
 
 
@@ -67,7 +66,7 @@ def _point(
     value: float,
     unit: str,
     source_key: str,
-    state: Optional[Dict[str, float]] = None,
+    state: dict[str, float] | None = None,
     note: str = "",
 ) -> ReferencePoint:
     return ReferencePoint(
@@ -81,7 +80,7 @@ def _point(
     )
 
 
-ANCHOR_POINTS: Tuple[ReferencePoint, ...] = (
+ANCHOR_POINTS: tuple[ReferencePoint, ...] = (
     # Water - IAPWS-95
     _point("water", "critical_temperature", 647.096, "K", "iapws95"),
     _point("water", "critical_pressure", 22.064e6, "Pa", "iapws95"),
@@ -155,7 +154,7 @@ ANCHOR_POINTS: Tuple[ReferencePoint, ...] = (
 )
 
 
-_FLUID_ALIASES: Dict[str, str] = {
+_FLUID_ALIASES: dict[str, str] = {
     "carbon dioxide": "co2",
     "carbondioxide": "co2",
     "h2o": "water",
@@ -172,19 +171,19 @@ def normalise_fluid(fluid: str) -> str:
     return _FLUID_ALIASES.get(key, key)
 
 
-def anchors_for(fluid: str) -> List[ReferencePoint]:
+def anchors_for(fluid: str) -> list[ReferencePoint]:
     """All anchor points for a fluid."""
     name = normalise_fluid(fluid)
     return [p for p in ANCHOR_POINTS if p.fluid == name]
 
 
-def available_fluids() -> List[str]:
+def available_fluids() -> list[str]:
     """Fluids covered by the offline anchor table."""
     return sorted({p.fluid for p in ANCHOR_POINTS})
 
 
 def _state_matches(
-    point: ReferencePoint, state: Dict[str, float], rel_tol: float
+    point: ReferencePoint, state: dict[str, float], rel_tol: float
 ) -> bool:
     for key, wanted in state.items():
         if key not in point.state:

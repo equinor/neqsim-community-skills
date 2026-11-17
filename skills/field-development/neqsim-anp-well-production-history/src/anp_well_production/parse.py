@@ -24,8 +24,9 @@ import io
 import re
 import unicodedata
 import zipfile
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any
 
 BBL_TO_M3 = 0.158987294928
 """Cubic metres per barrel (exact)."""
@@ -80,7 +81,7 @@ def fold(text: Any) -> str:
     return s.strip()
 
 
-def parse_number(text: Any) -> Optional[float]:
+def parse_number(text: Any) -> float | None:
     """Parse a Brazilian-formatted number.
 
     Accepts ``"4841,6358"``, ``",878"`` (no leading zero), ``"3.127,441"`` (dot
@@ -111,7 +112,7 @@ def parse_number(text: Any) -> Optional[float]:
         return None
 
 
-def parse_period(text: Any) -> Tuple[int, int]:
+def parse_period(text: Any) -> tuple[int, int]:
     """Parse a reporting period into ``(year, month)``.
 
     Accepts ``"2023/12"`` and ``"2023-12"`` (by-well rate files), ``"01/2026"``
@@ -153,7 +154,7 @@ def days_in_month(year: int, month: int) -> int:
     return calendar.monthrange(year, month)[1]
 
 
-def decode_bytes(raw: bytes) -> Tuple[str, str]:
+def decode_bytes(raw: bytes) -> tuple[str, str]:
     """Decode ANP file bytes line by line, UTF-8 first and Windows-1252 otherwise.
 
     Some ANP files mix encodings: a Windows-1252 header above UTF-8 data rows,
@@ -183,7 +184,7 @@ def decode_bytes(raw: bytes) -> Tuple[str, str]:
     return "\n".join(lines).lstrip("\ufeff"), encoding
 
 
-def read_table_bytes(raw: bytes) -> Tuple[List[str], List[List[str]], Dict[str, Any]]:
+def read_table_bytes(raw: bytes) -> tuple[list[str], list[list[str]], dict[str, Any]]:
     """Read delimited ANP bytes into a header, rows and a meta record.
 
     The delimiter (semicolon or comma) is taken from the header line.
@@ -210,7 +211,7 @@ def read_table_bytes(raw: bytes) -> Tuple[List[str], List[List[str]], Dict[str, 
     return headers, rows, meta
 
 
-def read_table(path: str | Path) -> Tuple[List[str], List[List[str]], Dict[str, Any]]:
+def read_table(path: str | Path) -> tuple[list[str], list[list[str]], dict[str, Any]]:
     """Read a delimited ANP file from disk.
 
     Args:
@@ -222,7 +223,7 @@ def read_table(path: str | Path) -> Tuple[List[str], List[List[str]], Dict[str, 
     return read_table_bytes(Path(path).read_bytes())
 
 
-def read_zip(path: str | Path) -> Dict[str, bytes]:
+def read_zip(path: str | Path) -> dict[str, bytes]:
     """Return the CSV members of an ANP zip as ``{member name: bytes}``.
 
     Args:
@@ -231,7 +232,7 @@ def read_zip(path: str | Path) -> Dict[str, bytes]:
     Returns:
         Mapping of member name to content for every ``.csv`` member.
     """
-    out: Dict[str, bytes] = {}
+    out: dict[str, bytes] = {}
     with zipfile.ZipFile(path) as zf:
         for name in zf.namelist():
             if name.lower().endswith(".csv"):
@@ -239,7 +240,7 @@ def read_zip(path: str | Path) -> Dict[str, bytes]:
     return out
 
 
-def _aliases(*names: str) -> Tuple[str, ...]:
+def _aliases(*names: str) -> tuple[str, ...]:
     return tuple(fold(n) for n in names)
 
 
@@ -252,10 +253,12 @@ _COMMON = {
     "state": _aliases("Estado"),
     "environment": _aliases("Ambiente"),
     "operator": _aliases("Operador"),
-    "installation": _aliases("Instalação Destino", "Instalação", "Instalao Destino", "Instalao"),
+    "installation": _aliases(
+        "Instalação Destino", "Instalação", "Instalao Destino", "Instalao"
+    ),
 }
 
-SCHEMAS: Dict[str, Dict[str, Tuple[str, ...]]] = {
+SCHEMAS: dict[str, dict[str, tuple[str, ...]]] = {
     "well_monthly_rates": dict(
         _COMMON,
         period=_aliases("Período", "Perodo"),
@@ -263,11 +266,19 @@ SCHEMAS: Dict[str, Dict[str, Tuple[str, ...]]] = {
         oil_bbld=_aliases("Óleo (bbl/dia)", "leo bbl dia"),
         condensate_bbld=_aliases("Condensado (bbl/dia)"),
         liquid_bbld=_aliases("Petróleo (bbl/dia)", "Petrleo bbl dia"),
-        gas_assoc_km3d=_aliases("Gás Natural (Mm³/dia) Assoc", "Gs Natural Mm dia Assoc"),
-        gas_nonassoc_km3d=_aliases("Gás Natural (Mm³/dia) N Assoc", "Gs Natural Mm dia N Assoc"),
-        gas_total_km3d=_aliases("Gás Natural (Mm³/dia) Total", "Gs Natural Mm dia Total"),
+        gas_assoc_km3d=_aliases(
+            "Gás Natural (Mm³/dia) Assoc", "Gs Natural Mm dia Assoc"
+        ),
+        gas_nonassoc_km3d=_aliases(
+            "Gás Natural (Mm³/dia) N Assoc", "Gs Natural Mm dia N Assoc"
+        ),
+        gas_total_km3d=_aliases(
+            "Gás Natural (Mm³/dia) Total", "Gs Natural Mm dia Total"
+        ),
         water_bbld=_aliases("Água (bbl/dia)", "gua bbl dia"),
-        hours_on=_aliases("Tempo de Produção (hs por mês)", "Tempo de Produo hs por ms"),
+        hours_on=_aliases(
+            "Tempo de Produção (hs por mês)", "Tempo de Produo hs por ms"
+        ),
         api=_aliases("Grau API"),
         analysis_period=_aliases("Período da Carga", "Perodo da Carga"),
         installation_type=_aliases("Tipo Instalação", "Tipo Instalao"),
@@ -278,15 +289,24 @@ SCHEMAS: Dict[str, Dict[str, Tuple[str, ...]]] = {
         period=_aliases("Mês/Ano", "Ms/Ano"),
         oil_m3=_aliases("Produção de Óleo (m³)", "Produo de leo m"),
         condensate_m3=_aliases("Produção de Condensado (m³)", "Produo de Condensado m"),
-        gas_assoc_km3=_aliases("Produção de Gás Associado (Mm³)", "Produo de Gs Associado Mm"),
-        gas_nonassoc_km3=_aliases("Produção de Gás Não Associado (Mm³)", "Produo de Gs No Associado Mm"),
+        gas_assoc_km3=_aliases(
+            "Produção de Gás Associado (Mm³)", "Produo de Gs Associado Mm"
+        ),
+        gas_nonassoc_km3=_aliases(
+            "Produção de Gás Não Associado (Mm³)", "Produo de Gs No Associado Mm"
+        ),
         water_m3=_aliases("Produção de Água (m³)", "Produo de gua m"),
         gas_inj_km3=_aliases("Injeção de Gás (Mm³)", "Injeo de Gs Mm"),
         water_inj_secondary_m3=_aliases(
-            "Injeção de Água para Recuperação Secundária (m³)", "Injeo de gua para Recuperao Secundria m"
+            "Injeção de Água para Recuperação Secundária (m³)",
+            "Injeo de gua para Recuperao Secundria m",
         ),
-        water_inj_disposal_m3=_aliases("Injeção de Água para Descarte (m³)", "Injeo de gua para Descarte m"),
-        co2_inj_km3=_aliases("Injeção de Gás Carbônico (Mm³)", "Injeo de Gs Carbnico Mm"),
+        water_inj_disposal_m3=_aliases(
+            "Injeção de Água para Descarte (m³)", "Injeo de gua para Descarte m"
+        ),
+        co2_inj_km3=_aliases(
+            "Injeção de Gás Carbônico (Mm³)", "Injeo de Gs Carbnico Mm"
+        ),
     ),
     "zone_daily_rates": dict(
         _COMMON,
@@ -296,12 +316,17 @@ SCHEMAS: Dict[str, Dict[str, Tuple[str, ...]]] = {
         condensate_m3d=_aliases("Condensado (m³/d)"),
         liquid_m3d=_aliases("Petróleo (m³/d)", "Petrleo m d"),
         gas_assoc_km3d=_aliases("Gás associado (Mil m³/d)", "Gs associado Mil m d"),
-        gas_nonassoc_km3d=_aliases("Gás não associado (Mil m³/d)", "Gs no associado Mil m d"),
+        gas_nonassoc_km3d=_aliases(
+            "Gás não associado (Mil m³/d)", "Gs no associado Mil m d"
+        ),
         gas_total_km3d=_aliases("Gás total (Mil m³/d)", "Gs total Mil m d"),
         water_m3d=_aliases("Água (m³/d)", "gua m d"),
-        water_inj_disposal_m3d=_aliases("Água injetada para descarte (m³/d)", "gua injetada para descarte m d"),
+        water_inj_disposal_m3d=_aliases(
+            "Água injetada para descarte (m³/d)", "gua injetada para descarte m d"
+        ),
         water_inj_secondary_m3d=_aliases(
-            "Água injetada para rec. secundária (m³/d)", "gua injetada para rec secundria m d"
+            "Água injetada para rec. secundária (m³/d)",
+            "gua injetada para rec secundria m d",
         ),
         gas_inj_km3d=_aliases("Gás injetado (Mil m³/d)", "Gs injetado Mil m d"),
     ),
@@ -314,9 +339,15 @@ SCHEMAS: Dict[str, Dict[str, Tuple[str, ...]]] = {
         "environment": _aliases("Ambiente"),
         "spud_date": _aliases("Data_início_perfuração", "Data_incio_perfurao"),
         "completion_date": _aliases("Data_conclusão_poço", "Data_concluso_poo"),
-        "first_production": _aliases("Data_início_produção_(mês/ano)", "Data_incio_produo_ms_ano"),
-        "last_production": _aliases("Data_última_produçaõ_(mês/ano)", "Data_ltima_produao_ms_ano"),
-        "in_operation": _aliases("Em_operação_(produção_ou_injeção)", "Em_operao_produo_ou_injeo"),
+        "first_production": _aliases(
+            "Data_início_produção_(mês/ano)", "Data_incio_produo_ms_ano"
+        ),
+        "last_production": _aliases(
+            "Data_última_produçaõ_(mês/ano)", "Data_ltima_produao_ms_ano"
+        ),
+        "in_operation": _aliases(
+            "Em_operação_(produção_ou_injeção)", "Em_operao_produo_ou_injeo"
+        ),
         "latitude": _aliases("Latitude_da_base"),
         "longitude": _aliases("Longitude_da_base"),
         "status": _aliases("Situação_do_poço", "Situao_do_poo"),
@@ -366,16 +397,23 @@ def detect_schema(headers: Sequence[str]) -> str:
         ValueError: No family matches; the message lists some folded headers.
     """
     folded = {fold(h) for h in headers}
-    for family in ("zone_daily_rates", "well_monthly_volumes", "well_monthly_rates", "well_status"):
+    for family in (
+        "zone_daily_rates",
+        "well_monthly_volumes",
+        "well_monthly_rates",
+        "well_status",
+    ):
         spec = SCHEMAS[family]
         if all(any(a in folded for a in spec[k]) for k in _REQUIRED[family]):
             return family
     raise ValueError("Header matches no known ANP family: %s" % sorted(folded)[:12])
 
 
-def _column_index(headers: Sequence[str], spec: Mapping[str, Tuple[str, ...]]) -> Dict[str, int]:
+def _column_index(
+    headers: Sequence[str], spec: Mapping[str, tuple[str, ...]]
+) -> dict[str, int]:
     folded = [fold(h) for h in headers]
-    idx: Dict[str, int] = {}
+    idx: dict[str, int] = {}
     for key, names in spec.items():
         for i, h in enumerate(folded):
             if h in names:
@@ -384,20 +422,20 @@ def _column_index(headers: Sequence[str], spec: Mapping[str, Tuple[str, ...]]) -
     return idx
 
 
-def _composition_index(headers: Sequence[str]) -> Dict[str, int]:
-    idx: Dict[str, int] = {}
+def _composition_index(headers: Sequence[str]) -> dict[str, int]:
+    idx: dict[str, int] = {}
     for i, h in enumerate(headers):
         f = fold(h)
         if not f.startswith("em volumes"):
             continue
-        tail = f[len("em volumes"):].strip()
+        tail = f[len("em volumes") :].strip()
         for key, name in _COMPOSITION_HEADERS.items():
             if tail == name:
                 idx[key] = i
     return idx
 
 
-def _cell(row: Sequence[str], idx: Mapping[str, int], key: str) -> Optional[str]:
+def _cell(row: Sequence[str], idx: Mapping[str, int], key: str) -> str | None:
     i = idx.get(key)
     if i is None or i >= len(row):
         return None
@@ -405,20 +443,20 @@ def _cell(row: Sequence[str], idx: Mapping[str, int], key: str) -> Optional[str]
     return v if v != "" else None
 
 
-def _num(row: Sequence[str], idx: Mapping[str, int], key: str) -> Optional[float]:
+def _num(row: Sequence[str], idx: Mapping[str, int], key: str) -> float | None:
     return parse_number(_cell(row, idx, key))
 
 
-def _scale(value: Optional[float], factor: float) -> Optional[float]:
+def _scale(value: float | None, factor: float) -> float | None:
     return None if value is None else value * factor
 
 
 def normalize(
     headers: Sequence[str],
     rows: Iterable[Sequence[str]],
-    family: Optional[str] = None,
-    source: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+    family: str | None = None,
+    source: str | None = None,
+) -> list[dict[str, Any]]:
     """Convert raw rows of one ANP family to the common record layout.
 
     Production records carry ``well``, ``field``, ``basin``, ``state``,
@@ -449,14 +487,24 @@ def normalize(
     idx = _column_index(headers, spec)
     missing = [k for k in _REQUIRED[family] if k not in idx]
     if missing:
-        raise KeyError("ANP %s file lacks required column(s): %s" % (family, ", ".join(missing)))
+        raise KeyError(
+            "ANP %s file lacks required column(s): %s" % (family, ", ".join(missing))
+        )
     comp_idx = _composition_index(headers) if family == "well_monthly_rates" else {}
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for row in rows:
-        rec: Dict[str, Any] = {"family": family}
+        rec: dict[str, Any] = {"family": family}
         if source:
             rec["source"] = source
-        for key in ("well", "field", "basin", "state", "environment", "operator", "installation"):
+        for key in (
+            "well",
+            "field",
+            "basin",
+            "state",
+            "environment",
+            "operator",
+            "installation",
+        ):
             rec[key] = _cell(row, idx, key)
         if family == "well_status":
             for key in (
@@ -475,7 +523,14 @@ def normalize(
             continue
         year, month = parse_period(_cell(row, idx, "period"))
         days = days_in_month(year, month)
-        rec.update({"year": year, "month": month, "period": "%04d-%02d" % (year, month), "days": days})
+        rec.update(
+            {
+                "year": year,
+                "month": month,
+                "period": "%04d-%02d" % (year, month),
+                "days": days,
+            }
+        )
         if family == "well_monthly_rates":
             oil = _scale(_num(row, idx, "oil_bbld"), BBL_TO_M3)
             cond = _scale(_num(row, idx, "condensate_bbld"), BBL_TO_M3)
@@ -521,8 +576,12 @@ def normalize(
                 gas_total_km3d=_scale(gas, per_day),
                 water_m3d=_scale(wat, per_day),
                 gas_inj_km3d=_scale(_num(row, idx, "gas_inj_km3"), per_day),
-                water_inj_secondary_m3d=_scale(_num(row, idx, "water_inj_secondary_m3"), per_day),
-                water_inj_disposal_m3d=_scale(_num(row, idx, "water_inj_disposal_m3"), per_day),
+                water_inj_secondary_m3d=_scale(
+                    _num(row, idx, "water_inj_secondary_m3"), per_day
+                ),
+                water_inj_disposal_m3d=_scale(
+                    _num(row, idx, "water_inj_disposal_m3"), per_day
+                ),
                 co2_inj_km3d=_scale(_num(row, idx, "co2_inj_km3"), per_day),
                 hours_on=None,
                 api=None,
@@ -549,9 +608,9 @@ def normalize(
 
 def load_records(
     path: str | Path,
-    family: Optional[str] = None,
-    environment: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+    family: str | None = None,
+    environment: str | None = None,
+) -> list[dict[str, Any]]:
     """Read one ANP CSV and return normalised records.
 
     Args:

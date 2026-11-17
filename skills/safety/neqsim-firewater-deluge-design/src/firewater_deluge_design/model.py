@@ -86,9 +86,13 @@ class FireWaterCoverageModel:
             raise ValueError(f"{name} must be zero or a positive number, got {value!r}")
 
     @staticmethod
-    def horizontal_vessel_surface_m2(shell_outer_diameter_m: float, length_m: float) -> float:
+    def horizontal_vessel_surface_m2(
+        shell_outer_diameter_m: float, length_m: float
+    ) -> float:
         """Exposed surface of a horizontal drum or shell-and-tube exchanger, shell plus ends."""
-        FireWaterCoverageModel._require_positive("shell_outer_diameter_m", shell_outer_diameter_m)
+        FireWaterCoverageModel._require_positive(
+            "shell_outer_diameter_m", shell_outer_diameter_m
+        )
         FireWaterCoverageModel._require_positive("length_m", length_m)
         shell = 3.141592653589793 * shell_outer_diameter_m * length_m
         ends = 2.0 * 3.141592653589793 * shell_outer_diameter_m**2 / 4.0
@@ -131,7 +135,9 @@ class FireWaterCoverageModel:
             total_demand_m3_per_h=total * 60.0 / 1000.0,
             water_volume_m3=volume,
             foam_concentrate_m3=volume * foam_concentrate_percent / 100.0,
-            object_to_area_ratio=(object_demand / area_demand) if area_demand > 0 else float("nan"),
+            object_to_area_ratio=(
+                (object_demand / area_demand) if area_demand > 0 else float("nan")
+            ),
             assumptions=(
                 "General area coverage applied over the plan area; no credit for shadowing.",
                 "Dedicated object surfaces supplied by the caller; not derived from a layout.",
@@ -152,7 +158,9 @@ class FireWaterCoverageModel:
     ) -> DelugeLayoutResult:
         """Nozzle count and grid pitch, governed by the larger of flow and spacing."""
         self._require_positive("protected_area_m2", protected_area_m2)
-        self._require_positive("required_density_lpm_per_m2", required_density_lpm_per_m2)
+        self._require_positive(
+            "required_density_lpm_per_m2", required_density_lpm_per_m2
+        )
         self._require_positive("nozzle_k_lpm_per_sqrt_bar", nozzle_k_lpm_per_sqrt_bar)
         self._require_positive("nozzle_min_pressure_barg", nozzle_min_pressure_barg)
         self._require_positive("max_spacing_m", max_spacing_m)
@@ -201,17 +209,25 @@ class FireWaterCoverageModel:
     ) -> MonitorScreeningResult:
         """Density a monitor arrangement achieves, before and after wind drift."""
         self._require_positive("target_area_m2", target_area_m2)
-        self._require_positive("required_density_lpm_per_m2", required_density_lpm_per_m2)
+        self._require_positive(
+            "required_density_lpm_per_m2", required_density_lpm_per_m2
+        )
         self._require_positive("monitor_flow_lpm", monitor_flow_lpm)
         self._require_positive("fall_height_m", fall_height_m)
-        self._require_positive("droplet_terminal_velocity_m_s", droplet_terminal_velocity_m_s)
+        self._require_positive(
+            "droplet_terminal_velocity_m_s", droplet_terminal_velocity_m_s
+        )
         self._require_non_negative("wind_speed_m_s", wind_speed_m_s)
         if monitor_count < 1:
             raise ValueError("monitor_count must be >= 1")
 
         total = monitor_count * monitor_flow_lpm
         nominal = total / target_area_m2
-        dim = characteristic_dimension_m if characteristic_dimension_m else sqrt(target_area_m2)
+        dim = (
+            characteristic_dimension_m
+            if characteristic_dimension_m
+            else sqrt(target_area_m2)
+        )
         self._require_positive("characteristic_dimension_m", dim)
         drift = fall_height_m * wind_speed_m_s / droplet_terminal_velocity_m_s
         frac = min(1.0, max(0.0, 1.0 - drift / dim))

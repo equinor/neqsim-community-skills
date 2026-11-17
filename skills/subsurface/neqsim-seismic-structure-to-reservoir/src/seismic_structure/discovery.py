@@ -19,17 +19,28 @@ from __future__ import annotations
 import csv
 import json
 import re
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Union
 
 from .io import infer_domain, sniff_format
 
 SEISMIC_SUFFIXES = (".sgy", ".segy")
 LOG_SUFFIXES = (".dlis", ".dls", ".lis", ".las")
 GRID_SUFFIXES = (".egrid", ".grdecl", ".grid")
-SURFACE_HINT_SUFFIXES = (".irap", ".irapasc", ".gri", ".zmap", ".zmp", ".xyz", ".pts", ".dat", ".txt", ".asc")
-_FAULT_NAME = re.compile(r"fault|fsticks?|polygon", re.I)
-_TIE_HEADERS = re.compile(r"twt|time", re.I)
+SURFACE_HINT_SUFFIXES = (
+    ".irap",
+    ".irapasc",
+    ".gri",
+    ".zmap",
+    ".zmp",
+    ".xyz",
+    ".pts",
+    ".dat",
+    ".txt",
+    ".asc",
+)
+_FAULT_NAME = re.compile(r"fault|fsticks?|polygon", re.IGNORECASE)
+_TIE_HEADERS = re.compile(r"twt|time", re.IGNORECASE)
 _SKIP_DIRS = {".git", "__pycache__", ".venv", "node_modules"}
 OWN_OUTPUT_MARKER = "structure_evidence.json"
 
@@ -42,23 +53,28 @@ def _is_own_output(item: Path, exclude: Sequence[Path]) -> bool:
     return (item.parent / OWN_OUTPUT_MARKER).exists()
 
 
-def _iter_files(paths: Iterable[Union[str, Path]], max_files: int,
-                exclude: Sequence[Path] = ()) -> List[Path]:
-    found: List[Path] = []
+def _iter_files(
+    paths: Iterable[str | Path], max_files: int, exclude: Sequence[Path] = ()
+) -> list[Path]:
+    found: list[Path] = []
     for raw in paths:
         path = Path(raw)
         if path.is_file():
             found.append(path)
         elif path.is_dir():
             for item in path.rglob("*"):
-                if item.is_file() and not (_SKIP_DIRS & set(item.parts)) and not _is_own_output(item, exclude):
+                if (
+                    item.is_file()
+                    and not (_SKIP_DIRS & set(item.parts))
+                    and not _is_own_output(item, exclude)
+                ):
                     found.append(item)
                 if len(found) >= max_files:
                     break
     return sorted(set(found))[:max_files]
 
 
-def _csv_header(path: Path) -> List[str]:
+def _csv_header(path: Path) -> list[str]:
     try:
         with open(path, newline="", encoding="utf-8", errors="replace") as handle:
             return next(csv.reader(handle), [])
@@ -79,14 +95,14 @@ def _tie_file(path: Path) -> bool:
     return False
 
 
-def _column(header: Sequence[str], pattern: str) -> Optional[str]:
+def _column(header: Sequence[str], pattern: str) -> str | None:
     for name in header:
-        if re.fullmatch(pattern, name.strip(), re.I):
+        if re.fullmatch(pattern, name.strip(), re.IGNORECASE):
             return name
     return None
 
 
-def _tops_columns(header: Sequence[str]) -> Optional[Dict[str, str]]:
+def _tops_columns(header: Sequence[str]) -> dict[str, str] | None:
     columns = {
         "x": _column(header, r"x|x_?(utm|coord|m)?|easting"),
         "y": _column(header, r"y|y_?(utm|coord|m)?|northing"),
@@ -94,10 +110,12 @@ def _tops_columns(header: Sequence[str]) -> Optional[Dict[str, str]]:
         "formation": _column(header, r"formation|horizon|surface|top|pick|name"),
         "well": _column(header, r"well(bore)?(_?name)?|uwi"),
     }
-    return columns if all(columns[k] for k in ("x", "y", "depth", "formation")) else None
+    return (
+        columns if all(columns[k] for k in ("x", "y", "depth", "formation")) else None
+    )
 
 
-def read_well_tops(path) -> List[dict]:
+def read_well_tops(path) -> list[dict]:
     """Read well tops (``well``, ``x``, ``y``, ``formation``, ``depth_m``) from a CSV with those columns.
 
     Depth is taken as given (TVDSS/MSL, positive down, is expected); the column name is kept for the record.
@@ -111,17 +129,31 @@ def read_well_tops(path) -> List[dict]:
         tops = []
         for row in reader:
             try:
-                tops.append({"well": (row.get(columns["well"]) or file_path.stem) if columns["well"] else file_path.stem,
-                             "x": float(row[columns["x"]]), "y": float(row[columns["y"]]),
-                             "formation": row[columns["formation"]].strip(), "depth_m": float(row[columns["depth"]]),
-                             "depth_column": columns["depth"], "source": str(file_path)})
+                tops.append(
+                    {
+                        "well": (
+                            (row.get(columns["well"]) or file_path.stem)
+                            if columns["well"]
+                            else file_path.stem
+                        ),
+                        "x": float(row[columns["x"]]),
+                        "y": float(row[columns["y"]]),
+                        "formation": row[columns["formation"]].strip(),
+                        "depth_m": float(row[columns["depth"]]),
+                        "depth_column": columns["depth"],
+                        "source": str(file_path),
+                    }
+                )
             except (TypeError, ValueError):
                 continue
     return tops
 
 
-def discover(paths: Sequence[Union[str, Path]], max_files: int = 2000,
-             exclude: Sequence[Union[str, Path]] = ()) -> Dict[str, List[dict]]:
+def discover(
+    paths: Sequence[str | Path],
+    max_files: int = 2000,
+    exclude: Sequence[str | Path] = (),
+) -> dict[str, list[dict]]:
     """Inventory structural data under the given files or folders (read only).
 
     Folders holding this workflow's own output (``structure_evidence.json``) and the ``exclude``
@@ -130,9 +162,19 @@ def discover(paths: Sequence[Union[str, Path]], max_files: int = 2000,
     Returns:
         A mapping from category to ``{"path", "kind", ...}`` records.
     """
-    inventory: Dict[str, List[dict]] = {k: [] for k in (
-        "published_grid", "depth_surface", "time_surface", "fault_data", "seismic", "well_logs", "well_ties",
-        "well_tops")}
+    inventory: dict[str, list[dict]] = {
+        k: []
+        for k in (
+            "published_grid",
+            "depth_surface",
+            "time_surface",
+            "fault_data",
+            "seismic",
+            "well_logs",
+            "well_ties",
+            "well_tops",
+        )
+    }
     excluded = [Path(p).resolve() for p in exclude]
     for path in _iter_files(paths, max_files, excluded):
         suffix = path.suffix.lower()
@@ -155,15 +197,17 @@ def discover(paths: Sequence[Union[str, Path]], max_files: int = 2000,
                 inventory["fault_data"].append(dict(record, format=fmt))
                 continue
             domain = infer_domain(path.stem)
-            inventory[f"{domain}_surface"].append(dict(record, format=fmt, domain_guessed=True))
+            inventory[f"{domain}_surface"].append(
+                dict(record, format=fmt, domain_guessed=True)
+            )
     return inventory
 
 
-def choose_top_surface(inventory: Dict[str, List[dict]]) -> Optional[dict]:
+def choose_top_surface(inventory: dict[str, list[dict]]) -> dict | None:
     """Pick the most likely reservoir-top surface: a name with 'top', else the only candidate."""
     for key in ("depth_surface", "time_surface"):
         items = inventory.get(key, [])
-        tops = [s for s in items if re.search(r"top", s["name"], re.I)]
+        tops = [s for s in items if re.search(r"top", s["name"], re.IGNORECASE)]
         if len(tops) == 1:
             return dict(tops[0], domain=key.split("_")[0])
         if len(items) == 1:
@@ -171,7 +215,7 @@ def choose_top_surface(inventory: Dict[str, List[dict]]) -> Optional[dict]:
     return None
 
 
-def geometry_candidates(inventory: Dict[str, List[dict]]) -> Dict[str, bool]:
+def geometry_candidates(inventory: dict[str, list[dict]]) -> dict[str, bool]:
     """Which geometry ladder rungs have data in the inventory (availability, not an outcome)."""
     surfaces = inventory["depth_surface"] + inventory["time_surface"]
     return {
@@ -183,8 +227,9 @@ def geometry_candidates(inventory: Dict[str, List[dict]]) -> Dict[str, bool]:
     }
 
 
-def geometry_attempts(inventory: Dict[str, List[dict]], used: Optional[str] = None,
-                      detail: str = "") -> List[dict]:
+def geometry_attempts(
+    inventory: dict[str, list[dict]], used: str | None = None, detail: str = ""
+) -> list[dict]:
     """``data_first_gate`` records for the geometry ladder, down to the rung that was used.
 
     Rungs above ``used`` with no data found are ``absent``. Rungs above it whose data
@@ -200,10 +245,22 @@ def geometry_attempts(inventory: Dict[str, List[dict]], used: Optional[str] = No
     """
     available = geometry_candidates(inventory)
     attempts = []
-    for source in ("published_grid", "horizons_and_faults", "structure_map", "well_tops", "assumed_block"):
+    for source in (
+        "published_grid",
+        "horizons_and_faults",
+        "structure_map",
+        "well_tops",
+        "assumed_block",
+    ):
         if source == used:
             attempts.append({"source": source, "outcome": "used", "detail": detail})
             break
         if not available[source]:
-            attempts.append({"source": source, "outcome": "absent", "detail": "none found in the searched folders"})
+            attempts.append(
+                {
+                    "source": source,
+                    "outcome": "absent",
+                    "detail": "none found in the searched folders",
+                }
+            )
     return attempts

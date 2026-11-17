@@ -10,8 +10,8 @@ rigorous ``neqsim.thermo.characterization`` Java classes for design-grade work.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import List, Sequence, Tuple
 
 
 # ---------------------------------------------------------------------------
@@ -80,9 +80,9 @@ class GammaSplitResult:
     :ivar eta: minimum molar mass (g/mol) used.
     """
 
-    mole_fractions: Tuple[float, ...]
-    molar_masses: Tuple[float, ...]
-    boundaries: Tuple[float, ...]
+    mole_fractions: tuple[float, ...]
+    molar_masses: tuple[float, ...]
+    boundaries: tuple[float, ...]
     alpha: float
     eta: float
 
@@ -137,8 +137,8 @@ def gamma_mole_split(
     if total <= 0.0:
         raise ValueError("gamma split produced no mass; check boundaries and eta")
 
-    fractions: List[float] = []
-    masses: List[float] = []
+    fractions: list[float] = []
+    masses: list[float] = []
     for i in range(len(bounds) - 1):
         frac = z_plus * raw[i] / total
         fractions.append(frac)
@@ -174,8 +174,8 @@ class SplitFactorResult:
     :ivar lump_totals: total mole fraction of each lump.
     """
 
-    split_factors: Tuple[float, ...]
-    lump_totals: Tuple[float, ...]
+    split_factors: tuple[float, ...]
+    lump_totals: tuple[float, ...]
 
 
 def _validate_scheme(n_components: int, lumping_scheme: LumpingScheme) -> None:
@@ -214,7 +214,7 @@ def calculate_split_factor(
     values = list(full_composition)
     _validate_scheme(len(values), lumping_scheme)
     split_factors = [0.0] * len(values)
-    lump_totals: List[float] = []
+    lump_totals: list[float] = []
     for lump in lumping_scheme:
         total = sum(values[idx] for idx in lump)
         if total <= 0.0:
@@ -232,7 +232,7 @@ def delump_composition(
     lumped_composition: Sequence[float],
     split_factors: Sequence[float],
     lumping_scheme: LumpingScheme,
-) -> Tuple[float, ...]:
+) -> tuple[float, ...]:
     """Reconstruct a detailed composition from a lumped one and a split factor.
 
     :param lumped_composition: mole fraction of each lump (same order as

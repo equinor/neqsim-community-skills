@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional
 
-
-def accept_calibration(tuned_error: Optional[float], prior_error: Optional[float], identifiable: bool,
-                       n_tests: int, min_improvement: float = 0.0) -> Dict[str, object]:
+def accept_calibration(
+    tuned_error: float | None,
+    prior_error: float | None,
+    identifiable: bool,
+    n_tests: int,
+    min_improvement: float = 0.0,
+) -> dict[str, object]:
     """Decide whether tuned parameters replace the prior ones.
 
     ``tuned_error``/``prior_error`` are absolute errors on the held-out (latest) test, predicted by the model refitted
@@ -16,10 +19,10 @@ def accept_calibration(tuned_error: Optional[float], prior_error: Optional[float
     """
     if n_tests >= 2 and tuned_error is not None and prior_error is not None:
         ok = tuned_error < prior_error - min_improvement
-        reason = "held-out error {:.2f} vs prior {:.2f}".format(tuned_error, prior_error)
+        reason = f"held-out error {tuned_error:.2f} vs prior {prior_error:.2f}"
     elif n_tests == 1:
         ok = bool(identifiable)
-        reason = "single test: accepted only if identifiable ({})".format(identifiable)
+        reason = f"single test: accepted only if identifiable ({identifiable})"
     else:
         ok, reason = False, "no usable test"
     return {"accept": bool(ok), "reason": reason}

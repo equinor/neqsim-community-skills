@@ -71,7 +71,6 @@ class RegulatedFlowResult:
     assumptions: tuple[str, ...]
 
 
-
 class ProductionNetworkModel:
     """Educational production-network routing screening placeholder.
 
@@ -218,9 +217,7 @@ class ProductionNetworkModel:
         inlet pressure plus a screening sum of segment pressure drops; the rate
         uses a linear productivity-index inflow. Screening only.
         """
-        self._require_positive(
-            "target_inlet_pressure_bara", target_inlet_pressure_bara
-        )
+        self._require_positive("target_inlet_pressure_bara", target_inlet_pressure_bara)
 
         default_dp = {"well": 60.0, "choke": 10.0, "flowline": 5.0, "riser": 8.0}
         if segment_dp_bar is None:
@@ -249,9 +246,7 @@ class ProductionNetworkModel:
             self._require_positive(
                 f"{name}.reservoir_pressure_bara", reservoir_pressure
             )
-            self._require_positive(
-                f"{name}.productivity_index_sm3_per_day_bar", pi
-            )
+            self._require_positive(f"{name}.productivity_index_sm3_per_day_bar", pi)
 
             well_dp = float(raw.get("segment_dp_bar", segment_total))
             self._require_non_negative(f"{name}.segment_dp_bar", well_dp)
@@ -370,10 +365,10 @@ class ProductionNetworkModel:
             fbhp = float(raw["flowing_bottomhole_pressure_bara"])
             pi = float(raw["productivity_index_sm3_per_day_bar"])
             thp = float(raw["tubing_head_pressure_bara"])
-            self._require_positive(f"{name}.reservoir_pressure_bara", reservoir_pressure)
-            self._require_non_negative(
-                f"{name}.flowing_bottomhole_pressure_bara", fbhp
+            self._require_positive(
+                f"{name}.reservoir_pressure_bara", reservoir_pressure
             )
+            self._require_non_negative(f"{name}.flowing_bottomhole_pressure_bara", fbhp)
             self._require_positive(f"{name}.productivity_index_sm3_per_day_bar", pi)
             self._require_positive(f"{name}.tubing_head_pressure_bara", thp)
             rows.append(

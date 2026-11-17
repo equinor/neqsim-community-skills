@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from cfd_coupling import (
     C_MU,
     FluidState,
@@ -110,7 +109,9 @@ def test_high_mach_flags_compressibility_and_switches_solver() -> None:
 
 def test_laminar_flow_disables_the_turbulence_model() -> None:
     boundary = derive_boundary_conditions(
-        gas_state(density_kg_per_m3=900.0, viscosity_pa_s=0.5, speed_of_sound_m_per_s=1200.0),
+        gas_state(
+            density_kg_per_m3=900.0, viscosity_pa_s=0.5, speed_of_sound_m_per_s=1200.0
+        ),
         hydraulic_diameter_m=0.05,
         velocity_m_per_s=0.5,
     )
@@ -135,7 +136,9 @@ def test_turbulence_intensity_must_be_a_fraction() -> None:
         )
 
 
-def test_neqsim_extraction_selects_the_requested_phase_and_initialises_properties() -> None:
+def test_neqsim_extraction_selects_the_requested_phase_and_initialises_properties() -> (
+    None
+):
     system = _FakeSystem(
         [
             _FakePhase("gas", 52.4, 1.45e-5, 395.0, 0.64),

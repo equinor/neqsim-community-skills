@@ -7,8 +7,9 @@ does not own plotting, and it does not decide what the output means.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any
 
 from .distributions import Distribution
 from .models import build_model
@@ -39,20 +40,16 @@ class TornadoEntry:
     output_high: float
     swing: float
 
-    def to_row(self, prefix: str = "output") -> Dict[str, Any]:
+    def to_row(self, prefix: str = "output") -> dict[str, Any]:
         """Report-table row; ``prefix`` names the output, e.g. ``"npv"``."""
         return {
             "parameter": (
-                "{} ({:g}-{:g} {})".format(
-                    self.parameter, self.input_low, self.input_high, self.unit
-                ).strip()
+                f"{self.parameter} ({self.input_low:g}-{self.input_high:g} {self.unit})".strip()
                 if self.unit
-                else "{} ({:g}-{:g})".format(
-                    self.parameter, self.input_low, self.input_high
-                )
+                else f"{self.parameter} ({self.input_low:g}-{self.input_high:g})"
             ),
-            "{}_low".format(prefix): self.output_low,
-            "{}_high".format(prefix): self.output_high,
+            f"{prefix}_low": self.output_low,
+            f"{prefix}_high": self.output_high,
             "swing": self.swing,
         }
 
@@ -61,12 +58,12 @@ class TornadoEntry:
 class StudyResult:
     """Outcome of a Monte Carlo run."""
 
-    outputs: List[float]
-    samples: List[Dict[str, float]]
+    outputs: list[float]
+    samples: list[dict[str, float]]
     summary: SampleSummary
     sampling_method: str
-    seed: Optional[int]
-    cache_report: Dict[str, int]
+    seed: int | None
+    cache_report: dict[str, int]
     failures: int = 0
 
     @property
@@ -83,10 +80,10 @@ class UncertaintyStudy:
     output_name: str = "output"
     output_unit: str = ""
     sampling_method: str = DEFAULT_SAMPLER
-    seed: Optional[int] = 42
-    model: Optional[Callable[[Dict[str, float]], float]] = None
-    technical: Optional[Callable[[Dict[str, float]], Any]] = None
-    economic: Optional[Callable[[Any, Dict[str, float]], float]] = None
+    seed: int | None = 42
+    model: Callable[[dict[str, float]], float] | None = None
+    technical: Callable[[dict[str, float]], Any] | None = None
+    economic: Callable[[Any, dict[str, float]], float] | None = None
     simulation_engine: str = ""
     _model: Any = field(default=None, init=False, repr=False)
 
@@ -96,29 +93,31 @@ class UncertaintyStudy:
         names = [p.name for p in self.parameters]
         duplicates = {n for n in names if names.count(n) > 1}
         if duplicates:
-            raise StudyError("duplicate parameter names: {}".format(", ".join(sorted(duplicates))))
+            raise StudyError(
+                "duplicate parameter names: {}".format(", ".join(sorted(duplicates)))
+            )
         self._model = build_model(self.model, self.technical, self.economic)
 
     @property
-    def technical_parameters(self) -> List[Distribution]:
+    def technical_parameters(self) -> list[Distribution]:
         """Parameters that drive the expensive stage."""
         return [p for p in self.parameters if p.kind != ECONOMIC]
 
     @property
-    def economic_parameters(self) -> List[Distribution]:
+    def economic_parameters(self) -> list[Distribution]:
         """Parameters that only enter the cheap stage."""
         return [p for p in self.parameters if p.kind == ECONOMIC]
 
-    def base_values(self) -> Dict[str, float]:
+    def base_values(self) -> dict[str, float]:
         """Base (deterministic) value of every parameter."""
         return {p.name: p.base() for p in self.parameters}
 
-    def _split(self, values: Dict[str, float]) -> Any:
+    def _split(self, values: dict[str, float]) -> Any:
         technical = {p.name: values[p.name] for p in self.technical_parameters}
         economic = {p.name: values[p.name] for p in self.economic_parameters}
         return technical, economic
 
-    def evaluate(self, values: Dict[str, float]) -> float:
+    def evaluate(self, values: dict[str, float]) -> float:
         """Evaluate the model at one explicit parameter set."""
         missing = [p.name for p in self.parameters if p.name not in values]
         if missing:
@@ -134,13 +133,13 @@ class UncertaintyStudy:
         costs one sample, not the whole study.
         """
         if n <= 0:
-            raise StudyError("n must be positive, got {}".format(n))
+            raise StudyError(f"n must be positive, got {n}")
         self._model.reset()
         unit_points = generate_unit_samples(
             n, len(self.parameters), self.sampling_method, self.seed
         )
-        samples: List[Dict[str, float]] = []
-        outputs: List[float] = []
+        samples: list[dict[str, float]] = []
+        outputs: list[float] = []
         failures = 0
         for point in unit_points:
             values = {
@@ -169,7 +168,7 @@ class UncertaintyStudy:
 
     def tornado(
         self, low_quantile: float = 0.10, high_quantile: float = 0.90
-    ) -> List[TornadoEntry]:
+    ) -> list[TornadoEntry]:
         """One-at-a-time sensitivity, ranked by output swing.
 
         Each parameter is moved to its low and high quantile with the others at
@@ -178,7 +177,7 @@ class UncertaintyStudy:
         parameter pair, not one per row.
         """
         base = self.base_values()
-        entries: List[TornadoEntry] = []
+        entries: list[TornadoEntry] = []
         for parameter in self.parameters:
             low_input = parameter.ppf(low_quantile)
             high_input = parameter.ppf(high_quantile)

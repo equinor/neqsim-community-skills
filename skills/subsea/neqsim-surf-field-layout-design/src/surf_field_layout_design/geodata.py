@@ -12,8 +12,8 @@ layout needs; met-ocean data is what an FPSO heading needs.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Callable, Mapping, Sequence
 from urllib.parse import urlencode
 
 
@@ -150,7 +150,8 @@ class DataRequest:
 def _source(key: str) -> OpenDataSource:
     if key not in OPEN_DATA_SOURCES:
         raise ValueError(
-            "unknown source %r; known sources are %s" % (key, ", ".join(sorted(OPEN_DATA_SOURCES)))
+            "unknown source %r; known sources are %s"
+            % (key, ", ".join(sorted(OPEN_DATA_SOURCES)))
         )
     return OPEN_DATA_SOURCES[key]
 
@@ -283,13 +284,17 @@ def execute(
         try:
             manifest["results"][request.source_key] = fetch(request.url)
         except Exception as error:  # a failed source must not abort the study
-            manifest["errors"][request.source_key] = "%s: %s" % (type(error).__name__, error)
+            manifest["errors"][request.source_key] = "%s: %s" % (
+                type(error).__name__,
+                error,
+            )
     return manifest
 
 
 def attribution_block(source_keys: Sequence[str]) -> list[str]:
     """Attribution lines to reproduce on any map made from these sources."""
     return [
-        "%s (%s, %s)" % (_source(key).attribution, _source(key).provider, _source(key).licence)
+        "%s (%s, %s)"
+        % (_source(key).attribution, _source(key).provider, _source(key).licence)
         for key in source_keys
     ]

@@ -5,7 +5,7 @@ from __future__ import annotations
 import calendar
 import csv
 import math
-from typing import Dict, Iterable, List, Optional
+from collections.abc import Iterable
 
 OIL_M3_TO_BBL = 6.28981
 SCF_PER_SM3 = 35.3147
@@ -25,7 +25,9 @@ def oil_volume(value: float, from_unit: str, to_unit: str) -> float:
     try:
         return value * _OIL_TO_M3[from_unit] / _OIL_TO_M3[to_unit]
     except KeyError as exc:
-        raise ValueError(f"unknown oil unit {exc}; use one of {sorted(_OIL_TO_M3)}") from None
+        raise ValueError(
+            f"unknown oil unit {exc}; use one of {sorted(_OIL_TO_M3)}"
+        ) from None
 
 
 def gas_volume(value: float, from_unit: str, to_unit: str) -> float:
@@ -37,7 +39,9 @@ def gas_volume(value: float, from_unit: str, to_unit: str) -> float:
     try:
         return value * _GAS_TO_SM3[from_unit] / _GAS_TO_SM3[to_unit]
     except KeyError as exc:
-        raise ValueError(f"unknown gas unit {exc}; use one of {sorted(_GAS_TO_SM3)}") from None
+        raise ValueError(
+            f"unknown gas unit {exc}; use one of {sorted(_GAS_TO_SM3)}"
+        ) from None
 
 
 def monthly_to_daily(volume: float, year: int, month: int) -> float:
@@ -57,14 +61,17 @@ def haversine_km(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
     return 2 * r * math.asin(math.sqrt(a))
 
 
-def check_crs(declared: Optional[str]) -> Dict[str, object]:
+def check_crs(declared: str | None) -> dict[str, object]:
     """Classify a declared CRS before any distance or area is computed.
 
     Geographic systems (EPSG:4326 and EPSG:4674) hold degrees: use ``haversine_km`` for point
     distances or reproject to a projected CRS before computing lengths and areas.
     """
     if not declared:
-        return {"status": "unknown", "action": "find the CRS in the dataset metadata before use"}
+        return {
+            "status": "unknown",
+            "action": "find the CRS in the dataset metadata before use",
+        }
     code = declared.strip().upper().replace(" ", "")
     if code in ("EPSG:4326", "EPSG:4674"):
         return {
@@ -72,17 +79,21 @@ def check_crs(declared: Optional[str]) -> Dict[str, object]:
             "crs": code,
             "action": "use haversine_km for distances or reproject to a projected CRS first",
         }
-    return {"status": "other", "crs": code, "action": "confirm units are metres before computing lengths"}
+    return {
+        "status": "other",
+        "crs": code,
+        "action": "confirm units are metres before computing lengths",
+    }
 
 
 def load_table(
     path: str,
-    mapping: Dict[str, str],
+    mapping: dict[str, str],
     sep: str = ";",
     decimal: str = ",",
     encoding: str = "utf-8-sig",
     numeric: Iterable[str] = (),
-) -> List[Dict[str, object]]:
+) -> list[dict[str, object]]:
     """Read a delimited file and rename columns by ``mapping`` {wanted_name: file_header}.
 
     Raises ``KeyError`` naming every missing header, so a renamed column is a loud failure.
@@ -98,7 +109,7 @@ def load_table(
             raise KeyError(f"headers not found in file: {missing}; file has {headers}")
         rows = []
         for raw in reader:
-            row: Dict[str, object] = {}
+            row: dict[str, object] = {}
             for name, header in mapping.items():
                 value = raw[header]
                 if name in numeric:

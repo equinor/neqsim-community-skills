@@ -35,11 +35,12 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 FRONTMATTER_RE = re.compile(r"^(---\s*\n)(.*?)(\n---\s*\n)", re.DOTALL)
 NAME_RE = re.compile(r'^\s*name:\s*["\']?([^"\'\n]+?)["\']?\s*$', re.MULTILINE)
-BASIS_RE = re.compile(r'^\s*calculation_basis:\s*["\']?([a-z-]+)["\']?\s*$', re.MULTILINE)
+BASIS_RE = re.compile(
+    r'^\s*calculation_basis:\s*["\']?([a-z-]+)["\']?\s*$', re.MULTILINE
+)
 
 VALID = ("screening", "neqsim-java", "hybrid", "data-retrieval", "advisory")
 
@@ -65,7 +66,9 @@ SCREENING_PATTERNS = (
     re.compile(r"\bscreening[- ]level\b", re.IGNORECASE),
     re.compile(r"\beducational\b", re.IGNORECASE),
     re.compile(r"\border[- ]of[- ]magnitude\b", re.IGNORECASE),
-    re.compile(r"\bbefore (?:a )?(?:detailed|rigorous|validated|verified)\b", re.IGNORECASE),
+    re.compile(
+        r"\bbefore (?:a )?(?:detailed|rigorous|validated|verified)\b", re.IGNORECASE
+    ),
 )
 ADVISORY_PATTERNS = (
     re.compile(r"\bno numeric output\b", re.IGNORECASE),
@@ -95,7 +98,9 @@ EVIDENCE_PACK_PATTERNS = (
     re.compile(r"\bSSO\b|\bbearer\b|\bAPIM\b"),
 )
 RENDERER_PATTERNS = (
-    re.compile(r"\bconvert(?:ing|s)?\b.*\b(?:to|into)\s+(?:PDF|HTML|PowerPoint)", re.IGNORECASE),
+    re.compile(
+        r"\bconvert(?:ing|s)?\b.*\b(?:to|into)\s+(?:PDF|HTML|PowerPoint)", re.IGNORECASE
+    ),
     re.compile(r"\b(?:python-pptx|headless browser|renderer)\b", re.IGNORECASE),
     re.compile(r"\bdeliverable\b", re.IGNORECASE),
 )
@@ -122,7 +127,7 @@ def _count(patterns, text: str) -> int:
     return sum(1 for p in patterns if p.search(text))
 
 
-def classify(text: str, area: str = "", folder: str = "") -> Tuple[Optional[str], str]:
+def classify(text: str, area: str = "", folder: str = "") -> tuple[str | None, str]:
     """Return (basis, rationale) or (None, reason) when it cannot be justified.
 
     @param text the full SKILL.md content
@@ -131,14 +136,16 @@ def classify(text: str, area: str = "", folder: str = "") -> Tuple[Optional[str]
     """
     m = FRONTMATTER_RE.search(text)
     front = m.group(2) if m else ""
-    body = text[m.end():] if m else text
+    body = text[m.end() :] if m else text
     code = _code_blocks(body)
 
     # A wrapper skill hides NeqSim behind its own package API, so the code fence
     # shows `from <skill_pkg> import ...` rather than a NeqSim import. Declaring
     # java_packages: [neqsim] is then the reliable evidence it drives the engine.
     declares_java_dep = bool(re.search(r"java_packages:\s*\[[^\]]*neqsim", front))
-    declares_neqsim_dep = declares_java_dep or bool(re.search(r"requires_mcp_tools:", front))
+    declares_neqsim_dep = declares_java_dep or bool(
+        re.search(r"requires_mcp_tools:", front)
+    )
     java_hits = _count(NEQSIM_JAVA_PATTERNS, code)
     screening_hits = _count(SCREENING_PATTERNS, text)
     retrieval_hits = _count(RETRIEVAL_PATTERNS, text)
@@ -148,31 +155,59 @@ def classify(text: str, area: str = "", folder: str = "") -> Tuple[Optional[str]
     renderer_hits = _count(RENDERER_PATTERNS, text)
     # An overlay whose required_skills point at a community screening skill is,
     # by construction, a policy gate on a screening result.
-    overlays_screening = bool(re.search(r"required_skills:[^\n]*\n(?:\s*-\s*neqsim-[a-z-]*screening[^\n]*\n)", front))
+    overlays_screening = bool(
+        re.search(
+            r"required_skills:[^\n]*\n(?:\s*-\s*neqsim-[a-z-]*screening[^\n]*\n)", front
+        )
+    )
 
     if java_hits >= 2 or declares_java_dep or (java_hits >= 1 and declares_neqsim_dep):
         evidence = f"java_code={java_hits}, java_dep={declares_java_dep}"
         if screening_hits >= 3:
-            return "hybrid", f"neqsim engine ({evidence}) plus screening language ({screening_hits})"
+            return (
+                "hybrid",
+                f"neqsim engine ({evidence}) plus screening language ({screening_hits})",
+            )
         return "neqsim-java", f"neqsim engine ({evidence})"
     if screening_hits >= 2:
-        return "screening", f"screening language ({screening_hits}), no neqsim call in code"
+        return (
+            "screening",
+            f"screening language ({screening_hits}), no neqsim call in code",
+        )
     if overlays_screening or policy_hits >= 3:
-        return "screening", f"policy overlay on a screening method (policy={policy_hits}, overlays={overlays_screening})"
+        return (
+            "screening",
+            f"policy overlay on a screening method (policy={policy_hits}, overlays={overlays_screening})",
+        )
     if retrieval_hits >= 2 or evidence_hits >= 3:
-        return "data-retrieval", f"retrieval/evidence language (retrieval={retrieval_hits}, evidence={evidence_hits})"
+        return (
+            "data-retrieval",
+            f"retrieval/evidence language (retrieval={retrieval_hits}, evidence={evidence_hits})",
+        )
     if renderer_hits >= 2 or advisory_hits >= 2:
-        return "advisory", f"renderer/advisory language (renderer={renderer_hits}, advisory={advisory_hits})"
+        return (
+            "advisory",
+            f"renderer/advisory language (renderer={renderer_hits}, advisory={advisory_hits})",
+        )
 
     # Fallback tier: catalog placement and name suffix are weaker but transparent
     # signals. The rationale records that the call came from here, so a reviewer
     # can see which assignments were structural rather than evidence-based.
     if area == "reporting":
-        return "advisory", "fallback: reporting area (formats a deliverable, no calculation)"
+        return (
+            "advisory",
+            "fallback: reporting area (formats a deliverable, no calculation)",
+        )
     if area == "engineering-data":
-        return "data-retrieval", "fallback: engineering-data area (connector/reader/extractor)"
+        return (
+            "data-retrieval",
+            "fallback: engineering-data area (connector/reader/extractor)",
+        )
     if folder.endswith(("-review", "-compliance", "-screening")):
-        return "screening", f"fallback: '{folder}' name suffix indicates a screening/policy gate"
+        return (
+            "screening",
+            f"fallback: '{folder}' name suffix indicates a screening/policy gate",
+        )
 
     return None, (
         f"inconclusive (java_code={java_hits}, screening={screening_hits}, "
@@ -193,25 +228,37 @@ def write_basis(path: Path, text: str, basis: str) -> bool:
     if not name_m:
         return False
     insert_at = name_m.end()
-    new_front = front[:insert_at] + f'\ncalculation_basis: "{basis}"' + front[insert_at:]
-    path.write_text(text[:m.start(2)] + new_front + text[m.end(2):], encoding="utf-8")
+    new_front = (
+        front[:insert_at] + f'\ncalculation_basis: "{basis}"' + front[insert_at:]
+    )
+    path.write_text(text[: m.start(2)] + new_front + text[m.end(2) :], encoding="utf-8")
     return True
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Report/backfill skill calculation_basis")
-    parser.add_argument("--write", action="store_true", help="Backfill confidently-classified skills")
-    parser.add_argument("--check", action="store_true", help="Exit 1 if any skill lacks calculation_basis")
+    parser = argparse.ArgumentParser(
+        description="Report/backfill skill calculation_basis"
+    )
+    parser.add_argument(
+        "--write", action="store_true", help="Backfill confidently-classified skills"
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Exit 1 if any skill lacks calculation_basis",
+    )
     args = parser.parse_args()
 
     skills_dir = repo_root_from_script() / "skills"
     if not skills_dir.is_dir():
-        print(f"ERROR: skills/ not found under {repo_root_from_script()}", file=sys.stderr)
+        print(
+            f"ERROR: skills/ not found under {repo_root_from_script()}", file=sys.stderr
+        )
         return 2
 
-    existing: List[str] = []
-    assigned: List[Tuple[str, str, str]] = []
-    unclassified: List[Tuple[str, str]] = []
+    existing: list[str] = []
+    assigned: list[tuple[str, str, str]] = []
+    unclassified: list[tuple[str, str]] = []
 
     for skill_md in sorted(skills_dir.glob("*/*/SKILL.md")):
         try:
@@ -228,7 +275,9 @@ def main() -> int:
             existing.append(f"{name}: {current.group(1)}")
             continue
 
-        basis, rationale = classify(text, area=skill_md.parent.parent.name, folder=skill_md.parent.name)
+        basis, rationale = classify(
+            text, area=skill_md.parent.parent.name, folder=skill_md.parent.name
+        )
         if basis is None:
             unclassified.append((name, rationale))
             continue
@@ -243,12 +292,14 @@ def main() -> int:
         print(f"  {line}")
     verb = "Backfilled" if args.write else "Would set"
     print(f"\n{verb}: {len(assigned)}")
-    by_basis: Dict[str, int] = {}
+    by_basis: dict[str, int] = {}
     for name, basis, rationale in assigned:
         by_basis[basis] = by_basis.get(basis, 0) + 1
         print(f"  {basis:<14} {name}   [{rationale}]")
     if by_basis:
-        print("\n  totals: " + ", ".join(f"{k}={v}" for k, v in sorted(by_basis.items())))
+        print(
+            "\n  totals: " + ", ".join(f"{k}={v}" for k, v in sorted(by_basis.items()))
+        )
     print(f"\nUnclassified (set manually): {len(unclassified)}")
     for name, rationale in unclassified:
         print(f"  {name}   [{rationale}]")

@@ -15,9 +15,10 @@ Markdown output needs no dependency. Word output needs ``python-docx``.
 from __future__ import annotations
 
 import datetime as _dt
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 REPORT_SCHEMA_VERSION = "technology_assessment_report.v1"
 
@@ -29,13 +30,41 @@ NOVELTY_TABLE = (
 
 TRL_ROWS = (
     ("0", "Unproven idea", "Paper concept; no analysis or testing."),
-    ("1", "Concept demonstrated", "Basic functionality shown by analysis, analogy or sub-component tests."),
-    ("2", "Concept validated", "Novel features validated by models or small-scale laboratory tests."),
-    ("3", "New technology tested", "First version built and tested over a limited range of conditions."),
-    ("4", "Qualified for first use", "Large-scale version tested in the intended environment; scale effects understood."),
-    ("5", "Integration tested", "Full-scale unit integrated in its environment with interface and function tests."),
-    ("6", "In operation", "Operated to predefined performance criteria for a limited period."),
-    ("7", "Proven", "Operated to performance and reliability criteria long enough to reveal time effects."),
+    (
+        "1",
+        "Concept demonstrated",
+        "Basic functionality shown by analysis, analogy or sub-component tests.",
+    ),
+    (
+        "2",
+        "Concept validated",
+        "Novel features validated by models or small-scale laboratory tests.",
+    ),
+    (
+        "3",
+        "New technology tested",
+        "First version built and tested over a limited range of conditions.",
+    ),
+    (
+        "4",
+        "Qualified for first use",
+        "Large-scale version tested in the intended environment; scale effects understood.",
+    ),
+    (
+        "5",
+        "Integration tested",
+        "Full-scale unit integrated in its environment with interface and function tests.",
+    ),
+    (
+        "6",
+        "In operation",
+        "Operated to predefined performance criteria for a limited period.",
+    ),
+    (
+        "7",
+        "Proven",
+        "Operated to performance and reliability criteria long enough to reveal time effects.",
+    ),
 )
 
 DEFAULT_REFERENCES = (
@@ -109,7 +138,7 @@ def _cell(value: Any) -> str:
     if value is None:
         return ""
     if isinstance(value, float):
-        return "{:g}".format(value)
+        return f"{value:g}"
     if isinstance(value, (list, tuple)):
         return "; ".join(str(v) for v in value)
     return str(value)
@@ -173,10 +202,10 @@ class Report:
             ("Status", m.status),
         ]
         out += ["| Item | Value |", "| --- | --- |"]
-        out += ["| {} | {} |".format(k, v) for k, v in control if v]
+        out += [f"| {k} | {v} |" for k, v in control if v]
         out.append("")
         for index, section in enumerate(self.sections, start=1):
-            out += ["## {}. {}".format(index, section.title), ""]
+            out += [f"## {index}. {section.title}", ""]
             table_no = 0
             for block in section.blocks:
                 if block.kind == "p":
@@ -186,11 +215,20 @@ class Report:
                     out.append("")
                 elif block.kind == "table":
                     table_no += 1
-                    out += ["**Table {}.{}: {}**".format(index, table_no, block.caption), ""]
+                    out += [
+                        f"**Table {index}.{table_no}: {block.caption}**",
+                        "",
+                    ]
                     out.append("| " + " | ".join(block.headers) + " |")
                     out.append("| " + " | ".join("---" for _ in block.headers) + " |")
                     for row in block.rows:
-                        out.append("| " + " | ".join(c.replace("|", "/").replace("\n", " ") for c in row) + " |")
+                        out.append(
+                            "| "
+                            + " | ".join(
+                                c.replace("|", "/").replace("\n", " ") for c in row
+                            )
+                            + " |"
+                        )
                     out.append("")
         return "\n".join(out).rstrip() + "\n"
 
@@ -211,7 +249,9 @@ class Report:
 
 def _risk_counts(fmirr: Mapping[str, Any]) -> str:
     counts = fmirr["summary"]["counts"]
-    return "{} High, {} Medium, {} Low".format(counts["High"], counts["Medium"], counts["Low"])
+    return "{} High, {} Medium, {} Low".format(
+        counts["High"], counts["Medium"], counts["Low"]
+    )
 
 
 def check_report_inputs(
@@ -237,20 +277,34 @@ def check_report_inputs(
     novel = [e for e in assessment["elements"] if e["qualification_required"]]
     if fmirr is None:
         if novel:
-            issues.append("No FMIRR supplied although {} element(s) need qualification.".format(len(novel)))
+            issues.append(
+                f"No FMIRR supplied although {len(novel)} element(s) need qualification."
+            )
         return issues
     if fmirr.get("schema_version") != "technology_fmirr.v1":
         raise ValueError("fmirr must be a technology_fmirr.v1 mapping")
     if fmirr.get("technology") != assessment.get("technology"):
-        issues.append("FMIRR technology name differs from the assessment technology name.")
+        issues.append(
+            "FMIRR technology name differs from the assessment technology name."
+        )
     items = {str(r["item"]).strip().lower() for r in fmirr["rows"]}
     for element in novel:
-        if element["name"].strip().lower() not in items and element["id"].strip().lower() not in items:
-            issues.append("Novel element {} ({}) has no failure mode in the FMIRR.".format(
-                element["id"], element["name"]))
+        if (
+            element["name"].strip().lower() not in items
+            and element["id"].strip().lower() not in items
+        ):
+            issues.append(
+                "Novel element {} ({}) has no failure mode in the FMIRR.".format(
+                    element["id"], element["name"]
+                )
+            )
     for finding in fmirr.get("findings", []):
         if finding["level"] in ("gap", "warning"):
-            issues.append("FMIRR {}: {} {}".format(finding["level"], finding["entry_id"], finding["text"]).strip())
+            issues.append(
+                "FMIRR {}: {} {}".format(
+                    finding["level"], finding["entry_id"], finding["text"]
+                ).strip()
+            )
     return issues
 
 
@@ -259,22 +313,41 @@ def _executive_summary(
 ) -> None:
     s = assessment["summary"]
     sec.para(
-        "This report assesses the technology \"{}\". The technology was decomposed into {} element(s), "
+        'This report assesses the technology "{}". The technology was decomposed into {} element(s), '
         "of which {} require qualification. The highest novelty category is {} and the system technology "
         "readiness level (TRL) is {} ({}).".format(
-            assessment["technology"], s["element_count"], s["novel_element_count"],
-            s["highest_category"], s["system_trl"], s["system_trl_name"])
+            assessment["technology"],
+            s["element_count"],
+            s["novel_element_count"],
+            s["highest_category"],
+            s["system_trl"],
+            s["system_trl_name"],
+        )
     )
-    sec.para("The technology is classified as {}. {}".format(s["role"], s["role_rationale"]))
-    beyond = [r["dimension"] for r in assessment["step_out"] if r["status"] == "step-out beyond experience"]
+    sec.para(
+        "The technology is classified as {}. {}".format(s["role"], s["role_rationale"])
+    )
+    beyond = [
+        r["dimension"]
+        for r in assessment["step_out"]
+        if r["status"] == "step-out beyond experience"
+    ]
     if beyond:
-        sec.para("Step-out beyond existing experience was identified for: {}.".format(", ".join(beyond)))
+        sec.para(
+            "Step-out beyond existing experience was identified for: {}.".format(
+                ", ".join(beyond)
+            )
+        )
     if fmirr is not None:
         fs = fmirr["summary"]
         sec.para(
             "The first failure-mode identification and risk ranking registered {} failure mode(s): {}. "
             "{} critical mode(s) need qualification activities; {} of them are linked to a test.".format(
-                fs["total"], _risk_counts(fmirr), fs["critical_count"], fs["critical_with_test"])
+                fs["total"],
+                _risk_counts(fmirr),
+                fs["critical_count"],
+                fs["critical_with_test"],
+            )
         )
     sec.para(
         "The conclusions are screening-level and depend on the evidence available. Open points are listed "
@@ -290,7 +363,9 @@ def _decomposition_rows(elements: Sequence[Mapping[str, Any]]) -> list[list[Any]
 
     def walk(parent: Any, depth: int) -> None:
         for e in children.get(parent, []):
-            rows.append([e["id"], "\u00a0\u00a0" * depth + e["name"], e["kind"], e["function"]])
+            rows.append(
+                [e["id"], "\u00a0\u00a0" * depth + e["name"], e["kind"], e["function"]]
+            )
             walk(e["id"], depth + 1)
 
     walk(None, 0)
@@ -370,14 +445,26 @@ def build_report(
             ["How the technology is used", basis["intended_use"] or "Not stated"],
             ["Intended environment", basis["environment"] or "Not stated"],
             ["Functions", basis["functions"] or "Not stated"],
-            ["Performance expectations", basis["performance_expectations"] or "Not stated"],
-            ["Regulatory requirements", basis["regulatory_requirements"] or "Not stated"],
+            [
+                "Performance expectations",
+                basis["performance_expectations"] or "Not stated",
+            ],
+            [
+                "Regulatory requirements",
+                basis["regulatory_requirements"] or "Not stated",
+            ],
         ],
     )
 
     sec = new("composition", "Technology description and decomposition")
-    sec.para("The technology is decomposed top-down from the system function to sub-systems, components and software.")
-    sec.table("Technology decomposition", ["Id", "Element", "Kind", "Function"], _decomposition_rows(elements))
+    sec.para(
+        "The technology is decomposed top-down from the system function to sub-systems, components and software."
+    )
+    sec.table(
+        "Technology decomposition",
+        ["Id", "Element", "Kind", "Function"],
+        _decomposition_rows(elements),
+    )
 
     sec = new("maturity", "Technology maturity: novelty category and TRL")
     sec.para(
@@ -386,36 +473,70 @@ def build_report(
     )
     sec.table(
         "Novelty and TRL per element",
-        ["Id", "Element", "Technology novelty", "Application area", "Category", "TRL", "Qualification"],
+        [
+            "Id",
+            "Element",
+            "Technology novelty",
+            "Application area",
+            "Category",
+            "TRL",
+            "Qualification",
+        ],
         [
             [
-                e["id"], e["name"], e["technology_novelty"].replace("_", " "),
+                e["id"],
+                e["name"],
+                e["technology_novelty"].replace("_", " "),
                 e["application_area"].replace("_", " "),
-                "{} ({})".format(e["category_label"], _CATEGORY_TEXT[e["category_label"]]),
+                "{} ({})".format(
+                    e["category_label"], _CATEGORY_TEXT[e["category_label"]]
+                ),
                 "{} {}".format(e["trl"], e["trl_name"]),
-                "Required ({} risk)".format(e["qualification_risk"]) if e["qualification_required"] else "Not required",
+                (
+                    "Required ({} risk)".format(e["qualification_risk"])
+                    if e["qualification_required"]
+                    else "Not required"
+                ),
             ]
             for e in elements
         ],
     )
-    sec.para("System TRL: {} ({}). Basis: {}".format(summary["system_trl"], summary["system_trl_name"], summary["system_trl_basis"]))
+    sec.para(
+        "System TRL: {} ({}). Basis: {}".format(
+            summary["system_trl"],
+            summary["system_trl_name"],
+            summary["system_trl_basis"],
+        )
+    )
     flagged = [(e["id"], f) for e in elements for f in e["flags"]]
     if flagged:
         sec.para("Consistency flags raised on the ratings:")
-        sec.bullets(["{}: {}".format(i, f) for i, f in flagged])
+        sec.bullets([f"{i}: {f}" for i, f in flagged])
 
     sec = new("role", "Enabling or enhancing technology")
-    sec.para("Classification: {}. {}".format(summary["role"], summary["role_rationale"]))
+    sec.para(
+        "Classification: {}. {}".format(summary["role"], summary["role_rationale"])
+    )
 
     sec = new("step_out", "Step-out from existing experience")
     sec.table(
         "Step-out per dimension",
-        ["Dimension", "Experience basis", "Proposed", "Reference", "Proposed value", "Status"],
+        [
+            "Dimension",
+            "Experience basis",
+            "Proposed",
+            "Reference",
+            "Proposed value",
+            "Status",
+        ],
         [
             [
-                r["dimension"].replace("_", " "), r["experience_basis"], r["proposed"],
+                r["dimension"].replace("_", " "),
+                r["experience_basis"],
+                r["proposed"],
                 "{} {}".format(_cell(r["reference_value"]), r["unit"]).strip(),
-                "{} {}".format(_cell(r["proposed_value"]), r["unit"]).strip(), r["status"],
+                "{} {}".format(_cell(r["proposed_value"]), r["unit"]).strip(),
+                r["status"],
             ]
             for r in assessment["step_out"]
         ]
@@ -424,31 +545,71 @@ def build_report(
 
     sec = new("benefits_risks", "Benefits and risks")
     sec.para("Possible benefits of using the technology:")
-    sec.bullets([b["text"] + (" ({})".format(b["kind"]) if b["kind"] else "") for b in assessment["benefits"]] or ["None recorded."])
+    sec.bullets(
+        [
+            b["text"] + (" ({})".format(b["kind"]) if b["kind"] else "")
+            for b in assessment["benefits"]
+        ]
+        or ["None recorded."]
+    )
     sec.para("Possible risks of using the technology:")
     sec.table(
         "Risks and mitigations",
         ["Risk", "Category", "Mitigation"],
-        [[r["text"], r["kind"], r["mitigation"]] for r in assessment["risks"]] or [["None recorded", "", ""]],
+        [[r["text"], r["kind"], r["mitigation"]] for r in assessment["risks"]]
+        or [["None recorded", "", ""]],
     )
 
     sec = new("standardisation", "Standardisation and multi-implementation")
-    sec.bullets(assessment["standardisation"] + assessment["multi_implementation"] or ["Not assessed."])
+    sec.bullets(
+        assessment["standardisation"] + assessment["multi_implementation"]
+        or ["Not assessed."]
+    )
 
     if fmirr is not None:
-        sec = new("fmirr", "Failure mode identification and risk ranking (first version)", landscape=True)
+        sec = new(
+            "fmirr",
+            "Failure mode identification and risk ranking (first version)",
+            landscape=True,
+        )
         fs = fmirr["summary"]
         sec.para(
             "Failure modes are registered with failed item, failure mode, mechanism and cause kept separate. "
-            "Result: {}. Critical (Medium and High) modes: {}.".format(_risk_counts(fmirr), ", ".join(fs["critical_ids"]) or "none")
+            "Result: {}. Critical (Medium and High) modes: {}.".format(
+                _risk_counts(fmirr), ", ".join(fs["critical_ids"]) or "none"
+            )
         )
         sec.table(
             "FMIRR register",
-            ["Id", "Item", "Function", "Failure mode", "Mechanism", "Cause", "Detection", "Consequence",
-             "Cons.", "Prob.", "Risk", "Test"],
             [
-                [r["id"], r["item"], r["function"], r["failure_mode"], r["failure_mechanism"], r["failure_cause"],
-                 r["detection"], r["consequence"], r["consequence_class"], r["probability_class"], r["risk"], r["test"]]
+                "Id",
+                "Item",
+                "Function",
+                "Failure mode",
+                "Mechanism",
+                "Cause",
+                "Detection",
+                "Consequence",
+                "Cons.",
+                "Prob.",
+                "Risk",
+                "Test",
+            ],
+            [
+                [
+                    r["id"],
+                    r["item"],
+                    r["function"],
+                    r["failure_mode"],
+                    r["failure_mechanism"],
+                    r["failure_cause"],
+                    r["detection"],
+                    r["consequence"],
+                    r["consequence_class"],
+                    r["probability_class"],
+                    r["risk"],
+                    r["test"],
+                ]
                 for r in fmirr["rows"]
             ],
             risk_column=10,
@@ -460,42 +621,80 @@ def build_report(
             [[p] + counts for p, counts in grid.items()],
         )
 
-    sec = new("qualification_outline", "Preliminary outline of qualification activities")
+    sec = new(
+        "qualification_outline", "Preliminary outline of qualification activities"
+    )
     outline = assessment["qualification_outline"]
     if outline:
-        sec.para("The activities below target TRL 4 (qualified for first use). TRL 5 to 7 follow by application.")
+        sec.para(
+            "The activities below target TRL 4 (qualified for first use). TRL 5 to 7 follow by application."
+        )
         sec.table(
             "Qualification outline per element",
             ["Element", "Category", "Current TRL", "Target TRL", "Activities"],
-            [[o["element"], o["category"], o["current_trl"], o["target_trl"], o["activities"]] for o in outline],
+            [
+                [
+                    o["element"],
+                    o["category"],
+                    o["current_trl"],
+                    o["target_trl"],
+                    o["activities"],
+                ]
+                for o in outline
+            ],
         )
         if fmirr is not None:
             linked = [r for r in fmirr["rows"] if r["critical"] and r["test"]]
             if linked:
                 sec.para("Critical failure modes with a linked qualification activity:")
-                sec.bullets(["{}: {} -> {}".format(r["id"], r["failure_mode"], r["test"]) for r in linked])
+                sec.bullets(
+                    [
+                        "{}: {} -> {}".format(r["id"], r["failure_mode"], r["test"])
+                        for r in linked
+                    ]
+                )
     else:
-        sec.para("No element requires technology qualification; elements are verified to the applicable standards.")
+        sec.para(
+            "No element requires technology qualification; elements are verified to the applicable standards."
+        )
 
     sec = new("conclusions", "Conclusions and recommendations")
-    novel = sorted((e for e in elements if e["qualification_required"]), key=lambda e: (-e["category"], e["trl"]))
+    novel = sorted(
+        (e for e in elements if e["qualification_required"]),
+        key=lambda e: (-e["category"], e["trl"]),
+    )
     if novel:
         sec.para("Elements that need qualification, ordered by novelty and maturity:")
-        sec.bullets(["{} {}: category {}, TRL {}".format(e["id"], e["name"], e["category_label"], e["trl"]) for e in novel])
+        sec.bullets(
+            [
+                "{} {}: category {}, TRL {}".format(
+                    e["id"], e["name"], e["category_label"], e["trl"]
+                )
+                for e in novel
+            ]
+        )
         if summary["role"] == "enabling":
             sec.para(
                 "The technology is enabling: the critical path of the project may run through the qualification. "
                 "Plan the qualification programme before the concept is locked and keep a fallback open where possible."
             )
-        sec.para("Recommended next steps: confirm the ratings in an expert-panel workshop, repeat the FMIRR with "
-                 "the panel, and prepare the technology qualification programme.")
+        sec.para(
+            "Recommended next steps: confirm the ratings in an expert-panel workshop, repeat the FMIRR with "
+            "the panel, and prepare the technology qualification programme."
+        )
     else:
-        sec.para("No qualification is required. Verify all elements to the applicable standards and practice.")
-    sec.para("Category 1 elements are not exempt from verification: verify them to the applicable standard with ordinary design review and QA/QC.")
+        sec.para(
+            "No qualification is required. Verify all elements to the applicable standards and practice."
+        )
+    sec.para(
+        "Category 1 elements are not exempt from verification: verify them to the applicable standard with ordinary design review and QA/QC."
+    )
 
     sec = new("open_points", "Assumptions, data gaps and open points")
     sec.para("Assumptions:")
-    sec.bullets(assessment["assumptions"] + (fmirr["assumptions"] if fmirr is not None else []))
+    sec.bullets(
+        assessment["assumptions"] + (fmirr["assumptions"] if fmirr is not None else [])
+    )
     sec.para("Data gaps and open issues to resolve before issue:")
     sec.bullets(issues or ["None."])
 
@@ -508,10 +707,22 @@ def build_report(
         ["Application area", "Proven", "Limited history", "New or unproven"],
         [list(r) for r in NOVELTY_TABLE],
     )
-    sec.table("Technology readiness levels", ["TRL", "Stage", "Description"], [list(r) for r in TRL_ROWS])
+    sec.table(
+        "Technology readiness levels",
+        ["TRL", "Stage", "Description"],
+        [list(r) for r in TRL_ROWS],
+    )
     if fmirr is not None:
-        sec.table("Consequence classes", ["Class", "Description"], list(fmirr["scales"]["consequence"].items()))
-        sec.table("Probability classes", ["Class", "Description"], list(fmirr["scales"]["probability"].items()))
+        sec.table(
+            "Consequence classes",
+            ["Class", "Description"],
+            list(fmirr["scales"]["consequence"].items()),
+        )
+        sec.table(
+            "Probability classes",
+            ["Class", "Description"],
+            list(fmirr["scales"]["probability"].items()),
+        )
 
     for section in sections:
         extra = narrative.get(section.section_id)
@@ -525,7 +736,10 @@ _RISK_FILL = {"Low": "C6EFCE", "Medium": "FFEB9C", "High": "FFC7CE"}
 
 
 def _column_widths(
-    headers: Sequence[str], rows: Sequence[Sequence[str]], usable_inches: float, font_pt: float
+    headers: Sequence[str],
+    rows: Sequence[Sequence[str]],
+    usable_inches: float,
+    font_pt: float,
 ) -> list[float]:
     """Return column widths in inches that fit ``usable_inches``.
 
@@ -573,7 +787,9 @@ def _write_docx(report: Report, path: Path) -> Path:
         from docx.oxml.ns import qn
         from docx.shared import Emu, Inches, Pt
     except ImportError as exc:
-        raise ImportError("python-docx is required for Word output: pip install python-docx") from exc
+        raise ImportError(
+            "python-docx is required for Word output: pip install python-docx"
+        ) from exc
 
     def field_run(paragraph: Any, code: str) -> None:
         run = paragraph.add_run()
@@ -610,9 +826,14 @@ def _write_docx(report: Report, path: Path) -> Path:
     if meta.subtitle:
         doc.add_paragraph(meta.subtitle)
     control = [
-        ("Document number", meta.document_number), ("Revision", meta.revision), ("Project", meta.project),
-        ("Author", meta.author), ("Reviewer", meta.reviewer), ("Date", meta.date),
-        ("Classification", meta.classification), ("Status", meta.status),
+        ("Document number", meta.document_number),
+        ("Revision", meta.revision),
+        ("Project", meta.project),
+        ("Author", meta.author),
+        ("Reviewer", meta.reviewer),
+        ("Date", meta.date),
+        ("Classification", meta.classification),
+        ("Status", meta.status),
     ]
     control = [(k, v) for k, v in control if v]
     table = doc.add_table(rows=0, cols=2)
@@ -632,7 +853,7 @@ def _write_docx(report: Report, path: Path) -> Path:
     first = doc.sections[0]
     first.header.paragraphs[0].text = meta.title
     footer = first.footer.paragraphs[0]
-    footer.text = "Security classification: {} - Status: {} - Page ".format(meta.classification, meta.status)
+    footer.text = f"Security classification: {meta.classification} - Status: {meta.status} - Page "
     field_run(footer, "PAGE")
     footer.add_run(" of ")
     field_run(footer, "NUMPAGES")
@@ -642,16 +863,24 @@ def _write_docx(report: Report, path: Path) -> Path:
         if section.landscape and not landscape_open:
             new_section = doc.add_section(WD_SECTION.NEW_PAGE)
             new_section.orientation = WD_ORIENT.LANDSCAPE
-            new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
+            new_section.page_width, new_section.page_height = (
+                new_section.page_height,
+                new_section.page_width,
+            )
             new_section.left_margin = new_section.right_margin = Inches(0.7)
             landscape_open = True
         elif not section.landscape and landscape_open:
             new_section = doc.add_section(WD_SECTION.NEW_PAGE)
             new_section.orientation = WD_ORIENT.PORTRAIT
-            new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
-            new_section.left_margin = new_section.right_margin = doc.sections[0].left_margin
+            new_section.page_width, new_section.page_height = (
+                new_section.page_height,
+                new_section.page_width,
+            )
+            new_section.left_margin = new_section.right_margin = doc.sections[
+                0
+            ].left_margin
             landscape_open = False
-        doc.add_heading("{}. {}".format(index, section.title), 1)
+        doc.add_heading(f"{index}. {section.title}", 1)
         table_no = 0
         for block in section.blocks:
             if block.kind == "p":
@@ -662,7 +891,9 @@ def _write_docx(report: Report, path: Path) -> Path:
             elif block.kind == "table":
                 table_no += 1
                 caption = doc.add_paragraph()
-                caption.add_run("Table {}.{}: {}".format(index, table_no, block.caption)).bold = True
+                caption.add_run(f"Table {index}.{table_no}: {block.caption}").bold = (
+                    True
+                )
                 tbl = doc.add_table(rows=1, cols=len(block.headers))
                 tbl.style = "Table Grid"
                 tbl.autofit = False
@@ -680,7 +911,9 @@ def _write_docx(report: Report, path: Path) -> Path:
                 current = doc.sections[-1]
                 usable = current.page_width - current.left_margin - current.right_margin
                 size = _table_font_size(len(block.headers))
-                widths = _column_widths(block.headers, block.rows, usable / 914400.0, size or 10)
+                widths = _column_widths(
+                    block.headers, block.rows, usable / 914400.0, size or 10
+                )
                 for position, inches in enumerate(widths):
                     width = Emu(int(inches * 914400))
                     tbl.columns[position].width = width

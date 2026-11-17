@@ -7,7 +7,7 @@ the drain inside the reservoir. Requires matplotlib.
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from .layout import SurfLayout
 from .wells import WellPath
@@ -43,8 +43,8 @@ def plot_reservoir_3d(
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         import numpy as np
-        from matplotlib.patches import Patch
         from matplotlib.lines import Line2D
+        from matplotlib.patches import Patch
     except ImportError as error:  # pragma: no cover - optional dependency
         raise RuntimeError("the 3D view requires matplotlib and numpy") from error
 
@@ -72,9 +72,15 @@ def plot_reservoir_3d(
     corner_e = np.array([east_range[0], east_range[1]])
     corner_n = np.array([north_range[0], north_range[1]])
     grid_e, grid_n = np.meshgrid(corner_e, corner_n)
-    axis.plot_surface(km(grid_e), km(grid_n), np.zeros_like(grid_e), color="#9ecae1", alpha=0.25)
     axis.plot_surface(
-        km(grid_e), km(grid_n), np.full_like(grid_e, water_depth), color="#8c8c7a", alpha=0.30
+        km(grid_e), km(grid_n), np.zeros_like(grid_e), color="#9ecae1", alpha=0.25
+    )
+    axis.plot_surface(
+        km(grid_e),
+        km(grid_n),
+        np.full_like(grid_e, water_depth),
+        color="#8c8c7a",
+        alpha=0.30,
     )
 
     # --- reservoir body ----------------------------------------------------
@@ -138,26 +144,52 @@ def plot_reservoir_3d(
     # --- subsea hardware and the host -------------------------------------
     for node in layout.nodes_of_kind("template"):
         axis.scatter(
-            km(node.east_m), km(node.north_m), node.water_depth_m,
-            marker="D", s=45, c="#2ca02c", depthshade=False,
+            km(node.east_m),
+            km(node.north_m),
+            node.water_depth_m,
+            marker="D",
+            s=45,
+            c="#2ca02c",
+            depthshade=False,
         )
         axis.text(
-            km(node.east_m), km(node.north_m), node.water_depth_m - 25.0, node.tag, fontsize=7
+            km(node.east_m),
+            km(node.north_m),
+            node.water_depth_m - 25.0,
+            node.tag,
+            fontsize=7,
         )
     for node in layout.nodes_of_kind("plem"):
         axis.scatter(
-            km(node.east_m), km(node.north_m), node.water_depth_m,
-            marker="^", s=28, c="#ff7f0e", depthshade=False,
+            km(node.east_m),
+            km(node.north_m),
+            node.water_depth_m,
+            marker="^",
+            s=28,
+            c="#ff7f0e",
+            depthshade=False,
         )
     for node in layout.nodes_of_kind("xmas_tree"):
         axis.scatter(
-            km(node.east_m), km(node.north_m), node.water_depth_m,
-            marker="s", s=12, c="#d62728", depthshade=False,
+            km(node.east_m),
+            km(node.north_m),
+            node.water_depth_m,
+            marker="s",
+            s=12,
+            c="#d62728",
+            depthshade=False,
         )
 
     host = layout.node("HOST")
-    axis.scatter(km(host.east_m), km(host.north_m), 0.0, marker="*", s=420, c="#111111",
-                 depthshade=False)
+    axis.scatter(
+        km(host.east_m),
+        km(host.north_m),
+        0.0,
+        marker="*",
+        s=420,
+        c="#111111",
+        depthshade=False,
+    )
     axis.text(km(host.east_m), km(host.north_m), -30.0, host.tag, fontsize=9)
 
     riser_base = layout.node("RB-PLEM")
@@ -184,8 +216,9 @@ def plot_reservoir_3d(
             alpha=0.95,
         )
         toe = well_path.points[-1]
-        axis.scatter(km(toe[0]), km(toe[1]), toe[2], marker="o", s=14, c=colour,
-                     depthshade=False)
+        axis.scatter(
+            km(toe[0]), km(toe[1]), toe[2], marker="o", s=14, c=colour, depthshade=False
+        )
 
     axis.set_xlabel("east [km]")
     axis.set_ylabel("north [km]")
@@ -206,10 +239,23 @@ def plot_reservoir_3d(
     for service in ("production", "water_injection", "gas_injection"):
         if any(item.service == service for item in paths) or service in drawn:
             legend.append(
-                Line2D([], [], color=_SERVICE_COLOUR[service], label=service.replace("_", " "))
+                Line2D(
+                    [],
+                    [],
+                    color=_SERVICE_COLOUR[service],
+                    label=service.replace("_", " "),
+                )
             )
     if any(not item.drillable for item in paths):
-        legend.append(Line2D([], [], color="#333333", ls="--", label="dogleg above the screening limit"))
+        legend.append(
+            Line2D(
+                [],
+                [],
+                color="#333333",
+                ls="--",
+                label="dogleg above the screening limit",
+            )
+        )
     axis.legend(handles=legend, loc="upper left", fontsize=8, framealpha=0.9)
 
     footer = "screening illustration - not for construction or well planning"

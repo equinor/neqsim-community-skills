@@ -1,5 +1,4 @@
 import pytest
-
 from pipeline_survey_processing import PipelineSurveyProcessor
 
 
@@ -9,7 +8,9 @@ def build_records(offset_m: float = 0.0, count: int = 200):
     for index in range(count):
         kp = index * 5.0
         depth = -300.0 + 0.01 * kp + offset_m
-        records.append({"kp_m": kp, "depth_to_top_m": depth, "seabed_depth_m": depth + 0.2})
+        records.append(
+            {"kp_m": kp, "depth_to_top_m": depth, "seabed_depth_m": depth + 0.2}
+        )
     return records
 
 
@@ -90,7 +91,9 @@ def test_edge_points_are_not_assessed_for_outliers():
     records = build_records(count=40)
     records[0]["depth_to_top_m"] -= 40.0
 
-    result = PipelineSurveyProcessor(minimum_kp_spacing_m=1.0, smoothing_window=11).process(records=records)
+    result = PipelineSurveyProcessor(
+        minimum_kp_spacing_m=1.0, smoothing_window=11
+    ).process(records=records)
 
     assert result.flagged_points == ()
     assert any("edge points not assessed" in entry for entry in result.processing_log)
@@ -132,7 +135,10 @@ def test_burial_intervals_and_minimum_cover_are_reported():
 
 
 def test_missing_seabed_depth_skips_span_screening_and_records_a_gap():
-    records = [{"kp_m": index * 5.0, "depth_to_top_m": -300.0 + 0.01 * index} for index in range(20)]
+    records = [
+        {"kp_m": index * 5.0, "depth_to_top_m": -300.0 + 0.01 * index}
+        for index in range(20)
+    ]
 
     result = PipelineSurveyProcessor(minimum_kp_spacing_m=1.0).process(records=records)
 
@@ -142,11 +148,15 @@ def test_missing_seabed_depth_skips_span_screening_and_records_a_gap():
 
 
 def test_user_supplied_outer_diameter_is_recorded_as_a_gap():
-    result = PipelineSurveyProcessor().process(records=build_records(count=20), outer_diameter_m=0.3239)
+    result = PipelineSurveyProcessor().process(
+        records=build_records(count=20), outer_diameter_m=0.3239
+    )
 
     assert result.outer_diameter_m == pytest.approx(0.3239)
     assert result.outer_diameter_source == "user_override"
-    assert any("Outer diameter was supplied manually" in gap for gap in result.data_gaps)
+    assert any(
+        "Outer diameter was supplied manually" in gap for gap in result.data_gaps
+    )
 
 
 def test_missing_outer_diameter_is_reported_rather_than_assumed():
@@ -161,7 +171,8 @@ def test_swapped_latitude_longitude_columns_are_corrected_and_kp_derived():
     for index in range(20):
         records.append(
             {
-                "latitude_deg": 100.0 + index * 0.001,  # longitude value in the latitude column
+                "latitude_deg": 100.0
+                + index * 0.001,  # longitude value in the latitude column
                 "longitude_deg": 60.0,
                 "depth_to_top_m": -300.0,
             }
@@ -176,7 +187,8 @@ def test_swapped_latitude_longitude_columns_are_corrected_and_kp_derived():
 
 def test_kp_is_derived_from_projected_coordinates_when_absent():
     records = [
-        {"easting_m": index * 100.0, "northing_m": 0.0, "depth_to_top_m": -300.0} for index in range(10)
+        {"easting_m": index * 100.0, "northing_m": 0.0, "depth_to_top_m": -300.0}
+        for index in range(10)
     ]
 
     result = PipelineSurveyProcessor(minimum_kp_spacing_m=1.0).process(records=records)
@@ -191,7 +203,9 @@ def test_slope_warning_escalates_on_a_steep_section():
         {"kp_m": 20.0, "depth_to_top_m": -289.0},
     ]
 
-    result = PipelineSurveyProcessor(minimum_kp_spacing_m=1.0, max_slope_deg=10.0).process(records=records)
+    result = PipelineSurveyProcessor(
+        minimum_kp_spacing_m=1.0, max_slope_deg=10.0
+    ).process(records=records)
 
     assert result.max_slope_deg > 10.0
     assert result.slope_warning == "high"
@@ -200,7 +214,9 @@ def test_slope_warning_escalates_on_a_steep_section():
 def test_repeat_survey_comparison_detects_lowering():
     processor = PipelineSurveyProcessor(minimum_kp_spacing_m=1.0)
     baseline = processor.process(records=build_records(count=60), survey_id="2006")
-    repeat = processor.process(records=build_records(offset_m=-0.5, count=60), survey_id="2010")
+    repeat = processor.process(
+        records=build_records(offset_m=-0.5, count=60), survey_id="2010"
+    )
 
     change = processor.compare(baseline=baseline, repeat=repeat, change_threshold_m=0.2)
 
@@ -214,7 +230,10 @@ def test_comparison_requires_overlapping_kp():
     processor = PipelineSurveyProcessor(minimum_kp_spacing_m=1.0)
     first = processor.process(records=build_records(count=20))
     second = processor.process(
-        records=[{"kp_m": 10000.0 + index * 5.0, "depth_to_top_m": -300.0} for index in range(20)]
+        records=[
+            {"kp_m": 10000.0 + index * 5.0, "depth_to_top_m": -300.0}
+            for index in range(20)
+        ]
     )
 
     with pytest.raises(ValueError, match="do not overlap"):
@@ -222,9 +241,13 @@ def test_comparison_requires_overlapping_kp():
 
 
 def test_neqsim_elevation_profile_handoff_is_evenly_spaced():
-    result = PipelineSurveyProcessor(minimum_kp_spacing_m=1.0).process(records=build_records(count=50))
+    result = PipelineSurveyProcessor(minimum_kp_spacing_m=1.0).process(
+        records=build_records(count=50)
+    )
 
-    handoff = PipelineSurveyProcessor.to_neqsim_elevation_profile(result, section_count=10)
+    handoff = PipelineSurveyProcessor.to_neqsim_elevation_profile(
+        result, section_count=10
+    )
 
     assert len(handoff["leg_positions_m"]) == 11
     assert len(handoff["elevation_profile_m"]) == 11
@@ -243,7 +266,9 @@ def test_processing_log_and_assumptions_are_always_populated():
 
 def test_too_few_records_is_refused():
     with pytest.raises(ValueError, match="at least two"):
-        PipelineSurveyProcessor().process(records=[{"kp_m": 0.0, "depth_to_top_m": -300.0}])
+        PipelineSurveyProcessor().process(
+            records=[{"kp_m": 0.0, "depth_to_top_m": -300.0}]
+        )
 
 
 def test_invalid_smoothing_window_is_refused():

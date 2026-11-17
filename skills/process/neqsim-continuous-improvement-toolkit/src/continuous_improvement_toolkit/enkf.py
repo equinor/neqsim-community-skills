@@ -41,18 +41,25 @@ def identifiability(jacobian, names=None, parameter_scale=None, rel_tol=1e-3):
     j = np.atleast_2d(np.asarray(jacobian, dtype=float))
     if parameter_scale is not None:
         j = j * np.asarray(parameter_scale, dtype=float)
-    names = list(names) if names else ["p{}".format(i) for i in range(j.shape[1])]
+    names = list(names) if names else [f"p{i}" for i in range(j.shape[1])]
     u, s, vt = np.linalg.svd(j, full_matrices=False)
     tol = rel_tol * (s[0] if len(s) else 0.0)
     rank = int(np.sum(s > tol))
     weak = []
     for i in range(rank, len(s)):
         direction = vt[i]
-        weak.append({n: round(float(c), 3) for n, c in zip(names, direction) if abs(c) > 0.2})
+        weak.append(
+            {n: round(float(c), 3) for n, c in zip(names, direction) if abs(c) > 0.2}
+        )
     column_norm = np.linalg.norm(j, axis=0)
-    return {"singular_values": s.tolist(),
-            "condition_number": float(s[0] / s[-1]) if len(s) and s[-1] > 0 else float("inf"),
-            "rank": rank, "n_parameters": j.shape[1],
-            "identifiable": rank == j.shape[1],
-            "unidentifiable_directions": weak,
-            "sensitivity_norm": {n: float(v) for n, v in zip(names, column_norm)}}
+    return {
+        "singular_values": s.tolist(),
+        "condition_number": (
+            float(s[0] / s[-1]) if len(s) and s[-1] > 0 else float("inf")
+        ),
+        "rank": rank,
+        "n_parameters": j.shape[1],
+        "identifiable": rank == j.shape[1],
+        "unidentifiable_directions": weak,
+        "sensitivity_norm": {n: float(v) for n, v in zip(names, column_norm)},
+    }

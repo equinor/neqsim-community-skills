@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite
-from typing import Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -14,11 +13,11 @@ class ReciprocatingCompressorResult:
     volumetric_efficiency: float
     actual_inlet_capacity_m3_h: float
     discharge_temperature_k: float
-    rod_load_ratio: Optional[float]
+    rod_load_ratio: float | None
     capacity_warning: str
     rod_load_warning: str
     neqsim_available: bool
-    assumptions: Tuple[str, ...]
+    assumptions: tuple[str, ...]
 
 
 class ReciprocatingCompressorModel:
@@ -36,7 +35,9 @@ class ReciprocatingCompressorModel:
         max_discharge_temperature_k: float = 423.15,
     ) -> None:
         self._require_positive("max_stage_ratio", max_stage_ratio)
-        self._require_positive("max_discharge_temperature_k", max_discharge_temperature_k)
+        self._require_positive(
+            "max_discharge_temperature_k", max_discharge_temperature_k
+        )
         self.max_stage_ratio = max_stage_ratio
         self.max_discharge_temperature_k = max_discharge_temperature_k
 
@@ -50,8 +51,8 @@ class ReciprocatingCompressorModel:
         clearance_fraction: float = 0.12,
         specific_heat_ratio: float = 1.3,
         leakage_allowance: float = 0.03,
-        rated_rod_load_kn: Optional[float] = None,
-        piston_area_m2: Optional[float] = None,
+        rated_rod_load_kn: float | None = None,
+        piston_area_m2: float | None = None,
     ) -> ReciprocatingCompressorResult:
         self._require_positive("suction_pressure", suction_pressure)
         self._require_positive("discharge_pressure", discharge_pressure)
@@ -78,7 +79,11 @@ class ReciprocatingCompressorModel:
         stage_ratio = overall_ratio ** (1.0 / stages)
 
         # Clearance volumetric efficiency: VE = 1 - C (r^(1/k) - 1) - L.
-        ve = 1.0 - clearance_fraction * (stage_ratio ** (1.0 / k) - 1.0) - leakage_allowance
+        ve = (
+            1.0
+            - clearance_fraction * (stage_ratio ** (1.0 / k) - 1.0)
+            - leakage_allowance
+        )
         ve = max(ve, 0.0)
         actual_capacity = swept_volume_rate_m3_h * ve
 
@@ -86,7 +91,7 @@ class ReciprocatingCompressorModel:
         discharge_temperature = suction_temperature * stage_ratio ** ((k - 1.0) / k)
 
         # Rod-load utilisation: gas load = dP * piston area.
-        rod_load_ratio: Optional[float] = None
+        rod_load_ratio: float | None = None
         if rated_rod_load_kn is not None and piston_area_m2 is not None:
             delta_p_pa = (discharge_pressure - suction_pressure) * 1.0e5 / stages
             gas_rod_load_kn = delta_p_pa * piston_area_m2 / 1000.0
@@ -102,7 +107,9 @@ class ReciprocatingCompressorModel:
             volumetric_efficiency=round(ve, 4),
             actual_inlet_capacity_m3_h=round(actual_capacity, 3),
             discharge_temperature_k=round(discharge_temperature, 3),
-            rod_load_ratio=(None if rod_load_ratio is None else round(rod_load_ratio, 4)),
+            rod_load_ratio=(
+                None if rod_load_ratio is None else round(rod_load_ratio, 4)
+            ),
             capacity_warning=capacity_warning,
             rod_load_warning=rod_load_warning,
             neqsim_available=find_spec("neqsim") is not None,
@@ -126,7 +133,7 @@ class ReciprocatingCompressorModel:
         return "ok"
 
     @staticmethod
-    def _rod_load_warning(rod_load_ratio: Optional[float]) -> str:
+    def _rod_load_warning(rod_load_ratio: float | None) -> str:
         if rod_load_ratio is None:
             return "no-rating"
         if rod_load_ratio > 1.0:

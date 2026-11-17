@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 R_GAS = 8.314462618
 """Universal gas constant in J/(mol K)."""
@@ -28,9 +27,9 @@ class CapillaryScreeningResult:
     max_ppmv: float
     kelvin_valid: bool
     warning: str
-    relative_saturation: Optional[float] = None
-    margin_ratio: Optional[float] = None
-    assumptions: List[str] = field(default_factory=list)
+    relative_saturation: float | None = None
+    margin_ratio: float | None = None
+    assumptions: list[str] = field(default_factory=list)
 
 
 def micropore_filling_fraction(
@@ -66,7 +65,7 @@ class CapillaryCondensationScreeningModel:
         molar_volume: float,
         pore_radius_nm: float,
         saturation_mole_fraction: float,
-        contaminant_mole_fraction: Optional[float] = None,
+        contaminant_mole_fraction: float | None = None,
         contact_angle_deg: float = 0.0,
         geometry_factor: float = 2.0,
         watch_margin: float = 0.5,
@@ -99,7 +98,12 @@ class CapillaryCondensationScreeningModel:
 
         cos_theta = math.cos(math.radians(contact_angle_deg))
         kelvin_length_nm = (
-            geometry_factor * surface_tension * molar_volume * cos_theta / (R_GAS * temperature) * 1e9
+            geometry_factor
+            * surface_tension
+            * molar_volume
+            * cos_theta
+            / (R_GAS * temperature)
+            * 1e9
         )
         onset = math.exp(-kelvin_length_nm / pore_radius_nm)
         max_mole_fraction = onset * saturation_mole_fraction

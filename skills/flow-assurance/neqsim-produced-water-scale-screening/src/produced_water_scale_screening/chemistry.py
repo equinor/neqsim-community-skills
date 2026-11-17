@@ -130,7 +130,7 @@ def davies_activity_coefficient(charge: int, ionic_strength_value: float) -> flo
     sqrt_i = sqrt(ionic_strength_value)
     z2 = float(charge * charge)
     log_gamma = -DAVIES_A * z2 * (sqrt_i / (1.0 + sqrt_i) - 0.3 * ionic_strength_value)
-    return float(10.0 ** log_gamma)
+    return float(10.0**log_gamma)
 
 
 def charge_balance_error_pct(molality: dict[str, float]) -> float:

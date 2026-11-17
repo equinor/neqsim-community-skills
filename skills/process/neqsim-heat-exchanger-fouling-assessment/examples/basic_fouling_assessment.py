@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -30,7 +30,9 @@ def main() -> None:
     print(f"lmtd_k={result.lmtd_k} reliable={result.lmtd_reliable}")
     print(f"effectiveness={result.effectiveness} ntu={result.ntu}")
     print(f"u_measured_w_m2k={result.u_measured_w_m2k} basis={result.u_measured_basis}")
-    print(f"u_normalised_to_design_flow_w_m2k={result.u_normalised_to_design_flow_w_m2k}")
+    print(
+        f"u_normalised_to_design_flow_w_m2k={result.u_normalised_to_design_flow_w_m2k}"
+    )
     print(f"u_naive_one_sided_w_m2k={result.u_naive_one_sided_w_m2k}")
     print(f"naive_optimism_percentage_points={result.naive_optimism_percentage_points}")
     print(f"performance_ratio={result.performance_ratio}")

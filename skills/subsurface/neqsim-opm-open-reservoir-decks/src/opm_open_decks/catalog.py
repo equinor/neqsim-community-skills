@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 REPO = "OPM/opm-data"
 RAW_HOST = "https://raw.githubusercontent.com"
@@ -18,13 +18,18 @@ LICENCE_SLEIPNER = (
     "Not ODbL. See sleipner/COPYING and sleipner/license.pdf."
 )
 
-CASES: Dict[str, Dict[str, Any]] = {
+CASES: dict[str, dict[str, Any]] = {
     "spe1": {
         "title": "SPE1 - black-oil gas injection, 10x10x3",
         "reference": "Odeh A.S., J. Pet. Technol. 33(1), 1981 (First SPE CSP)",
         "kind": "black-oil",
         "directory": "spe1",
-        "decks": ["SPE1CASE1.DATA", "SPE1CASE2.DATA", "SPE1CASE2_2P.DATA", "SPE1CASE2_OILGAS.DATA"],
+        "decks": [
+            "SPE1CASE1.DATA",
+            "SPE1CASE2.DATA",
+            "SPE1CASE2_2P.DATA",
+            "SPE1CASE2_OILGAS.DATA",
+        ],
         "licence": LICENCE_ODBL,
         "use_for": "Smallest end-to-end black-oil case: PVTO/PVDG tables, Rs and Bo checks, material-balance demos.",
         "large_files": {},
@@ -54,7 +59,12 @@ CASES: Dict[str, Dict[str, Any]] = {
         "reference": "Killough J.E., J. Pet. Technol. 47(12), 1995 (Ninth SPE CSP)",
         "kind": "black-oil",
         "directory": "spe9",
-        "decks": ["SPE9.DATA", "SPE9_CP.DATA", "SPE9_CP_GROUP.DATA", "SPE9_CP_SHORT.DATA"],
+        "decks": [
+            "SPE9.DATA",
+            "SPE9_CP.DATA",
+            "SPE9_CP_GROUP.DATA",
+            "SPE9_CP_SHORT.DATA",
+        ],
         "licence": LICENCE_ODBL,
         "use_for": "Heterogeneous black-oil benchmark with many wells; permeability and tops come from side files.",
         "large_files": {},
@@ -77,7 +87,10 @@ CASES: Dict[str, Dict[str, Any]] = {
         "decks": ["SPE10_MODEL2.DATA"],
         "licence": LICENCE_ODBL,
         "use_for": "Large reference model. WARNING: SPE10MODEL2_PERM.INC is about 58 MB, SPE10MODEL2_PHI.INC about 19 MB.",
-        "large_files": {"SPE10MODEL2_PERM.INC": 57946924, "SPE10MODEL2_PHI.INC": 19287206},
+        "large_files": {
+            "SPE10MODEL2_PERM.INC": 57946924,
+            "SPE10MODEL2_PHI.INC": 19287206,
+        },
     },
     "norne": {
         "title": "Norne full-field model (SPE ATW 2013), 46x112x22",
@@ -86,9 +99,14 @@ CASES: Dict[str, Dict[str, Any]] = {
         "directory": "norne",
         "decks": ["NORNE_ATW2013.DATA"],
         "licence": LICENCE_ODBL,
-        "use_for": ("Realistic field deck: wells, VFP tables, regions, PVT-WET-GAS.INC, history schedule. "
-                    "The INCLUDE tree holds tens of MB (for example GRID/IRAP_1005.GRDECL about 11 MB)."),
-        "large_files": {"INCLUDE/GRID/IRAP_1005.GRDECL": 11318913, "INCLUDE/PETRO/SWINITIAL.INC": 1983942},
+        "use_for": (
+            "Realistic field deck: wells, VFP tables, regions, PVT-WET-GAS.INC, history schedule. "
+            "The INCLUDE tree holds tens of MB (for example GRID/IRAP_1005.GRDECL about 11 MB)."
+        ),
+        "large_files": {
+            "INCLUDE/GRID/IRAP_1005.GRDECL": 11318913,
+            "INCLUDE/PETRO/SWINITIAL.INC": 1983942,
+        },
     },
     "sleipner": {
         "title": "Sleipner 2019 CO2 benchmark model",
@@ -98,12 +116,15 @@ CASES: Dict[str, Dict[str, Any]] = {
         "decks": ["SLEIPNER_ORG.DATA"],
         "licence": LICENCE_SLEIPNER,
         "use_for": "CO2 plume and storage cases. WARNING: PORO.INC is about 34 MB and the gzipped grid about 27 MB.",
-        "large_files": {"PORO.INC": 34168687, "Sleipner_Reference_Model_cleaned.grdecl.gz": 26905193},
+        "large_files": {
+            "PORO.INC": 34168687,
+            "Sleipner_Reference_Model_cleaned.grdecl.gz": 26905193,
+        },
     },
 }
 
 # Informational pointer, not fetched by the client: the page states no licence.
-EXTERNAL: List[Dict[str, str]] = [
+EXTERNAL: list[dict[str, str]] = [
     {
         "name": "SPE10 model 2 original archive (SPE CSP)",
         "url": "https://www.spe.org/web/csp/datasets/set02.htm",
@@ -112,12 +133,12 @@ EXTERNAL: List[Dict[str, str]] = [
 ]
 
 
-def case_names() -> List[str]:
+def case_names() -> list[str]:
     """Return the catalog case names."""
     return sorted(CASES)
 
 
-def get_case(name: str) -> Dict[str, Any]:
+def get_case(name: str) -> dict[str, Any]:
     """Return one catalog entry; raises ``KeyError`` with the valid names for an unknown case."""
     try:
         return CASES[name]

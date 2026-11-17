@@ -15,7 +15,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from reference_fluid import (  # noqa: E402
+from reference_fluid import (
     FluidAnalogue,
     api_to_density,
     build_analogue_fluid_basis,
@@ -38,16 +38,23 @@ ANALOGUES = [
 # -- conditions ------------------------------------------------------------
 def test_temperature_uses_the_depth_below_mudline_not_the_tvdss():
     shallow_water = estimate_reservoir_conditions(
-        datum_tvdss_m=3000.0, water_depth_m=100.0, sea_area="north_sea")
+        datum_tvdss_m=3000.0, water_depth_m=100.0, sea_area="north_sea"
+    )
     deep_water = estimate_reservoir_conditions(
-        datum_tvdss_m=3000.0, water_depth_m=1500.0, sea_area="north_sea")
-    assert deep_water["temperature_C"]["value"] < shallow_water["temperature_C"]["value"]
+        datum_tvdss_m=3000.0, water_depth_m=1500.0, sea_area="north_sea"
+    )
+    assert (
+        deep_water["temperature_C"]["value"] < shallow_water["temperature_C"]["value"]
+    )
 
 
 def test_a_measured_temperature_is_labelled_measured_and_keeps_the_estimate():
     record = estimate_reservoir_conditions(
-        datum_tvdss_m=3590.0, water_depth_m=381.0, sea_area="north_sea",
-        measured_temperature_C=129.0)
+        datum_tvdss_m=3590.0,
+        water_depth_m=381.0,
+        sea_area="north_sea",
+        measured_temperature_C=129.0,
+    )
     assert record["temperature_C"]["value"] == 129.0
     assert record["temperature_C"]["provenance"] == "measured"
     assert "estimate_if_measured_supplied" in record["temperature_C"]
@@ -56,8 +63,11 @@ def test_a_measured_temperature_is_labelled_measured_and_keeps_the_estimate():
 
 def test_overpressure_is_quantified_against_hydrostatic():
     record = estimate_reservoir_conditions(
-        datum_tvdss_m=3590.0, water_depth_m=381.0, sea_area="north_sea",
-        measured_pressure_bara=542.0)
+        datum_tvdss_m=3590.0,
+        water_depth_m=381.0,
+        sea_area="north_sea",
+        measured_pressure_bara=542.0,
+    )
     assert record["pressure_bara"]["overpressure_bar"] > 150
     assert "refuted" in record["pressure_bara"]["note"]
 
@@ -71,7 +81,8 @@ def test_hydrostatic_carries_a_warning_because_it_is_an_assumption():
 def test_a_strong_overpressure_regime_raises_the_estimate():
     hydro = estimate_reservoir_conditions(datum_tvdss_m=3590.0)
     over = estimate_reservoir_conditions(
-        datum_tvdss_m=3590.0, pressure_regime="strong_overpressure")
+        datum_tvdss_m=3590.0, pressure_regime="strong_overpressure"
+    )
     assert over["pressure_bara"]["value"] > hydro["pressure_bara"]["value"] + 100
 
 
@@ -87,10 +98,17 @@ def test_a_negative_datum_is_refused():
 
 
 # -- fluid type ------------------------------------------------------------
-@pytest.mark.parametrize("gor,expected", [
-    (10.0, "heavy_oil"), (120.0, "black_oil"), (290.0, "volatile_oil"),
-    (700.0, "near_critical"), (5000.0, "gas_condensate"), (50000.0, "dry_gas"),
-])
+@pytest.mark.parametrize(
+    "gor,expected",
+    [
+        (10.0, "heavy_oil"),
+        (120.0, "black_oil"),
+        (290.0, "volatile_oil"),
+        (700.0, "near_critical"),
+        (5000.0, "gas_condensate"),
+        (50000.0, "dry_gas"),
+    ],
+)
 def test_fluid_type_bands(gor, expected):
     assert classify_fluid_type(gor)["fluid_type"] == expected
 
@@ -157,18 +175,27 @@ def test_an_empty_analogue_set_is_refused():
 
 # -- the basis -------------------------------------------------------------
 def test_a_basis_with_no_measurements_is_declared_synthetic():
-    basis = build_analogue_fluid_basis(datum_tvdss_m=3590.0, analogues=ANALOGUES,
-                                       water_depth_m=381.0, sea_area="north_sea")
+    basis = build_analogue_fluid_basis(
+        datum_tvdss_m=3590.0,
+        analogues=ANALOGUES,
+        water_depth_m=381.0,
+        sea_area="north_sea",
+    )
     assert basis["confidence"]["level"] == "synthetic"
     assert "synthetic estimate" in basis["confidence"]["statement"]
 
 
 def test_supplying_every_measurement_makes_the_basis_measured():
     basis = build_analogue_fluid_basis(
-        datum_tvdss_m=3590.0, analogues=ANALOGUES, water_depth_m=381.0,
-        sea_area="north_sea", measured_temperature_C=129.0,
-        measured_pressure_bara=542.0, measured_gor_sm3_sm3=290.0,
-        measured_api_degrees=41.0)
+        datum_tvdss_m=3590.0,
+        analogues=ANALOGUES,
+        water_depth_m=381.0,
+        sea_area="north_sea",
+        measured_temperature_C=129.0,
+        measured_pressure_bara=542.0,
+        measured_gor_sm3_sm3=290.0,
+        measured_api_degrees=41.0,
+    )
     assert basis["confidence"]["level"] == "measured"
     assert basis["open_assumptions"] == 2  # F5 gas analysis, F6 grading
 
@@ -176,16 +203,25 @@ def test_supplying_every_measurement_makes_the_basis_measured():
 def test_low_base_high_bracket_the_base_case():
     basis = build_analogue_fluid_basis(datum_tvdss_m=2700.0, analogues=ANALOGUES)
     cases = basis["cases"]
-    assert cases["low"]["gor_sm3_sm3"] < cases["base"]["gor_sm3_sm3"] < cases["high"]["gor_sm3_sm3"]
+    assert (
+        cases["low"]["gor_sm3_sm3"]
+        < cases["base"]["gor_sm3_sm3"]
+        < cases["high"]["gor_sm3_sm3"]
+    )
     assert cases["low"]["sto_density_kg_m3"] > cases["high"]["sto_density_kg_m3"]
 
 
 def test_a_measured_gor_narrows_the_spread():
     wide = build_analogue_fluid_basis(datum_tvdss_m=2700.0, analogues=ANALOGUES)
-    narrow = build_analogue_fluid_basis(datum_tvdss_m=2700.0, analogues=ANALOGUES,
-                                        measured_gor_sm3_sm3=200.0)
-    wide_span = wide["cases"]["high"]["gor_sm3_sm3"] - wide["cases"]["low"]["gor_sm3_sm3"]
-    narrow_span = narrow["cases"]["high"]["gor_sm3_sm3"] - narrow["cases"]["low"]["gor_sm3_sm3"]
+    narrow = build_analogue_fluid_basis(
+        datum_tvdss_m=2700.0, analogues=ANALOGUES, measured_gor_sm3_sm3=200.0
+    )
+    wide_span = (
+        wide["cases"]["high"]["gor_sm3_sm3"] - wide["cases"]["low"]["gor_sm3_sm3"]
+    )
+    narrow_span = (
+        narrow["cases"]["high"]["gor_sm3_sm3"] - narrow["cases"]["low"]["gor_sm3_sm3"]
+    )
     assert narrow_span < wide_span
 
 
@@ -210,22 +246,28 @@ def test_a_clamped_trend_adds_its_own_assumption():
 
 
 def test_a_measured_parameter_marks_its_assumption_retired():
-    basis = build_analogue_fluid_basis(datum_tvdss_m=2700.0, analogues=ANALOGUES,
-                                       measured_gor_sm3_sm3=200.0)
+    basis = build_analogue_fluid_basis(
+        datum_tvdss_m=2700.0, analogues=ANALOGUES, measured_gor_sm3_sm3=200.0
+    )
     entry = next(a for a in basis["assumption_register"] if a["id"] == "F1")
     assert entry["retired"] is True and entry["retired_by"]
 
 
 # -- reconciliation --------------------------------------------------------
 def test_reconciliation_separates_confirmed_from_overturned():
-    basis = build_analogue_fluid_basis(datum_tvdss_m=3590.0, analogues=ANALOGUES,
-                                       water_depth_m=381.0, sea_area="north_sea")
+    basis = build_analogue_fluid_basis(
+        datum_tvdss_m=3590.0,
+        analogues=ANALOGUES,
+        water_depth_m=381.0,
+        sea_area="north_sea",
+    )
     result = reconcile_with_measured(
-        basis, {"temperature_C": 129.0, "pressure_bara": 542.0})
+        basis, {"temperature_C": 129.0, "pressure_bara": 542.0}
+    )
     confirmed = {e["parameter"] for e in result["confirmed"]}
     overturned = {e["parameter"] for e in result["overturned"]}
-    assert "temperature_C" in confirmed        # the gradient read was good
-    assert "pressure_bara" in overturned       # hydrostatic was not
+    assert "temperature_C" in confirmed  # the gradient read was good
+    assert "pressure_bara" in overturned  # hydrostatic was not
     assert result["verdict"] == "analogue_basis_refuted"
 
 
@@ -250,11 +292,14 @@ def test_a_fully_confirmed_basis_supports_the_analogue_method():
 
 # -- the GOR definition trap ----------------------------------------------
 def test_the_gor_spread_across_definitions_is_reported():
-    record = reconcile_gor_definitions({
-        "single_stage_flash": 290.1,
-        "black_oil_Rs_at_bubble_point": 317.9,
-        "separator_train": 259.5,
-    }, quoted=290.0)
+    record = reconcile_gor_definitions(
+        {
+            "single_stage_flash": 290.1,
+            "black_oil_Rs_at_bubble_point": 317.9,
+            "separator_train": 259.5,
+        },
+        quoted=290.0,
+    )
     assert record["spread"] == pytest.approx(58.4, abs=0.1)
     assert record["closest_definition"] == "single_stage_flash"
     assert "state which definition" in record["consequence"]
@@ -277,4 +322,5 @@ def test_no_recognised_definition_is_refused():
 
 def test_differential_liberation_is_declared_not_comparable():
     from reference_fluid import GOR_DEFINITIONS
+
     assert "not comparable" in GOR_DEFINITIONS["differential_liberation"]

@@ -3,11 +3,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional
 
 KINDS = (
-    "equipment", "pump", "gate_valve", "ball_valve", "esdv", "check_valve", "control_valve", "psv",
-    "pig_launcher", "pig_receiver", "spec_break", "transmitter", "flow_meter", "sampler", "tie_in", "riser",
+    "equipment",
+    "pump",
+    "gate_valve",
+    "ball_valve",
+    "esdv",
+    "check_valve",
+    "control_valve",
+    "psv",
+    "pig_launcher",
+    "pig_receiver",
+    "spec_break",
+    "transmitter",
+    "flow_meter",
+    "sampler",
+    "tie_in",
+    "riser",
     "note_box",
 )
 
@@ -45,15 +58,15 @@ class TieInEndSketch:
     title: str
     subtitle: str
     side: str  # "source" (line leaves) or "landing" (line arrives)
-    elements: List[Element] = field(default_factory=list)
-    notes: List[str] = field(default_factory=list)
-    options: List[str] = field(default_factory=list)
+    elements: list[Element] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
+    options: list[str] = field(default_factory=list)
     line_label: str = ""
-    source_ref: Optional[str] = None
+    source_ref: str | None = None
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Return a list of completeness findings (empty when the sketch is internally consistent)."""
-        findings: List[str] = []
+        findings: list[str] = []
         kinds = [e.kind for e in self.elements]
         if "esdv" not in kinds:
             findings.append("no ESD valve at the platform boundary")

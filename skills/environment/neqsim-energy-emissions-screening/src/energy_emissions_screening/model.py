@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite
-from typing import Sequence
 
 
 @dataclass(frozen=True)
@@ -77,9 +77,7 @@ class EnergyEmissionsModel:
             carbon_intensity = None
 
         # MUSD = tonnes * USD/tonne / 1e6.
-        annual_cost = [
-            (t * co2_tax_usd_per_tonne) / 1.0e6 for t in annual_co2e_tonnes
-        ]
+        annual_cost = [(t * co2_tax_usd_per_tonne) / 1.0e6 for t in annual_co2e_tonnes]
         total_cost = sum(annual_cost)
 
         warning = self._intensity_warning(carbon_intensity)

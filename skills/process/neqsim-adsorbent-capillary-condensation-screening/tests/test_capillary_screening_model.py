@@ -1,9 +1,6 @@
 """Tests for the adsorbent capillary condensation screening model."""
 
-import math
-
 import pytest
-
 from adsorbent_capillary_condensation_screening import (
     CapillaryCondensationScreeningModel,
     micropore_filling_fraction,
@@ -29,7 +26,12 @@ def test_kelvin_length_matches_analytical(model):
 
 
 def test_onset_matches_kelvin_equation(model):
-    for radius, expected in ((1.0, 0.4717), (2.0, 0.6868), (5.0, 0.8605), (10.0, 0.9276)):
+    for radius, expected in (
+        (1.0, 0.4717),
+        (2.0, 0.6868),
+        (5.0, 0.8605),
+        (10.0, 0.9276),
+    ):
         result = model.evaluate(T, SIGMA, VM, radius, Y_SAT)
         assert result.onset_relative_saturation == pytest.approx(expected, abs=5e-4)
 
@@ -43,7 +45,9 @@ def test_narrow_pores_give_tighter_limit(model):
 
 def test_limit_is_a_fraction_of_bulk_saturation(model):
     result = model.evaluate(T, SIGMA, VM, 6.0, Y_SAT)
-    assert result.max_mole_fraction == pytest.approx(result.onset_relative_saturation * Y_SAT)
+    assert result.max_mole_fraction == pytest.approx(
+        result.onset_relative_saturation * Y_SAT
+    )
     assert result.max_mole_fraction < Y_SAT
 
 
@@ -68,7 +72,10 @@ def test_warning_levels(model):
     limit = model.evaluate(T, SIGMA, VM, 6.0, Y_SAT).max_mole_fraction
     assert model.evaluate(T, SIGMA, VM, 6.0, Y_SAT, 0.05 * limit).warning == "ok"
     assert model.evaluate(T, SIGMA, VM, 6.0, Y_SAT, 0.7 * limit).warning == "watch"
-    assert model.evaluate(T, SIGMA, VM, 6.0, Y_SAT, 1.4 * limit).warning == "condensation-expected"
+    assert (
+        model.evaluate(T, SIGMA, VM, 6.0, Y_SAT, 1.4 * limit).warning
+        == "condensation-expected"
+    )
 
 
 def test_margin_and_relative_saturation_reported(model):

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from benchmark_reference_data import coolprop_backend as backend
 
 coolprop_required = pytest.mark.skipif(

@@ -1,12 +1,17 @@
 import pytest
-
 from subsea_layout_geometry import SubseaLayoutModel
 
 
 def _square_layout():
     return [
         {"name": "Host", "x": 0.0, "y": 0.0, "water_depth_m": 100.0, "kind": "host"},
-        {"name": "W1", "x": 3000.0, "y": 4000.0, "water_depth_m": 100.0, "kind": "well"},
+        {
+            "name": "W1",
+            "x": 3000.0,
+            "y": 4000.0,
+            "water_depth_m": 100.0,
+            "kind": "well",
+        },
     ]
 
 
@@ -50,7 +55,9 @@ def test_step_out_warning_flags_high_beyond_guideline() -> None:
         {"name": "Host", "x": 0.0, "y": 0.0, "water_depth_m": 100.0, "kind": "host"},
         {"name": "W1", "x": 60000.0, "y": 0.0, "water_depth_m": 100.0, "kind": "well"},
     ]
-    result = SubseaLayoutModel(max_step_out_km=50.0).evaluate(nodes=nodes, host_name="Host")
+    result = SubseaLayoutModel(max_step_out_km=50.0).evaluate(
+        nodes=nodes, host_name="Host"
+    )
 
     assert result.max_step_out_km == pytest.approx(60.0, abs=1e-6)
     assert result.step_out_warning == "high"
@@ -59,7 +66,13 @@ def test_step_out_warning_flags_high_beyond_guideline() -> None:
 def test_pairwise_distance_matrix_is_complete() -> None:
     nodes = [
         {"name": "Host", "x": 0.0, "y": 0.0, "water_depth_m": 100.0, "kind": "host"},
-        {"name": "M1", "x": 1000.0, "y": 0.0, "water_depth_m": 100.0, "kind": "manifold"},
+        {
+            "name": "M1",
+            "x": 1000.0,
+            "y": 0.0,
+            "water_depth_m": 100.0,
+            "kind": "manifold",
+        },
         {"name": "W1", "x": 2000.0, "y": 0.0, "water_depth_m": 100.0, "kind": "well"},
     ]
     result = SubseaLayoutModel().evaluate(nodes=nodes, host_name="Host")

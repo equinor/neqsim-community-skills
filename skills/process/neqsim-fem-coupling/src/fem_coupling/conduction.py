@@ -20,9 +20,9 @@ defended.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from math import isfinite, log, pi
-from typing import Sequence
 
 from .materials import SolidMaterial
 
@@ -196,10 +196,16 @@ class RadialConductionModel:
             inner_weight = self._weight(self.coordinates[0])
             outer_weight = self._weight(self.coordinates[-1])
             diagonal[0] += inner_film_coefficient_w_per_m2k * inner_weight
-            rhs[0] += inner_film_coefficient_w_per_m2k * inner_weight * inner_bulk_temperature_c
+            rhs[0] += (
+                inner_film_coefficient_w_per_m2k
+                * inner_weight
+                * inner_bulk_temperature_c
+            )
             diagonal[-1] += outer_film_coefficient_w_per_m2k * outer_weight
             rhs[-1] += (
-                outer_film_coefficient_w_per_m2k * outer_weight * outer_bulk_temperature_c
+                outer_film_coefficient_w_per_m2k
+                * outer_weight
+                * outer_bulk_temperature_c
             )
 
             updated = _solve_tridiagonal(lower, diagonal, upper, rhs)
@@ -260,7 +266,9 @@ class RadialConductionModel:
             interface_temperatures_c=self._interface_temperatures(temperatures),
             heat_flux_inner_w_per_m2=flux_inner,
             heat_flow_per_length_w_per_m=heat_per_length,
-            overall_u_inner_w_per_m2k=flux_inner / driving if abs(driving) > 1.0e-12 else 0.0,
+            overall_u_inner_w_per_m2k=(
+                flux_inner / driving if abs(driving) > 1.0e-12 else 0.0
+            ),
             thermal_resistance_m2k_per_w=analytic_resistance,
             analytic_heat_flux_inner_w_per_m2=analytic_flux,
             analytic_deviation_percent=deviation,
@@ -331,9 +339,12 @@ class RadialConductionModel:
                     "the inner surface temperature does not respond to the outer "
                     "bulk temperature; check the film coefficients"
                 )
-            guess = low + (high - low) * (
-                target_inner_surface_temperature_c - surface_low
-            ) / slope
+            guess = (
+                low
+                + (high - low)
+                * (target_inner_surface_temperature_c - surface_low)
+                / slope
+            )
             surface = inner_surface(guess)
             if abs(surface - target_inner_surface_temperature_c) < tolerance_k:
                 return guess
@@ -400,7 +411,9 @@ class RadialConductionModel:
                 )
 
         conductivities = self._layer_conductivities(wall_initial)
-        wall_k_diag, wall_k_lower, wall_k_upper, _ = self._assemble_stiffness(conductivities)
+        wall_k_diag, wall_k_lower, wall_k_upper, _ = self._assemble_stiffness(
+            conductivities
+        )
         wall_m_diag, wall_m_lower, wall_m_upper = self._assemble_mass()
 
         # A bore fluid with its own capacity becomes one extra node ahead of the
@@ -449,7 +462,9 @@ class RadialConductionModel:
             outer_film_coefficient_w_per_m2k * outer_weight * outer_bulk_temperature_c
         )
 
-        temperatures = ([float(inner_bulk_temperature_c)] if track_fluid else []) + wall_initial
+        temperatures = (
+            [float(inner_bulk_temperature_c)] if track_fluid else []
+        ) + wall_initial
 
         steps = max(1, int(round(duration_s / time_step_s)))
         dt = duration_s / steps
@@ -465,7 +480,9 @@ class RadialConductionModel:
         for step in range(1, steps + 1):
             rhs = _tridiagonal_multiply(m_lower, m_diag, m_upper, temperatures)
             rhs = [value / dt + source for value, source in zip(rhs, load)]
-            temperatures = _solve_tridiagonal(system_lower, system_diag, system_upper, rhs)
+            temperatures = _solve_tridiagonal(
+                system_lower, system_diag, system_upper, rhs
+            )
             if step % sample_every == 0 or step == steps:
                 times.append(step * dt)
                 history.append(tuple(temperatures))
@@ -477,7 +494,8 @@ class RadialConductionModel:
                 "too few points to read an intermediate time off the history."
             )
         slowest = min(
-            layer.material.thermal_diffusivity_at(wall_initial[0]) for layer in self.layers
+            layer.material.thermal_diffusivity_at(wall_initial[0])
+            for layer in self.layers
         )
         wall_response_s = self.total_thickness_m**2 / slowest
         if dt > wall_response_s / 50.0:
@@ -513,7 +531,9 @@ class RadialConductionModel:
             temperatures_c=tuple(row[offset:] for row in history),
             inner_surface_history_c=tuple(row[offset] for row in history),
             outer_surface_history_c=tuple(row[-1] for row in history),
-            inner_fluid_history_c=tuple(row[0] for row in history) if track_fluid else (),
+            inner_fluid_history_c=(
+                tuple(row[0] for row in history) if track_fluid else ()
+            ),
             time_step_s=dt,
             steps=steps,
             warnings=tuple(warnings),
@@ -547,7 +567,11 @@ class RadialConductionModel:
             right = self.coordinates[element + 1]
             length = right - left
             # Integral of the geometric weight over the element.
-            integral = length * 0.5 * (left + right) if self.geometry == "cylindrical" else length
+            integral = (
+                length * 0.5 * (left + right)
+                if self.geometry == "cylindrical"
+                else length
+            )
             stiffness = conductivity * integral / length**2
             diagonal[element] += stiffness
             diagonal[element + 1] += stiffness
@@ -566,7 +590,9 @@ class RadialConductionModel:
             left = self.coordinates[element]
             right = self.coordinates[element + 1]
             length = right - left
-            capacity = self.layers[layer_index].material.volumetric_heat_capacity_j_per_m3k()
+            capacity = self.layers[
+                layer_index
+            ].material.volumetric_heat_capacity_j_per_m3k()
             if self.geometry == "cylindrical":
                 m11 = capacity * length * (left / 3.0 + length / 12.0)
                 m22 = capacity * length * (left / 3.0 + length / 4.0)
@@ -669,8 +695,12 @@ def analytic_composite_resistance(
     than a restatement of the same code.
     """
     _require_positive("inner_radius_m", inner_radius_m)
-    _require_positive("inner_film_coefficient_w_per_m2k", inner_film_coefficient_w_per_m2k)
-    _require_positive("outer_film_coefficient_w_per_m2k", outer_film_coefficient_w_per_m2k)
+    _require_positive(
+        "inner_film_coefficient_w_per_m2k", inner_film_coefficient_w_per_m2k
+    )
+    _require_positive(
+        "outer_film_coefficient_w_per_m2k", outer_film_coefficient_w_per_m2k
+    )
 
     radius = float(inner_radius_m)
     resistance = 1.0 / (inner_film_coefficient_w_per_m2k * 2.0 * pi * radius)

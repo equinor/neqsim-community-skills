@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -23,7 +23,12 @@ _SEGYIO_MISSING = (
 )
 
 #: Inline/crossline header byte pairs tried in order: SEG-Y rev1 standard, then common legacy.
-DEFAULT_HEADER_BYTES: Tuple[Tuple[int, int], ...] = ((189, 193), (9, 21), (9, 13), (5, 21))
+DEFAULT_HEADER_BYTES: tuple[tuple[int, int], ...] = (
+    (189, 193),
+    (9, 21),
+    (9, 13),
+    (5, 21),
+)
 
 COORDINATE_FIELDS = {
     "cdp": ("CDP_X", "CDP_Y"),
@@ -32,16 +37,21 @@ COORDINATE_FIELDS = {
 }
 
 _CRS_PATTERNS = (
-    ("epsg", re.compile(r"EPSG\s*[:#]?\s*(\d{4,5})", re.I)),
-    ("utm_zone", re.compile(r"UTM\s*(?:ZONE)?\s*(\d{1,2}\s*[NS]?)", re.I)),
-    ("datum", re.compile(r"\b(ED\s?50|ED\s?87|WGS\s?84|ETRS\s?89|NAD\s?27|NAD\s?83)\b", re.I)),
+    ("epsg", re.compile(r"EPSG\s*[:#]?\s*(\d{4,5})", re.IGNORECASE)),
+    ("utm_zone", re.compile(r"UTM\s*(?:ZONE)?\s*(\d{1,2}\s*[NS]?)", re.IGNORECASE)),
+    (
+        "datum",
+        re.compile(
+            r"\b(ED\s?50|ED\s?87|WGS\s?84|ETRS\s?89|NAD\s?27|NAD\s?83)\b", re.IGNORECASE
+        ),
+    ),
 )
 
 
 def segyio_module():
     """Import segyio or raise an ImportError with the remedy."""
     try:
-        import segyio  # noqa: PLC0415
+        import segyio
     except ImportError as exc:  # pragma: no cover - depends on environment
         raise ImportError(_SEGYIO_MISSING) from exc
     return segyio
@@ -69,24 +79,26 @@ class SegyGeometry:
     sample_format: str
     structured: bool
     sorting: str = "unstructured"
-    header_bytes: Optional[Tuple[int, int]] = None
-    inlines: Optional[np.ndarray] = None
-    crosslines: Optional[np.ndarray] = None
-    offsets: List[int] = field(default_factory=list)
+    header_bytes: tuple[int, int] | None = None
+    inlines: np.ndarray | None = None
+    crosslines: np.ndarray | None = None
+    offsets: list[int] = field(default_factory=list)
     coordinate_source: str = "cdp"
-    coordinate_scalars: List[int] = field(default_factory=list)
+    coordinate_scalars: list[int] = field(default_factory=list)
     coordinate_unit: str = "unknown"
-    bbox: Optional[Dict[str, float]] = None
-    bin_spacing: Optional[Dict[str, float]] = None
+    bbox: dict[str, float] | None = None
+    bin_spacing: dict[str, float] | None = None
     domain: str = "unknown"
     text_header: str = ""
-    crs_hints: Dict[str, str] = field(default_factory=dict)
-    amplitude: Dict[str, float] = field(default_factory=dict)
-    warnings: List[str] = field(default_factory=list)
+    crs_hints: dict[str, str] = field(default_factory=dict)
+    amplitude: dict[str, float] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
 
 
 @contextmanager
-def open_segy(path, header_bytes: Sequence[Tuple[int, int]] = DEFAULT_HEADER_BYTES) -> Iterator:
+def open_segy(
+    path, header_bytes: Sequence[tuple[int, int]] = DEFAULT_HEADER_BYTES
+) -> Iterator:
     """Open a SEG-Y file, trying inline/crossline byte pairs, else unstructured.
 
     Yields ``(segyfile, used_bytes, note)``; ``used_bytes`` is ``None`` for unstructured
@@ -113,7 +125,9 @@ def open_segy(path, header_bytes: Sequence[Tuple[int, int]] = DEFAULT_HEADER_BYT
         handle.close()
 
 
-def trace_coordinates(handle, source: str = "cdp") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def trace_coordinates(
+    handle, source: str = "cdp"
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return trace X, Y with the SEG-Y coordinate scalar applied, and the raw scalars.
 
     Scalar convention (bytes 71-72): positive multiplies, negative divides, zero means 1.
@@ -133,7 +147,7 @@ def trace_coordinates(handle, source: str = "cdp") -> Tuple[np.ndarray, np.ndarr
     return x * factor, y * factor, scalar
 
 
-def _crs_hints(text: str) -> Dict[str, str]:
+def _crs_hints(text: str) -> dict[str, str]:
     hints = {}
     for key, pattern in _CRS_PATTERNS:
         match = pattern.search(text)
@@ -151,7 +165,7 @@ def _domain(text: str) -> str:
     return "time assumed (SEG-Y default); confirm with the data owner"
 
 
-def _amplitude_stats(handle, max_traces: int = 2000) -> Dict[str, float]:
+def _amplitude_stats(handle, max_traces: int = 2000) -> dict[str, float]:
     count = handle.tracecount
     if count == 0:
         return {}
@@ -167,7 +181,7 @@ def _amplitude_stats(handle, max_traces: int = 2000) -> Dict[str, float]:
         "zero_fraction": float(np.mean(finite == 0.0)),
         "min": float(finite.min()),
         "max": float(finite.max()),
-        "rms": float(np.sqrt(np.mean(finite ** 2))),
+        "rms": float(np.sqrt(np.mean(finite**2))),
         "p01": float(p01),
         "p50": float(p50),
         "p99": float(p99),
@@ -176,7 +190,7 @@ def _amplitude_stats(handle, max_traces: int = 2000) -> Dict[str, float]:
 
 def inspect_segy(
     path,
-    header_bytes: Sequence[Tuple[int, int]] = DEFAULT_HEADER_BYTES,
+    header_bytes: Sequence[tuple[int, int]] = DEFAULT_HEADER_BYTES,
     coordinate_source: str = "cdp",
 ) -> SegyGeometry:
     """Describe a SEG-Y file: sizes, sampling, geometry, coordinates, CRS hints, amplitudes.
@@ -212,7 +226,9 @@ def inspect_segy(
             geometry.inlines = np.asarray(handle.ilines)
             geometry.crosslines = np.asarray(handle.xlines)
             geometry.offsets = [int(o) for o in handle.offsets]
-            geometry.sorting = {1: "crossline", 2: "inline"}.get(handle.sorting, str(handle.sorting))
+            geometry.sorting = {1: "crossline", 2: "inline"}.get(
+                handle.sorting, str(handle.sorting)
+            )
             if len(geometry.offsets) > 1:
                 geometry.warnings.append(
                     f"pre-stack data: {len(geometry.offsets)} offsets per bin ({geometry.offsets}); "
@@ -225,23 +241,33 @@ def inspect_segy(
                 f"({note})"
             )
         unit_code = handle.bin[segyio.BinField.MeasurementSystem]
-        geometry.coordinate_unit = {1: "m", 2: "ft"}.get(unit_code, "unknown (binary header byte 3255)")
+        geometry.coordinate_unit = {1: "m", 2: "ft"}.get(
+            unit_code, "unknown (binary header byte 3255)"
+        )
         x, y, scalars = trace_coordinates(handle, coordinate_source)
         geometry.coordinate_scalars = sorted({int(s) for s in np.unique(scalars)})
         if np.allclose(x, 0) and np.allclose(y, 0):
-            geometry.warnings.append(f"{coordinate_source} coordinates are all zero; try another source")
+            geometry.warnings.append(
+                f"{coordinate_source} coordinates are all zero; try another source"
+            )
         else:
-            geometry.bbox = {"xmin": float(x.min()), "xmax": float(x.max()),
-                             "ymin": float(y.min()), "ymax": float(y.max())}
+            geometry.bbox = {
+                "xmin": float(x.min()),
+                "xmax": float(x.max()),
+                "ymin": float(y.min()),
+                "ymax": float(y.max()),
+            }
             if used is not None:
                 geometry.bin_spacing = _bin_spacing(handle, x, y)
         if not geometry.crs_hints:
-            geometry.warnings.append("no CRS found in the text header; obtain it from the data owner")
+            geometry.warnings.append(
+                "no CRS found in the text header; obtain it from the data owner"
+            )
         geometry.amplitude = _amplitude_stats(handle)
     return geometry
 
 
-def _bin_spacing(handle, x: np.ndarray, y: np.ndarray) -> Optional[Dict[str, float]]:
+def _bin_spacing(handle, x: np.ndarray, y: np.ndarray) -> dict[str, float] | None:
     """Inline and crossline bin spacing from the first two lines of the survey."""
     ilines, xlines = np.asarray(handle.ilines), np.asarray(handle.xlines)
     if ilines.size < 2 or xlines.size < 2 or len(handle.offsets) > 1:

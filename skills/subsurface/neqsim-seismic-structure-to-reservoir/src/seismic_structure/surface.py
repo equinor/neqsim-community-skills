@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field, replace
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -35,7 +34,7 @@ class Surface:
     domain: str = "depth"  # "depth" (m, positive down) or "time" (two-way time, ms)
     unit: str = "m"
     source: str = ""
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.values = np.asarray(self.values, dtype=float)
@@ -68,7 +67,7 @@ class Surface:
         """Boolean mask of defined nodes."""
         return np.isfinite(self.values)
 
-    def node_xy(self) -> Tuple[np.ndarray, np.ndarray]:
+    def node_xy(self) -> tuple[np.ndarray, np.ndarray]:
         """Return x and y of every node, each of shape ``(ncol, nrow)``."""
         i, j = np.meshgrid(np.arange(self.ncol), np.arange(self.nrow), indexing="ij")
         return self._to_world(i.astype(float), j.astype(float))
@@ -77,10 +76,12 @@ class Surface:
         r = math.radians(self.rotation)
         u = np.asarray(i) * self.xinc
         v = np.asarray(j) * self.yinc * self.yflip
-        return (self.xori + u * math.cos(r) - v * math.sin(r),
-                self.yori + u * math.sin(r) + v * math.cos(r))
+        return (
+            self.xori + u * math.cos(r) - v * math.sin(r),
+            self.yori + u * math.sin(r) + v * math.cos(r),
+        )
 
-    def to_index(self, x, y) -> Tuple[np.ndarray, np.ndarray]:
+    def to_index(self, x, y) -> tuple[np.ndarray, np.ndarray]:
         """Return fractional node indices ``(i, j)`` of world coordinates."""
         r = math.radians(self.rotation)
         dx = np.asarray(x, dtype=float) - self.xori
@@ -101,41 +102,70 @@ class Surface:
         j1 = np.minimum(j0 + 1, self.nrow - 1)
         ti, tj = fi - i0, fj - j0
         v = self.values
-        value = (v[i0, j0] * (1 - ti) * (1 - tj) + v[i1, j0] * ti * (1 - tj)
-                 + v[i0, j1] * (1 - ti) * tj + v[i1, j1] * ti * tj)
+        value = (
+            v[i0, j0] * (1 - ti) * (1 - tj)
+            + v[i1, j0] * ti * (1 - tj)
+            + v[i0, j1] * (1 - ti) * tj
+            + v[i1, j1] * ti * tj
+        )
         out[inside] = value[inside]
         return out
 
-    def resample_to(self, target: "Surface") -> "Surface":
+    def resample_to(self, target: Surface) -> Surface:
         """Return this surface sampled on the nodes of ``target`` (bilinear)."""
         x, y = target.node_xy()
         values = self.sample(x.ravel(), y.ravel()).reshape(target.values.shape)
-        return replace(target, values=values, name=self.name, domain=self.domain,
-                       unit=self.unit, source=self.source, notes=list(self.notes))
+        return replace(
+            target,
+            values=values,
+            name=self.name,
+            domain=self.domain,
+            unit=self.unit,
+            source=self.source,
+            notes=list(self.notes),
+        )
 
-    def same_geometry(self, other: "Surface", tol: float = 1e-6) -> bool:
+    def same_geometry(self, other: Surface, tol: float = 1e-6) -> bool:
         """True when both surfaces share nodes (origin, increments, rotation, size)."""
-        return (self.values.shape == other.values.shape and self.yflip == other.yflip
-                and all(abs(a - b) <= tol * max(1.0, abs(a)) for a, b in (
-                    (self.xori, other.xori), (self.yori, other.yori), (self.xinc, other.xinc),
-                    (self.yinc, other.yinc), (self.rotation, other.rotation))))
+        return (
+            self.values.shape == other.values.shape
+            and self.yflip == other.yflip
+            and all(
+                abs(a - b) <= tol * max(1.0, abs(a))
+                for a, b in (
+                    (self.xori, other.xori),
+                    (self.yori, other.yori),
+                    (self.xinc, other.xinc),
+                    (self.yinc, other.yinc),
+                    (self.rotation, other.rotation),
+                )
+            )
+        )
 
-    def normalized(self) -> "Surface":
+    def normalized(self) -> Surface:
         """Return an equivalent surface with ``yflip = 1`` (rows reversed, origin moved)."""
         if self.yflip == 1:
             return self
         x, y = self._to_world(0.0, float(self.nrow - 1))
-        return replace(self, xori=float(x), yori=float(y), yflip=1,
-                       values=self.values[:, ::-1].copy(), notes=list(self.notes))
+        return replace(
+            self,
+            xori=float(x),
+            yori=float(y),
+            yflip=1,
+            values=self.values[:, ::-1].copy(),
+            notes=list(self.notes),
+        )
 
-    def coarsen(self, factor: int) -> "Surface":
+    def coarsen(self, factor: int) -> Surface:
         """Average blocks of ``factor x factor`` nodes (NaN-aware); use for very large grids."""
         if factor <= 1:
             return self
         nc, nr = self.ncol // factor, self.nrow // factor
         if nc < 2 or nr < 2:
             raise ValueError(f"factor {factor} leaves fewer than 2 x 2 nodes")
-        block = self.values[: nc * factor, : nr * factor].reshape(nc, factor, nr, factor)
+        block = self.values[: nc * factor, : nr * factor].reshape(
+            nc, factor, nr, factor
+        )
         with np.errstate(all="ignore"):
             count = np.isfinite(block).sum(axis=(1, 3))
             total = np.nansum(block, axis=(1, 3))
@@ -143,32 +173,47 @@ class Surface:
         # Block centre: half a block minus half a node from the original origin.
         shift = 0.5 * (factor - 1)
         x, y = self._to_world(shift, shift)
-        return replace(self, xori=float(x), yori=float(y), xinc=self.xinc * factor,
-                       yinc=self.yinc * factor, values=mean,
-                       notes=list(self.notes) + [f"coarsened by {factor}"])
+        return replace(
+            self,
+            xori=float(x),
+            yori=float(y),
+            xinc=self.xinc * factor,
+            yinc=self.yinc * factor,
+            values=mean,
+            notes=list(self.notes) + [f"coarsened by {factor}"],
+        )
 
-    def smooth(self, cells: int = 1) -> "Surface":
+    def smooth(self, cells: int = 1) -> Surface:
         """NaN-aware moving average over ``(2 cells + 1)`` squared nodes; undefined nodes stay undefined."""
         if cells <= 0:
             return self
-        from scipy.ndimage import uniform_filter  # noqa: PLC0415
+        from scipy.ndimage import uniform_filter
 
         size = 2 * int(cells) + 1
         defined = np.isfinite(self.values)
         weight = uniform_filter(defined.astype(float), size=size, mode="nearest")
-        total = uniform_filter(np.where(defined, self.values, 0.0), size=size, mode="nearest")
+        total = uniform_filter(
+            np.where(defined, self.values, 0.0), size=size, mode="nearest"
+        )
         with np.errstate(all="ignore"):
             values = np.where(defined & (weight > 0), total / weight, np.nan)
-        return replace(self, values=values, notes=list(self.notes) + [f"smoothed {size} x {size} nodes"])
+        return replace(
+            self,
+            values=values,
+            notes=list(self.notes) + [f"smoothed {size} x {size} nodes"],
+        )
 
-    def stats(self) -> Dict[str, Optional[float]]:
+    def stats(self) -> dict[str, float | None]:
         """Min, max, mean and defined fraction of the values."""
         finite = self.values[np.isfinite(self.values)]
         if finite.size == 0:
             return {"min": None, "max": None, "mean": None, "defined_fraction": 0.0}
-        return {"min": float(finite.min()), "max": float(finite.max()),
-                "mean": float(finite.mean()),
-                "defined_fraction": float(finite.size / self.values.size)}
+        return {
+            "min": float(finite.min()),
+            "max": float(finite.max()),
+            "mean": float(finite.mean()),
+            "defined_fraction": float(finite.size / self.values.size),
+        }
 
     def describe(self) -> dict:
         """JSON-serialisable summary (geometry, domain, statistics, provenance)."""
@@ -176,17 +221,41 @@ class Surface:
         defined = self.defined
         bbox = None
         if defined.any():
-            bbox = {"xmin": float(x[defined].min()), "xmax": float(x[defined].max()),
-                    "ymin": float(y[defined].min()), "ymax": float(y[defined].max())}
-        return {"name": self.name, "domain": self.domain, "unit": self.unit,
-                "ncol": self.ncol, "nrow": self.nrow, "xori": self.xori, "yori": self.yori,
-                "xinc": self.xinc, "yinc": self.yinc, "rotation": self.rotation,
-                "yflip": self.yflip, "bbox": bbox, "stats": self.stats(),
-                "source": self.source, "notes": list(self.notes)}
+            bbox = {
+                "xmin": float(x[defined].min()),
+                "xmax": float(x[defined].max()),
+                "ymin": float(y[defined].min()),
+                "ymax": float(y[defined].max()),
+            }
+        return {
+            "name": self.name,
+            "domain": self.domain,
+            "unit": self.unit,
+            "ncol": self.ncol,
+            "nrow": self.nrow,
+            "xori": self.xori,
+            "yori": self.yori,
+            "xinc": self.xinc,
+            "yinc": self.yinc,
+            "rotation": self.rotation,
+            "yflip": self.yflip,
+            "bbox": bbox,
+            "stats": self.stats(),
+            "source": self.source,
+            "notes": list(self.notes),
+        }
 
 
-def surface_from_function(func, xori: float, yori: float, xinc: float, yinc: float,
-                          ncol: int, nrow: int, **kwargs) -> Surface:
+def surface_from_function(
+    func,
+    xori: float,
+    yori: float,
+    xinc: float,
+    yinc: float,
+    ncol: int,
+    nrow: int,
+    **kwargs,
+) -> Surface:
     """Build a surface from ``func(x, y)`` evaluated on the nodes (tests and synthetic cases)."""
     base = Surface(xori, yori, xinc, yinc, np.zeros((ncol, nrow)), **kwargs)
     x, y = base.node_xy()

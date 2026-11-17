@@ -12,9 +12,9 @@ no anti-collision, no casing or completion design, no geosteering.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from math import atan2, ceil, cos, degrees, hypot, radians, sin
-from typing import Sequence
+from math import cos, hypot, radians, sin
 
 from .geo import LocalFrame
 from .layout import SurfLayout, _place
@@ -119,7 +119,9 @@ def build_well_paths(
     wells = [node for node in layout.nodes if node.kind == "well"]
     by_service: dict[str, list] = {}
     for well in wells:
-        by_service.setdefault(well.attributes.get("service", "production"), []).append(well)
+        by_service.setdefault(well.attributes.get("service", "production"), []).append(
+            well
+        )
 
     paths: list[WellPath] = []
     for service, service_wells in by_service.items():
@@ -129,7 +131,9 @@ def build_well_paths(
             fraction = 0.5 if count == 1 else index / (count - 1)
             along = heel_start + fraction * heel_span
             heel_east, heel_north = _place(along, across, field_axis_bearing_deg)
-            toe_east, toe_north = _place(along + drain_m, across, field_axis_bearing_deg)
+            toe_east, toe_north = _place(
+                along + drain_m, across, field_axis_bearing_deg
+            )
 
             seabed_tvd = well.water_depth_m
             kick_off_tvd = seabed_tvd + kick_off_below_seabed_m

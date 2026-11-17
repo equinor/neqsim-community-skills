@@ -30,10 +30,11 @@ import re
 import shlex
 import shutil
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from math import cos, isfinite, radians, sin
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from .boundary import CfdBoundaryConditions
 from .multiphase import GRAVITY_M_PER_S2, MultiphaseBoundaryConditions
@@ -244,12 +245,16 @@ class _FoamCaseBase:
         if not self.wall_patches:
             raise ValueError("at least one wall patch is required")
 
-    def write(self, case_dir: str | Path, *, overwrite: bool = False) -> tuple[str, ...]:
+    def write(
+        self, case_dir: str | Path, *, overwrite: bool = False
+    ) -> tuple[str, ...]:
         """Write the whole case tree and return the relative paths written."""
         root = Path(case_dir)
         if root.exists():
             if not overwrite:
-                raise FileExistsError(f"{root} already exists; pass overwrite=True to replace it")
+                raise FileExistsError(
+                    f"{root} already exists; pass overwrite=True to replace it"
+                )
             shutil.rmtree(root)
 
         files = dict(self._system_files())
@@ -319,11 +324,7 @@ class _FoamCaseBase:
         if self.mesh.kind == "external" or self.mesh.first_cell_height_m is None:
             return ()
 
-        if self.mesh.kind == "pipe":
-            thickness = (self.mesh.diameter_m / 2.0) * (1.0 - self.mesh.core_fraction)
-            cells = self.mesh.radial_cells
-            direction = "radial"
-        elif self.mesh.kind == "bend":
+        if self.mesh.kind == "pipe" or self.mesh.kind == "bend":
             thickness = (self.mesh.diameter_m / 2.0) * (1.0 - self.mesh.core_fraction)
             cells = self.mesh.radial_cells
             direction = "radial"
@@ -352,7 +353,9 @@ class _FoamCaseBase:
     # ------------------------------------------------------------ shared pieces
 
     def _mesh_commands(self) -> list[str]:
-        first = self._conversion_command() if self.mesh.kind == "external" else "blockMesh"
+        first = (
+            self._conversion_command() if self.mesh.kind == "external" else "blockMesh"
+        )
         return [first, "checkMesh -constant"]
 
     def _block_mesh_dict(self) -> str:
@@ -389,7 +392,9 @@ class _FoamCaseBase:
         header = _foam_file("dictionary", "constant", spec["turbulence_file"])
         if laminar:
             return path, header + "\nsimulationType  laminar;\n"
-        return path, header + f"""
+        return (
+            path,
+            header + f"""
 simulationType  RAS;
 
 RAS
@@ -398,18 +403,21 @@ RAS
     turbulence      on;
     printCoeffs     on;
 }}
-"""
+""",
+        )
 
     def _wall_entry(self, patch_type: str, value: str | None) -> str:
         blocks = []
         for patch in self.wall_patches:
-            value_line = f"\n        value           uniform {value};" if value is not None else ""
-            blocks.append(
-                f"""    {patch}
+            value_line = (
+                f"\n        value           uniform {value};"
+                if value is not None
+                else ""
+            )
+            blocks.append(f"""    {patch}
     {{
         type            {patch_type};{value_line}
-    }}"""
-            )
+    }}""")
         return "\n\n".join(blocks)
 
     @staticmethod
@@ -430,7 +438,9 @@ RAS
         return "".join(f"// {note}\n" for note in self.extra_notes)
 
     @staticmethod
-    def _surface_field_value(name: str, patch: str, operation: str, field_name: str) -> str:
+    def _surface_field_value(
+        name: str, patch: str, operation: str, field_name: str
+    ) -> str:
         return f"""    {name}
     {{
         type            surfaceFieldValue;
@@ -514,7 +524,8 @@ class OpenFoamCase(_FoamCaseBase):
     def _constant_files(self) -> dict[str, str]:
         spec = _FLAVOURS[self.flavour]
         fluid = self.boundary.fluid
-        properties = _foam_file("dictionary", "constant", spec["properties_file"]) + f"""
+        properties = (
+            _foam_file("dictionary", "constant", spec["properties_file"]) + f"""
 // Kinematic viscosity from the NeqSim {fluid.phase} phase:
 //   density   {fluid.density_kg_per_m3:.6g} kg/m3
 //   viscosity {fluid.viscosity_pa_s:.6g} Pa s
@@ -522,6 +533,7 @@ class OpenFoamCase(_FoamCaseBase):
 
 {_nu_entry(spec, fluid.kinematic_viscosity_m2_per_s)}
 """
+        )
         turbulence_path, turbulence_text = self._turbulence_file(
             self.boundary.recommended_turbulence_model,
             laminar=self.boundary.flow_regime == "laminar",
@@ -605,8 +617,12 @@ functions
     }""",
             self._surface_field_value("inletFlux", self.inlet_patch, "sum", "phi"),
             self._surface_field_value("outletFlux", self.outlet_patch, "sum", "phi"),
-            self._surface_field_value("inletPressure", self.inlet_patch, "areaAverage", "p"),
-            self._surface_field_value("outletPressure", self.outlet_patch, "areaAverage", "p"),
+            self._surface_field_value(
+                "inletPressure", self.inlet_patch, "areaAverage", "p"
+            ),
+            self._surface_field_value(
+                "outletPressure", self.outlet_patch, "areaAverage", "p"
+            ),
         ]
         for patch in self.wall_patches:
             blocks.append(
@@ -749,7 +765,11 @@ boundaryField
 
     def _field_k(self) -> str:
         value = f"{self.boundary.turbulent_kinetic_energy_m2_per_s2:.8g}"
-        wall_type = "kqRWallFunction" if self.wall_treatment == "wall_function" else "fixedValue"
+        wall_type = (
+            "kqRWallFunction"
+            if self.wall_treatment == "wall_function"
+            else "fixedValue"
+        )
         wall_value = value if self.wall_treatment == "wall_function" else "1e-12"
         return (
             _foam_file("volScalarField", "0", "k")
@@ -778,7 +798,9 @@ boundaryField
 
     def _field_nut(self) -> str:
         wall_type = (
-            "nutkWallFunction" if self.wall_treatment == "wall_function" else "nutLowReWallFunction"
+            "nutkWallFunction"
+            if self.wall_treatment == "wall_function"
+            else "nutLowReWallFunction"
         )
         return _foam_file("volScalarField", "0", "nut") + f"""
 dimensions      [0 2 -1 0 0 0 0];
@@ -838,7 +860,10 @@ class VofOpenFoamCase(_FoamCaseBase):
         self._validate_common()
         if not 0.0 <= self.initial_dispersed_fraction <= 1.0:
             raise ValueError("initial_dispersed_fraction must lie between 0 and 1")
-        if self.boundary.recommended_model != "vof" and not self.allow_unrecommended_model:
+        if (
+            self.boundary.recommended_model != "vof"
+            and not self.allow_unrecommended_model
+        ):
             raise ValueError(
                 "the multiphase screening recommended "
                 f"'{self.boundary.recommended_model}', not volume of fluid: "
@@ -895,8 +920,7 @@ class VofOpenFoamCase(_FoamCaseBase):
 
         if self.flavour == "org":
             files["constant/phaseProperties"] = (
-                _foam_file("dictionary", "constant", "phaseProperties")
-                + f"""
+                _foam_file("dictionary", "constant", "phaseProperties") + f"""
 {header}
 phases          ({self.dispersed_name} {self.continuous_name});
 
@@ -918,8 +942,7 @@ rho             {phase.density_kg_per_m3:.8g};
                 )
         else:
             files["constant/transportProperties"] = (
-                _foam_file("dictionary", "constant", "transportProperties")
-                + f"""
+                _foam_file("dictionary", "constant", "transportProperties") + f"""
 {header}
 phases          ({self.dispersed_name} {self.continuous_name});
 
@@ -956,7 +979,11 @@ sigma           [1 0 -2 0 0 0 0] {state.interfacial_tension_n_per_m:.8g};
         if self.boundary.mixture_reynolds >= 4000.0:
             value_k = f"{self.boundary.turbulent_kinetic_energy_m2_per_s2:.8g}"
             value_omega = f"{self.boundary.specific_dissipation_1_per_s:.8g}"
-            wall_k = "kqRWallFunction" if self.wall_treatment == "wall_function" else "fixedValue"
+            wall_k = (
+                "kqRWallFunction"
+                if self.wall_treatment == "wall_function"
+                else "fixedValue"
+            )
             fields["0/k"] = (
                 _foam_file("volScalarField", "0", "k")
                 + "\ndimensions      [0 2 -2 0 0 0 0];\n\n"
@@ -967,7 +994,9 @@ sigma           [1 0 -2 0 0 0 0] {state.interfacial_tension_n_per_m:.8g};
                 _foam_file("volScalarField", "0", "omega")
                 + "\ndimensions      [0 0 -1 0 0 0 0];\n\n"
                 + f"internalField   uniform {value_omega};\n"
-                + self._turbulence_field_entries(value_omega, "omegaWallFunction", value_omega)
+                + self._turbulence_field_entries(
+                    value_omega, "omegaWallFunction", value_omega
+                )
             )
             wall_nut = (
                 "nutkWallFunction"
@@ -1041,8 +1070,12 @@ functions
             self._surface_field_value(
                 "outletDispersedFraction", self.outlet_patch, "areaAverage", alpha
             ),
-            self._surface_field_value("inletPressure", self.inlet_patch, "areaAverage", "p_rgh"),
-            self._surface_field_value("outletPressure", self.outlet_patch, "areaAverage", "p_rgh"),
+            self._surface_field_value(
+                "inletPressure", self.inlet_patch, "areaAverage", "p_rgh"
+            ),
+            self._surface_field_value(
+                "outletPressure", self.outlet_patch, "areaAverage", "p_rgh"
+            ),
             f"""    dispersedInventory
     {{
         type            volFieldValue;
@@ -1383,7 +1416,8 @@ def _bend_block_mesh(mesh: MeshSpec, inlet: str, outlet: str, wall: str) -> str:
         for angle in angles:
             points.append(
                 tuple(
-                    centre[i] + r * (cos(angle) * e1[i] + sin(angle) * e2[i]) for i in range(3)
+                    centre[i] + r * (cos(angle) * e1[i] + sin(angle) * e2[i])
+                    for i in range(3)
                 )
             )
         return points
@@ -1447,7 +1481,8 @@ def _bend_block_mesh(mesh: MeshSpec, inlet: str, outlet: str, wall: str) -> str:
             nxt = (k + 1) % 4
             mid = radians(90.0 + 90.0 * k)
             point = tuple(
-                centre[i] + radius * (cos(mid) * e1[i] + sin(mid) * e2[i]) for i in range(3)
+                centre[i] + radius * (cos(mid) * e1[i] + sin(mid) * e2[i])
+                for i in range(3)
             )
             edges.append(
                 "    arc {} {} ({:.8g} {:.8g} {:.8g})".format(
@@ -1459,11 +1494,14 @@ def _bend_block_mesh(mesh: MeshSpec, inlet: str, outlet: str, wall: str) -> str:
     for k in range(4):
         for local, r in ((k, core_radius), (4 + k, radius)):
             point = tuple(
-                mid_centre[i] + r * (cos(angles[k]) * e1_mid[i] + sin(angles[k]) * e2_mid[i])
+                mid_centre[i]
+                + r * (cos(angles[k]) * e1_mid[i] + sin(angles[k]) * e2_mid[i])
                 for i in range(3)
             )
             edges.append(
-                "    arc {} {} ({:.8g} {:.8g} {:.8g})".format(8 + local, 16 + local, *point)
+                "    arc {} {} ({:.8g} {:.8g} {:.8g})".format(
+                    8 + local, 16 + local, *point
+                )
             )
 
     inlet_faces = ["        (3 2 1 0)"]
@@ -1533,8 +1571,12 @@ def _channel_block_mesh(mesh: MeshSpec, inlet: str, outlet: str, wall: str) -> s
     width = mesh.width_m
     length = mesh.length_m
     half_cells = max(1, mesh.radial_cells // 2)
-    grading, cell_ratio = _wall_grading(height / 2.0, half_cells, mesh.first_cell_height_m)
-    symmetric = f"( (0.5 {half_cells} {grading:.6g}) (0.5 {half_cells} {1.0 / grading:.6g}) )"
+    grading, cell_ratio = _wall_grading(
+        height / 2.0, half_cells, mesh.first_cell_height_m
+    )
+    symmetric = (
+        f"( (0.5 {half_cells} {grading:.6g}) (0.5 {half_cells} {1.0 / grading:.6g}) )"
+    )
 
     vertices = [
         "    (0 0 0)",
@@ -1651,12 +1693,17 @@ def detect_openfoam(*, bashrc: str | None = None) -> str | None:
     The returned value is either ``"path"`` when the solvers are already on PATH,
     or the path to an ``etc/bashrc`` that must be sourced first.
     """
-    candidate = bashrc or os.environ.get("OPENFOAM_BASHRC") or os.environ.get("FOAM_BASHRC")
+    candidate = (
+        bashrc or os.environ.get("OPENFOAM_BASHRC") or os.environ.get("FOAM_BASHRC")
+    )
     if candidate and Path(candidate).is_file():
         return str(candidate)
     if shutil.which("blockMesh"):
         return "path"
-    for pattern in ("opt/openfoam*/etc/bashrc", "usr/lib/openfoam/openfoam*/etc/bashrc"):
+    for pattern in (
+        "opt/openfoam*/etc/bashrc",
+        "usr/lib/openfoam/openfoam*/etc/bashrc",
+    ):
         matches = sorted(Path("/").glob(pattern))
         if matches:
             return str(matches[-1])
@@ -1669,10 +1716,14 @@ def _run_foam_command(
     if environment == "path":
         argv: list[str] = shlex.split(command)
     else:
-        argv = ["bash", "-lc", f"source {shlex.quote(environment)} >/dev/null 2>&1 && {command}"]
+        argv = [
+            "bash",
+            "-lc",
+            f"source {shlex.quote(environment)} >/dev/null 2>&1 && {command}",
+        ]
 
     try:
-        completed = subprocess.run(  # noqa: S603 - commands come from a fixed set
+        completed = subprocess.run(
             argv,
             cwd=str(case_dir),
             capture_output=True,
@@ -1681,7 +1732,9 @@ def _run_foam_command(
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
     except (OSError, subprocess.SubprocessError) as error:
-        return RunStep(command=command, returncode=None, stdout_tail="", stderr_tail=str(error))
+        return RunStep(
+            command=command, returncode=None, stdout_tail="", stderr_tail=str(error)
+        )
 
     return RunStep(
         command=command,
@@ -1713,7 +1766,16 @@ def read_case_results(
 
     if not root.is_dir():
         return OpenFoamResults(
-            None, None, None, None, None, None, None, None, None, None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
             ("No postProcessing directory; the case has not produced results yet.",),
         )
 
@@ -1752,7 +1814,9 @@ def read_case_results(
         peak_shear = peak_shear * density_kg_per_m3 if peak_shear is not None else None
         mean_shear = mean_shear * density_kg_per_m3 if mean_shear is not None else None
     elif peak_shear is not None:
-        findings.append("Wall shear is kinematic (m2/s2); supply density_kg_per_m3 to obtain Pa.")
+        findings.append(
+            "Wall shear is kinematic (m2/s2); supply density_kg_per_m3 to obtain Pa."
+        )
 
     if y_plus:
         findings.append(
@@ -1877,7 +1941,9 @@ def _as_magnitude(token: str) -> float | None:
 
 
 def _foam_file(class_name: str, location: str, object_name: str) -> str:
-    return _HEADER.format(class_name=class_name, location=location, object_name=object_name)
+    return _HEADER.format(
+        class_name=class_name, location=location, object_name=object_name
+    )
 
 
 def _foam_name(phase: str) -> str:

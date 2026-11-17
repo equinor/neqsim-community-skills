@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from produced_water_scale_screening import ProducedWaterBuilder, ScaleScreener
 
 
@@ -14,9 +13,7 @@ def _formation_water():
 
 
 def _seawater():
-    return ProducedWaterBuilder().build(
-        preset="seawater", ph=8.1, temperature_c=25.0
-    )
+    return ProducedWaterBuilder().build(preset="seawater", ph=8.1, temperature_c=25.0)
 
 
 def test_screen_returns_all_minerals() -> None:

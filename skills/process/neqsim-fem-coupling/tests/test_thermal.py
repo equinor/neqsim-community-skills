@@ -1,5 +1,4 @@
 import pytest
-
 from fem_coupling import (
     FemFluidState,
     derive_thermal_conditions,
@@ -27,9 +26,7 @@ def _gas():
 def test_prandtl_and_diffusivity_are_consistent():
     gas = _gas()
     assert gas.prandtl == pytest.approx(2500.0 * 1.4e-5 / 0.043)
-    assert gas.thermal_diffusivity_m2_per_s == pytest.approx(
-        0.043 / (62.0 * 2500.0)
-    )
+    assert gas.thermal_diffusivity_m2_per_s == pytest.approx(0.043 / (62.0 * 2500.0))
 
 
 def test_gnielinski_is_used_for_turbulent_flow():

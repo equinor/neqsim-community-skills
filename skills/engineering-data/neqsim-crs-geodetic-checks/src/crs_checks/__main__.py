@@ -6,13 +6,12 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 from .transform import CrsError, transform
 from .workflow import run_crs_check
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="crs_checks")
     sub = parser.add_subparsers(dest="command", required=True)
     check = sub.add_parser("check", help="run the configured CRS checks")
@@ -30,12 +29,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         except CrsError as exc:
             print(f"refused: {exc}", file=sys.stderr)
             return 2
-        print(json.dumps({"coordinates": result.coordinates[0], **result.provenance()}, indent=2))
+        print(
+            json.dumps(
+                {"coordinates": result.coordinates[0], **result.provenance()}, indent=2
+            )
+        )
         return 0
     evidence = run_crs_check(json.loads(Path(args.config).read_text(encoding="utf-8")))
     shift = (evidence["results"].get("datum_sensitivity") or {}).get("max_shift_m")
-    print(f"status={evidence['status']} engine={evidence['engine']} findings={len(evidence['findings'])} "
-          f"datum_shift_m={shift} missing={evidence['missing']} evidence={evidence['outputs'].get('evidence')}")
+    print(
+        f"status={evidence['status']} engine={evidence['engine']} findings={len(evidence['findings'])} "
+        f"datum_shift_m={shift} missing={evidence['missing']} evidence={evidence['outputs'].get('evidence')}"
+    )
     return 2 if evidence["status"] == "blocked" else 0
 
 

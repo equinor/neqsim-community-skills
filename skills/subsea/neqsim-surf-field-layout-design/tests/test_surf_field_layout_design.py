@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from surf_field_layout_design import (
     OPEN_DATA_SOURCES,
     LocalFrame,
@@ -66,8 +65,12 @@ class TestNorwegianGrid:
 
     def test_block_is_fifteen_by_forty_minutes(self):
         bounds = block_bounds("7324/8")
-        assert bounds["north_latitude_deg"] - bounds["south_latitude_deg"] == pytest.approx(0.25)
-        assert bounds["east_longitude_deg"] - bounds["west_longitude_deg"] == pytest.approx(2.0 / 3.0)
+        assert bounds["north_latitude_deg"] - bounds[
+            "south_latitude_deg"
+        ] == pytest.approx(0.25)
+        assert bounds["east_longitude_deg"] - bounds[
+            "west_longitude_deg"
+        ] == pytest.approx(2.0 / 3.0)
         assert bounds["quadrant"] == "7324"
 
     def test_block_bounds_carry_a_verification_flag(self):
@@ -112,7 +115,9 @@ class TestLayoutDesign:
         trees = layout.nodes_of_kind("xmas_tree")
         assert len(wells) == 16
         assert len(trees) == 16
-        assert all(well.parent.endswith("DC01") or "DC" in well.parent for well in wells)
+        assert all(
+            well.parent.endswith("DC01") or "DC" in well.parent for well in wells
+        )
 
     def test_drill_centre_count_follows_the_slot_count(self):
         layout = _layout(producers=8, slots_per_template=4)
@@ -136,7 +141,9 @@ class TestLayoutDesign:
     def test_single_line_architecture_gives_one_line_per_drill_centre(self):
         layout = _layout(production_architecture="single_line")
         flowlines = [
-            line for line in layout.lines_of_service("production") if "flowline" in line.line_type
+            line
+            for line in layout.lines_of_service("production")
+            if "flowline" in line.line_type
         ]
         assert len(flowlines) == layout.summary["drill_centres"]["production"]
 
@@ -152,16 +159,23 @@ class TestLayoutDesign:
     def test_drill_centres_line_up_on_the_requested_field_axis(self):
         layout = _layout(field_axis_bearing_deg=30.0)
         first, second = [
-            node for node in layout.nodes_of_kind("template") if node.tag.startswith("P-DC")
+            node
+            for node in layout.nodes_of_kind("template")
+            if node.tag.startswith("P-DC")
         ][:2]
-        axis = math.degrees(
-            math.atan2(second.east_m - first.east_m, second.north_m - first.north_m)
-        ) % 180.0
+        axis = (
+            math.degrees(
+                math.atan2(second.east_m - first.east_m, second.north_m - first.north_m)
+            )
+            % 180.0
+        )
         assert axis == pytest.approx(30.0, abs=0.5)
 
     def test_seabed_slope_deepens_along_the_axis(self):
         layout = _layout(field_axis_bearing_deg=0.0, seabed_slope_deg=1.0)
-        centres = [n for n in layout.nodes_of_kind("template") if n.tag.startswith("P-DC")]
+        centres = [
+            n for n in layout.nodes_of_kind("template") if n.tag.startswith("P-DC")
+        ]
         south = min(centres, key=lambda node: node.north_m)
         north = max(centres, key=lambda node: node.north_m)
         assert south.water_depth_m > north.water_depth_m
@@ -177,7 +191,9 @@ class TestLayoutDesign:
         collection = layout.to_geojson()
         assert collection["type"] == "FeatureCollection"
         points = [f for f in collection["features"] if f["geometry"]["type"] == "Point"]
-        lines = [f for f in collection["features"] if f["geometry"]["type"] == "LineString"]
+        lines = [
+            f for f in collection["features"] if f["geometry"]["type"] == "LineString"
+        ]
         assert len(points) == len(layout.nodes)
         assert len(lines) == len(layout.lines)
         longitude, latitude = points[0]["geometry"]["coordinates"]
@@ -196,7 +212,9 @@ class TestLayoutDesign:
         layout = _layout(design_liquid_rate_m3_per_s=0.0)
         assert any("not sized" in warning for warning in layout.warnings)
         production = [
-            line for line in layout.lines_of_service("production") if "flowline" in line.line_type
+            line
+            for line in layout.lines_of_service("production")
+            if "flowline" in line.line_type
         ]
         assert all(line.size is None for line in production)
 
@@ -237,6 +255,8 @@ class TestOpenData:
                 raise TimeoutError("no network")
             return {"ok": True}
 
-        manifest = execute(plan_layout_data_package(24.0, 73.0, 26.0, 74.0), fetch=fetch)
+        manifest = execute(
+            plan_layout_data_package(24.0, 73.0, 26.0, 74.0), fetch=fetch
+        )
         assert manifest["results"]
         assert "sodir_factmaps" in manifest["errors"]

@@ -5,7 +5,6 @@ import json
 import zipfile
 
 import pytest
-
 from anp_well_production import (
     BBL_TO_M3,
     aggregate,
@@ -88,9 +87,9 @@ STATUS_HEADER = (
     "Método_de_elevação,Última_intervenção,Data_última_intervenção"
 )
 STATUS_ROW = (
-    '1-BAS-85-BAS,ÁREA DO BAS-85,ESPÍRITO SANTO,,10/02/1989,11/04/1989,11/04/1989, , , , , , ,NÃO,MAR,'
+    "1-BAS-85-BAS,ÁREA DO BAS-85,ESPÍRITO SANTO,,10/02/1989,11/04/1989,11/04/1989, , , , , , ,NÃO,MAR,"
     '"-18:22:40,186","-39:31:29,808",BAHIA,06/06/2013,02/07/2013,ABANDONADO PERMANENTEMENTE,'
-    'SEM MÉTODO DE ELEVAÇÃO, , '
+    "SEM MÉTODO DE ELEVAÇÃO, , "
 )
 
 
@@ -104,9 +103,21 @@ def month_record(period, liquid, gas, water, hours=None, well="W-1", field="F"):
     y, m = parse_period(period)
     days = [31, 29 if y % 4 == 0 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1]
     return {
-        "well": well, "field": field, "installation": "I", "period": period, "year": y, "month": m,
-        "days": days, "liquid_m3d": liquid, "oil_m3d": liquid, "gas_total_km3d": gas, "water_m3d": water,
-        "gas_assoc_km3d": gas, "gas_nonassoc_km3d": 0.0, "condensate_m3d": 0.0, "hours_on": hours,
+        "well": well,
+        "field": field,
+        "installation": "I",
+        "period": period,
+        "year": y,
+        "month": m,
+        "days": days,
+        "liquid_m3d": liquid,
+        "oil_m3d": liquid,
+        "gas_total_km3d": gas,
+        "water_m3d": water,
+        "gas_assoc_km3d": gas,
+        "gas_nonassoc_km3d": 0.0,
+        "condensate_m3d": 0.0,
+        "hours_on": hours,
     }
 
 
@@ -123,7 +134,12 @@ def test_parse_number_brazilian_forms():
 
 @pytest.mark.parametrize(
     "text,expected",
-    [("2023/12", (2023, 12)), ("01/2026", (2026, 1)), ("01/08/2026", (2026, 8)), ("2026-08-01", (2026, 8))],
+    [
+        ("2023/12", (2023, 12)),
+        ("01/2026", (2026, 1)),
+        ("01/08/2026", (2026, 8)),
+        ("2026-08-01", (2026, 8)),
+    ],
 )
 def test_parse_period(text, expected):
     assert parse_period(text) == expected
@@ -138,7 +154,10 @@ def test_parse_period_rejects_garbage():
 
 def test_rate_family_units_and_fluid_fields():
     recs = rate_records(PAPA, MERO)
-    assert detect_schema(read_table_bytes(RATE_HEADER.encode("cp1252"))[0]) == "well_monthly_rates"
+    assert (
+        detect_schema(read_table_bytes(RATE_HEADER.encode("cp1252"))[0])
+        == "well_monthly_rates"
+    )
     papa = recs[0]
     assert papa["family"] == "well_monthly_rates"
     assert papa["liquid_m3d"] == pytest.approx(4841.6358 * BBL_TO_M3)
@@ -154,7 +173,9 @@ def test_rate_family_units_and_fluid_fields():
 
 
 def test_damaged_headers_still_resolve():
-    damaged = RATE_HEADER.replace("ç", "\ufffd").replace("ã", "\ufffd").replace("á", "\ufffd")
+    damaged = (
+        RATE_HEADER.replace("ç", "\ufffd").replace("ã", "\ufffd").replace("á", "\ufffd")
+    )
     h, r, _ = read_table_bytes((damaged + "\n" + PAPA + "\n").encode("utf-8"))
     rec = normalize(h, r)[0]
     assert rec["well"] == "7-PPT-50HP-RJS"
@@ -164,7 +185,9 @@ def test_damaged_headers_still_resolve():
 def test_cp1252_and_utf8_both_read():
     for enc in ("cp1252", "utf-8"):
         h, r, meta = read_table_bytes((RATE_HEADER + "\n" + PAPA + "\n").encode(enc))
-        assert meta["delimiter"] == ";" and meta["encoding"] == ("utf-8" if enc == "utf-8" else "cp1252")
+        assert meta["delimiter"] == ";" and meta["encoding"] == (
+            "utf-8" if enc == "utf-8" else "cp1252"
+        )
         assert normalize(h, r)[0]["field"] == "PAPA-TERRA"
 
 
@@ -193,9 +216,14 @@ def test_zone_and_status_families():
     z = normalize(h, r)[0]
     assert z["family"] == "zone_daily_rates" and z["zone"] == "28URUC-04"
     assert z["liquid_m3d"] == pytest.approx(1.25) and z["period"] == "2026-08"
-    h, r, _ = read_table_bytes((STATUS_HEADER + "\n" + STATUS_ROW + "\n").encode("utf-8"))
+    h, r, _ = read_table_bytes(
+        (STATUS_HEADER + "\n" + STATUS_ROW + "\n").encode("utf-8")
+    )
     s = normalize(h, r)[0]
-    assert s["status"] == "ABANDONADO PERMANENTEMENTE" and s["lift_method"] == "SEM MÉTODO DE ELEVAÇÃO"
+    assert (
+        s["status"] == "ABANDONADO PERMANENTEMENTE"
+        and s["lift_method"] == "SEM MÉTODO DE ELEVAÇÃO"
+    )
     assert s["latitude_dms"] == "-18:22:40,186"
 
 
@@ -217,9 +245,9 @@ def test_merge_environments_does_not_double_count_presalt():
     naive = mar + presalt
     with pytest.raises(ValueError, match="Duplicate"):
         aggregate(naive, by=("field",))
-    assert sum(a["liquid_m3d"] for a in aggregate(merged, by=("field",))) == pytest.approx(
-        (4841.6358 + 1615.7229) * BBL_TO_M3
-    )
+    assert sum(
+        a["liquid_m3d"] for a in aggregate(merged, by=("field",))
+    ) == pytest.approx((4841.6358 + 1615.7229) * BBL_TO_M3)
 
 
 def test_merge_warns_on_presalt_only_and_missing_offshore():
@@ -227,7 +255,9 @@ def test_merge_warns_on_presalt_only_and_missing_offshore():
     _, rep = merge_environments({"PreSal": presalt})
     assert rep["warnings"]
     _, rep = merge_environments({"Mar": rate_records(PAPA), "PreSal": presalt})
-    assert not rep["presalt_is_subset"] and rep["presalt_only"] == [("7-MRO-10B-RJS", "2023-12")]
+    assert not rep["presalt_is_subset"] and rep["presalt_only"] == [
+        ("7-MRO-10B-RJS", "2023-12")
+    ]
 
 
 def test_ratios_and_aggregate_by_field():
@@ -238,7 +268,10 @@ def test_ratios_and_aggregate_by_field():
     assert agg[0]["liquid_m3d"] == 400.0
     assert agg[0]["gor_sm3_sm3"] == pytest.approx(200.0)
     assert agg[0]["water_cut"] == pytest.approx(200.0 / 600.0)
-    assert ratios({"liquid_m3d": 0, "gas_total_km3d": 5, "water_m3d": 0})["gor_sm3_sm3"] is None
+    assert (
+        ratios({"liquid_m3d": 0, "gas_total_km3d": 5, "water_m3d": 0})["gor_sm3_sm3"]
+        is None
+    )
 
 
 def test_gor_of_papa_terra_is_physical():
@@ -278,7 +311,10 @@ def test_well_flags():
 
 
 def test_decline_series_drops_shut_in_and_feeds_fit():
-    hist = [month_record("2024-%02d" % m, q, 1, 1) for m, q in enumerate([100, 90, 0, 72, 65, 58], start=1)]
+    hist = [
+        month_record("2024-%02d" % m, q, 1, 1)
+        for m, q in enumerate([100, 90, 0, 72, 65, 58], start=1)
+    ]
     s = decline_series(hist)
     assert len(s) == 5 and s[0][0] == pytest.approx(2024 + 0.5 / 12)
     nsc = pytest.importorskip("norwegian_continental_shelf_data.decline")
@@ -287,14 +323,20 @@ def test_decline_series_drops_shut_in_and_feeds_fit():
 
 
 def test_cumulative_uses_calendar_days():
-    hist = [month_record("2024-01", 10.0, 1.0, 0.0), month_record("2024-02", 20.0, 1.0, 0.0)]
+    hist = [
+        month_record("2024-01", 10.0, 1.0, 0.0),
+        month_record("2024-02", 20.0, 1.0, 0.0),
+    ]
     cum = cumulative(hist)
     assert cum[-1][1] == pytest.approx(10 * 31 + 20 * 29)
 
 
 def test_well_history_sorted_with_ratios():
-    recs = [month_record("2024-02", 10, 1, 0, well="W"), month_record("2024-01", 10, 2, 0, well="W"),
-            month_record("2024-01", 5, 1, 0, well="X")]
+    recs = [
+        month_record("2024-02", 10, 1, 0, well="W"),
+        month_record("2024-01", 10, 2, 0, well="W"),
+        month_record("2024-01", 5, 1, 0, well="X"),
+    ]
     hist = well_history(recs, "W")
     assert [h["period"] for h in hist] == ["2024-01", "2024-02"]
     assert hist[0]["gor_sm3_sm3"] == pytest.approx(200.0)
@@ -306,14 +348,18 @@ def test_fluid_basis_from_real_row():
     assert fb["api"] == pytest.approx(29.6)
     assert fb["stock_tank_density_kg_m3"] == pytest.approx(oil_density_kg_m3(29.6))
     assert 870 < fb["stock_tank_density_kg_m3"] < 885
-    assert fb["gor_sm3_sm3"] == pytest.approx(104099.4 / (1615.7229 * BBL_TO_M3), rel=1e-6)
+    assert fb["gor_sm3_sm3"] == pytest.approx(
+        104099.4 / (1615.7229 * BBL_TO_M3), rel=1e-6
+    )
     comp = fb["gas"]["mole_fraction"]
     assert sum(comp.values()) == pytest.approx(1.0)
     assert comp["methane"] == pytest.approx(0.43434) and "i-butane" in comp
     assert fb["gas"]["closure_ok"] and fb["gcv_kj_m3"] == pytest.approx(22539.3063)
     assert any("not a wellstream" in w for w in fb["warnings"])
     assert any("Oxygen above" in w for w in fb["warnings"])
-    assert not any("Oxygen above" in w for w in fluid_basis(rate_records(PAPA)[0])["warnings"])
+    assert not any(
+        "Oxygen above" in w for w in fluid_basis(rate_records(PAPA)[0])["warnings"]
+    )
 
 
 def test_latest_fluid_basis_skips_records_without_fluid():
@@ -342,7 +388,11 @@ def test_extract_links_and_download_cache(tmp_path):
         return b"abc"
 
     path, log = download(links[0]["url"], tmp_path, getter=getter)
-    assert log["status"] == "downloaded" and log["bytes"] == 3 and path.read_bytes() == b"abc"
+    assert (
+        log["status"] == "downloaded"
+        and log["bytes"] == 3
+        and path.read_bytes() == b"abc"
+    )
     path2, log2 = download(links[0]["url"], tmp_path, getter=getter)
     assert log2["status"] == "cache" and calls == [links[0]["url"]] and path2 == path
     assert json.loads(path.with_name(path.name + ".log.json").read_text())["sha256"]
@@ -360,21 +410,33 @@ def test_read_zip_returns_csv_members(tmp_path):
 
 
 def test_well_split_over_fields_is_not_a_duplicate_and_sums_in_history():
-    a = month_record("2023-12", 1.0, 0.03, 0.1, hours=374, well="7-SDM-19-RN", field="ANGICO")
-    b = month_record("2023-12", 4.0, 0.29, 0.2, hours=374, well="7-SDM-19-RN", field="JANDUÍ")
+    a = month_record(
+        "2023-12", 1.0, 0.03, 0.1, hours=374, well="7-SDM-19-RN", field="ANGICO"
+    )
+    b = month_record(
+        "2023-12", 4.0, 0.29, 0.2, hours=374, well="7-SDM-19-RN", field="JANDUÍ"
+    )
     agg = aggregate([a, b], by=("field",))
     assert len(agg) == 2
     with pytest.raises(ValueError, match="Duplicate"):
         aggregate([a, dict(a)], by=("field",))
     hist = well_history([a, b], "7-SDM-19-RN")
-    assert len(hist) == 1 and hist[0]["n_rows"] == 2 and hist[0]["liquid_m3d"] == pytest.approx(5.0)
+    assert (
+        len(hist) == 1
+        and hist[0]["n_rows"] == 2
+        and hist[0]["liquid_m3d"] == pytest.approx(5.0)
+    )
     assert hist[0]["field"] == "ANGICO+JANDUÍ" and hist[0]["hours_on"] == 374
 
 
 def test_mixed_encoding_file_keeps_valid_lines():
     header = RATE_HEADER.encode("cp1252")
     good = PAPA.replace("PAPA-TERRA", "CARMÓPOLIS").encode("utf-8")
-    cut = PAPA.replace("PAPA-TERRA", "BALEIA ANÃ").encode("utf-8").replace("BALEIA ANÃ".encode("utf-8"), b"BALEIA AN\xc3")
+    cut = (
+        PAPA.replace("PAPA-TERRA", "BALEIA ANÃ")
+        .encode("utf-8")
+        .replace("BALEIA ANÃ".encode(), b"BALEIA AN\xc3")
+    )
     h, r, meta = read_table_bytes(header + b"\n" + good + b"\n" + cut + b"\n")
     recs = normalize(h, r)
     assert meta["encoding"] == "mixed" and len(recs) == 2

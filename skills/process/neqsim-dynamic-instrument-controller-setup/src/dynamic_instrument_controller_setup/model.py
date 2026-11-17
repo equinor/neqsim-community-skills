@@ -47,7 +47,9 @@ class DynamicInstrumentControllerModel:
         self._require_text("manipulated_equipment", manipulated_equipment)
         variable = controlled_variable.strip().lower()
         if variable not in self.TRANSMITTERS:
-            raise ValueError("controlled_variable must be one of level, pressure, temperature, flow")
+            raise ValueError(
+                "controlled_variable must be one of level, pressure, temperature, flow"
+            )
         self._require_finite("setpoint", setpoint)
         self._require_finite("minimum_value", minimum_value)
         self._require_finite("maximum_value", maximum_value)
@@ -61,13 +63,21 @@ class DynamicInstrumentControllerModel:
         elif not (minimum_value <= setpoint <= maximum_value):
             warnings.append("setpoint is outside transmitter range")
         if kp == 0.0:
-            warnings.append("kp is zero; controller will not provide proportional action")
+            warnings.append(
+                "kp is zero; controller will not provide proportional action"
+            )
         if ti < 0.0 or td < 0.0:
-            warnings.append("ti and td should be non-negative for a first dynamic trial")
+            warnings.append(
+                "ti and td should be non-negative for a first dynamic trial"
+            )
         if variable == "level" and not reverse_acting:
-            warnings.append("level control commonly uses reverse action on liquid outlet valves; verify action")
+            warnings.append(
+                "level control commonly uses reverse action on liquid outlet valves; verify action"
+            )
         if variable == "pressure" and reverse_acting:
-            warnings.append("pressure control action is case-dependent; verify direct/reverse cause and effect")
+            warnings.append(
+                "pressure control action is case-dependent; verify direct/reverse cause and effect"
+            )
 
         transmitter_class = self.TRANSMITTERS[variable]
         return ControlLoopSetup(

@@ -1,5 +1,4 @@
 import pytest
-
 from reservoir_depletion_screening import ReservoirDepletionModel
 
 
@@ -69,7 +68,8 @@ def test_negative_offtake_raises() -> None:
 
 
 def test_oil_fluid_type_runs() -> None:
-    result = _base(fluid_type="oil", recoverable_volume_sm3=5.0e8,
-                   offtake_rate_sm3_per_day=2.0e4)
+    result = _base(
+        fluid_type="oil", recoverable_volume_sm3=5.0e8, offtake_rate_sm3_per_day=2.0e4
+    )
     assert result.fluid_type == "oil"
     assert len(result.steps) == 15

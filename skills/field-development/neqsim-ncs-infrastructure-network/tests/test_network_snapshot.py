@@ -1,7 +1,6 @@
 """Behaviour of the bundled snapshot (open Sodir / norskpetroleum / Gassco data)."""
 
 import pytest
-
 from ncs_infrastructure_network import NcsNetwork
 from ncs_infrastructure_network import neqsim_bridge as nb
 
@@ -16,7 +15,15 @@ def test_snapshot_has_the_ncs(net):
     assert s["fields"] >= 120 and s["candidate_discoveries"] >= 100 and s["hosts"] >= 50
     for plant in ("KOLLSNES", "KARSTO", "NYHAMNA", "HAMMERFEST_LNG"):
         assert net.nodes[plant]["kind"] == "plant"
-    for terminal in ("EMDEN", "DORNUM", "ZEEBRUGGE", "DUNKERQUE", "ST_FERGUS", "EASINGTON", "NYBRO"):
+    for terminal in (
+        "EMDEN",
+        "DORNUM",
+        "ZEEBRUGGE",
+        "DUNKERQUE",
+        "ST_FERGUS",
+        "EASINGTON",
+        "NYBRO",
+    ):
         assert net.nodes[terminal]["kind"] == "terminal"
 
 
@@ -50,8 +57,14 @@ def test_nearest_hosts_are_sorted(net):
 
 
 def test_bridge_specs_offline(net):
-    disc = max((d for d in net.discoveries.values() if d.get("lat") and d["reserves"].get("oe_msm3")),
-               key=lambda d: d["reserves"]["oe_msm3"])
+    disc = max(
+        (
+            d
+            for d in net.discoveries.values()
+            if d.get("lat") and d["reserves"].get("oe_msm3")
+        ),
+        key=lambda d: d["reserves"]["oe_msm3"],
+    )
     spec = nb.tieback_screen_spec(net, disc["id"], n_hosts=3, max_km=500)
     assert spec["reserves_mmboe"] > 0 and len(spec["hosts"]) == 3
     hyd = nb.trunk_hydraulics_spec(net, "TROLL", rate_msm3d=40.0)
@@ -60,11 +73,19 @@ def test_bridge_specs_offline(net):
 
 def test_bridge_runs_neqsim_when_available(net):
     pytest.importorskip("neqsim")
-    disc = max((d for d in net.discoveries.values() if d.get("lat") and d["reserves"].get("oe_msm3")),
-               key=lambda d: d["reserves"]["oe_msm3"])
+    disc = max(
+        (
+            d
+            for d in net.discoveries.values()
+            if d.get("lat") and d["reserves"].get("oe_msm3")
+        ),
+        key=lambda d: d["reserves"]["oe_msm3"],
+    )
     spec = nb.tieback_screen_spec(net, disc["id"], n_hosts=2, max_km=500)
     results = nb.run_tieback_screening(spec, max_distance_km=500)
     assert results and all("TiebackAnalyzer" in r["neqsim_class"] for r in results)
-    hyd = nb.run_trunk_hydraulics(nb.trunk_hydraulics_spec(net, "TROLL", terminal_pressure_bar=90.0),
-                                  inlet_pressure_bar=160.0)
+    hyd = nb.run_trunk_hydraulics(
+        nb.trunk_hydraulics_spec(net, "TROLL", terminal_pressure_bar=90.0),
+        inlet_pressure_bar=160.0,
+    )
     assert hyd["converged"] and hyd["deliverable_rate_msm3d"] > 5

@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite, sqrt
 
-
 # Standard API 526 effective orifice areas in mm2 (from published in2 values).
 _API_ORIFICES: tuple[tuple[str, float], ...] = (
     ("D", 71.0),
@@ -68,9 +67,7 @@ class PsvOrificeModel:
         self._require_fraction("combination_correction", combination_correction)
 
         k = specific_heat_ratio
-        coefficient_c = 0.03948 * sqrt(
-            k * (2.0 / (k + 1.0)) ** ((k + 1.0) / (k - 1.0))
-        )
+        coefficient_c = 0.03948 * sqrt(k * (2.0 / (k + 1.0)) ** ((k + 1.0) / (k - 1.0)))
         # API 520 metric form expects the relieving pressure in kPa absolute.
         relieving_pressure_kpa = relieving_pressure * 100.0
         required_area = (

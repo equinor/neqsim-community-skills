@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite, log10
-from typing import Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -16,7 +15,7 @@ class AcousticInducedVibrationResult:
     downstream_pipe_length_m: float
     risk_warning: str
     neqsim_available: bool
-    assumptions: Tuple[str, ...]
+    assumptions: tuple[str, ...]
 
 
 class AcousticInducedVibrationModel:
@@ -57,7 +56,7 @@ class AcousticInducedVibrationModel:
         molecular_weight: float = 19.0,
         temperature_k: float = 313.15,
         downstream_pipe_length_m: float = 10.0,
-        sound_power_level_db: Optional[float] = None,
+        sound_power_level_db: float | None = None,
     ) -> AcousticInducedVibrationResult:
         self._require_positive("mass_flow_kg_s", mass_flow_kg_s)
         self._require_positive("upstream_pressure_bar", upstream_pressure_bar)
@@ -85,8 +84,8 @@ class AcousticInducedVibrationModel:
         # PWL = 10 log10[(dP/P1)^3.6 * mdot^2 * (T/MW)^1.2] + constant.
         if sound_power_level_db is None:
             inner = (
-                pressure_drop_ratio ** 3.6
-                * mass_flow_kg_s ** 2.0
+                pressure_drop_ratio**3.6
+                * mass_flow_kg_s**2.0
                 * (temperature_k / molecular_weight) ** 1.2
             )
             pwl = 10.0 * log10(inner) + self.pwl_constant_db

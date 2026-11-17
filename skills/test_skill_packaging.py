@@ -32,7 +32,7 @@ def test_skill_package_names_are_unique() -> None:
 
 
 def test_setup_discovers_every_skill_package() -> None:
-    import setup as root_setup  # noqa: PLC0415  (imports the repo's setup.py)
+    import setup as root_setup
 
     expected = set(_top_level_packages())
     assert set(root_setup.PACKAGE_DIR) == expected
@@ -55,5 +55,6 @@ def test_setup_discovers_packages_in_flat_plugin_layout(tmp_path) -> None:
     spec.loader.exec_module(flat_setup)
 
     assert set(flat_setup.PACKAGE_DIR) == set(_top_level_packages())
-    assert all(rel.count("/") == 3 for rel in flat_setup.PACKAGE_DIR.values()), \
-        "flat layout must map skills/<skill>/src/<package>"
+    assert all(
+        rel.count("/") == 3 for rel in flat_setup.PACKAGE_DIR.values()
+    ), "flat layout must map skills/<skill>/src/<package>"

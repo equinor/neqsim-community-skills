@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import exp, isfinite
-from typing import Tuple
 
 _HOURS_PER_YEAR = 8760.0
 
@@ -19,7 +18,7 @@ class ReliabilityDataResult:
     expected_failures: float
     availability_warning: str
     neqsim_available: bool
-    assumptions: Tuple[str, ...]
+    assumptions: tuple[str, ...]
 
 
 class ReliabilityDataModel:
@@ -56,7 +55,9 @@ class ReliabilityDataModel:
         self._require_positive("mean_time_to_repair_h", mean_time_to_repair_h)
         self._require_positive_int("redundancy", redundancy)
         self._require_positive("mission_time_years", mission_time_years)
-        self._require_planned_downtime("planned_downtime_h_per_year", planned_downtime_h_per_year)
+        self._require_planned_downtime(
+            "planned_downtime_h_per_year", planned_downtime_h_per_year
+        )
 
         lam = failure_rate_per_year
 

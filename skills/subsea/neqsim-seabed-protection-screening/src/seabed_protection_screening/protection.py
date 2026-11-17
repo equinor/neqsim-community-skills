@@ -15,8 +15,9 @@ assessment (DNV-RP-F110) and contractor capability data before quoting a result.
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from .mapdata import LineCrossing, RouteSegment
 
@@ -41,7 +42,12 @@ SOIL_ALIASES: dict[str, str] = {
 }
 CLAY_CLASSES = ("soft_clay", "firm_clay", "stiff_clay", "very_stiff_clay")
 #: Representative strengths used only when no measured value is supplied.
-PLACEHOLDER_SU_KPA = {"soft_clay": 15.0, "firm_clay": 50.0, "stiff_clay": 100.0, "very_stiff_clay": 200.0}
+PLACEHOLDER_SU_KPA = {
+    "soft_clay": 15.0,
+    "firm_clay": 50.0,
+    "stiff_clay": 100.0,
+    "very_stiff_clay": 200.0,
+}
 FISHING_ORDER = ("none", "low", "medium", "high")
 RECOGNISED_ATTRIBUTES = {
     "fishing_intensity",
@@ -105,7 +111,9 @@ class ScreeningAssumptions:
     crossing_length_m: float = 20.0
     crossed_outer_diameter_default_m: float = 0.3
     span_support_length_m: float = 5.0
-    trenchers: Mapping[str, TrencherCapability] = field(default_factory=lambda: dict(DEFAULT_TRENCHERS))
+    trenchers: Mapping[str, TrencherCapability] = field(
+        default_factory=lambda: dict(DEFAULT_TRENCHERS)
+    )
     method_preference: Sequence[str] = ("jetting", "plough", "mechanical_cutter")
     rock_rate_tonnes_per_day: float | None = None
     soil_conductivity_w_mk: float = 1.5
@@ -119,7 +127,11 @@ class ScreeningAssumptions:
     @property
     def rock_submerged_unit_weight_n_m3(self) -> float:
         """Submerged unit weight of placed rock in N/m3."""
-        return (1.0 - self.rock_porosity) * (self.rock_solid_density_kg_m3 - self.seawater_density_kg_m3) * 9.81
+        return (
+            (1.0 - self.rock_porosity)
+            * (self.rock_solid_density_kg_m3 - self.seawater_density_kg_m3)
+            * 9.81
+        )
 
 
 @dataclass(frozen=True)
@@ -221,8 +233,17 @@ def required_uplift_rock_thickness_m(
         raise ValueError("uplift force must not be negative")
     if uplift_n_per_m == 0.0:
         return 0.0
-    w, n, od = assumptions.rock_crest_width_m, assumptions.rock_side_slope, outer_diameter_m
-    target = (w + n * od) * od + uplift_n_per_m * assumptions.uplift_safety_factor / assumptions.rock_submerged_unit_weight_n_m3
+    w, n, od = (
+        assumptions.rock_crest_width_m,
+        assumptions.rock_side_slope,
+        outer_diameter_m,
+    )
+    target = (
+        (w + n * od) * od
+        + uplift_n_per_m
+        * assumptions.uplift_safety_factor
+        / assumptions.rock_submerged_unit_weight_n_m3
+    )
     height = (-w + math.sqrt(w * w + 4.0 * n * target)) / (2.0 * n)
     return max(0.0, height - od)
 
@@ -254,7 +275,9 @@ def rock_section_area_m2(
     od = outer_diameter_m
     top = od + rock_above_pipe_m
     mound_h = max(0.0, top - trench_depth_m)
-    area = (assumptions.rock_crest_width_m + assumptions.rock_side_slope * mound_h) * mound_h
+    area = (
+        assumptions.rock_crest_width_m + assumptions.rock_side_slope * mound_h
+    ) * mound_h
     pipe_in_rock = trench_depth_m <= 0.0
     if fill_trench and trench_depth_m > 0.0:
         bottom = od + 2.0 * assumptions.trench_bottom_clearance_m
@@ -266,7 +289,9 @@ def rock_section_area_m2(
     return max(0.0, area)
 
 
-def buried_thermal_resistance_k_m_per_w(cover_m: float, outer_diameter_m: float, conductivity_w_mk: float) -> float:
+def buried_thermal_resistance_k_m_per_w(
+    cover_m: float, outer_diameter_m: float, conductivity_w_mk: float
+) -> float:
     """Shape-factor thermal resistance of a buried pipe, per metre.
 
     Matches ``PipeSurroundingEnvironment.calcBuriedPipeThermalResistance`` in NeqSim.
@@ -289,7 +314,9 @@ def buried_thermal_resistance_k_m_per_w(cover_m: float, outer_diameter_m: float,
     if conductivity_w_mk <= 0.0:
         raise ValueError("conductivity must be positive")
     ratio = depth / radius
-    return math.log(2.0 * ratio + math.sqrt(4.0 * ratio * ratio - 1.0)) / (2.0 * math.pi * conductivity_w_mk)
+    return math.log(2.0 * ratio + math.sqrt(4.0 * ratio * ratio - 1.0)) / (
+        2.0 * math.pi * conductivity_w_mk
+    )
 
 
 def _get(obj: Any, name: str) -> Any:
@@ -299,7 +326,9 @@ def _get(obj: Any, name: str) -> Any:
 class SeabedProtectionScreener:
     """Screens trenching, burial and rock-dump scope along a route."""
 
-    def __init__(self, pipe: PipeBasis, assumptions: ScreeningAssumptions | None = None) -> None:
+    def __init__(
+        self, pipe: PipeBasis, assumptions: ScreeningAssumptions | None = None
+    ) -> None:
         if pipe.outer_diameter_m <= 0.0:
             raise ValueError("outer_diameter_m must be positive")
         self.pipe = pipe
@@ -337,18 +366,27 @@ class SeabedProtectionScreener:
         gaps: list[str] = []
         warnings: list[str] = []
         if existing_cover_intervals is None:
-            gaps.append("No surveyed cover supplied; existing cover is assumed to be zero everywhere.")
+            gaps.append(
+                "No surveyed cover supplied; existing cover is assumed to be zero everywhere."
+            )
         if a.rock_rate_tonnes_per_day is None:
-            gaps.append("No rock placement rate supplied; rock vessel days are not estimated.")
+            gaps.append(
+                "No rock placement rate supplied; rock vessel days are not estimated."
+            )
         seen_unknown: set[str] = set()
         results = [
-            self._segment(seg, existing_cover_intervals, used, gaps, warnings, seen_unknown) for seg in segments
+            self._segment(
+                seg, existing_cover_intervals, used, gaps, warnings, seen_unknown
+            )
+            for seg in segments
         ]
         crossing_results = tuple(self._crossing(c, used, gaps) for c in crossings)
         span_results = self._spans(span_candidates, allowable_span_m, gaps)
         return self._plan(results, crossing_results, span_results, used, gaps, warnings)
 
-    def _segment(self, seg, intervals, used, gaps, warnings, seen_unknown) -> SegmentProtection:
+    def _segment(
+        self, seg, intervals, used, gaps, warnings, seen_unknown
+    ) -> SegmentProtection:
         a, od = self.assumptions, self.pipe.outer_diameter_m
         attrs = dict(seg.attributes)
         for name in attrs:
@@ -358,19 +396,35 @@ class SeabedProtectionScreener:
         contributions: dict[str, float] = {}
         intensity = str(attrs.get("fishing_intensity") or "none").lower()
         if intensity not in a.cover_by_fishing_m:
-            gaps.append("Fishing intensity %r has no cover rule; treated as none." % intensity)
+            gaps.append(
+                "Fishing intensity %r has no cover rule; treated as none." % intensity
+            )
             intensity = "none"
         if a.cover_by_fishing_m[intensity] > 0.0:
-            contributions["trawl (%s fishing intensity)" % intensity] = a.cover_by_fishing_m[intensity]
-            used["cover_by_fishing_m"] = "placeholder cover per fishing intensity: %s" % dict(a.cover_by_fishing_m)
+            contributions["trawl (%s fishing intensity)" % intensity] = (
+                a.cover_by_fishing_m[intensity]
+            )
+            used["cover_by_fishing_m"] = (
+                "placeholder cover per fishing intensity: %s"
+                % dict(a.cover_by_fishing_m)
+            )
         scour = float(attrs.get("ice_scour_depth_m") or 0.0)
         if scour > 0.0:
             contributions["ice scour"] = scour + a.ice_scour_margin_m
-            used["ice_scour_margin_m"] = "ice-scour margin %.2f m on top of scour depth" % a.ice_scour_margin_m
-        for key, label in (("anchor_penetration_m", "anchor"), ("cover_required_m", "project cover requirement")):
+            used["ice_scour_margin_m"] = (
+                "ice-scour margin %.2f m on top of scour depth" % a.ice_scour_margin_m
+            )
+        for key, label in (
+            ("anchor_penetration_m", "anchor"),
+            ("cover_required_m", "project cover requirement"),
+        ):
             if attrs.get(key):
                 contributions[label] = float(attrs[key])
-        required, hazard = (max((v, k) for k, v in contributions.items()) if contributions else (0.0, "none"))
+        required, hazard = (
+            max((v, k) for k, v in contributions.items())
+            if contributions
+            else (0.0, "none")
+        )
 
         rock_only: dict[str, float] = {}
         if attrs.get("dropped_object_cover_m"):
@@ -378,9 +432,16 @@ class SeabedProtectionScreener:
         if attrs.get("stabilisation_cover_m"):
             rock_only["on-bottom stabilisation"] = float(attrs["stabilisation_cover_m"])
         if attrs.get("uplift_force_n_per_m"):
-            rock_only["upheaval buckling"] = required_uplift_rock_thickness_m(float(attrs["uplift_force_n_per_m"]), od, a)
-            used["uplift_safety_factor"] = "uplift factor of safety %.2f on the supplied force" % a.uplift_safety_factor
-        rock_only_t, rock_hazard = (max((v, k) for k, v in rock_only.items()) if rock_only else (0.0, "none"))
+            rock_only["upheaval buckling"] = required_uplift_rock_thickness_m(
+                float(attrs["uplift_force_n_per_m"]), od, a
+            )
+            used["uplift_safety_factor"] = (
+                "uplift factor of safety %.2f on the supplied force"
+                % a.uplift_safety_factor
+            )
+        rock_only_t, rock_hazard = (
+            max((v, k) for k, v in rock_only.items()) if rock_only else (0.0, "none")
+        )
         if rock_only_t > required:
             hazard = rock_hazard
 
@@ -398,17 +459,27 @@ class SeabedProtectionScreener:
                 fill = True
             strategy = "rock_dump"
             if required > 0.0:
-                notes.append("rock-only requirement governs; burial need is met by the rock cover")
+                notes.append(
+                    "rock-only requirement governs; burial need is met by the rock cover"
+                )
         elif required > 0.0:
             if existing >= required:
                 strategy, achieved = "adequate_existing_cover", existing
-                notes.append("surveyed cover meets the requirement; verify at the next survey")
+                notes.append(
+                    "surveyed cover meets the requirement; verify at the next survey"
+                )
             else:
                 strategy, method, trench_d, rock_t, fill, achieved = self._burial(
                     seg, attrs, required, existing, used, gaps, notes
                 )
         if strategy == "rock_dump" and 0.0 < rock_t <= existing:
-            strategy, rock_t, trench_d, fill, achieved = "adequate_existing_cover", 0.0, 0.0, False, existing
+            strategy, rock_t, trench_d, fill, achieved = (
+                "adequate_existing_cover",
+                0.0,
+                0.0,
+                False,
+                existing,
+            )
             notes.append("surveyed cover already exceeds the rock cover requirement")
         if rock_t > 0.0 and attrs.get("no_rock"):
             warnings.append(
@@ -421,17 +492,27 @@ class SeabedProtectionScreener:
         if rock_t > 0.0:
             area = rock_section_area_m2(od, rock_t, trench_d, fill, a)
             volume = area * seg.length_m
-            tonnes = volume * a.rock_bulk_density_kg_m3 * a.rock_spillage_factor / 1000.0
+            tonnes = (
+                volume * a.rock_bulk_density_kg_m3 * a.rock_spillage_factor / 1000.0
+            )
             used["rock"] = (
                 "rock crest %.2f m, slope 1:%.1f, solid %.0f kg/m3, porosity %.2f, spillage x%.2f"
-                % (a.rock_crest_width_m, a.rock_side_slope, a.rock_solid_density_kg_m3, a.rock_porosity, a.rock_spillage_factor)
+                % (
+                    a.rock_crest_width_m,
+                    a.rock_side_slope,
+                    a.rock_solid_density_kg_m3,
+                    a.rock_porosity,
+                    a.rock_spillage_factor,
+                )
             )
         days = seg.length_m / a.trenchers[method].rate_m_per_day if method else 0.0
         if method and strategy in ("trench", "trench_and_rock"):
             used["trenchers"] = "placeholder trencher capability and rates: %s" % {
                 k: asdict(v) for k, v in a.trenchers.items()
             }
-        final_cover = rock_t if rock_t > 0.0 else (achieved if strategy != "none" else existing)
+        final_cover = (
+            rock_t if rock_t > 0.0 else (achieved if strategy != "none" else existing)
+        )
         condition, depth, resistance = self._thermal(final_cover, rock_t > 0.0)
         return SegmentProtection(
             start_kp_m=seg.start_kp_m,
@@ -461,11 +542,17 @@ class SeabedProtectionScreener:
         soil = SOIL_ALIASES.get(str(attrs.get("soil_class") or "").lower())
         su = attrs.get("undrained_shear_strength_kpa")
         if soil is None:
-            gaps.append("KP %.0f-%.0f has no recognised soil class; trenching is not assumed." % (seg.start_kp_m, seg.end_kp_m))
+            gaps.append(
+                "KP %.0f-%.0f has no recognised soil class; trenching is not assumed."
+                % (seg.start_kp_m, seg.end_kp_m)
+            )
             notes.append("soil unknown - rock dump assumed")
         elif soil in CLAY_CLASSES and su is None:
             su = PLACEHOLDER_SU_KPA[soil]
-            used["undrained_shear_strength_kpa"] = "placeholder strengths used where none measured: %s" % PLACEHOLDER_SU_KPA
+            used["undrained_shear_strength_kpa"] = (
+                "placeholder strengths used where none measured: %s"
+                % PLACEHOLDER_SU_KPA
+            )
             gaps.append(
                 "KP %.0f-%.0f uses a placeholder undrained shear strength for %s; supply geotechnical data."
                 % (seg.start_kp_m, seg.end_kp_m, soil)
@@ -474,13 +561,20 @@ class SeabedProtectionScreener:
         method, d_max = self._select_trencher(soil, su, d_req)
         cover_n = max(0.0, d_max - od)
         if method is None or (d_max < d_req and existing >= cover_n):
-            notes.append("not trenchable with the listed methods" if method is None else "trenching adds no cover")
+            notes.append(
+                "not trenchable with the listed methods"
+                if method is None
+                else "trenching adds no cover"
+            )
             if existing > 0.0:
                 return "rock_dump", None, od + existing, required, False, existing
             return "rock_dump", None, 0.0, required, True, 0.0
         if d_max >= d_req:
             return "trench", method, d_req, 0.0, False, d_req - od
-        notes.append("achievable trench depth %.2f m is below the %.2f m needed; rock tops up" % (d_max, d_req))
+        notes.append(
+            "achievable trench depth %.2f m is below the %.2f m needed; rock tops up"
+            % (d_max, d_req)
+        )
         return "trench_and_rock", method, d_max, required, d_max < od, cover_n
 
     def _select_trencher(self, soil, su, d_req):
@@ -509,9 +603,14 @@ class SeabedProtectionScreener:
         if not intervals:
             return 0.0
         spans = sorted(
-            (float(_get(i, "start_kp_m")), float(_get(i, "end_kp_m")), float(_get(i, "min_cover_m")))
+            (
+                float(_get(i, "start_kp_m")),
+                float(_get(i, "end_kp_m")),
+                float(_get(i, "min_cover_m")),
+            )
             for i in intervals
-            if float(_get(i, "end_kp_m")) > seg.start_kp_m and float(_get(i, "start_kp_m")) < seg.end_kp_m
+            if float(_get(i, "end_kp_m")) > seg.start_kp_m
+            and float(_get(i, "start_kp_m")) < seg.end_kp_m
         )
         reach, cover = seg.start_kp_m, None
         for start, end, minimum in spans:
@@ -519,7 +618,11 @@ class SeabedProtectionScreener:
                 return 0.0
             reach = max(reach, end)
             cover = minimum if cover is None else min(cover, minimum)
-        return max(0.0, cover) if cover is not None and reach >= seg.end_kp_m - 1e-6 else 0.0
+        return (
+            max(0.0, cover)
+            if cover is not None and reach >= seg.end_kp_m - 1e-6
+            else 0.0
+        )
 
     def _thermal(self, cover, rock):
         a, od = self.assumptions, self.pipe.outer_diameter_m
@@ -537,14 +640,26 @@ class SeabedProtectionScreener:
         crossed = crossing.crossed_outer_diameter_m
         if crossed is None:
             crossed = a.crossed_outer_diameter_default_m
-            gaps.append("Crossed outer diameter missing at %s (KP %.0f); %.2f m assumed." % (crossing.feature_id, crossing.kp_m, crossed))
+            gaps.append(
+                "Crossed outer diameter missing at %s (KP %.0f); %.2f m assumed."
+                % (crossing.feature_id, crossing.kp_m, crossed)
+            )
         height = crossed + a.crossing_separation_m + od
         length = a.crossing_length_m + a.rock_side_slope * height
-        area = (a.rock_crest_width_m + a.rock_side_slope * height) * height - math.pi * od * od / 4.0
+        area = (
+            a.rock_crest_width_m + a.rock_side_slope * height
+        ) * height - math.pi * od * od / 4.0
         volume = area * length
-        used["crossing"] = "crossing separation %.2f m, berm length %.0f m plus slopes" % (a.crossing_separation_m, a.crossing_length_m)
+        used["crossing"] = (
+            "crossing separation %.2f m, berm length %.0f m plus slopes"
+            % (a.crossing_separation_m, a.crossing_length_m)
+        )
         return CrossingProtection(
-            crossing.kp_m, crossing.feature_id, height, length, volume,
+            crossing.kp_m,
+            crossing.feature_id,
+            height,
+            length,
+            volume,
             volume * a.rock_bulk_density_kg_m3 * a.rock_spillage_factor / 1000.0,
         )
 
@@ -552,7 +667,9 @@ class SeabedProtectionScreener:
         if not candidates:
             return ()
         if allowable is None or allowable <= 0.0:
-            gaps.append("Free-span candidates were supplied without an allowable span; no supports sized.")
+            gaps.append(
+                "Free-span candidates were supplied without an allowable span; no supports sized."
+            )
             return ()
         a, od = self.assumptions, self.pipe.outer_diameter_m
         out = []
@@ -567,8 +684,15 @@ class SeabedProtectionScreener:
             volume = supports * area * a.span_support_length_m
             out.append(
                 SpanSupportProtection(
-                    float(_get(cand, "start_kp_m")), float(_get(cand, "end_kp_m")), supports, base_h, volume,
-                    volume * a.rock_bulk_density_kg_m3 * a.rock_spillage_factor / 1000.0,
+                    float(_get(cand, "start_kp_m")),
+                    float(_get(cand, "end_kp_m")),
+                    supports,
+                    base_h,
+                    volume,
+                    volume
+                    * a.rock_bulk_density_kg_m3
+                    * a.rock_spillage_factor
+                    / 1000.0,
                 )
             )
         return tuple(out)
@@ -579,19 +703,35 @@ class SeabedProtectionScreener:
         by_method: dict[str, float] = {}
         for s in segs:
             if s.trench_method and s.strategy in ("trench", "trench_and_rock"):
-                by_method[s.trench_method] = by_method.get(s.trench_method, 0.0) + s.length_m
-        volume = sum(s.rock_volume_m3 for s in segs) + sum(c.rock_volume_m3 for c in crossings) + sum(p.rock_volume_m3 for p in spans)
-        tonnes = sum(s.rock_tonnes for s in segs) + sum(c.rock_tonnes for c in crossings) + sum(p.rock_tonnes for p in spans)
+                by_method[s.trench_method] = (
+                    by_method.get(s.trench_method, 0.0) + s.length_m
+                )
+        volume = (
+            sum(s.rock_volume_m3 for s in segs)
+            + sum(c.rock_volume_m3 for c in crossings)
+            + sum(p.rock_volume_m3 for p in spans)
+        )
+        tonnes = (
+            sum(s.rock_tonnes for s in segs)
+            + sum(c.rock_tonnes for c in crossings)
+            + sum(p.rock_tonnes for p in spans)
+        )
         buried = sum(s.length_m for s in segs if s.thermal_condition != "exposed")
-        rock_days = tonnes / a.rock_rate_tonnes_per_day if a.rock_rate_tonnes_per_day else None
-        warnings.append("Quantities exclude mobilisation, weather downtime, pre-lay clearance and post-works survey.")
+        rock_days = (
+            tonnes / a.rock_rate_tonnes_per_day if a.rock_rate_tonnes_per_day else None
+        )
+        warnings.append(
+            "Quantities exclude mobilisation, weather downtime, pre-lay clearance and post-works survey."
+        )
         return ProtectionPlan(
             segments=tuple(segs),
             crossings=crossings,
             span_supports=spans,
             route_length_m=length,
             trench_length_m_by_method=by_method,
-            rock_dump_length_m=sum(s.length_m for s in segs if s.rock_thickness_m > 0.0),
+            rock_dump_length_m=sum(
+                s.length_m for s in segs if s.rock_thickness_m > 0.0
+            ),
             rock_volume_m3=volume,
             rock_tonnes=tonnes,
             trench_days=sum(s.trench_days for s in segs),
@@ -604,7 +744,11 @@ class SeabedProtectionScreener:
         )
 
 
-def to_neqsim_burial_segments(plan: ProtectionPlan, outer_diameter_m: float, assumptions: ScreeningAssumptions | None = None) -> list[dict[str, Any]]:
+def to_neqsim_burial_segments(
+    plan: ProtectionPlan,
+    outer_diameter_m: float,
+    assumptions: ScreeningAssumptions | None = None,
+) -> list[dict[str, Any]]:
     """Hand the post-protection burial state to a NeqSim thermal or cooldown model.
 
     Each entry is one pipe section. ``buried`` and ``burial_depth_m`` map to
@@ -624,8 +768,18 @@ def to_neqsim_burial_segments(plan: ProtectionPlan, outer_diameter_m: float, ass
     out: list[dict[str, Any]] = []
     for seg in plan.segments:
         buried = seg.thermal_condition != "exposed"
-        depth = None if not buried else round(seg.final_cover_m + outer_diameter_m / 2.0, 4)
-        conductivity = None if not buried else (a.rock_conductivity_w_mk if seg.thermal_condition == "rock_covered" else a.soil_conductivity_w_mk)
+        depth = (
+            None if not buried else round(seg.final_cover_m + outer_diameter_m / 2.0, 4)
+        )
+        conductivity = (
+            None
+            if not buried
+            else (
+                a.rock_conductivity_w_mk
+                if seg.thermal_condition == "rock_covered"
+                else a.soil_conductivity_w_mk
+            )
+        )
         entry = {
             "start_kp_m": seg.start_kp_m,
             "end_kp_m": seg.end_kp_m,
@@ -635,7 +789,10 @@ def to_neqsim_burial_segments(plan: ProtectionPlan, outer_diameter_m: float, ass
             "condition": seg.thermal_condition,
         }
         prev = out[-1] if out else None
-        if prev and all(prev[k] == entry[k] for k in ("buried", "burial_depth_m", "soil_conductivity_w_mk", "condition")):
+        if prev and all(
+            prev[k] == entry[k]
+            for k in ("buried", "burial_depth_m", "soil_conductivity_w_mk", "condition")
+        ):
             prev["end_kp_m"] = entry["end_kp_m"]
         else:
             out.append(entry)

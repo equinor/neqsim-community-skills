@@ -119,7 +119,9 @@ class FemCouplingModel:
         if element_order not in (1, 2):
             raise ValueError("element_order must be 1 or 2")
 
-        minimum = _MIN_LINEAR_ELEMENTS if element_order == 1 else _MIN_QUADRATIC_ELEMENTS
+        minimum = (
+            _MIN_LINEAR_ELEMENTS if element_order == 1 else _MIN_QUADRATIC_ELEMENTS
+        )
         # The tolerance keeps an exact division such as 0.05 / 0.002 from rounding up
         # to an extra element on the floating-point representation alone.
         count = max(minimum, ceil(layer_thickness_m / max_element_size_m - 1.0e-9))
@@ -131,7 +133,9 @@ class FemCouplingModel:
             f"{element_order} elements cannot represent curvature with fewer.",
         ]
         if thermal_diffusivity_m2_per_s is not None:
-            _require_positive("thermal_diffusivity_m2_per_s", thermal_diffusivity_m2_per_s)
+            _require_positive(
+                "thermal_diffusivity_m2_per_s", thermal_diffusivity_m2_per_s
+            )
             _require_positive("mesh_fourier_target", mesh_fourier_target)
             time_step = mesh_fourier_target * size**2 / thermal_diffusivity_m2_per_s
             assumptions.append(
@@ -177,7 +181,9 @@ class FemCouplingModel:
 
         findings: list[str] = []
 
-        minimum = _MIN_LINEAR_ELEMENTS if element_order == 1 else _MIN_QUADRATIC_ELEMENTS
+        minimum = (
+            _MIN_LINEAR_ELEMENTS if element_order == 1 else _MIN_QUADRATIC_ELEMENTS
+        )
         discretisation_ok = elements_across_critical_layer >= minimum
         if not discretisation_ok:
             findings.append(
@@ -226,7 +232,9 @@ class FemCouplingModel:
                 "usually means it was never checked."
             )
         else:
-            _require_finite("energy_balance_error_percent", energy_balance_error_percent)
+            _require_finite(
+                "energy_balance_error_percent", energy_balance_error_percent
+            )
             if abs(energy_balance_error_percent) > _ENERGY_BALANCE_LIMIT_PERCENT:
                 energy_balance_ok = False
                 findings.append(

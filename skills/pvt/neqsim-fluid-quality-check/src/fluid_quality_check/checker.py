@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite
-from typing import Mapping, Sequence
-
 
 FLAG_ALIASES = {
     "water": {"water", "h2o"},
@@ -42,7 +41,9 @@ class FluidQualityChecker:
         if not composition:
             raise ValueError("composition must contain at least one component")
 
-        normalized = {self._normalize_name(name): value for name, value in composition.items()}
+        normalized = {
+            self._normalize_name(name): value for name, value in composition.items()
+        }
         for name, value in normalized.items():
             if not isfinite(value):
                 raise ValueError(f"fraction for {name} must be finite")
@@ -50,9 +51,7 @@ class FluidQualityChecker:
         total_fraction = sum(normalized.values())
         total_within_tolerance = abs(total_fraction - 1.0) <= self.tolerance
         negative_components = tuple(
-            original_name
-            for original_name, value in composition.items()
-            if value < 0.0
+            original_name for original_name, value in composition.items() if value < 0.0
         )
         missing_components = tuple(
             component
@@ -75,13 +74,17 @@ class FluidQualityChecker:
             missing_components=missing_components,
             flagged_components=flagged_components,
             warnings=warnings,
-            is_usable=not negative_components and not missing_components and total_within_tolerance,
+            is_usable=not negative_components
+            and not missing_components
+            and total_within_tolerance,
             neqsim_available=find_spec("neqsim") is not None,
         )
 
     @staticmethod
     def _normalize_name(name: str) -> str:
-        return " ".join(name.strip().lower().replace("_", " ").replace("-", " ").split())
+        return " ".join(
+            name.strip().lower().replace("_", " ").replace("-", " ").split()
+        )
 
     @classmethod
     def _flagged_components(cls, normalized: Mapping[str, float]) -> dict[str, float]:
@@ -106,7 +109,11 @@ class FluidQualityChecker:
         if negative_components:
             warnings.append("negative fractions: " + ", ".join(negative_components))
         if missing_components:
-            warnings.append("missing required components: " + ", ".join(missing_components))
+            warnings.append(
+                "missing required components: " + ", ".join(missing_components)
+            )
         for component in flagged_components:
-            warnings.append(f"{component} present; check whether this matters for the simulation basis")
+            warnings.append(
+                f"{component} present; check whether this matters for the simulation basis"
+            )
         return tuple(warnings)

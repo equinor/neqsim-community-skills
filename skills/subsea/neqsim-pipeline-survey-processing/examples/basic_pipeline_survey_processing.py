@@ -5,7 +5,7 @@ from pipeline_survey_processing import PipelineSurveyProcessor
 
 def synthetic_survey(offset_m: float = 0.0):
     records = []
-    for index in range(0, 400):
+    for index in range(400):
         kp = index * 5.0
         depth = -298.0 + 0.004 * kp + offset_m
         seabed = depth + 0.2  # negative-up: seabed above the pipe top means 0.2 m cover
@@ -20,7 +20,9 @@ def synthetic_survey(offset_m: float = 0.0):
 
 
 def main() -> None:
-    processor = PipelineSurveyProcessor(minimum_kp_spacing_m=5.0, span_gap_threshold_m=0.05)
+    processor = PipelineSurveyProcessor(
+        minimum_kp_spacing_m=5.0, span_gap_threshold_m=0.05
+    )
 
     repeat = processor.process(
         records=synthetic_survey(),
@@ -36,8 +38,12 @@ def main() -> None:
     )
 
     print(f"depth convention        : {repeat.depth_convention}")
-    print(f"retained / rejected     : {repeat.retained_point_count} / {repeat.rejected_point_count}")
-    print(f"flagged erroneous points: {[point.kp_m for point in repeat.flagged_points]}")
+    print(
+        f"retained / rejected     : {repeat.retained_point_count} / {repeat.rejected_point_count}"
+    )
+    print(
+        f"flagged erroneous points: {[point.kp_m for point in repeat.flagged_points]}"
+    )
     print(f"route length            : {repeat.route_length_m} m")
     print(f"span candidates         : {repeat.span_candidates}")
     print(f"minimum cover           : {repeat.minimum_cover_m} m")
@@ -50,10 +56,14 @@ def main() -> None:
         print(f"  - {entry}")
 
     change = processor.compare(baseline=baseline, repeat=repeat, change_threshold_m=0.2)
-    print(f"max lowering / lifting  : {change.max_lowering_m} m / {change.max_lifting_m} m")
+    print(
+        f"max lowering / lifting  : {change.max_lowering_m} m / {change.max_lifting_m} m"
+    )
     print(f"changed intervals       : {len(change.changed_intervals)}")
 
-    handoff = PipelineSurveyProcessor.to_neqsim_elevation_profile(repeat, section_count=10)
+    handoff = PipelineSurveyProcessor.to_neqsim_elevation_profile(
+        repeat, section_count=10
+    )
     print(f"neqsim leg positions    : {handoff['leg_positions_m'][:4]} ...")
     print(f"neqsim elevations       : {handoff['elevation_profile_m'][:4]} ...")
 

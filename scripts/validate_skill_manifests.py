@@ -77,16 +77,16 @@ def minimal_structural_check(manifest, schema):
     errors = []
     for key in schema.get("required", []):
         if key not in manifest:
-            errors.append("missing required field '{}'".format(key))
+            errors.append(f"missing required field '{key}'")
     name = manifest.get("name")
     if isinstance(name, str) and not NAME_RE.match(name):
-        errors.append("name '{}' is not a canonical skill id".format(name))
+        errors.append(f"name '{name}' is not a canonical skill id")
     version = manifest.get("version")
     if isinstance(version, str) and not re.match(r"^\d+\.\d+\.\d+$", version):
-        errors.append("version '{}' is not semver".format(version))
+        errors.append(f"version '{version}' is not semver")
     for skill in manifest.get("required_skills") or []:
         if not isinstance(skill, str) or not NAME_RE.match(skill):
-            errors.append("required_skills entry '{}' is not a canonical id".format(skill))
+            errors.append(f"required_skills entry '{skill}' is not a canonical id")
     return errors
 
 
@@ -95,7 +95,9 @@ def validate_against_schema(manifest, schema):
         validator = jsonschema.Draft7Validator(schema)
         return [
             "{}: {}".format("/".join(str(p) for p in err.path) or "<root>", err.message)
-            for err in sorted(validator.iter_errors(manifest), key=lambda e: list(e.path))
+            for err in sorted(
+                validator.iter_errors(manifest), key=lambda e: list(e.path)
+            )
         ]
     return minimal_structural_check(manifest, schema)
 
@@ -116,8 +118,8 @@ def check_description_length(manifest):
     description = manifest.get("description")
     if isinstance(description, str) and len(description) > MAX_CATALOG_DESCRIPTION:
         return [
-            "description is {} chars; keep it <= {} (resent on every chat request) and "
-            "move detail into the SKILL.md body".format(len(description), MAX_CATALOG_DESCRIPTION)
+            f"description is {len(description)} chars; keep it <= {MAX_CATALOG_DESCRIPTION} (resent on every chat request) and "
+            "move detail into the SKILL.md body"
         ]
     return []
 
@@ -126,8 +128,8 @@ def check_directory_matches_name(manifest, skill_md):
     name = manifest.get("name")
     if isinstance(name, str) and skill_md.parent.name != name:
         return [
-            "directory '{}' must equal frontmatter name '{}' (agent-plugin loaders skip "
-            "mismatched skills)".format(skill_md.parent.name, name)
+            f"directory '{skill_md.parent.name}' must equal frontmatter name '{name}' (agent-plugin loaders skip "
+            "mismatched skills)"
         ]
     return []
 
@@ -135,15 +137,15 @@ def check_directory_matches_name(manifest, skill_md):
 def validate_repo(repo_root):
     schema, schema_path = load_schema(repo_root)
     if schema is None:
-        return ["schema not found at {}".format(schema_path)], []
+        return [f"schema not found at {schema_path}"], []
 
     skills_dir = repo_root / "skills"
     if not skills_dir.is_dir():
-        return ["skills/ directory not found at {}".format(skills_dir)], []
+        return [f"skills/ directory not found at {skills_dir}"], []
 
     manifests = sorted(skills_dir.glob("*/*/SKILL.md"))
     if not manifests:
-        return ["no SKILL.md files found under {}".format(skills_dir)], []
+        return [f"no SKILL.md files found under {skills_dir}"], []
 
     errors, warnings = [], []
     for skill_md in manifests:
@@ -151,16 +153,16 @@ def validate_repo(repo_root):
         text = skill_md.read_text(encoding="utf-8")
         manifest = parse_frontmatter(text)
         if manifest is None:
-            errors.append("[{}] missing or invalid YAML frontmatter".format(rel))
+            errors.append(f"[{rel}] missing or invalid YAML frontmatter")
             continue
         for err in validate_against_schema(manifest, schema):
-            errors.append("[{}] schema: {}".format(rel, err))
+            errors.append(f"[{rel}] schema: {err}")
         for err in check_use_when(manifest):
-            errors.append("[{}] {}".format(rel, err))
+            errors.append(f"[{rel}] {err}")
         for err in check_description_length(manifest):
-            errors.append("[{}] {}".format(rel, err))
+            errors.append(f"[{rel}] {err}")
         for err in check_directory_matches_name(manifest, skill_md):
-            errors.append("[{}] {}".format(rel, err))
+            errors.append(f"[{rel}] {err}")
 
     return errors, warnings
 
@@ -177,16 +179,16 @@ def main(argv=None):
 
     errors, warnings = validate_repo(args.repo_root.resolve())
     for warning in warnings:
-        print("WARNING: {}".format(warning))
+        print(f"WARNING: {warning}")
     for error in errors:
-        print("ERROR: {}".format(error))
+        print(f"ERROR: {error}")
     if jsonschema is None:
         print("NOTE: jsonschema not installed - used minimal structural checks only.")
 
     if errors:
-        print("\nSkill manifest validation FAILED ({} errors).".format(len(errors)))
+        print(f"\nSkill manifest validation FAILED ({len(errors)} errors).")
         return 1
-    print("\nSkill manifest validation passed ({} warnings).".format(len(warnings)))
+    print(f"\nSkill manifest validation passed ({len(warnings)} warnings).")
     return 0
 
 

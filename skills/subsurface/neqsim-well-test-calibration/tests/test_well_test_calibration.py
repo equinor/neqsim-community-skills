@@ -7,11 +7,18 @@ import importlib.util
 import numpy as np
 import pandas as pd
 import pytest
+from well_test_calibration import (
+    accept_calibration,
+    calibrate_well,
+    fit_with_priors,
+    quality_flags,
+    rate_from_gauge,
+    window_mean,
+)
 
-from well_test_calibration import (accept_calibration, calibrate_well, fit_with_priors, rate_from_gauge,
-                                   recombine_separator_volumes, quality_flags, window_mean)
-
-needs_neqsim = pytest.mark.skipif(importlib.util.find_spec("neqsim") is None, reason="neqsim not installed")
+needs_neqsim = pytest.mark.skipif(
+    importlib.util.find_spec("neqsim") is None, reason="neqsim not installed"
+)
 
 
 def _model(theta, q):
@@ -26,20 +33,37 @@ def test_fit_recovers_parameters_from_informative_tests():
     meas = [_model(truth, q) for q in qs]
 
     def res(th):
-        return np.array([(_model(th, q)[k] - m[k]) / s for q, m in zip(qs, meas) for k, s in (("wht", 1.0), ("dp", 2.0))])
+        return np.array(
+            [
+                (_model(th, q)[k] - m[k]) / s
+                for q, m in zip(qs, meas)
+                for k, s in (("wht", 1.0), ("dp", 2.0))
+            ]
+        )
 
-    fit = fit_with_priors(res, prior=(np.log(8.0), 1.0), prior_std=(1.0, 0.2), bounds=((np.log(0.5), np.log(200.0)), (0.6, 1.5)),
-                          steps=(0.15, 0.05))
+    fit = fit_with_priors(
+        res,
+        prior=(np.log(8.0), 1.0),
+        prior_std=(1.0, 0.2),
+        bounds=((np.log(0.5), np.log(200.0)), (0.6, 1.5)),
+        steps=(0.15, 0.05),
+    )
     assert fit.identifiable
     assert abs(np.exp(fit.theta[0]) - 12.0) < 1.0
     assert abs(fit.theta[1] - 1.05) < 0.02
 
 
 def test_fit_reports_unidentifiable_parameter_and_keeps_prior():
-    def res(th):                       # only the first parameter affects the data
+    def res(th):  # only the first parameter affects the data
         return np.array([(90.0 - 8.0 * th[0] - 70.0) / 1.0])
 
-    fit = fit_with_priors(res, prior=(2.0, 1.0), prior_std=(1.0, 0.2), bounds=((0.0, 5.0), (0.6, 1.5)), steps=(0.1, 0.05))
+    fit = fit_with_priors(
+        res,
+        prior=(2.0, 1.0),
+        prior_std=(1.0, 0.2),
+        bounds=((0.0, 5.0), (0.6, 1.5)),
+        steps=(0.1, 0.05),
+    )
     assert not fit.identifiable
     assert abs(fit.theta[1] - 1.0) < 1e-6
     assert any("identifiable" in n for n in fit.notes)
@@ -47,7 +71,9 @@ def test_fit_reports_unidentifiable_parameter_and_keeps_prior():
 
 def test_rate_from_gauge_finds_scale_and_rejects_unbracketed_gauge():
     def p_in(s):
-        return 100.0 + 60.0 * s          # bottomhole pressure grows with rate (friction) at fixed wellhead pressure
+        return (
+            100.0 + 60.0 * s
+        )  # bottomhole pressure grows with rate (friction) at fixed wellhead pressure
 
     assert abs(rate_from_gauge(p_in, 166.0) - 1.1) < 0.01
     assert rate_from_gauge(p_in, 300.0) is None
@@ -67,17 +93,32 @@ def test_calibrate_well_accepts_good_fit_and_rejects_noise():
     def predict(c, th):
         return _model(th, c["q"])
 
-    kw = dict(prior=(np.log(8.0), 1.0), prior_std=(1.0, 0.2), bounds=((np.log(0.5), np.log(200.0)), (0.6, 1.5)),
-              sigma={"wht": 1.0, "dp": 2.0}, steps=(0.15, 0.05))
+    kw = dict(
+        prior=(np.log(8.0), 1.0),
+        prior_std=(1.0, 0.2),
+        bounds=((np.log(0.5), np.log(200.0)), (0.6, 1.5)),
+        sigma={"wht": 1.0, "dp": 2.0},
+        steps=(0.15, 0.05),
+    )
     good = calibrate_well(cases, predict, **kw)
     assert good["accept"] and abs(good["theta"][1] - 1.1) < 0.03
 
-    rng = np.random.default_rng(1)        # the latest test contradicts the others: the held-out check refuses it
+    rng = np.random.default_rng(
+        1
+    )  # the latest test contradicts the others: the held-out check refuses it
     bad = [dict(c) for c in cases]
-    bad[-1]["wht"] += 25.0 * rng.choice([-1, 1]); bad[-1]["dp"] -= 60.0
+    bad[-1]["wht"] += 25.0 * rng.choice([-1, 1])
+    bad[-1]["dp"] -= 60.0
     out = calibrate_well(bad, predict, **kw)
     assert out["validation"]
-    assert out["accept"] == (sum(v["tuned"] for v in out["validation"].values()) < sum(v["prior"] for v in out["validation"].values())) or not out["accept"]
+    assert (
+        out["accept"]
+        == (
+            sum(v["tuned"] for v in out["validation"].values())
+            < sum(v["prior"] for v in out["validation"].values())
+        )
+        or not out["accept"]
+    )
 
 
 def test_window_mean_drops_settling_period_and_flags():
@@ -116,10 +157,16 @@ def test_recombination_closes_separator_gas_and_gives_plausible_shrinkage():
     import sys
 
     src = str(pathlib.Path(__file__).resolve().parents[1] / "src")
-    out = subprocess.run([sys.executable, "-c", _RECOMBINE_SCRIPT, src], capture_output=True, text=True, timeout=300,
-                         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), check=True)
+    out = subprocess.run(
+        [sys.executable, "-c", _RECOMBINE_SCRIPT, src],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        check=True,
+    )
     r = json.loads(out.stdout.strip().splitlines()[-1])
     assert abs(r["zsum"] - 1.0) < 1e-9
     assert 0.6 < r["shrinkage"] < 1.0
-    assert r["gas_Sm3d"] > r["sep_gas_Sm3d"] > 0      # stage gas adds to the separator gas
+    assert r["gas_Sm3d"] > r["sep_gas_Sm3d"] > 0  # stage gas adds to the separator gas
     assert abs(r["water_m3d"] - 480.0) < 1e-9

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from bisect import bisect_left
-from typing import Callable, Sequence
+from collections.abc import Callable, Sequence
 
 
 def capacity_from_sweep(rates: Sequence[float], utilisation: Sequence[float]) -> dict:
@@ -38,7 +38,12 @@ class PressureCapacityCurve:
         return max(0.0, self.c[i - 1] + t * (self.c[i] - self.c[i - 1]))
 
 
-def maximise_rate(supply: Callable[[float], float], capacity: Callable[[float], float], p_min: float, p_max: float):
+def maximise_rate(
+    supply: Callable[[float], float],
+    capacity: Callable[[float], float],
+    p_min: float,
+    p_max: float,
+):
     """Maximise min(supply(p), capacity(p)); supply falls with p, capacity rises with p.
 
     Returns (pressure, rate, binding) with binding "SUPPLY" (wells limit even at p_min) or "FACILITY".
@@ -63,7 +68,9 @@ def maximise_rate(supply: Callable[[float], float], capacity: Callable[[float], 
     return p, min(supply(p), capacity(p)), "FACILITY"
 
 
-def flow_balance(rate_at_whp: Callable[[float], float], sep_barg: float, dp_ref: float, q_ref: float) -> float:
+def flow_balance(
+    rate_at_whp: Callable[[float], float], sep_barg: float, dp_ref: float, q_ref: float
+) -> float:
     """Solve q = rate(sep + dp_ref (q/q_ref)^2) by bisection.
 
     Plain fixed-point iteration oscillates and can collapse to zero when the drawdown is small, so bisect.

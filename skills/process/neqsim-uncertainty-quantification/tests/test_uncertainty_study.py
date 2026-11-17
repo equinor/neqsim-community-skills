@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from uncertainty_quantification.distributions import Triangular, Uniform
 from uncertainty_quantification.study import StudyError, UncertaintyStudy
 
@@ -28,7 +27,10 @@ def test_study_requires_at_least_one_parameter():
 def test_study_rejects_duplicate_parameter_names():
     with pytest.raises(StudyError):
         UncertaintyStudy(
-            parameters=[Uniform(name="a", low=0, high=1), Uniform(name="a", low=0, high=2)],
+            parameters=[
+                Uniform(name="a", low=0, high=1),
+                Uniform(name="a", low=0, high=2),
+            ],
             model=lambda v: 0.0,
         )
 

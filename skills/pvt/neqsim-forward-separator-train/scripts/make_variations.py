@@ -11,6 +11,7 @@ Example:
     python make_variations.py base.e300 --n 30 --outdir variations
     python make_variations.py base.e300 --n 30 --outdir test --truth-stages "60:55,15:45,1.8:35" --noise 0.02
 """
+
 import argparse
 import csv
 import os
@@ -19,8 +20,8 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import fit_separator_pt as fit  # noqa: E402
-import run_forward_separator as rfs  # noqa: E402
+import fit_separator_pt as fit
+import run_forward_separator as rfs
 
 
 def lhs(n, d, rng):
@@ -67,7 +68,9 @@ def compositions(fluid, n, spread, rng):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
     ap.add_argument("e300")
     ap.add_argument("--n", type=int, default=30)
     ap.add_argument("--spread", type=float, default=0.20)
@@ -76,8 +79,12 @@ def main():
     ap.add_argument("--feed-p", type=float, default=250.0)
     ap.add_argument("--feed-t", type=float, default=100.0)
     ap.add_argument("--kmol-h", type=float, default=1000.0)
-    ap.add_argument("--truth-stages", help="bara:degC list; fills oil/gas targets from this train")
-    ap.add_argument("--noise", type=float, default=0.0, help="relative gaussian noise on targets")
+    ap.add_argument(
+        "--truth-stages", help="bara:degC list; fills oil/gas targets from this train"
+    )
+    ap.add_argument(
+        "--noise", type=float, default=0.0, help="relative gaussian noise on targets"
+    )
     args = ap.parse_args()
 
     jneqsim = rfs.load_jneqsim()
@@ -91,10 +98,19 @@ def main():
         fl = base.clone()
         fl.setMolarComposition(z.tolist())
         name = "fluid_%02d.e300" % k
-        jneqsim.thermo.util.readwrite.EclipseFluidReadWrite.write(fl, os.path.join(args.outdir, name))
-        row = {"fluid": name, "oil_Sm3_h": "", "gas_Sm3_h": "", "feed_kmol_h": args.kmol_h}
+        jneqsim.thermo.util.readwrite.EclipseFluidReadWrite.write(
+            fl, os.path.join(args.outdir, name)
+        )
+        row = {
+            "fluid": name,
+            "oil_Sm3_h": "",
+            "gas_Sm3_h": "",
+            "feed_kmol_h": args.kmol_h,
+        }
         if truth:
-            res = fit.oil_gas_rates(jneqsim, fl, truth, args.kmol_h, args.feed_p, args.feed_t)
+            res = fit.oil_gas_rates(
+                jneqsim, fl, truth, args.kmol_h, args.feed_p, args.feed_t
+            )
             if res is None:
                 continue
             row["oil_Sm3_h"] = res[0] * (1 + args.noise * rng.standard_normal())
@@ -102,7 +118,9 @@ def main():
         rows.append(row)
     path = os.path.join(args.outdir, "manifest.csv")
     with open(path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["fluid", "oil_Sm3_h", "gas_Sm3_h", "feed_kmol_h"])
+        w = csv.DictWriter(
+            f, fieldnames=["fluid", "oil_Sm3_h", "gas_Sm3_h", "feed_kmol_h"]
+        )
         w.writeheader()
         w.writerows(rows)
     print("wrote %d E300 files and %s" % (len(rows), path))

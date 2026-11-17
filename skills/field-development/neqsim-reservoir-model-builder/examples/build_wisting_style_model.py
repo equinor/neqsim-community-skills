@@ -12,9 +12,9 @@ with figures verified against the Norwegian Offshore Directorate FactPages and
 the operator's own reporting. Nothing here is an official resource statement.
 """
 
-from pathlib import Path
 import json
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -119,8 +119,11 @@ def main() -> None:
     print("=" * 78)
     print("CONSISTENCY CHECK - what an over-mapped area looks like")
     print("=" * 78)
-    oversized = stage_3.refine({"area_km2": 55.0}, provenance="interpreted",
-                               reference="deliberately over-mapped area")
+    oversized = stage_3.refine(
+        {"area_km2": 55.0},
+        provenance="interpreted",
+        reference="deliberately over-mapped area",
+    )
     for warning in oversized.warnings:
         if "implies a recovery factor" in warning:
             print(f"  ! {warning}")

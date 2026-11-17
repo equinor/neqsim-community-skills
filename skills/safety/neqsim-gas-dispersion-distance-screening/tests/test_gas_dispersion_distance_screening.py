@@ -1,5 +1,4 @@
 import pytest
-
 from gas_dispersion_distance_screening import GaussianDispersionModel
 
 

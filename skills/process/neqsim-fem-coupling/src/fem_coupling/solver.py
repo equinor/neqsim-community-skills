@@ -26,11 +26,12 @@ import json
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 BACKENDS: tuple[str, ...] = (
     "scikit-fem",
@@ -107,11 +108,11 @@ class BoundaryCondition:
     def __post_init__(self) -> None:
         kind = self.kind.strip().lower()
         if kind not in {"robin", "dirichlet", "flux", "adiabatic"}:
-            raise ValueError(
-                "kind must be 'robin', 'dirichlet', 'flux' or 'adiabatic'"
-            )
+            raise ValueError("kind must be 'robin', 'dirichlet', 'flux' or 'adiabatic'")
         if kind == "robin":
-            _require_positive("film_coefficient_w_per_m2k", self.film_coefficient_w_per_m2k)
+            _require_positive(
+                "film_coefficient_w_per_m2k", self.film_coefficient_w_per_m2k
+            )
             if self.temperature_c is None:
                 raise ValueError("a robin boundary needs a bulk temperature_c")
         if kind == "dirichlet" and self.temperature_c is None:
@@ -220,7 +221,7 @@ class ConductionProblem:
         materials: Sequence[MaterialAssignment],
         boundaries: Sequence[BoundaryCondition],
         transient: TransientSettings | None = None,
-    ) -> "ConductionProblem":
+    ) -> ConductionProblem:
         """Build a problem from a :class:`fem_coupling.mesh.FemMeshSpec`.
 
         The physical-group tags are taken straight from the mesh specification, so
@@ -230,9 +231,9 @@ class ConductionProblem:
         switched off for it - applying it to a revolved model would count the
         circumference twice.
         """
-        axisymmetric = getattr(spec, "kind", "") == "axisymmetric_section" and not getattr(
-            spec, "is_three_dimensional", False
-        )
+        axisymmetric = getattr(
+            spec, "kind", ""
+        ) == "axisymmetric_section" and not getattr(spec, "is_three_dimensional", False)
         return cls(
             name=name,
             mesh_file=mesh_file,
@@ -321,7 +322,12 @@ def recommend_backend(
     if dimension not in (1, 2, 3):
         raise ValueError("dimension must be 1, 2 or 3")
     physics_key = (physics or "").strip().lower()
-    if physics_key not in {"conduction", "diffusion", "elasticity", "thermo_mechanical"}:
+    if physics_key not in {
+        "conduction",
+        "diffusion",
+        "elasticity",
+        "thermo_mechanical",
+    }:
         raise ValueError(
             "physics must be 'conduction', 'diffusion', 'elasticity' or "
             "'thermo_mechanical'"
@@ -355,7 +361,9 @@ def recommend_backend(
             "Prefer the built-in one-dimensional solver over any external backend "
             "here; it is verifiable against an analytic result and they are not."
         )
-    elif coupled or physics_key == "thermo_mechanical" or (nonlinear and dimension == 3):
+    elif (
+        coupled or physics_key == "thermo_mechanical" or (nonlinear and dimension == 3)
+    ):
         backend = "fenicsx"
         rationale = (
             "Coupled or nonlinear multiphysics needs a variational framework that can "
@@ -440,7 +448,9 @@ class FemCase:
         target.mkdir(parents=True, exist_ok=True)
 
         payload = self.problem.as_dict()
-        if self.backend == "fenicsx" and not (payload["material_tags"] and payload["boundary_tags"]):
+        if self.backend == "fenicsx" and not (
+            payload["material_tags"] and payload["boundary_tags"]
+        ):
             raise ValueError(
                 "a FEniCSx case needs material_tags and boundary_tags; build the "
                 "problem with ConductionProblem.from_mesh_spec so the physical-group "
@@ -485,7 +495,7 @@ class FemCase:
             )
 
         try:
-            completed = subprocess.run(  # noqa: S603 - fixed command shape
+            completed = subprocess.run(
                 [sys.executable, "case.py"],
                 cwd=str(target),
                 capture_output=True,
@@ -525,7 +535,9 @@ def read_case_results(directory: str | Path) -> FemResults:
         )
     payload = json.loads(path.read_text(encoding="utf-8"))
 
-    flows = {str(k): float(v) for k, v in (payload.get("boundary_heat_flow_w") or {}).items()}
+    flows = {
+        str(k): float(v) for k, v in (payload.get("boundary_heat_flow_w") or {}).items()
+    }
     findings = list(payload.get("findings") or [])
 
     balance = payload.get("energy_balance_error_percent")

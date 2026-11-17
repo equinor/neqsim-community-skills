@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-
 from jv_cost_control import (
     check_identities,
     check_subtotals,
@@ -89,7 +88,9 @@ def test_variance_table_flags_material_and_unbudgeted():
             "budget": [100.0, 50.0, 0.0, 0.0],
         }
     )
-    table = variance_table(df, "actual", "budget", ["acct"], abs_threshold=10.0, pct_threshold=0.10)
+    table = variance_table(
+        df, "actual", "budget", ["acct"], abs_threshold=10.0, pct_threshold=0.10
+    )
     flags = table.set_index("acct")["material"].to_dict()
     assert flags == {"a": True, "b": False, "c": True, "d": False}
     assert table.iloc[0]["acct"] == "c" or table.iloc[0]["acct"] == "a"
@@ -100,7 +101,9 @@ def test_variance_table_flags_material_and_unbudgeted():
 
 def test_price_volume_split_adds_up():
     split = price_volume_split(415.6, 38.4, 360.9, 40.3)
-    assert split["volume_effect"] + split["rate_effect"] == pytest.approx(split["total"])
+    assert split["volume_effect"] + split["rate_effect"] == pytest.approx(
+        split["total"]
+    )
     with pytest.raises(ValueError):
         price_volume_split(1.0, 0.0, 1.0, 1.0)
 
@@ -123,7 +126,9 @@ def test_outlier_months_uses_mad():
 def test_reconcile_statuses():
     a = pd.DataFrame({"k": ["x", "y", "z"], "v": [100.0, 200.0, 5.0]})
     b = pd.DataFrame({"k": ["x", "y", "w"], "v": [100.0, 150.0, 7.0]})
-    result = reconcile_tables(a, b, ["k"], "v", "v", tol_abs=1.0, names=("jib", "crr")).set_index("k")
+    result = reconcile_tables(
+        a, b, ["k"], "v", "v", tol_abs=1.0, names=("jib", "crr")
+    ).set_index("k")
     assert result.loc["x", "status"] == "MATCH"
     assert result.loc["y", "status"] == "DIFF"
     assert result.loc["z", "status"] == "ONLY_jib"

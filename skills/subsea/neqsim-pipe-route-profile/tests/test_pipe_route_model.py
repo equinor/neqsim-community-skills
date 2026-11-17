@@ -1,5 +1,4 @@
 import pytest
-
 from pipe_route_profile import PipeRouteModel
 
 
@@ -74,7 +73,9 @@ def test_geographic_route_length_reasonable() -> None:
 
 def test_rejects_single_waypoint() -> None:
     with pytest.raises(ValueError, match="at least two waypoints"):
-        PipeRouteModel().evaluate(waypoints=[{"name": "A", "x": 0.0, "y": 0.0, "depth_m": 1.0}])
+        PipeRouteModel().evaluate(
+            waypoints=[{"name": "A", "x": 0.0, "y": 0.0, "depth_m": 1.0}]
+        )
 
 
 def test_rejects_negative_depth() -> None:

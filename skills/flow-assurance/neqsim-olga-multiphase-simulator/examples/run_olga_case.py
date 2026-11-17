@@ -31,7 +31,9 @@ def main() -> int:
     parser.add_argument("case", type=Path, help="OLGA .genkey or .key input file")
     parser.add_argument("--endtime", help='Override INTEGRATION ENDTIME, e.g. "600 s"')
     parser.add_argument("--nthreads", type=int, default=None, help="OpenMP threads")
-    parser.add_argument("--timeout", type=float, default=None, help="Wall-clock limit in seconds")
+    parser.add_argument(
+        "--timeout", type=float, default=None, help="Wall-clock limit in seconds"
+    )
     args = parser.parse_args()
 
     installations = find_olga_installations()
@@ -81,7 +83,9 @@ def main() -> int:
 
     if "ppl" in result.outputs:
         profile = read_ppl(result.outputs["ppl"])
-        print(f"\nProfile: {len(profile.times)} output times, {len(profile.variables)} variables")
+        print(
+            f"\nProfile: {len(profile.times)} output times, {len(profile.variables)} variables"
+        )
         for branch in profile.branches:
             print(f"  branch {branch.name}: {branch.nsections} sections")
 

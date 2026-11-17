@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -10,10 +10,34 @@ def main() -> None:
     model = SubseaLayoutModel(max_step_out_km=50.0)
     result = model.evaluate(
         nodes=[
-            {"name": "Host", "x": 0.0, "y": 0.0, "water_depth_m": 120.0, "kind": "host"},
-            {"name": "M1", "x": 7000.0, "y": 1000.0, "water_depth_m": 320.0, "kind": "manifold"},
-            {"name": "W1", "x": 8000.0, "y": 1500.0, "water_depth_m": 340.0, "kind": "well"},
-            {"name": "W2", "x": 8200.0, "y": 700.0, "water_depth_m": 345.0, "kind": "well"},
+            {
+                "name": "Host",
+                "x": 0.0,
+                "y": 0.0,
+                "water_depth_m": 120.0,
+                "kind": "host",
+            },
+            {
+                "name": "M1",
+                "x": 7000.0,
+                "y": 1000.0,
+                "water_depth_m": 320.0,
+                "kind": "manifold",
+            },
+            {
+                "name": "W1",
+                "x": 8000.0,
+                "y": 1500.0,
+                "water_depth_m": 340.0,
+                "kind": "well",
+            },
+            {
+                "name": "W2",
+                "x": 8200.0,
+                "y": 700.0,
+                "water_depth_m": 345.0,
+                "kind": "well",
+            },
         ],
         host_name="Host",
         coordinate_system="cartesian",

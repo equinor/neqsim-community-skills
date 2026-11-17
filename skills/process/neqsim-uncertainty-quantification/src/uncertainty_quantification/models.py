@@ -12,8 +12,9 @@ split does not apply.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any
 
 #: Rounding applied to technical inputs when forming a cache key.
 CACHE_KEY_DECIMALS = 12
@@ -23,7 +24,7 @@ class ModelError(RuntimeError):
     """Raised when a model cannot be evaluated as configured."""
 
 
-def _cache_key(values: Dict[str, float]) -> Tuple[Tuple[str, float], ...]:
+def _cache_key(values: dict[str, float]) -> tuple[tuple[str, float], ...]:
     return tuple(
         (name, round(float(value), CACHE_KEY_DECIMALS))
         for name, value in sorted(values.items())
@@ -40,12 +41,12 @@ class StagedModel:
     parameters tagged ``kind="economic"`` and returns the scalar output.
     """
 
-    technical: Callable[[Dict[str, float]], Any]
-    economic: Callable[[Any, Dict[str, float]], float]
+    technical: Callable[[dict[str, float]], Any]
+    economic: Callable[[Any, dict[str, float]], float]
     technical_evaluations: int = field(default=0, init=False)
     economic_evaluations: int = field(default=0, init=False)
     cache_hits: int = field(default=0, init=False)
-    _cache: Dict[Tuple[Tuple[str, float], ...], Any] = field(
+    _cache: dict[tuple[tuple[str, float], ...], Any] = field(
         default_factory=dict, init=False, repr=False
     )
 
@@ -56,7 +57,7 @@ class StagedModel:
         self.economic_evaluations = 0
         self.cache_hits = 0
 
-    def intermediate(self, technical_values: Dict[str, float]) -> Any:
+    def intermediate(self, technical_values: dict[str, float]) -> Any:
         """Evaluate (or reuse) the expensive stage."""
         key = _cache_key(technical_values)
         if key in self._cache:
@@ -68,14 +69,14 @@ class StagedModel:
         return result
 
     def __call__(
-        self, technical_values: Dict[str, float], economic_values: Dict[str, float]
+        self, technical_values: dict[str, float], economic_values: dict[str, float]
     ) -> float:
         """Full evaluation: cached technical stage, then the economic stage."""
         intermediate = self.intermediate(technical_values)
         self.economic_evaluations += 1
         return float(self.economic(intermediate, dict(economic_values)))
 
-    def cache_report(self) -> Dict[str, int]:
+    def cache_report(self) -> dict[str, int]:
         """Counters describing how much simulation the split actually saved."""
         return {
             "technical_evaluations": self.technical_evaluations,
@@ -88,7 +89,7 @@ class StagedModel:
 class SingleStageModel:
     """Wrapper giving a plain ``f(values) -> float`` the staged-model interface."""
 
-    model: Callable[[Dict[str, float]], float]
+    model: Callable[[dict[str, float]], float]
     technical_evaluations: int = field(default=0, init=False)
     economic_evaluations: int = field(default=0, init=False)
     cache_hits: int = field(default=0, init=False)
@@ -99,21 +100,21 @@ class SingleStageModel:
         self.economic_evaluations = 0
         self.cache_hits = 0
 
-    def intermediate(self, technical_values: Dict[str, float]) -> Any:
+    def intermediate(self, technical_values: dict[str, float]) -> Any:
         """No expensive stage to isolate; the inputs pass straight through."""
         return dict(technical_values)
 
     def __call__(
-        self, technical_values: Dict[str, float], economic_values: Dict[str, float]
+        self, technical_values: dict[str, float], economic_values: dict[str, float]
     ) -> float:
         """Evaluate the model on the merged parameter set."""
-        merged: Dict[str, float] = dict(technical_values)
+        merged: dict[str, float] = dict(technical_values)
         merged.update(economic_values)
         self.technical_evaluations += 1
         self.economic_evaluations += 1
         return float(self.model(merged))
 
-    def cache_report(self) -> Dict[str, int]:
+    def cache_report(self) -> dict[str, int]:
         """Counters; ``cache_hits`` is always zero for a single-stage model."""
         return {
             "technical_evaluations": self.technical_evaluations,
@@ -123,9 +124,9 @@ class SingleStageModel:
 
 
 def build_model(
-    model: Optional[Callable[[Dict[str, float]], float]] = None,
-    technical: Optional[Callable[[Dict[str, float]], Any]] = None,
-    economic: Optional[Callable[[Any, Dict[str, float]], float]] = None,
+    model: Callable[[dict[str, float]], float] | None = None,
+    technical: Callable[[dict[str, float]], Any] | None = None,
+    economic: Callable[[Any, dict[str, float]], float] | None = None,
 ) -> Any:
     """Return a staged or single-stage model from whichever callables were given."""
     if model is not None and (technical is not None or economic is not None):

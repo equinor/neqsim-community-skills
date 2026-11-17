@@ -25,7 +25,9 @@ class SeparatorModel:
     ) -> None:
         self._require_positive("design_gas_load_basis", design_gas_load_basis)
         self._require_positive("liquid_holdup_volume", liquid_holdup_volume)
-        self._require_positive("target_residence_time_minutes", target_residence_time_minutes)
+        self._require_positive(
+            "target_residence_time_minutes", target_residence_time_minutes
+        )
         self.design_gas_load_basis = design_gas_load_basis
         self.liquid_holdup_volume = liquid_holdup_volume
         self.target_residence_time_minutes = target_residence_time_minutes
@@ -49,8 +51,12 @@ class SeparatorModel:
 
         gas_load_indicator = gas_flow * sqrt(gas_density) / self.design_gas_load_basis
         residence_time_minutes = self._residence_time_minutes(liquid_flow)
-        residence_time_indicator = residence_time_minutes / self.target_residence_time_minutes
-        capacity_warning = self._capacity_warning(gas_load_indicator, residence_time_indicator)
+        residence_time_indicator = (
+            residence_time_minutes / self.target_residence_time_minutes
+        )
+        capacity_warning = self._capacity_warning(
+            gas_load_indicator, residence_time_indicator
+        )
 
         return SeparatorResult(
             gas_load_indicator=round(gas_load_indicator, 4),
@@ -71,7 +77,9 @@ class SeparatorModel:
         return self.liquid_holdup_volume / liquid_flow * 60.0
 
     @staticmethod
-    def _capacity_warning(gas_load_indicator: float, residence_time_indicator: float) -> str:
+    def _capacity_warning(
+        gas_load_indicator: float, residence_time_indicator: float
+    ) -> str:
         if gas_load_indicator > 1.0 or residence_time_indicator < 0.75:
             return "high"
         if gas_load_indicator > 0.8 or residence_time_indicator < 1.0:

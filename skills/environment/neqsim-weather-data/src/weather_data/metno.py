@@ -15,13 +15,15 @@ from __future__ import annotations
 import json
 import urllib.parse
 import urllib.request
-from typing import Callable, Dict, List, Optional
+from collections.abc import Callable
 
 from .open_meteo import WeatherSeries
 
 Fetch = Callable[[str, float], bytes]
 
-DEFAULT_USER_AGENT = "neqsim-weather-data/0.1 github.com/equinor/neqsim-community-skills"
+DEFAULT_USER_AGENT = (
+    "neqsim-weather-data/0.1 github.com/equinor/neqsim-community-skills"
+)
 
 BASE_URL = "https://api.met.no/weatherapi/locationforecast/2.0"
 
@@ -52,8 +54,10 @@ def make_fetch(user_agent: str = DEFAULT_USER_AGENT) -> Fetch:
     """Build a ``fetch`` function that carries the mandatory MET Norway User-Agent."""
 
     def _fetch(url: str, timeout: float = 30.0) -> bytes:
-        request = urllib.request.Request(url, headers={"User-Agent": user_agent, "Accept": "application/json"})
-        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed https host
+        request = urllib.request.Request(
+            url, headers={"User-Agent": user_agent, "Accept": "application/json"}
+        )
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             return response.read()
 
     return _fetch
@@ -62,15 +66,29 @@ def make_fetch(user_agent: str = DEFAULT_USER_AGENT) -> Fetch:
 class MetNorwayClient:
     """Read-only client for MET Norway Locationforecast (``/compact`` or ``/complete``)."""
 
-    def __init__(self, fetch: Optional[Fetch] = None, *, user_agent: str = DEFAULT_USER_AGENT,
-                 timeout: float = 30.0) -> None:
+    def __init__(
+        self,
+        fetch: Fetch | None = None,
+        *,
+        user_agent: str = DEFAULT_USER_AGENT,
+        timeout: float = 30.0,
+    ) -> None:
         self.fetch = fetch or make_fetch(user_agent)
         self.timeout = timeout
 
-    def forecast(self, latitude: float, longitude: float, *, altitude: Optional[int] = None,
-                 method: str = "complete") -> WeatherSeries:
+    def forecast(
+        self,
+        latitude: float,
+        longitude: float,
+        *,
+        altitude: int | None = None,
+        method: str = "complete",
+    ) -> WeatherSeries:
         """Up to ~9-day forecast at MET Nordic resolution (Norway/Sweden/Denmark)."""
-        params: Dict[str, object] = {"lat": round(latitude, 4), "lon": round(longitude, 4)}
+        params: dict[str, object] = {
+            "lat": round(latitude, 4),
+            "lon": round(longitude, 4),
+        }
         if altitude is not None:
             params["altitude"] = int(altitude)
         url = f"{BASE_URL}/{method}?" + urllib.parse.urlencode(params)
@@ -86,8 +104,8 @@ def _parse_locationforecast(payload: dict, url: str) -> WeatherSeries:
     elevation_m = coords[2] if len(coords) > 2 else None
     timeseries = payload.get("properties", {}).get("timeseries", [])
 
-    hourly_time: List[str] = []
-    columns: Dict[str, List[Optional[float]]] = {name: [] for name in _HOURLY_COLUMNS}
+    hourly_time: list[str] = []
+    columns: dict[str, list[float | None]] = {name: [] for name in _HOURLY_COLUMNS}
     for entry in timeseries:
         data = entry.get("data", {})
         instant = data.get("instant", {}).get("details", {})

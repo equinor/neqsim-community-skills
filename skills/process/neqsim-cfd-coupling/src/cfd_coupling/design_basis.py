@@ -13,9 +13,10 @@ required, so the same code serves a pipe, a bend, a vessel or a tube bundle.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from math import isfinite
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 # Highest authority first. A value from an earlier source wins a conflict.
 SOURCE_PRECEDENCE: tuple[str, ...] = (
@@ -137,7 +138,9 @@ def required_fields(component_kind: str) -> tuple[str, ...]:
     key = (component_kind or "").strip().lower()
     if key not in GEOMETRY_REQUIREMENTS:
         known = ", ".join(sorted(GEOMETRY_REQUIREMENTS))
-        raise ValueError(f"unknown component_kind '{component_kind}'; known kinds: {known}")
+        raise ValueError(
+            f"unknown component_kind '{component_kind}'; known kinds: {known}"
+        )
     return GEOMETRY_REQUIREMENTS[key] + PROCESS_REQUIREMENTS
 
 
@@ -163,7 +166,9 @@ def build_design_basis(
     if not 0.0 < conflict_tolerance < 1.0:
         raise ValueError("conflict_tolerance must be a fraction between 0 and 1")
 
-    needed = tuple(dict.fromkeys(required_fields(component_kind) + tuple(extra_required)))
+    needed = tuple(
+        dict.fromkeys(required_fields(component_kind) + tuple(extra_required))
+    )
     unit_map = dict(units or {})
 
     ranked = sorted(sources, key=_precedence_index)
@@ -241,7 +246,9 @@ def _validated_source(entry: Mapping[str, Any]) -> str:
     source = str(entry.get("source", "")).strip().lower()
     if source not in _CONFIDENCE_BY_SOURCE:
         known = ", ".join(SOURCE_PRECEDENCE)
-        raise ValueError(f"unknown source '{entry.get('source')}'; known sources: {known}")
+        raise ValueError(
+            f"unknown source '{entry.get('source')}'; known sources: {known}"
+        )
     return source
 
 

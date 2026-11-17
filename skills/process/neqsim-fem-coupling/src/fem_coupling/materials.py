@@ -249,7 +249,9 @@ def list_materials(category: str | None = None) -> tuple[str, ...]:
     return tuple(sorted(k for k, v in _LIBRARY.items() if v.category == wanted))
 
 
-def custom_material(base: str | SolidMaterial | None = None, **overrides) -> SolidMaterial:
+def custom_material(
+    base: str | SolidMaterial | None = None, **overrides
+) -> SolidMaterial:
     """Build a project-specific material, optionally starting from a library entry.
 
     This is the intended route for a value taken from a material data sheet: start
@@ -257,12 +259,18 @@ def custom_material(base: str | SolidMaterial | None = None, **overrides) -> Sol
     ``source`` to the document reference so the number stays traceable.
     """
     if base is None:
-        required = ("name", "category", "density_kg_per_m3", "specific_heat_j_per_kgk",
-                    "conductivity_w_per_mk")
+        required = (
+            "name",
+            "category",
+            "density_kg_per_m3",
+            "specific_heat_j_per_kgk",
+            "conductivity_w_per_mk",
+        )
         missing = [field for field in required if field not in overrides]
         if missing:
             raise ValueError(
-                "without a base material these fields are required: " + ", ".join(missing)
+                "without a base material these fields are required: "
+                + ", ".join(missing)
             )
         return SolidMaterial(**overrides)
 

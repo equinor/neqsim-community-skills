@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 
-def rate_from_gauge(inlet_pressure_fn: Callable[[float], float], p_gauge_barg: float, lo: float = 0.5, hi: float = 1.5,
-                    tol_bar: float = 0.3, max_iter: int = 10) -> Optional[float]:
+def rate_from_gauge(
+    inlet_pressure_fn: Callable[[float], float],
+    p_gauge_barg: float,
+    lo: float = 0.5,
+    hi: float = 1.5,
+    tol_bar: float = 0.3,
+    max_iter: int = 10,
+) -> float | None:
     """Return the rate scale ``s`` with ``inlet_pressure_fn(s) == p_gauge_barg`` (regula falsi on [lo, hi]).
 
     ``inlet_pressure_fn(s)`` runs the tuned tubing model from the measured wellhead pressure with the test fluid at

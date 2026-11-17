@@ -1,10 +1,15 @@
 import os
 
 import pytest
-
 from thermoml_experimental_data import (
-    ThermomlClient, ThermomlUnavailable, compare_points, parse_thermoml, pressure_to_bara, split_name_unit,
-    thermoml_url, validate_doi,
+    ThermomlClient,
+    ThermomlUnavailable,
+    compare_points,
+    parse_thermoml,
+    pressure_to_bara,
+    split_name_unit,
+    thermoml_url,
+    validate_doi,
 )
 
 # Synthetic document in the ThermoML 2.0 schema (not real measurements).
@@ -43,12 +48,21 @@ FIXTURE = """<?xml version="1.0" encoding="UTF-8"?>
 
 def test_parse_flattens_state_and_uncertainty():
     report = parse_thermoml(FIXTURE)
-    assert report.doi == "10.9999/synthetic.1" and report.compounds[1].inchikey.startswith("VNWKTOKE")
+    assert report.doi == "10.9999/synthetic.1" and report.compounds[
+        1
+    ].inchikey.startswith("VNWKTOKE")
     points = list(report.points(property_contains="density"))
     assert len(points) == 2
     first = points[0]
-    assert (first.temperature_k, first.pressure_bara, first.unit, first.phase) == (300.0, 50.0, "kg/m3", "Gas")
-    assert first.mole_fractions["methane"] == 0.8 and first.mole_fractions["ethane"] == pytest.approx(0.2)
+    assert (first.temperature_k, first.pressure_bara, first.unit, first.phase) == (
+        300.0,
+        50.0,
+        "kg/m3",
+        "Gas",
+    )
+    assert first.mole_fractions["methane"] == 0.8 and first.mole_fractions[
+        "ethane"
+    ] == pytest.approx(0.2)
     assert first.uncertainty == 0.5 and points[1].uncertainty is None
     assert list(report.points(component="R-170"))  # alias match
     assert not list(report.points(property_contains="viscosity"))
@@ -62,7 +76,9 @@ def test_parse_rejects_other_xml():
 def test_units():
     assert split_name_unit("Mass density, kg/m3") == ("Mass density", "kg/m3")
     assert split_name_unit("Mole fraction") == ("Mole fraction", "")
-    assert pressure_to_bara(5000, "kPa") == 50.0 and pressure_to_bara(1, "furlong") is None
+    assert (
+        pressure_to_bara(5000, "kPa") == 50.0 and pressure_to_bara(1, "furlong") is None
+    )
 
 
 def test_compare_summary_and_skipped_failures():
@@ -75,13 +91,18 @@ def test_compare_summary_and_skipped_failures():
 
     summary = compare_points(points, model, tolerance_pct=2.0)
     assert summary.n_points == 1 and summary.n_skipped == 1 and summary.status == "PASS"
-    assert summary.aad_pct == pytest.approx(1.0) and summary.fraction_within_uncertainty == 1.0
+    assert (
+        summary.aad_pct == pytest.approx(1.0)
+        and summary.fraction_within_uncertainty == 1.0
+    )
     assert compare_points(points, lambda p: 80.0).status == "FAIL"
     assert compare_points([], lambda p: 1.0).status == "FAIL"
     assert summary.to_dict()["rows"][0]["T_K"] == 300.0
 
 
-@pytest.mark.parametrize("bad", ["", "10.1021/../etc", "https://x/y", "10.1021/a?b=1", "abc"])
+@pytest.mark.parametrize(
+    "bad", ["", "10.1021/../etc", "https://x/y", "10.1021/a?b=1", "abc"]
+)
 def test_doi_validation_blocks_path_tricks(bad):
     with pytest.raises(ValueError):
         validate_doi(bad)
@@ -117,13 +138,26 @@ def test_client_request_cap_and_search_errors():
 
 
 def test_search_parses_results():
-    body = (b'{"size":1,"results":[{"content":{"Citation":{"sDOI":"10.1/x","sTitle":"T","yrPubYr":"2001","sPubName":"J"},'
-            b'"Compound":[{"sCommonName":["methane"]}]}}]}')
+    body = (
+        b'{"size":1,"results":[{"content":{"Citation":{"sDOI":"10.1/x","sTitle":"T","yrPubYr":"2001","sPubName":"J"},'
+        b'"Compound":[{"sCommonName":["methane"]}]}}]}'
+    )
     hits = ThermomlClient(lambda u, t: body).search("methane")
-    assert hits == [{"doi": "10.1/x", "title": "T", "year": "2001", "journal": "J", "compounds": ["methane"]}]
+    assert hits == [
+        {
+            "doi": "10.1/x",
+            "title": "T",
+            "year": "2001",
+            "journal": "J",
+            "compounds": ["methane"],
+        }
+    ]
 
 
-@pytest.mark.skipif(os.environ.get("NEQSIM_SKILLS_LIVE") != "1", reason="live network test; set NEQSIM_SKILLS_LIVE=1")
+@pytest.mark.skipif(
+    os.environ.get("NEQSIM_SKILLS_LIVE") != "1",
+    reason="live network test; set NEQSIM_SKILLS_LIVE=1",
+)
 def test_live_archive_fetch_without_login():
     report = ThermomlClient().get_report("10.1021/je3001427")
     points = list(report.points(property_contains="density"))

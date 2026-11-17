@@ -7,7 +7,7 @@ import pytest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from concept_longlist_shortlist import (  # noqa: E402
+from concept_longlist_shortlist import (
     COST,
     READINESS_LABEL,
     detect_capacity_variants,

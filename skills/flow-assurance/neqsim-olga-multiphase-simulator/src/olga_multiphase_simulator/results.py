@@ -31,17 +31,17 @@ from __future__ import annotations
 
 import os
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 __all__ = [
     "OlgaBranch",
     "OlgaVariable",
-    "TrendData",
     "ProfileData",
-    "read_tpl",
+    "TrendData",
     "read_ppl",
+    "read_tpl",
 ]
 
 _QUOTED_RE = re.compile(r"'([^']*)'")
@@ -66,8 +66,8 @@ class OlgaBranch:
 
     name: str
     nsections: int
-    x: Tuple[float, ...] = ()
-    y: Tuple[float, ...] = ()
+    x: tuple[float, ...] = ()
+    y: tuple[float, ...] = ()
 
     @property
     def nboundaries(self) -> int:
@@ -79,11 +79,11 @@ class OlgaBranch:
         """Total length of the branch in metres, or ``nan`` without geometry."""
         return self.x[-1] - self.x[0] if self.x else float("nan")
 
-    def section_centres(self) -> Tuple[float, ...]:
+    def section_centres(self) -> tuple[float, ...]:
         """Mid-point distance of each section, for plotting ``SECTION:`` variables."""
         return tuple((self.x[i] + self.x[i + 1]) / 2.0 for i in range(len(self.x) - 1))
 
-    def positions(self, boundary: bool) -> Tuple[float, ...]:
+    def positions(self, boundary: bool) -> tuple[float, ...]:
         """Return the abscissa matching a profile: boundaries or section centres."""
         return self.x if boundary else self.section_centres()
 
@@ -97,8 +97,8 @@ class OlgaVariable:
     unit: str
     description: str
     location: str = "SECTION"
-    pipe: Optional[str] = None
-    section: Optional[str] = None
+    pipe: str | None = None
+    section: str | None = None
 
     @property
     def is_boundary(self) -> bool:
@@ -118,8 +118,8 @@ class OlgaVariable:
 @dataclass(frozen=True)
 class _Header:
     kind: str
-    branches: Tuple[OlgaBranch, ...]
-    variables: Tuple[OlgaVariable, ...]
+    branches: tuple[OlgaBranch, ...]
+    variables: tuple[OlgaVariable, ...]
     data_start: int
     metadata: Mapping[str, str]
 
@@ -129,10 +129,10 @@ class TrendData:
     """Time-series results read from an OLGA ``.tpl`` file."""
 
     path: Path
-    time: Tuple[float, ...]
-    variables: Tuple[OlgaVariable, ...]
-    values: Tuple[Tuple[float, ...], ...]
-    branches: Tuple[OlgaBranch, ...] = ()
+    time: tuple[float, ...]
+    variables: tuple[OlgaVariable, ...]
+    values: tuple[tuple[float, ...], ...]
+    branches: tuple[OlgaBranch, ...] = ()
     metadata: Mapping[str, str] = field(default_factory=dict)
 
     @property
@@ -140,11 +140,11 @@ class TrendData:
         """Unit of the time column, normally ``S``."""
         return self.metadata.get("time_unit", "S")
 
-    def names(self) -> List[str]:
+    def names(self) -> list[str]:
         """Return the catalog variable names in file order."""
         return [v.name for v in self.variables]
 
-    def index_of(self, name: str, branch: Optional[str] = None) -> int:
+    def index_of(self, name: str, branch: str | None = None) -> int:
         """Return the catalog index of a variable, optionally restricted to a branch."""
         for index, variable in enumerate(self.variables):
             if variable.name.upper() != name.upper():
@@ -154,11 +154,11 @@ class TrendData:
             return index
         raise KeyError(f"Variable {name!r} not found in {self.path.name}")
 
-    def series(self, name: str, branch: Optional[str] = None) -> Tuple[float, ...]:
+    def series(self, name: str, branch: str | None = None) -> tuple[float, ...]:
         """Return the time series of one variable."""
         return self.values[self.index_of(name, branch)]
 
-    def final(self, name: str, branch: Optional[str] = None) -> float:
+    def final(self, name: str, branch: str | None = None) -> float:
         """Return the last value of one variable."""
         return self.series(name, branch)[-1]
 
@@ -168,13 +168,13 @@ class ProfileData:
     """Spatial profiles versus time read from an OLGA ``.ppl`` file."""
 
     path: Path
-    times: Tuple[float, ...]
-    variables: Tuple[OlgaVariable, ...]
-    branches: Tuple[OlgaBranch, ...]
-    profiles: Tuple[Tuple[Tuple[float, ...], ...], ...]
+    times: tuple[float, ...]
+    variables: tuple[OlgaVariable, ...]
+    branches: tuple[OlgaBranch, ...]
+    profiles: tuple[tuple[tuple[float, ...], ...], ...]
     metadata: Mapping[str, str] = field(default_factory=dict)
 
-    def index_of(self, name: str, branch: Optional[str] = None) -> int:
+    def index_of(self, name: str, branch: str | None = None) -> int:
         """Return the catalog index of a variable, optionally restricted to a branch."""
         for index, variable in enumerate(self.variables):
             if variable.name.upper() != name.upper():
@@ -188,8 +188,8 @@ class ProfileData:
         self,
         name: str,
         time_index: int = -1,
-        branch: Optional[str] = None,
-    ) -> Tuple[float, ...]:
+        branch: str | None = None,
+    ) -> tuple[float, ...]:
         """Return one variable's spatial profile at one output time.
 
         Args:
@@ -199,7 +199,7 @@ class ProfileData:
         """
         return self.profiles[time_index][self.index_of(name, branch)]
 
-    def positions(self, name: str, branch: Optional[str] = None) -> Tuple[float, ...]:
+    def positions(self, name: str, branch: str | None = None) -> tuple[float, ...]:
         """Return the distance abscissa matching :meth:`profile` for one variable.
 
         ``BOUNDARY:`` variables are reported at the section boundaries and
@@ -270,14 +270,14 @@ def read_ppl(path: str | os.PathLike[str], encoding: str = "utf-8") -> ProfileDa
     if block <= 1:
         raise OlgaResultError(f"{file_path.name}: catalog is empty")
 
-    times: List[float] = []
-    profiles: List[Tuple[Tuple[float, ...], ...]] = []
+    times: list[float] = []
+    profiles: list[tuple[tuple[float, ...], ...]] = []
     cursor = 0
     total = len(numbers)
     while cursor + block <= total:
         times.append(numbers[cursor])
         cursor += 1
-        step: List[Tuple[float, ...]] = []
+        step: list[tuple[float, ...]] = []
         for size in sizes:
             step.append(tuple(numbers[cursor : cursor + size]))
             cursor += size
@@ -305,12 +305,16 @@ def _parse_header(lines: Sequence[str]) -> _Header:
     if catalog_index is None:
         raise OlgaResultError("No CATALOG block found; not an OLGA .tpl/.ppl file")
 
-    metadata: Dict[str, str] = {}
+    metadata: dict[str, str] = {}
     if lines:
         metadata["engine"] = lines[0].strip().strip("'")
     kind = lines[1].strip().upper() if len(lines) > 1 else ""
     metadata["kind"] = kind
-    for key, label in (("input_file", "INPUT FILE"), ("date", "DATE"), ("project", "PROJECT")):
+    for key, label in (
+        ("input_file", "INPUT FILE"),
+        ("date", "DATE"),
+        ("project", "PROJECT"),
+    ):
         index = _index_of_token(lines[:catalog_index], label)
         if index is not None and index + 1 < catalog_index:
             metadata[key] = lines[index + 1].strip().strip("'")
@@ -323,7 +327,9 @@ def _parse_header(lines: Sequence[str]) -> _Header:
         raise OlgaResultError("CATALOG is not followed by a variable count") from exc
     catalog_lines = lines[catalog_index + 2 : catalog_index + 2 + count]
     if len(catalog_lines) < count:
-        raise OlgaResultError(f"CATALOG declares {count} variables but only {len(catalog_lines)} follow")
+        raise OlgaResultError(
+            f"CATALOG declares {count} variables but only {len(catalog_lines)} follow"
+        )
     variables = tuple(_parse_catalog_line(line) for line in catalog_lines)
 
     data_start = catalog_index + 2 + count
@@ -333,7 +339,9 @@ def _parse_header(lines: Sequence[str]) -> _Header:
             if match:
                 raw_unit = match.group(1).strip()
                 unit_match = _UNIT_RE.match(raw_unit)
-                metadata["time_unit"] = unit_match.group("unit").strip() if unit_match else raw_unit
+                metadata["time_unit"] = (
+                    unit_match.group("unit").strip() if unit_match else raw_unit
+                )
             data_start = offset + 1
             break
     return _Header(
@@ -345,7 +353,7 @@ def _parse_header(lines: Sequence[str]) -> _Header:
     )
 
 
-def _index_of_token(lines: Sequence[str], token: str) -> Optional[int]:
+def _index_of_token(lines: Sequence[str], token: str) -> int | None:
     upper = token.upper()
     for index, line in enumerate(lines):
         if line.strip().upper().startswith(upper):
@@ -353,14 +361,18 @@ def _index_of_token(lines: Sequence[str], token: str) -> Optional[int]:
     return None
 
 
-def _parse_branches(header_lines: Sequence[str]) -> Tuple[OlgaBranch, ...]:
-    branches: List[OlgaBranch] = []
+def _parse_branches(header_lines: Sequence[str]) -> tuple[OlgaBranch, ...]:
+    branches: list[OlgaBranch] = []
     index = 0
     while index < len(header_lines):
         if header_lines[index].strip().upper() != "BRANCH":
             index += 1
             continue
-        name = header_lines[index + 1].strip().strip("'") if index + 1 < len(header_lines) else ""
+        name = (
+            header_lines[index + 1].strip().strip("'")
+            if index + 1 < len(header_lines)
+            else ""
+        )
         nsections = 0
         if index + 2 < len(header_lines):
             try:
@@ -372,16 +384,16 @@ def _parse_branches(header_lines: Sequence[str]) -> Tuple[OlgaBranch, ...]:
         # the section boundaries, then all y values, wrapped over as many lines as
         # the writer chose.
         wanted = 2 * (nsections + 1)
-        coordinates: List[float] = []
+        coordinates: list[float] = []
         while index < len(header_lines) and len(coordinates) < wanted:
             values = _NUMBER_RE.findall(header_lines[index])
             if not values or header_lines[index].strip().upper() == "BRANCH":
                 break
             coordinates.extend(float(v) for v in values)
             index += 1
-        x: Tuple[float, ...] = ()
-        y: Tuple[float, ...] = ()
-        if len(coordinates) >= wanted and wanted > 0:
+        x: tuple[float, ...] = ()
+        y: tuple[float, ...] = ()
+        if len(coordinates) >= wanted > 0:
             x = tuple(coordinates[: nsections + 1])
             y = tuple(coordinates[nsections + 1 : wanted])
         branches.append(OlgaBranch(name=name, nsections=nsections, x=x, y=y))
@@ -395,8 +407,8 @@ def _parse_catalog_line(line: str) -> OlgaVariable:
 
     location = "SECTION"
     branch = ""
-    pipe: Optional[str] = None
-    section: Optional[str] = None
+    pipe: str | None = None
+    section: str | None = None
     unit = ""
     description = ""
 
@@ -428,9 +440,9 @@ def _parse_catalog_line(line: str) -> OlgaVariable:
     )
 
 
-def _profile_sizes(header: _Header) -> List[int]:
+def _profile_sizes(header: _Header) -> list[int]:
     by_name = {b.name.upper(): b for b in header.branches}
-    sizes: List[int] = []
+    sizes: list[int] = []
     for variable in header.variables:
         branch = by_name.get(variable.branch.upper())
         if branch is None:
@@ -441,8 +453,8 @@ def _profile_sizes(header: _Header) -> List[int]:
     return sizes
 
 
-def _numbers_from(lines: Sequence[str]) -> List[float]:
-    values: List[float] = []
+def _numbers_from(lines: Sequence[str]) -> list[float]:
+    values: list[float] = []
     for line in lines:
         for token in _NUMBER_RE.findall(line):
             values.append(float(token.replace("d", "e").replace("D", "E")))

@@ -110,9 +110,8 @@ class E300Fluid:
             values = self._vector(keyword)
             if values and len(values) != n:
                 problems.append(f"{keyword} has {len(values)} values but expected {n}")
-        if self.bic:
-            if len(self.bic) != n or any(len(row) != n for row in self.bic):
-                problems.append("BIC matrix is not square with one row per component")
+        if self.bic and (len(self.bic) != n or any(len(row) != n for row in self.bic)):
+            problems.append("BIC matrix is not square with one row per component")
         return problems
 
 

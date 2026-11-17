@@ -109,9 +109,10 @@ def render_field(
         raise ValueError(f"camera must be one of {', '.join(_CAMERAS)}")
     if warp_factor is not None:
         _require_finite("warp_factor", warp_factor)
-    if scale is not None:
-        if len(tuple(scale)) != 3 or any(float(s) <= 0.0 for s in scale):
-            raise ValueError("scale must be three positive factors")
+    if scale is not None and (
+        len(tuple(scale)) != 3 or any(float(s) <= 0.0 for s in scale)
+    ):
+        raise ValueError("scale must be three positive factors")
 
     directory = Path(case_dir)
     requested = _resolve_field_file(directory, field_file)

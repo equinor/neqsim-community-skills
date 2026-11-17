@@ -122,6 +122,7 @@ def setup_assemblies(version: str = DEFAULT_VERSION, dest: Path | None = None) -
             "-v",
             "q",
         ],
+        check=False,
         capture_output=True,
         text=True,
         creationflags=_CREATE_NO_WINDOW,

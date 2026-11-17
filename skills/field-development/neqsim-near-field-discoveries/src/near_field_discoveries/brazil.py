@@ -18,6 +18,7 @@ authority, and volumes are not public.
 from __future__ import annotations
 
 import datetime as _dt
+import math
 import re
 import unicodedata
 from collections.abc import Mapping
@@ -176,7 +177,7 @@ def _num(value: Any) -> float | None:
         v = float(value)
     except (TypeError, ValueError):
         return None
-    return v if v == v else None
+    return v if not math.isnan(v) else None
 
 
 def field_records(fields: Any) -> list[Discovery]:

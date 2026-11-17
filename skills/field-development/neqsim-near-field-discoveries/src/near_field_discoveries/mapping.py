@@ -85,7 +85,7 @@ def plot_near_field(
     if bathymetry:
         lons, lats = bathymetry["lons"], bathymetry["lats"]
         depth = [
-            [(-v if v == v and v < 0 else float("nan")) for v in row]
+            [(-v if not math.isnan(v) and v < 0 else float("nan")) for v in row]
             for row in bathymetry["z"]
         ]
         levels = [50, 100, 200, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000]

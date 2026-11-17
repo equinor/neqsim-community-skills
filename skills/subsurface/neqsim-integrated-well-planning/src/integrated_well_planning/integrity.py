@@ -330,7 +330,7 @@ def evaluate_tubing(
         pi_p, po_p = lc.get("pi_packer_bara"), lc.get("po_packer_bara")
         collapse_load = (
             (po_p - pi_p)
-            if (pi_p is not None and po_p is not None and pi_p == pi_p)
+            if (pi_p is not None and po_p is not None and not math.isnan(pi_p))
             else None
         )
         row = {

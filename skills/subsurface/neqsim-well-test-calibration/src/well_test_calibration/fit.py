@@ -25,7 +25,7 @@ def fit_with_priors(
     prior: Sequence[float],
     prior_std: Sequence[float],
     bounds: Sequence[Sequence[float]],
-    steps: Sequence[float] = None,
+    steps: Sequence[float] | None = None,
     iters: int = 4,
     min_singular: float = 0.3,
 ) -> FitResult:

@@ -85,7 +85,7 @@ def recombine_separator_volumes(
     gas_act_m3h: float,
     oil_act_m3h: float,
     water_m3h: float = 0.0,
-    t_gas_c: float = None,
+    t_gas_c: float | None = None,
     water_name: str = "water",
     train: Iterable[tuple[float, float]] = ((0.0, 15.0),),
 ) -> dict[str, object]:

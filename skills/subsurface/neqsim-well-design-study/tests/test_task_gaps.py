@@ -218,7 +218,7 @@ def test_calibration_points_skip_none_and_rebase_to_equal_depth_below_mudline():
     }
     cp = calibration_points(ev, refs, {"rkb_m": 30.0, "water_depth_m": 370.0})
     assert len(cp.frac) == 2
-    a = [p for p in cp.frac if p["well"] == "A"][0]
+    a = next(p for p in cp.frac if p["well"] == "A")
     assert a["tvd_m"] == pytest.approx(2000.0 + 75.0) and a["tvd_orig_m"] == 2000.0
     assert rebase_tvd(1000.0, None, {"rkb_m": 30.0, "water_depth_m": 370.0}) == 1000.0
 

@@ -97,7 +97,7 @@ def test_duplicate_case_names_do_not_collide_in_the_block():
 
 def test_results_json_list_form_names_each_entry():
     entries = _passing_report().to_results_json_list()
-    assert [e["what"] for e in entries][0] == "CO2 Tc"
+    assert next(e["what"] for e in entries) == "CO2 Tc"
 
 
 def test_citations_are_deduplicated():

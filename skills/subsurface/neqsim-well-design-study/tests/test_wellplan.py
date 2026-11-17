@@ -416,7 +416,7 @@ def test_report_structure_and_fields(tmp_path):
     rep2.callout("Box", ["line one [ASSUMED]", "line two"])
     after = len(Document(str(rep2.save(tmp_path / "r3.docx"))).tables)
     assert after == base and n_tables >= 1
-    t = [t for t in doc.tables if t.rows[0].cells[0].text == "Item"][0]
+    t = next(t for t in doc.tables if t.rows[0].cells[0].text == "Item")
     assert t.rows[1].cells[1].paragraphs[0].alignment == 2
 
 
@@ -461,7 +461,7 @@ def test_evacuation_level_limit_and_alternatives():
     )
     walls = [a["wall_in"] for a in alts]
     assert walls == sorted(walls)
-    thick = [a for a in alts if a["wall_in"] >= 0.5][0]
+    thick = next(a for a in alts if a["wall_in"] >= 0.5)
     thin = alts[0]
     assert (
         thick["collapse_df_conservative"] > thin["collapse_df_conservative"]

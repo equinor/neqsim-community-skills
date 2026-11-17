@@ -35,7 +35,8 @@ def test_tagreader_adapter_writes_part_and_watermark(tmp_path):
     result = adapter.pull(start, start + timedelta(hours=3), str(tmp_path))
     assert result.status == "partial" and result.gaps == ["discharge"]
     assert result.rows == 3 and result.watermark.startswith("2026-01-01T02:00")
-    text = open(result.outputs[0], encoding="utf-8").read().splitlines()
+    with open(result.outputs[0], encoding="utf-8") as stream:
+        text = stream.read().splitlines()
     assert text[0] == "timestamp,suction" and len(text) == 4
 
 

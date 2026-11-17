@@ -25,7 +25,8 @@ def test_template_lists_every_catalogue_limit_with_no_value():
 
 def test_template_file_roundtrip(tmp_path):
     path = write_limits_template(tmp_path / "limits.json")
-    assert set(json.load(open(path, encoding="utf-8"))["limits"]) == set(LIMIT_CATALOG)
+    with open(path, encoding="utf-8") as stream:
+        assert set(json.load(stream)["limits"]) == set(LIMIT_CATALOG)
     assert len(load_limits(path)) == len(LIMIT_CATALOG)
 
 

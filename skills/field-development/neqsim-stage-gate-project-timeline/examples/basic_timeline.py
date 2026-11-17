@@ -4,7 +4,12 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from stage_gate_project_timeline import life_extension_timeline, portfolio_plan, project_timeline, prospect_timeline  # noqa: E402
+from stage_gate_project_timeline import (
+    life_extension_timeline,
+    portfolio_plan,
+    project_timeline,
+    prospect_timeline,
+)
 
 prospects = [{"name": "Discovery A", "status": "discovered"}, {"name": "Prospect B", "status": "undrilled"}]
 for p in prospects:

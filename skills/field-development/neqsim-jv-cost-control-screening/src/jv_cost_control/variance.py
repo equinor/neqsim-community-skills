@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
@@ -52,7 +52,7 @@ def variance_commentary(
     reference: str,
     unit: str = "MUSD",
     top_n: int = 10,
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """Draft fact-only commentary lines for the largest material variances.
 
     The sentence states only numbers taken from the table. The cause is left as
@@ -87,7 +87,7 @@ def variance_commentary(
 
 def price_volume_split(
     cost_actual: float, volume_actual: float, cost_ref: float, volume_ref: float
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Split a cost variance into volume and unit-rate effects.
 
     ``volume_effect = (V_act - V_ref) * unit_ref`` and
@@ -124,7 +124,7 @@ def price_volume_split(
 
 def run_rate_outlook(
     ytd: float, months_elapsed: int, full_year_ref: float | None = None, months_in_year: int = 12
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Linear run-rate full-year outlook compared with a full-year reference.
 
     Args:

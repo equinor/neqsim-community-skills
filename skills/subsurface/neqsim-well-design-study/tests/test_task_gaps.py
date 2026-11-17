@@ -1,10 +1,26 @@
-import numpy as np
 import pytest
-
-from well_design_study import (EmwCurve, Pipe, PlannedSection, PressureModel, StringBasis, calibration_points, check_string, evaluate_plan, kick_tolerance,
-                               run_well_study)
-from well_design_study.normalise import (approx_tvd, normalise_casing_rows, normalise_mud_rows, normalise_wellbore_rows, parse_date, parse_inches,
-                                         tag_problem_sentences, write_table)
+from well_design_study import (
+    EmwCurve,
+    Pipe,
+    PlannedSection,
+    PressureModel,
+    StringBasis,
+    calibration_points,
+    check_string,
+    evaluate_plan,
+    kick_tolerance,
+    run_well_study,
+)
+from well_design_study.normalise import (
+    approx_tvd,
+    normalise_casing_rows,
+    normalise_mud_rows,
+    normalise_wellbore_rows,
+    parse_date,
+    parse_inches,
+    tag_problem_sentences,
+    write_table,
+)
 from well_design_study.offsets import load_evidence, rebase_tvd
 from well_design_study.report import WellReport
 
@@ -231,7 +247,10 @@ def test_evacuation_pore_balance_is_milder_than_half_string_for_a_liner():
 
 
 def test_hydrostatic_pressure_excludes_air_gap_and_pressure_points_give_emw():
-    from well_design_study import emw_curve_from_pressure_points, hydrostatic_pressure_bar
+    from well_design_study import (
+        emw_curve_from_pressure_points,
+        hydrostatic_pressure_bar,
+    )
     p = hydrostatic_pressure_bar(1030.0, 1.04, 30.0, 370.0)
     assert p == pytest.approx(0.0980665 * (1.03 * 370.0 + 1.04 * 630.0))
     assert p / (0.0980665 * 1030.0) < 1.03  # EMW at RKB depth is below the water gradient

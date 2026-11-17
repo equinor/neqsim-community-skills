@@ -20,7 +20,8 @@ from __future__ import annotations
 import datetime as _dt
 import re
 import unicodedata
-from typing import Any, Iterable, Mapping, Sequence
+from collections.abc import Mapping
+from typing import Any
 
 from .geo import (
     bbox_around,

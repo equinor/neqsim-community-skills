@@ -1,7 +1,12 @@
 import json
 import urllib.parse
 
-from near_field_discoveries import extract_plan_flags, fetch_ncs_near_field, ncs_stage, records_from_snapshot
+from near_field_discoveries import (
+    extract_plan_flags,
+    fetch_ncs_near_field,
+    ncs_stage,
+    records_from_snapshot,
+)
 
 DSC = [
     {"attributes": {"dscNpdidDiscovery": 1, "dscName": "7324/8-1 (Wisting)", "dscCurrentActivityStatus": "Production in clarification phase",

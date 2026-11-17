@@ -12,7 +12,7 @@ SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from surf_field_layout_design import (  # noqa: E402
+from surf_field_layout_design import (
     Annotation,
     Horizon,
     KeyFact,

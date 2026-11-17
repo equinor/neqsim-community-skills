@@ -1,6 +1,5 @@
 from dynamic_instrument_controller_setup import DynamicInstrumentControllerModel
 
-
 model = DynamicInstrumentControllerModel()
 loop = model.evaluate(
     loop_name="LC-001",

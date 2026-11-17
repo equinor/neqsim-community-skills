@@ -14,11 +14,11 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "src"))
 sys.path.insert(0, str(HERE.parents[1] / "neqsim-well-design-study" / "src"))
 
-from integrated_well_planning import study  # noqa: E402
-from integrated_well_planning.basis import load_basis  # noqa: E402
-from integrated_well_planning.drawings_run import make_drawings  # noqa: E402
-from integrated_well_planning.report import build_report  # noqa: E402
-from integrated_well_planning.runtime import ensure_runtime  # noqa: E402
+from integrated_well_planning import study
+from integrated_well_planning.basis import load_basis
+from integrated_well_planning.drawings_run import make_drawings
+from integrated_well_planning.report import build_report
+from integrated_well_planning.runtime import ensure_runtime
 
 CASES = ["oil_producer_platform", "gas_condensate_producer_subsea", "water_injector_onshore", "gas_injector_platform"]
 

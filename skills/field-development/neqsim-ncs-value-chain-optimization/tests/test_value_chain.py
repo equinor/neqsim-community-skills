@@ -1,11 +1,19 @@
 """Value-chain optimiser tests: synthetic network (exact LP answers) + bundled NCS snapshot."""
 
 import pytest
-
 from ncs_infrastructure_network import NcsNetwork
-from ncs_value_chain_optimization import (NcsValueChainOptimizer, bottlenecks, build_supply, curtailment,
-                                          discovery_profile, forecast_series, make_scenario, production_uplift,
-                                          tiein_ranking, validate_scenario)
+from ncs_value_chain_optimization import (
+    NcsValueChainOptimizer,
+    bottlenecks,
+    build_supply,
+    curtailment,
+    discovery_profile,
+    forecast_series,
+    make_scenario,
+    production_uplift,
+    tiein_ranking,
+    validate_scenario,
+)
 from ncs_value_chain_optimization import neqsim_bridge as vb
 from ncs_value_chain_optimization.supply import EntityProfile
 

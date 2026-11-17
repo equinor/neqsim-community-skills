@@ -9,14 +9,13 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 
 def _print(obj) -> None:
     sys.stdout.write(json.dumps(obj, indent=2, default=str) + "\n")
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """Run the CLI; returns the process exit code (non-zero when validation fails or a step cannot run)."""
     ap = argparse.ArgumentParser(prog="integrated_well_planning", description="Integrated well planning workflow")
     sub = ap.add_subparsers(dest="cmd", required=True)

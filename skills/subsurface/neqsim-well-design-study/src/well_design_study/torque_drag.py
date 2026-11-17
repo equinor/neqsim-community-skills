@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, List, Sequence
 
 import numpy as np
 
@@ -23,7 +23,7 @@ class Station:
     east: float = 0.0
 
 
-def minimum_curvature(stations: Sequence[Station]) -> List[Station]:
+def minimum_curvature(stations: Sequence[Station]) -> list[Station]:
     """Fill TVD, north and east of stations (first station is the origin) with the minimum-curvature method."""
     out = [Station(stations[0].md, stations[0].inc_deg, stations[0].azi_deg, stations[0].tvd, stations[0].north, stations[0].east)]
     for a, b in zip(stations[:-1], stations[1:]):
@@ -41,7 +41,7 @@ def minimum_curvature(stations: Sequence[Station]) -> List[Station]:
     return out
 
 
-def build_and_hold(target_tvd_m: float, target_departure_m: float, kop_m: float, dls_deg_per_30m: float, azimuth_deg: float = 0.0, step_m: float = 30.0) -> List[Station]:
+def build_and_hold(target_tvd_m: float, target_departure_m: float, kop_m: float, dls_deg_per_30m: float, azimuth_deg: float = 0.0, step_m: float = 30.0) -> list[Station]:
     """Vertical-build-hold path that closes on the target TVD and departure. A zero departure returns a vertical well."""
     stations = [Station(0.0, 0.0, azimuth_deg)]
     if target_departure_m <= 0.5:
@@ -100,7 +100,7 @@ def torque_and_drag(
     hole_in: float = 8.5,
     casing_id_in: float = 8.68,
     tortuosity_deg_per_30m: float = 0.0,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Soft-string torque and drag along the path from the bit to surface.
 
     Args:
@@ -124,7 +124,7 @@ def torque_and_drag(
 
     bf = _buoyancy(mud_sg)
     # discretise into elements of at most 10 m from the bit upward and assign component properties
-    comps: List[tuple] = []
+    comps: list[tuple] = []
     start = bit
     for c in string:
         comps.append((start, max(0.0, start - c.length_m), c))
@@ -179,10 +179,10 @@ def torque_and_drag(
     }
 
 
-def torque_drag_envelope(stations, string, mud_sg, shoe_md_m, ff_cases: Dict[str, Dict[str, float]], wob_kn: float = 50.0, hole_in: float = 8.5, casing_id_in: float = 8.68,
-                         tortuosity_deg_per_30m: float = 0.0) -> Dict[str, Dict[str, object]]:
+def torque_drag_envelope(stations, string, mud_sg, shoe_md_m, ff_cases: dict[str, dict[str, float]], wob_kn: float = 50.0, hole_in: float = 8.5, casing_id_in: float = 8.68,
+                         tortuosity_deg_per_30m: float = 0.0) -> dict[str, dict[str, object]]:
     """Run trip-out, trip-in, rotate-off and rotate-on for each friction-factor case (e.g. low, base, high)."""
-    res: Dict[str, Dict[str, object]] = {}
+    res: dict[str, dict[str, object]] = {}
     for name, ff in ff_cases.items():
         res[name] = {
             op: torque_and_drag(stations, string, mud_sg, ff["cased"], ff["open"], shoe_md_m, wob_kn if op == "rotate_on" else 0.0, op,

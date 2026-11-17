@@ -1,5 +1,4 @@
 import pytest
-
 from gas_turbine_performance_screening import GasTurbinePerformanceModel
 
 

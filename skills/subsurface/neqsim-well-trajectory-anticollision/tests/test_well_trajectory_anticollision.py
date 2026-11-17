@@ -2,11 +2,25 @@ import math
 
 import numpy as np
 import pytest
-
-from well_trajectory_anticollision import (ErrorModel, SFRule, Wellpath, add_model_covariance, check_slot,
-                                           compare_growth, curve_hold, dogleg_severity, governing, group_by_surface,
-                                           minimum_curvature, plan_from_surface, plan_sidetrack, pull_back_search,
-                                           scan, separation_factor, summarize)
+from well_trajectory_anticollision import (
+    ErrorModel,
+    SFRule,
+    Wellpath,
+    add_model_covariance,
+    check_slot,
+    compare_growth,
+    curve_hold,
+    dogleg_severity,
+    governing,
+    group_by_surface,
+    minimum_curvature,
+    plan_from_surface,
+    plan_sidetrack,
+    pull_back_search,
+    scan,
+    separation_factor,
+    summarize,
+)
 
 MODEL = ErrorModel()
 RULE = SFRule()

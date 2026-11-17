@@ -4,27 +4,30 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-
-import numpy as np
+from typing import Any
 
 from . import iwp_graphics as G
-from .barriers import BarrierState, BarrierElement, propose_barriers
+from .barriers import BarrierElement, BarrierState
 from .basis import load_basis
 from .iwp_drawings import barrier_schematic_sheet, render_sheet, well_schematic_sheet
-from .planning_extras import build_risks, decision_tree_nodes, schedule_tasks, time_depth
+from .planning_extras import (
+    build_risks,
+    decision_tree_nodes,
+    schedule_tasks,
+    time_depth,
+)
 from .registers import Registers, get_path
 from .study import load_json, study_paths
 
 
-def _states_from(res: Dict[str, Any]) -> List[BarrierState]:
+def _states_from(res: dict[str, Any]) -> list[BarrierState]:
     out = []
     for s in res["barriers"]["states"]:
         out.append(BarrierState(s["state"], s["description"], [BarrierElement(**e) for e in s["elements"]], s.get("notes", [])))
     return out
 
 
-def make_drawings(root: Path, formats_charts=("png",)) -> Dict[str, Any]:
+def make_drawings(root: Path, formats_charts=("png",)) -> dict[str, Any]:
     """Render every available chart and sheet. Missing inputs skip that figure and are listed in the register with the reason."""
     paths = study_paths(root)
     d = paths["drawings"]
@@ -36,18 +39,18 @@ def make_drawings(root: Path, formats_charts=("png",)) -> Dict[str, Any]:
     well = get_path(basis, "well.id")
     sid = get_path(basis, "study.id")
     synthetic = bool(get_path(basis, "study.synthetic"))
-    register: List[Dict[str, str]] = []
+    register: list[dict[str, str]] = []
 
-    def note(fig_id: str, title: str, files: Optional[Dict[str, str]], status: str, reason: str = "", dwg: str = "") -> None:
+    def note(fig_id: str, title: str, files: dict[str, str] | None, status: str, reason: str = "", dwg: str = "") -> None:
         register.append({"id": fig_id, "title": title, "drawing_no": dwg, "status": status, "files": ";".join(Path(v).name for k, v in (files or {}).items() if k != "provenance"), "note": reason})
 
     survey = res["trajectory"]["survey"]
-    fig = well_schematic_sheet(basis, survey, "{}-DWG-001".format(sid))
-    note("F01", "Well schematic (A3)", render_sheet(fig, d / "well_schematic", "well_schematic", basis, "{}-DWG-001".format(sid), "Well schematic with depth tracks", synthetic, ["L13"]), "RENDERED", dwg="{}-DWG-001".format(sid))
+    fig = well_schematic_sheet(basis, survey, f"{sid}-DWG-001")
+    note("F01", "Well schematic (A3)", render_sheet(fig, d / "well_schematic", "well_schematic", basis, f"{sid}-DWG-001", "Well schematic with depth tracks", synthetic, ["L13"]), "RENDERED", dwg=f"{sid}-DWG-001")
     states = _states_from(res)
-    fig = barrier_schematic_sheet(states, basis, "{}-DWG-002".format(sid))
-    note("F02", "Barrier schematics per well state (A3)", render_sheet(fig, d / "barrier_schematics", "barrier_schematic", res["barriers"], "{}-DWG-002".format(sid), "Proposed barrier envelopes, elements UNVERIFIED", synthetic,
-                                                                    ["L13"]), "RENDERED", dwg="{}-DWG-002".format(sid))
+    fig = barrier_schematic_sheet(states, basis, f"{sid}-DWG-002")
+    note("F02", "Barrier schematics per well state (A3)", render_sheet(fig, d / "barrier_schematics", "barrier_schematic", res["barriers"], f"{sid}-DWG-002", "Proposed barrier envelopes, elements UNVERIFIED", synthetic,
+                                                                    ["L13"]), "RENDERED", dwg=f"{sid}-DWG-002")
     prod = (res.get("producer") or {})
     inj = (res.get("injector") or {})
     if prod:
@@ -55,7 +58,7 @@ def make_drawings(root: Path, formats_charts=("png",)) -> Dict[str, Any]:
         ops = {c: {"q_op": prod[c].get("q_op"), "bhp_op": prod[c].get("bhp_op")} for c in prod}
         unit = get_path(basis, "targets.rate.kind") or "Sm3/d"
         w = G.render("nodal", d / "nodal_analysis", {"fam": fam, "ops": ops}, "Nodal analysis: IPR (low-high band) and VLP family", synthetic, formats_charts, ["L02", "L04", "L05"], family=fam, ops=ops,
-                     target_rate=prod["base"]["target_rate"], rate_label="Rate [{}]".format(unit), ipr_band={"low": fam["ipr_low"], "high": fam["ipr_high"]},
+                     target_rate=prod["base"]["target_rate"], rate_label=f"Rate [{unit}]", ipr_band={"low": fam["ipr_low"], "high": fam["ipr_high"]},
                      outflow_min_rate=prod["base"]["nodal"].get("outflow_min_rate") if res["meta"]["gas_well"] else None, title="Nodal analysis - base case")
         note("F03", "Nodal analysis", w, "RENDERED")
         w = G.render("wellbore_profiles", d / "wellbore_profiles", prod["base"].get("profile"), "Pressure, temperature, holdup and velocity profiles", synthetic, formats_charts, ["L01", "L02"],
@@ -133,7 +136,7 @@ def make_drawings(root: Path, formats_charts=("png",)) -> Dict[str, Any]:
     note("F18", "Risk register heat-map", G.render("risk_register", d / "risk_register", risks, "Risk register", synthetic, formats_charts, [], risks=risks), "RENDERED")
     note("F19", "Trajectory plan / section", G.render("trajectory_views", d / "trajectory_views", survey, "Minimum-curvature survey (synthetic path)", synthetic, formats_charts, ["L22"], survey=survey), "RENDERED")
     renderer = G.trajectory_3d(survey, d / "trajectory_3d.png")
-    note("F20", "Trajectory 3D view ({})".format(renderer), {"png": str(d / "trajectory_3d.png")}, "RENDERED")
+    note("F20", f"Trajectory 3D view ({renderer})", {"png": str(d / "trajectory_3d.png")}, "RENDERED")
     with (d / "drawings_register.csv").open("w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=["id", "title", "drawing_no", "status", "files", "note"])
         w.writeheader()

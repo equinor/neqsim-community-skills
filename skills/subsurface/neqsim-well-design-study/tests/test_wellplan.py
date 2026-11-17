@@ -10,8 +10,17 @@ import pytest
 pytest.importorskip("matplotlib")
 pytest.importorskip("docx")
 
-from well_design_study import (DesignFactors, Pipe, StringBasis, alternative_pipes, check_string, collapse_basis_comparison, drift_diameter_in,
-                               max_evacuation_level_for_collapse, run_well_study)
+from well_design_study import (
+    DesignFactors,
+    Pipe,
+    StringBasis,
+    alternative_pipes,
+    check_string,
+    collapse_basis_comparison,
+    drift_diameter_in,
+    max_evacuation_level_for_collapse,
+    run_well_study,
+)
 from well_design_study import wellplan_charts as wc
 from well_design_study import wellplan_graphics as wg
 from well_design_study.report import WellPlanReport, _is_numeric_cell
@@ -180,7 +189,7 @@ def test_evacuation_level_limit_and_alternatives():
 
 def test_pore_basis_keeps_planned_mud_in_evacuation_case():
     """Pore-based kick convention must not replace the fluid left in the pipe after loss of returns (skill 0.2.0 did)."""
-    from well_design_study import curve_from_points, PressureModel
+    from well_design_study import PressureModel, curve_from_points
 
     z = [0.0, 400.0, 4000.0]
     pm = PressureModel({k: curve_from_points([(0, 1.0), (400, 1.03), (4000, 1.2)]) for k in ("low", "base", "high")},

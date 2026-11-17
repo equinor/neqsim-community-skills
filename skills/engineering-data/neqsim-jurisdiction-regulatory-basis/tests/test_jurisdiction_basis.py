@@ -1,5 +1,4 @@
 import pytest
-
 from jurisdiction_basis import jurisdiction_block, resolve_profile
 from jurisdiction_basis.profiles import ALIASES, PROFILES
 

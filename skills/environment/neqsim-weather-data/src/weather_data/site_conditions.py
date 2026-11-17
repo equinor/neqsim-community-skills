@@ -5,16 +5,16 @@ class estimator built on top of ``WeatherSeries`` data.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .open_meteo import WeatherSeries
 
 
-def _clean(values: List[Optional[float]]) -> List[float]:
+def _clean(values: list[float | None]) -> list[float]:
     return [float(v) for v in values if v is not None]
 
 
-def _percentile(values: List[float], pct: float) -> Optional[float]:
+def _percentile(values: list[float], pct: float) -> float | None:
     if not values:
         return None
     ordered = sorted(values)
@@ -34,22 +34,22 @@ class SiteConditionsSummary:
     location_name: str
     latitude: float
     longitude: float
-    period_start: Optional[str]
-    period_end: Optional[str]
+    period_start: str | None
+    period_end: str | None
     n_hours: int
-    min_temperature_c: Optional[float]
-    mean_temperature_c: Optional[float]
-    max_temperature_c: Optional[float]
-    mean_wind_speed_ms: Optional[float]
-    p99_wind_speed_ms: Optional[float]
-    max_wind_speed_ms: Optional[float]
-    max_wind_gust_ms: Optional[float]
-    mean_relative_humidity_pct: Optional[float]
-    mean_surface_pressure_hpa: Optional[float]
+    min_temperature_c: float | None
+    mean_temperature_c: float | None
+    max_temperature_c: float | None
+    mean_wind_speed_ms: float | None
+    p99_wind_speed_ms: float | None
+    max_wind_speed_ms: float | None
+    max_wind_gust_ms: float | None
+    mean_relative_humidity_pct: float | None
+    mean_surface_pressure_hpa: float | None
     source: str
-    warnings: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
 
 
@@ -62,7 +62,7 @@ def summarize_site_conditions(series: WeatherSeries, *, location: Any = None) ->
     percentile as indicative and escalate to a proper met-ocean study for
     design loads.
     """
-    warnings: List[str] = []
+    warnings: list[str] = []
     temperature = _clean(series.hourly.get("temperature_2m", []))
     wind_speed = _clean(series.hourly.get("wind_speed_10m", []))
     wind_gust = _clean(series.hourly.get("wind_gusts_10m", []))
@@ -104,7 +104,7 @@ def summarize_site_conditions(series: WeatherSeries, *, location: Any = None) ->
 # Simplified Turner (1964) day table: upper bound of wind-speed bucket (m/s) ->
 # stability class by insolation (cloud-cover-derived). Values at/above the
 # highest bucket resolve to the neutral class D (see the loop fallback below).
-_INSOLATION_DAY_TABLE: Dict[float, Dict[str, str]] = {
+_INSOLATION_DAY_TABLE: dict[float, dict[str, str]] = {
     2.0: {"strong": "A", "moderate": "A", "slight": "B"},
     3.0: {"strong": "A", "moderate": "B", "slight": "C"},
     5.0: {"strong": "B", "moderate": "B", "slight": "C"},
@@ -113,7 +113,7 @@ _INSOLATION_DAY_TABLE: Dict[float, Dict[str, str]] = {
 
 # Simplified night table: upper bound of wind-speed bucket (m/s) -> stability
 # class by cloud cover ("clear" <50%, "cloudy" >=50%).
-_NIGHT_TABLE: Dict[float, Dict[str, str]] = {
+_NIGHT_TABLE: dict[float, dict[str, str]] = {
     2.0: {"cloudy": "F", "clear": "F"},
     3.0: {"cloudy": "E", "clear": "F"},
     5.0: {"cloudy": "D", "clear": "E"},
@@ -124,7 +124,7 @@ def estimate_pasquill_stability_class(
     wind_speed_ms: float,
     *,
     is_daytime: bool,
-    cloud_cover_fraction: Optional[float] = None,
+    cloud_cover_fraction: float | None = None,
 ) -> str:
     """Screening Pasquill-Gifford stability class (A-F) from wind speed, time
     of day and cloud cover, following a simplified Turner (1964) lookup.

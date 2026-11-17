@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from technology_fmirr import (
     DEFAULT_MATRIX,
     FailureModeEntry,

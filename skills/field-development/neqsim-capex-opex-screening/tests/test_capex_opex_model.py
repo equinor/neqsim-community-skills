@@ -1,5 +1,4 @@
 import pytest
-
 from capex_opex_screening import CapexOpexModel
 
 

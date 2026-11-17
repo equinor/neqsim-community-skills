@@ -5,7 +5,6 @@ import json
 import zipfile
 
 import pytest
-
 from anp_well_production import (
     BBL_TO_M3,
     aggregate,
@@ -374,7 +373,7 @@ def test_well_split_over_fields_is_not_a_duplicate_and_sums_in_history():
 def test_mixed_encoding_file_keeps_valid_lines():
     header = RATE_HEADER.encode("cp1252")
     good = PAPA.replace("PAPA-TERRA", "CARMÓPOLIS").encode("utf-8")
-    cut = PAPA.replace("PAPA-TERRA", "BALEIA ANÃ").encode("utf-8").replace("BALEIA ANÃ".encode("utf-8"), b"BALEIA AN\xc3")
+    cut = PAPA.replace("PAPA-TERRA", "BALEIA ANÃ").encode("utf-8").replace("BALEIA ANÃ".encode(), b"BALEIA AN\xc3")
     h, r, meta = read_table_bytes(header + b"\n" + good + b"\n" + cut + b"\n")
     recs = normalize(h, r)
     assert meta["encoding"] == "mixed" and len(recs) == 2

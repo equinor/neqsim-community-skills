@@ -1,5 +1,4 @@
 import pytest
-
 from cfd_coupling import (
     FluidState,
     MeshSpec,

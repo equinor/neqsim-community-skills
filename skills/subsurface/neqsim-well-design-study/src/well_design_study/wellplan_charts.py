@@ -9,15 +9,15 @@ from __future__ import annotations
 import datetime as _dt
 import math
 import textwrap
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
 
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-from matplotlib.patches import FancyBboxPatch, Polygon, Rectangle  # noqa: E402
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import FancyBboxPatch, Polygon, Rectangle
 
 DPI = 200
 NAVY = "#1f3a5f"
@@ -32,8 +32,8 @@ def _save(fig, path: Path) -> Path:
     return path
 
 
-def gantt_chart(activities: Sequence[Dict[str, object]], path: Path, spud_date: Optional[_dt.date] = None, title: str = "Operations plan (P50 durations)",
-                total: Optional[Dict[str, float]] = None) -> Path:
+def gantt_chart(activities: Sequence[dict[str, object]], path: Path, spud_date: _dt.date | None = None, title: str = "Operations plan (P50 durations)",
+                total: dict[str, float] | None = None) -> Path:
     """Operations Gantt: sequential bars of P50 duration with P10-P90 whiskers on each activity end.
 
     Args:
@@ -88,7 +88,7 @@ def gantt_chart(activities: Sequence[Dict[str, object]], path: Path, spud_date: 
     return _save(fig, path)
 
 
-def risk_matrix(risks: Sequence[Dict[str, object]], path: Path, title: str = "Risk matrix (5 x 5, screening)", show_residual: bool = True) -> Path:
+def risk_matrix(risks: Sequence[dict[str, object]], path: Path, title: str = "Risk matrix (5 x 5, screening)", show_residual: bool = True) -> Path:
     """5 x 5 likelihood-severity matrix with numbered risks and a legend list.
 
     Args:
@@ -109,17 +109,17 @@ def risk_matrix(risks: Sequence[Dict[str, object]], path: Path, title: str = "Ri
             band = 1 if score <= 4 else 2 if score <= 9 else 3 if score <= 15 else 4
             ax.add_patch(Rectangle((S - 0.5, L - 0.5), 1, 1, fc=RISK_COLOURS[band], ec="white", lw=1.5))
             ax.text(S + 0.44, L - 0.44, str(score), fontsize=6, ha="right", va="bottom", color="0.35")
-    pos: Dict[Tuple[int, int], List[Tuple[str, str]]] = {}
+    pos: dict[tuple[int, int], list[tuple[str, str]]] = {}
     for r in risks:
         pos.setdefault((int(r["likelihood"]), int(r["severity"])), []).append(("inh", str(r["id"])))
-    seen: Dict[Tuple[int, int], int] = {}
+    seen: dict[tuple[int, int], int] = {}
 
-    def slot(cell: Tuple[int, int], k: int) -> Tuple[float, float]:
+    def slot(cell: tuple[int, int], k: int) -> tuple[float, float]:
         sub = [(-0.24, 0.16), (0.0, 0.16), (0.24, 0.16), (-0.24, -0.08), (0.0, -0.08), (0.24, -0.08), (-0.24, -0.30), (0.0, -0.30), (0.24, -0.30)]
         dx, dy = sub[k % len(sub)]
         return cell[1] + dx, cell[0] + dy
 
-    placed: Dict[str, Tuple[float, float]] = {}
+    placed: dict[str, tuple[float, float]] = {}
     for r in risks:
         cell = (int(r["likelihood"]), int(r["severity"]))
         k = seen.get(cell, 0)
@@ -129,7 +129,7 @@ def risk_matrix(risks: Sequence[Dict[str, object]], path: Path, title: str = "Ri
         ax.add_patch(plt.Circle((x, y), 0.105, fc="#1f3a5f", ec="white", lw=0.8, zorder=4))
         ax.text(x, y, str(r["id"]).lstrip("R").lstrip("0") or "0", fontsize=5.8, ha="center", va="center", color="white", zorder=5, fontweight="bold")
     if show_residual:
-        seen2: Dict[Tuple[int, int], int] = {}
+        seen2: dict[tuple[int, int], int] = {}
         for r in risks:
             if r.get("res_likelihood") is None:
                 continue
@@ -168,7 +168,7 @@ def risk_matrix(risks: Sequence[Dict[str, object]], path: Path, title: str = "Ri
     return _save(fig, path)
 
 
-def _tree_layout(node: Dict[str, object], depth: int, counter: List[int], out: List[Dict[str, object]], parent: Optional[int], edge: str) -> int:
+def _tree_layout(node: dict[str, object], depth: int, counter: list[int], out: list[dict[str, object]], parent: int | None, edge: str) -> int:
     idx = len(out)
     rec = {"label": node["label"], "kind": node.get("kind", "action"), "depth": depth, "parent": parent, "edge": edge, "y": 0.0}
     out.append(rec)
@@ -182,7 +182,7 @@ def _tree_layout(node: Dict[str, object], depth: int, counter: List[int], out: L
     return idx
 
 
-def decision_tree(root: Dict[str, object], path: Path, title: str = "Contingency decision tree", wrap: int = 26) -> Path:
+def decision_tree(root: dict[str, object], path: Path, title: str = "Contingency decision tree", wrap: int = 26) -> Path:
     """Left-to-right decision tree. ``root`` = {"label", "kind", "children": [{"edge": "yes", "node": {...}}, ...]}.
 
     Node kinds: ``question`` (hexagon), ``action`` (rounded box), ``contingency`` (orange box), ``outcome`` (green box), ``stop`` (red box).
@@ -196,7 +196,7 @@ def decision_tree(root: Dict[str, object], path: Path, title: str = "Contingency
     Returns:
         The PNG path.
     """
-    nodes: List[Dict[str, object]] = []
+    nodes: list[dict[str, object]] = []
     _tree_layout(root, 0, [0], nodes, None, "")
     nd = max(n["depth"] for n in nodes) + 1
     nl = max(n["y"] for n in nodes) + 1
@@ -230,7 +230,7 @@ def decision_tree(root: Dict[str, object], path: Path, title: str = "Contingency
     return _save(fig, path)
 
 
-def s_curve_plot(samples: Dict[str, np.ndarray], path: Path, units: Dict[str, str], title: str = "Cumulative distributions (S-curves)") -> Path:
+def s_curve_plot(samples: dict[str, np.ndarray], path: Path, units: dict[str, str], title: str = "Cumulative distributions (S-curves)") -> Path:
     """S-curves (cumulative probability) with P10/P50/P90 markers, one panel per quantity.
 
     Args:
@@ -264,8 +264,8 @@ def s_curve_plot(samples: Dict[str, np.ndarray], path: Path, units: Dict[str, st
     return _save(fig, path)
 
 
-def time_depth_band_plot(offsets: Dict[str, Sequence[Sequence[float]]], plan: Dict[str, Sequence[Sequence[float]]], path: Path,
-                         title: str = "Time-depth: plan P10 / P50 / P90 and offset wells", milestones: Optional[Sequence[Tuple[str, float, float]]] = None) -> Path:
+def time_depth_band_plot(offsets: dict[str, Sequence[Sequence[float]]], plan: dict[str, Sequence[Sequence[float]]], path: Path,
+                         title: str = "Time-depth: plan P10 / P50 / P90 and offset wells", milestones: Sequence[tuple[str, float, float]] | None = None) -> Path:
     """Time-depth chart: shaded P10-P90 band, P50 curve, offset lines and optional labelled milestones.
 
     Args:
@@ -301,7 +301,7 @@ def time_depth_band_plot(offsets: Dict[str, Sequence[Sequence[float]]], plan: Di
     return _save(fig, path)
 
 
-def cost_breakdown_chart(items: Sequence[Dict[str, object]], path: Path, unit: str = "MNOK", title: str = "Cost breakdown (P50 with P10-P90 range)") -> Path:
+def cost_breakdown_chart(items: Sequence[dict[str, object]], path: Path, unit: str = "MNOK", title: str = "Cost breakdown (P50 with P10-P90 range)") -> Path:
     """Horizontal bars of P50 cost per item with P10-P90 whiskers and a total row.
 
     Args:
@@ -334,7 +334,7 @@ def cost_breakdown_chart(items: Sequence[Dict[str, object]], path: Path, unit: s
     return _save(fig, path)
 
 
-def _place_labels(ax, pts: Sequence[Tuple[float, float, str]], fontsize: float = 7.0) -> None:
+def _place_labels(ax, pts: Sequence[tuple[float, float, str]], fontsize: float = 7.0) -> None:
     """Greedy collision-free label placement around marker points (8 candidate directions, checked against placed labels in display space)."""
     fig = ax.figure
     fig.canvas.draw()
@@ -359,7 +359,7 @@ def _place_labels(ax, pts: Sequence[Tuple[float, float, str]], fontsize: float =
         placed.append(best[1])
 
 
-def location_map(points: Sequence[Dict[str, object]], path: Path, centre: Optional[Tuple[float, float]] = None, rings_km: Sequence[float] = (),
+def location_map(points: Sequence[dict[str, object]], path: Path, centre: tuple[float, float] | None = None, rings_km: Sequence[float] = (),
                  title: str = "Well location and offset wells", unit_note: str = "Grid coordinates (m) as supplied; distances are straight-line") -> Path:
     """Plan map of a planned well and offset wells with distance rings, scale bar and north arrow.
 
@@ -411,7 +411,7 @@ def location_map(points: Sequence[Dict[str, object]], path: Path, centre: Option
     return _save(fig, path)
 
 
-def offset_comparison_chart(rows: Sequence[Dict[str, object]], path: Path, plan: Optional[Dict[str, float]] = None,
+def offset_comparison_chart(rows: Sequence[dict[str, object]], path: Path, plan: dict[str, float] | None = None,
                             title: str = "Offset wells: total days from spud to completion") -> Path:
     """Horizontal bars of offset total days (labelled with TD and distance) with the plan P10/P50/P90 band.
 

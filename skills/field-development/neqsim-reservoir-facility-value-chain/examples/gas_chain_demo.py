@@ -5,7 +5,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from reservoir_facility_value_chain import Gas, GasTank, PressureCapacityCurve, RSDeliverability, flow_balance, maximise_rate
+from reservoir_facility_value_chain import (
+    Gas,
+    GasTank,
+    PressureCapacityCurve,
+    RSDeliverability,
+    flow_balance,
+    maximise_rate,
+)
 
 gas = Gas({"C1": 0.93, "C2": 0.04, "C3": 0.01, "N2": 0.02})
 tank = GasTank(gas, 343.15, pz_i=171.6, giip=1000.0, cum=700.0)  # GSm3

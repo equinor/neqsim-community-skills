@@ -8,8 +8,9 @@ validate: ``p10 <= p50 <= p90`` ascending, an ``input_parameters`` table, and a
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any
 
 from .distributions import Distribution
 from .study import StudyResult, TornadoEntry
@@ -28,16 +29,16 @@ class UncertaintyReport:
     result: StudyResult
     output_name: str = "output"
     output_unit: str = ""
-    tornado: List[TornadoEntry] = field(default_factory=list)
+    tornado: list[TornadoEntry] = field(default_factory=list)
     simulation_engine: str = ""
-    sensitivity: Optional[Dict[str, Any]] = None
+    sensitivity: dict[str, Any] | None = None
     minimum_samples: int = MINIMUM_SAMPLES_SIMULATION
 
     @property
     def output_parameter(self) -> str:
         """Label used for the output distribution table."""
         if self.output_unit:
-            return "{} ({})".format(self.output_name, self.output_unit)
+            return f"{self.output_name} ({self.output_unit})"
         return self.output_name
 
     def tornado_prefix(self) -> str:
@@ -46,36 +47,34 @@ class UncertaintyReport:
         token = "_".join(part for part in token.replace("-", " ").split() if part)
         return token or "output"
 
-    def blockers(self) -> List[str]:
+    def blockers(self) -> list[str]:
         """Reasons the uncertainty block should not be presented as converged."""
-        issues: List[str] = []
+        issues: list[str] = []
         summary = self.result.summary
         if summary.count < self.minimum_samples:
             issues.append(
-                "{} samples is below the {}-sample minimum for a simulation-backed "
-                "Monte Carlo".format(summary.count, self.minimum_samples)
+                f"{summary.count} samples is below the {self.minimum_samples}-sample minimum for a simulation-backed "
+                "Monte Carlo"
             )
         if summary.drift_pct > MAX_MEDIAN_DRIFT_PCT:
             issues.append(
-                "median drifts {:.1f}% of the P10-P90 spread between run halves "
-                "(limit {:.1f}%) — increase the sample count".format(
-                    summary.drift_pct, MAX_MEDIAN_DRIFT_PCT
-                )
+                f"median drifts {summary.drift_pct:.1f}% of the P10-P90 spread between run halves "
+                f"(limit {MAX_MEDIAN_DRIFT_PCT:.1f}%) — increase the sample count"
             )
         if self.result.failures:
             issues.append(
-                "{} evaluation(s) failed and were dropped".format(self.result.failures)
+                f"{self.result.failures} evaluation(s) failed and were dropped"
             )
         if not self.tornado:
             issues.append("no tornado sensitivity was produced")
         return issues
 
-    def to_results_json(self) -> Dict[str, Any]:
+    def to_results_json(self) -> dict[str, Any]:
         """The ``uncertainty`` block."""
         summary = self.result.summary
         prefix = self.tornado_prefix()
-        block: Dict[str, Any] = {
-            "method": "Monte Carlo, {} sampling".format(self.result.sampling_method.upper()),
+        block: dict[str, Any] = {
+            "method": f"Monte Carlo, {self.result.sampling_method.upper()} sampling",
             "sampling_method": self.result.sampling_method,
             "seed": self.result.seed,
             "simulation_engine": self.simulation_engine,
@@ -101,21 +100,19 @@ class UncertaintyReport:
     def to_markdown(self) -> str:
         """Markdown summary for a notebook cell or the report body."""
         summary = self.result.summary
-        unit = " {}".format(self.output_unit) if self.output_unit else ""
+        unit = f" {self.output_unit}" if self.output_unit else ""
         lines = [
-            "**{}** — {} samples, {} sampling.".format(
-                self.output_parameter, summary.count, self.result.sampling_method.upper()
-            ),
+            f"**{self.output_parameter}** — {summary.count} samples, {self.result.sampling_method.upper()} sampling.",
             "",
             "| Statistic | Value |",
             "| --- | --- |",
-            "| P10 (low) | {:.6g}{} |".format(summary.p10, unit),
-            "| P50 (median) | {:.6g}{} |".format(summary.p50, unit),
-            "| P90 (high) | {:.6g}{} |".format(summary.p90, unit),
-            "| Mean | {:.6g}{} |".format(summary.mean, unit),
-            "| Std. dev. | {:.6g}{} |".format(summary.std, unit),
-            "| P(negative) | {:.1f} % |".format(summary.prob_negative_pct),
-            "| Median drift (% of P10-P90 spread) | {:.2f} % |".format(summary.drift_pct),
+            f"| P10 (low) | {summary.p10:.6g}{unit} |",
+            f"| P50 (median) | {summary.p50:.6g}{unit} |",
+            f"| P90 (high) | {summary.p90:.6g}{unit} |",
+            f"| Mean | {summary.mean:.6g}{unit} |",
+            f"| Std. dev. | {summary.std:.6g}{unit} |",
+            f"| P(negative) | {summary.prob_negative_pct:.1f} % |",
+            f"| Median drift (% of P10-P90 spread) | {summary.drift_pct:.2f} % |",
         ]
         if self.tornado:
             lines += [
@@ -125,9 +122,7 @@ class UncertaintyReport:
             ]
             for entry in self.tornado:
                 lines.append(
-                    "| {} | {:.6g} | {:.6g} | {:.6g} |".format(
-                        entry.parameter, entry.output_low, entry.output_high, entry.swing
-                    )
+                    f"| {entry.parameter} | {entry.output_low:.6g} | {entry.output_high:.6g} | {entry.swing:.6g} |"
                 )
         cache = self.result.cache_report
         if cache.get("cache_hits"):

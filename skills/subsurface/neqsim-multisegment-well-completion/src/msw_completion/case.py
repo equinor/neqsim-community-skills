@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 ANNULUS = {"GP", "OA", "PA"}
 DEVICE_TYPES = {"PERF", "AICD", "ICD", "VALVE", "DENSITY"}
@@ -16,9 +16,9 @@ _AICD_DEFAULTS = {"a": 1.0, "b": 1.0, "c": 1.0, "d": 1.0, "e": 1.0, "f": 1.0, "r
 _ICD_DEFAULTS = {"rho_cal": 1000.25, "mu_cal": 1.45, "critical_value": 0.5}
 
 
-def validate_design(design: Dict[str, Any]) -> List[str]:
+def validate_design(design: dict[str, Any]) -> list[str]:
     """Return a list of problems in a completion design; empty when completor can be run."""
-    problems: List[str] = []
+    problems: list[str] = []
     rows = design.get("completion") or []
     if not rows:
         problems.append("completion: at least one interval is needed")
@@ -57,7 +57,7 @@ def _fmt(value: Any) -> str:
     return f"{float(value):.6g}"
 
 
-def build_case(design: Dict[str, Any]) -> str:
+def build_case(design: dict[str, Any]) -> str:
     """Return completor case-file text for a design dict.
 
     ``design`` keys: ``completion`` (rows with well, branch, start_md, end_md, screen_diameter_m,

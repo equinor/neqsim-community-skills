@@ -7,13 +7,13 @@ links; the reader still checks every header.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 VERIFIED_ON = "2026-11-02"
 
 ANP_FILES_BASE = "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/arquivos"
 
-FAMILIES: Dict[str, Dict[str, Any]] = {
+FAMILIES: dict[str, dict[str, Any]] = {
     "well_monthly_rates": {
         "title": "Produção de petróleo e gás natural por poço (monthly files, 2005 onward)",
         "page": "https://www.gov.br/anp/pt-br/centrais-de-conteudo/dados-abertos/producao-de-petroleo-e-gas-natural-por-poco",
@@ -79,7 +79,7 @@ FAMILIES: Dict[str, Dict[str, Any]] = {
 }
 """The four public well-level file families and their verified traits."""
 
-MODEL_READINESS: Dict[str, Dict[str, Any]] = {
+MODEL_READINESS: dict[str, dict[str, Any]] = {
     "decline_and_eur": {
         "public": ["monthly rate history per well and field", "hours on stream", "well status and lift method"],
         "missing": ["reservoir pressure", "completion and workover timing per well beyond status dates"],
@@ -114,7 +114,7 @@ MODEL_READINESS: Dict[str, Dict[str, Any]] = {
 """What the open data supports for each downstream NeqSim model, and what is missing."""
 
 
-def readiness(model: str) -> Dict[str, Any]:
+def readiness(model: str) -> dict[str, Any]:
     """Return the readiness record of a model type.
 
     Args:
@@ -132,7 +132,7 @@ def readiness(model: str) -> Dict[str, Any]:
         raise KeyError("Unknown model %r; known: %s" % (model, ", ".join(sorted(MODEL_READINESS))))
 
 
-def families() -> List[str]:
+def families() -> list[str]:
     """Return the family names in catalog order.
 
     Returns:

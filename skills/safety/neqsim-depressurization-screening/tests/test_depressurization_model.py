@@ -1,5 +1,4 @@
 import pytest
-
 from depressurization_screening import DepressurizationModel
 
 

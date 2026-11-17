@@ -7,9 +7,14 @@ import importlib.util
 import numpy as np
 import pandas as pd
 import pytest
-
-from well_test_calibration import (accept_calibration, calibrate_well, fit_with_priors, rate_from_gauge,
-                                   recombine_separator_volumes, quality_flags, window_mean)
+from well_test_calibration import (
+    accept_calibration,
+    calibrate_well,
+    fit_with_priors,
+    quality_flags,
+    rate_from_gauge,
+    window_mean,
+)
 
 needs_neqsim = pytest.mark.skipif(importlib.util.find_spec("neqsim") is None, reason="neqsim not installed")
 

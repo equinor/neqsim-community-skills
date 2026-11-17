@@ -1,6 +1,12 @@
 """Minimal worked example: window, seats, casing strings and a time/cost range for a synthetic exploration well."""
 
-from well_design_study import CostBasis, NptEvent, SectionTime, monte_carlo, run_well_study
+from well_design_study import (
+    CostBasis,
+    NptEvent,
+    SectionTime,
+    monte_carlo,
+    run_well_study,
+)
 
 SPEC = {
     "name": "synthetic exploration well",

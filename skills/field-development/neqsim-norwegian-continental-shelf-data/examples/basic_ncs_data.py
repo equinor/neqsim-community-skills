@@ -13,11 +13,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from norwegian_continental_shelf_data import (
+    fields_started_by_decade,
     load_dataset,
     production_share,
-    resource_remaining,
-    fields_started_by_decade,
     rank_fields_by_remaining,
+    resource_remaining,
     sodir_download_plan,
 )
 

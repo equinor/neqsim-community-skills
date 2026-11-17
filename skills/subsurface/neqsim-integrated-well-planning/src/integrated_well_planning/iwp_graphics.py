@@ -7,15 +7,24 @@ values - charts only draw results produced by the model chain.
 
 from __future__ import annotations
 
-import math
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Circle, FancyBboxPatch, Rectangle
+from matplotlib.patches import Circle, Rectangle
 
-from .iwp_style import (CATEGORICAL, LW, PALETTE, STATUS_COLOR, badge, band, direct_label, provenance_record, save_figure, small_multiples, status_color)
+from .iwp_style import (
+    CATEGORICAL,
+    LW,
+    PALETTE,
+    band,
+    direct_label,
+    provenance_record,
+    save_figure,
+    status_color,
+)
 
 REGIME_COLORS = {"SINGLE_PHASE_LIQUID": "#9ECAE1", "SINGLE_PHASE_GAS": "#FDD0A2", "BUBBLE": "#C6DBEF", "SLUG": "#F2B134", "CHURN": "#E08E45", "ANNULAR": "#E7B7D6"}
 
@@ -28,10 +37,10 @@ def _depth_axis(ax, depth_max: float, label: bool = True) -> None:
 
 
 # ----------------------------------------------------------------------------- nodal
-def nodal_chart(family: Dict[str, Any], ops: Optional[Dict[str, Dict[str, Any]]] = None, target_rate: Optional[float] = None, rate_label: str = "Rate [Sm3/d]",
-                title: str = "Nodal analysis", ipr_band: Optional[Dict[str, Sequence[float]]] = None, outflow_min_rate: Optional[float] = None,
-                rate_scale: float = 1.0, vlp_labels: Optional[Dict[str, str]] = None, points: Optional[Sequence[Dict[str, Any]]] = None,
-                ymax: Optional[float] = None) -> plt.Figure:
+def nodal_chart(family: dict[str, Any], ops: dict[str, dict[str, Any]] | None = None, target_rate: float | None = None, rate_label: str = "Rate [Sm3/d]",
+                title: str = "Nodal analysis", ipr_band: dict[str, Sequence[float]] | None = None, outflow_min_rate: float | None = None,
+                rate_scale: float = 1.0, vlp_labels: dict[str, str] | None = None, points: Sequence[dict[str, Any]] | None = None,
+                ymax: float | None = None) -> plt.Figure:
     """IPR versus a family of VLP curves with operating points, stable/unstable regions and the target rate.
 
     Args:
@@ -58,11 +67,11 @@ def nodal_chart(family: Dict[str, Any], ops: Optional[Dict[str, Dict[str, Any]]]
     for i, k in enumerate(labels):
         v = np.asarray(family["families"][k], float)
         ax.plot(q, v, color=cols[i % len(cols)], lw=LW["normal"], ls="-" if i == 0 else "--", zorder=3)
-        txt = (vlp_labels or {}).get(k) or ("VLP, tubing ID {:.0f} mm".format(float(k) * 1000.0) if param == "tubing_id_m" else "VLP, {} = {}".format(param, k))
+        txt = (vlp_labels or {}).get(k) or (f"VLP, tubing ID {float(k) * 1000.0:.0f} mm" if param == "tubing_id_m" else f"VLP, {param} = {k}")
         inside = v <= top
         j = int(np.where(inside)[0][-1]) if inside.any() else len(v) - 1
         ends.append((float(v[j]), j, txt, cols[i % len(cols)]))
-    placed: List[float] = []
+    placed: list[float] = []
     for y, j, txt, col in sorted(ends):
         yy = y
         for p in placed:
@@ -99,7 +108,7 @@ def nodal_chart(family: Dict[str, Any], ops: Optional[Dict[str, Dict[str, Any]]]
     return fig
 
 
-def wellbore_profiles(profile: Dict[str, Any], hydrate: Optional[Dict[str, Any]] = None, c_factor: float = 100.0, title: str = "Wellbore profiles (base case)") -> plt.Figure:
+def wellbore_profiles(profile: dict[str, Any], hydrate: dict[str, Any] | None = None, c_factor: float = 100.0, title: str = "Wellbore profiles (base case)") -> plt.Figure:
     """Aligned depth tracks (pressure, temperature with hydrate line, holdup, velocities with erosional limit, regime strip) sharing one depth axis."""
     zn = np.asarray(profile["node_tvd_m"], float)
     zm = np.asarray(profile["tvd_m"], float)
@@ -108,8 +117,8 @@ def wellbore_profiles(profile: Dict[str, Any], hydrate: Optional[Dict[str, Any]]
     ax = axs[0]
     ax.plot(profile["pressure_bara"], zn, color=PALETTE["pressure"], lw=LW["thick"])
     pp = np.asarray(profile["pressure_bara"], float)
-    direct_label(ax, pp[0], zn[0], "tree {:.0f} bara".format(pp[0]), PALETTE["pressure"], dx=8, dy=-10, size=7.5)
-    direct_label(ax, pp[-1], zn[-1], "bottom {:.0f} bara".format(pp[-1]), PALETTE["pressure"], dx=-8, dy=12, ha="right", size=7.5)
+    direct_label(ax, pp[0], zn[0], f"tree {pp[0]:.0f} bara", PALETTE["pressure"], dx=8, dy=-10, size=7.5)
+    direct_label(ax, pp[-1], zn[-1], f"bottom {pp[-1]:.0f} bara", PALETTE["pressure"], dx=-8, dy=12, ha="right", size=7.5)
     ax.set_xlabel("Pressure [bara]")
     ax.set_title("Pressure", fontsize=9)
     _depth_axis(ax, dmax)
@@ -144,7 +153,7 @@ def wellbore_profiles(profile: Dict[str, Any], hydrate: Optional[Dict[str, Any]]
     ax.fill_betweenx(zm, ve, np.maximum(vsg + vsl, ve), where=(vsg + vsl) > ve, color=PALETTE["fail"], alpha=0.22, lw=0)
     direct_label(ax, vsg[len(vsg) // 2], zm[len(vsg) // 2], "gas", PALETTE["gas"], dx=4, dy=-6)
     direct_label(ax, vsl[len(vsl) // 3], zm[len(vsl) // 3], "liquid", PALETTE["water"], dx=4, dy=-6)
-    direct_label(ax, ve[0], zm[0], "erosional (API RP 14E, C={:g})".format(c_factor), PALETTE["limit"], dx=-4, dy=-10, ha="right", size=7)
+    direct_label(ax, ve[0], zm[0], f"erosional (API RP 14E, C={c_factor:g})", PALETTE["limit"], dx=-4, dy=-10, ha="right", size=7)
     ax.set_xlabel("Superficial velocity [m/s]")
     ax.set_title("Velocities", fontsize=9)
     _depth_axis(ax, dmax, label=False)
@@ -167,7 +176,7 @@ def wellbore_profiles(profile: Dict[str, Any], hydrate: Optional[Dict[str, Any]]
 
 
 # ----------------------------------------------------------------------------- operating envelope
-def operating_envelope_chart(rows: List[Dict[str, Any]], title: str = "Operating envelope: utilisation of limits") -> plt.Figure:
+def operating_envelope_chart(rows: list[dict[str, Any]], title: str = "Operating envelope: utilisation of limits") -> plt.Figure:
     """Limit bars with utilisation markers and traffic-light status text; hatched when the limit is not approved."""
     rows = [r for r in rows if r.get("utilisation") is not None]
     n = max(len(rows), 1)
@@ -195,7 +204,7 @@ def operating_envelope_chart(rows: List[Dict[str, Any]], title: str = "Operating
     return fig
 
 
-def envelope_table_figure(rows: List[Dict[str, Any]], max_rows: int = 24, title: str = "Operating-envelope table") -> plt.Figure:
+def envelope_table_figure(rows: list[dict[str, Any]], max_rows: int = 24, title: str = "Operating-envelope table") -> plt.Figure:
     """Rendered envelope table with coloured status cells (for the report and drawing register)."""
     rows = rows[:max_rows]
     cols = ["Parameter", "Condition", "Limit", "Source (basis)", "Predicted", "Margin", "Status"]
@@ -223,8 +232,8 @@ def envelope_table_figure(rows: List[Dict[str, Any]], max_rows: int = 24, title:
 
 
 # ----------------------------------------------------------------------------- alternatives
-def alternatives_scorecard(sc: Dict[str, Any], labels: Dict[str, str], title: str = "Alternatives scorecard (1 = best of those compared)", crit_labels: Optional[Dict[str, str]] = None,
-                           raw_fmt: Optional[Dict[str, str]] = None, raw_sign: Optional[Dict[str, float]] = None) -> plt.Figure:
+def alternatives_scorecard(sc: dict[str, Any], labels: dict[str, str], title: str = "Alternatives scorecard (1 = best of those compared)", crit_labels: dict[str, str] | None = None,
+                           raw_fmt: dict[str, str] | None = None, raw_sign: dict[str, float] | None = None) -> plt.Figure:
     """Heat-map of normalised criterion scores with raw values annotated and a weighted total column.
 
     Args:
@@ -272,7 +281,7 @@ def alternatives_scorecard(sc: Dict[str, Any], labels: Dict[str, str], title: st
     return fig
 
 
-def alternatives_radar(sc: Dict[str, Any], labels: Dict[str, str], title: str = "Alternatives radar (normalised scores)") -> plt.Figure:
+def alternatives_radar(sc: dict[str, Any], labels: dict[str, str], title: str = "Alternatives radar (normalised scores)") -> plt.Figure:
     """Radar chart of criterion scores per alternative (criteria without data are skipped)."""
     crit = [c for c in sc["criteria"] if any(sc["scores"][c].get(a) is not None for a in labels)]
     ang = np.linspace(0, 2 * np.pi, len(crit), endpoint=False).tolist()
@@ -292,7 +301,7 @@ def alternatives_radar(sc: Dict[str, Any], labels: Dict[str, str], title: str = 
     return fig
 
 
-def pareto_chart(points: Dict[str, Tuple[float, float]], front: Sequence[str], labels: Dict[str, str], xlabel: str, ylabel: str, title: str = "Pareto view") -> plt.Figure:
+def pareto_chart(points: dict[str, tuple[float, float]], front: Sequence[str], labels: dict[str, str], xlabel: str, ylabel: str, title: str = "Pareto view") -> plt.Figure:
     """Scatter of alternatives with the non-dominated front highlighted and directly labelled."""
     fig, ax = plt.subplots(figsize=(6.4, 4.6))
     for k, (a, (x, y)) in enumerate(points.items()):
@@ -308,7 +317,7 @@ def pareto_chart(points: Dict[str, Tuple[float, float]], front: Sequence[str], l
     return fig
 
 
-def waterfall_chart(reference_label: str, reference_value: float, steps: List[Tuple[str, float]], unit: str = "Sm3/d", title: str = "Waterfall from the reference alternative",
+def waterfall_chart(reference_label: str, reference_value: float, steps: list[tuple[str, float]], unit: str = "Sm3/d", title: str = "Waterfall from the reference alternative",
                     result_label: str = "result") -> plt.Figure:
     """Waterfall of incremental changes relative to a reference value (decreases red, increases green, start blue, result orange) with connectors and value labels."""
     import textwrap
@@ -317,7 +326,7 @@ def waterfall_chart(reference_label: str, reference_value: float, steps: List[Tu
     x = 0
     run = reference_value
     ax.bar(x, run, color=PALETTE["accent1"], width=0.6, zorder=3)
-    ax.text(x, run, "{:,.4g}".format(run), ha="center", va="bottom", fontsize=8, fontweight="bold")
+    ax.text(x, run, f"{run:,.4g}", ha="center", va="bottom", fontsize=8, fontweight="bold")
     names = [reference_label]
     top = run
     for name, d in steps:
@@ -325,14 +334,14 @@ def waterfall_chart(reference_label: str, reference_value: float, steps: List[Tu
         lo, hi = (run + d, run) if d < 0 else (run, run + d)
         ax.bar(x, hi - lo, bottom=lo, color=PALETTE["pass"] if d >= 0 else PALETTE["fail"], width=0.6, zorder=3)
         ax.plot([x - 1 + 0.3, x - 0.3], [run, run], color=PALETTE["muted"], lw=0.8, zorder=2)
-        ax.text(x, hi, "{:+,.4g}".format(d), ha="center", va="bottom", fontsize=8)
+        ax.text(x, hi, f"{d:+,.4g}", ha="center", va="bottom", fontsize=8)
         run += d
         names.append(name)
         top = max(top, hi)
     x += 1
     ax.plot([x - 1 + 0.3, x - 0.3], [run, run], color=PALETTE["muted"], lw=0.8, zorder=2)
     ax.bar(x, run, color=PALETTE["accent2"], width=0.6, zorder=3)
-    ax.text(x, run, "{:,.4g}".format(run), ha="center", va="bottom", fontsize=8, fontweight="bold")
+    ax.text(x, run, f"{run:,.4g}", ha="center", va="bottom", fontsize=8, fontweight="bold")
     names.append(result_label)
     ax.set_xticks(range(len(names)))
     ax.set_xticklabels([textwrap.fill(n, 16) for n in names], fontsize=7.8)
@@ -345,7 +354,7 @@ def waterfall_chart(reference_label: str, reference_value: float, steps: List[Tu
 
 
 # ----------------------------------------------------------------------------- sensitivities
-def tornado_chart(t: Dict[str, Any], title: str = "Tornado: one-at-a-time sensitivity") -> plt.Figure:
+def tornado_chart(t: dict[str, Any], title: str = "Tornado: one-at-a-time sensitivity") -> plt.Figure:
     """Tornado chart around the reference value; bars show the metric at the low and high parameter values."""
     rows = t["rows"][::-1]
     ref = t["reference"] or 0.0
@@ -354,8 +363,8 @@ def tornado_chart(t: Dict[str, Any], title: str = "Tornado: one-at-a-time sensit
         lo, hi = r["metric_at_low_value"] or 0.0, r["metric_at_high_value"] or 0.0
         for v, col in ((lo, PALETTE["accent5"]), (hi, PALETTE["accent2"])):
             ax.barh(i, v - ref, left=ref, color=col, height=0.55, alpha=0.95)
-        direct_label(ax, min(lo, hi), i, "{:.3g}".format(min(lo, hi)), PALETTE["text"], dx=-3, ha="right", size=7)
-        direct_label(ax, max(lo, hi), i, "{:.3g}".format(max(lo, hi)), PALETTE["text"], dx=3, ha="left", size=7)
+        direct_label(ax, min(lo, hi), i, f"{min(lo, hi):.3g}", PALETTE["text"], dx=-3, ha="right", size=7)
+        direct_label(ax, max(lo, hi), i, f"{max(lo, hi):.3g}", PALETTE["text"], dx=3, ha="left", size=7)
     ax.axvline(ref, color=PALETTE["limit"], lw=LW["normal"])
     ax.set_yticks(range(len(rows)))
     ax.set_yticklabels(["{}  [{:.3g} to {:.3g}]".format(r["parameter"], r["range"][0], r["range"][2]) for r in rows], fontsize=7.8)
@@ -370,18 +379,18 @@ def tornado_chart(t: Dict[str, Any], title: str = "Tornado: one-at-a-time sensit
     return fig
 
 
-def sensitivity_heatmap(g: Dict[str, Any], target: Optional[float] = None, title: str = "Sensitivity grid") -> plt.Figure:
+def sensitivity_heatmap(g: dict[str, Any], target: float | None = None, title: str = "Sensitivity grid") -> plt.Figure:
     """Heat-map of a metric over two parameters; the target contour is overlaid when given."""
     z = np.asarray(g["q_op"], float)
     fig, ax = plt.subplots(figsize=(6.4, 4.8))
     im = ax.imshow(z, origin="lower", aspect="auto", cmap="viridis", extent=[0, len(g["x"]), 0, len(g["y"])])
     ax.set_xticks(np.arange(len(g["x"])) + 0.5)
-    ax.set_xticklabels(["{:.3g}".format(v) for v in g["x"]], fontsize=7.5)
+    ax.set_xticklabels([f"{v:.3g}" for v in g["x"]], fontsize=7.5)
     ax.set_yticks(np.arange(len(g["y"])) + 0.5)
-    ax.set_yticklabels(["{:.3g}".format(v) for v in g["y"]], fontsize=7.5)
+    ax.set_yticklabels([f"{v:.3g}" for v in g["y"]], fontsize=7.5)
     for i in range(z.shape[0]):
         for j in range(z.shape[1]):
-            ax.text(j + 0.5, i + 0.5, "{:.3g}".format(z[i, j]), ha="center", va="center", fontsize=7, color="white" if z[i, j] < np.nanmean(z) else "black")
+            ax.text(j + 0.5, i + 0.5, f"{z[i, j]:.3g}", ha="center", va="center", fontsize=7, color="white" if z[i, j] < np.nanmean(z) else "black")
     if target is not None and z.min() < target < z.max():
         ax.contour(np.arange(z.shape[1]) + 0.5, np.arange(z.shape[0]) + 0.5, z, levels=[target], colors=[PALETTE["fail"]], linewidths=2)
     ax.set_xlabel(g["x_param"])
@@ -392,7 +401,7 @@ def sensitivity_heatmap(g: Dict[str, Any], target: Optional[float] = None, title
     return fig
 
 
-def profile_bands(years: Sequence[float], cases: Dict[str, Sequence[float]], target: Optional[float] = None, unit: str = "Sm3/d",
+def profile_bands(years: Sequence[float], cases: dict[str, Sequence[float]], target: float | None = None, unit: str = "Sm3/d",
                   title: str = "Deliverability versus time (low / base / high)") -> plt.Figure:
     """Deliverability profile with a low-high band; labelled as capacity, not a production forecast."""
     fig, ax = plt.subplots(figsize=(7.0, 4.2))
@@ -407,7 +416,7 @@ def profile_bands(years: Sequence[float], cases: Dict[str, Sequence[float]], tar
         ax.axhline(target, color=PALETTE["limit"], ls="--", lw=LW["thin"])
         direct_label(ax, y[0], target, "target", PALETTE["limit"], dx=3, dy=6)
     ax.set_xlabel("Years from start (linear depletion basis)")
-    ax.set_ylabel("Deliverability [{}]".format(unit))
+    ax.set_ylabel(f"Deliverability [{unit}]")
     ax.set_ylim(bottom=0)
     ax.set_title(title, loc="left")
     ax.text(0.99, 0.02, "capacity at the stated back pressure - not a production forecast", transform=ax.transAxes, ha="right", fontsize=6.8, color=PALETTE["muted"])
@@ -415,7 +424,7 @@ def profile_bands(years: Sequence[float], cases: Dict[str, Sequence[float]], tar
 
 
 # ----------------------------------------------------------------------------- planning charts
-def gantt_chart(tasks: List[Dict[str, Any]], title: str = "Schedule (base with low-high whiskers)") -> plt.Figure:
+def gantt_chart(tasks: list[dict[str, Any]], title: str = "Schedule (base with low-high whiskers)") -> plt.Figure:
     """Gantt chart: tasks with ``name, start, low, base, high`` durations in days; whiskers show the duration uncertainty."""
     fig, ax = plt.subplots(figsize=(8.4, 0.42 * len(tasks) + 1.6))
     for i, t in enumerate(tasks):
@@ -436,7 +445,7 @@ def gantt_chart(tasks: List[Dict[str, Any]], title: str = "Schedule (base with l
     return fig
 
 
-def risk_matrix(risks: List[Dict[str, Any]], title: str = "Risk matrix (likelihood x consequence)") -> plt.Figure:
+def risk_matrix(risks: list[dict[str, Any]], title: str = "Risk matrix (likelihood x consequence)") -> plt.Figure:
     """5x5 risk matrix with numbered risks; cell colour is a presentation convention, not an acceptance criterion."""
     fig, ax = plt.subplots(figsize=(5.6, 5.0))
     for lk in range(1, 6):
@@ -444,7 +453,7 @@ def risk_matrix(risks: List[Dict[str, Any]], title: str = "Risk matrix (likeliho
             s = lk * cq
             col = PALETTE["pass"] if s <= 4 else PALETTE["warn"] if s <= 9 else "#E08E45" if s <= 14 else PALETTE["fail"]
             ax.add_patch(Rectangle((cq - 0.5, lk - 0.5), 1, 1, fc=col, ec="white", lw=1.5, alpha=0.75))
-    cells: Dict[Tuple[int, int], List[str]] = {}
+    cells: dict[tuple[int, int], list[str]] = {}
     for r in risks:
         cells.setdefault((r["likelihood"], r["consequence"]), []).append(str(r["id"]))
     for (lk, cq), ids in cells.items():
@@ -460,7 +469,7 @@ def risk_matrix(risks: List[Dict[str, Any]], title: str = "Risk matrix (likeliho
     return fig
 
 
-def risk_register_heatmap(risks: List[Dict[str, Any]], title: str = "Risk register") -> plt.Figure:
+def risk_register_heatmap(risks: list[dict[str, Any]], title: str = "Risk register") -> plt.Figure:
     """Register table with colour-coded score cells."""
     cell = [[str(r["id"]), r["title"][:46], str(r["likelihood"]), str(r["consequence"]), str(r["likelihood"] * r["consequence"]), r.get("mitigation", "")[:40], r.get("owner", "")] for r in risks]
     fig, ax = plt.subplots(figsize=(10.5, 0.36 * len(cell) + 1.0))
@@ -482,14 +491,14 @@ def risk_register_heatmap(risks: List[Dict[str, Any]], title: str = "Risk regist
     return fig
 
 
-def decision_tree(nodes: List[Dict[str, Any]], title: str = "Decision tree") -> plt.Figure:
+def decision_tree(nodes: list[dict[str, Any]], title: str = "Decision tree") -> plt.Figure:
     """Decision tree: nodes ``{id, parent, label, kind (decision|chance|outcome), edge}``; laid out by depth and leaf order."""
     by = {n["id"]: n for n in nodes}
-    kids: Dict[Any, List[Any]] = {}
+    kids: dict[Any, list[Any]] = {}
     for n in nodes:
         kids.setdefault(n.get("parent"), []).append(n["id"])
-    depth: Dict[Any, int] = {}
-    ypos: Dict[Any, float] = {}
+    depth: dict[Any, int] = {}
+    ypos: dict[Any, float] = {}
     counter = [0.0]
 
     def walk(i: Any, d: int) -> float:
@@ -535,7 +544,7 @@ def decision_tree(nodes: List[Dict[str, Any]], title: str = "Decision tree") -> 
     return fig
 
 
-def time_depth_chart(curves: Dict[str, Sequence[Tuple[float, float]]], planned: Optional[Sequence[Tuple[float, float]]] = None, band_curves: Optional[Tuple[str, str]] = None,
+def time_depth_chart(curves: dict[str, Sequence[tuple[float, float]]], planned: Sequence[tuple[float, float]] | None = None, band_curves: tuple[str, str] | None = None,
                      title: str = "Time-depth curve") -> plt.Figure:
     """Time-depth chart for low/base/high (and planned) curves; ``curves`` maps a label to (day, depth) points."""
     fig, ax = plt.subplots(figsize=(6.8, 4.8))
@@ -559,7 +568,7 @@ def time_depth_chart(curves: Dict[str, Sequence[Tuple[float, float]]], planned: 
 
 
 # ----------------------------------------------------------------------------- trajectory
-def trajectory_views(survey: Dict[str, Sequence[float]], offsets: Optional[Dict[str, Dict[str, Sequence[float]]]] = None, separation: Optional[Dict[str, Any]] = None,
+def trajectory_views(survey: dict[str, Sequence[float]], offsets: dict[str, dict[str, Sequence[float]]] | None = None, separation: dict[str, Any] | None = None,
                      title: str = "Trajectory: plan, section and separation") -> plt.Figure:
     """Plan view, vertical section and (optionally) separation-factor fans of offset wells."""
     ncols = 3 if separation else 2
@@ -593,7 +602,7 @@ def trajectory_views(survey: Dict[str, Sequence[float]], offsets: Optional[Dict[
         thr = separation.get("threshold")
         if thr is not None:
             ax.axhline(thr, color=PALETTE["fail"], ls="--", lw=LW["normal"])
-            direct_label(ax, ax.get_xlim()[0], thr, "operator threshold {:g} (supplied)".format(thr), PALETTE["fail"], dx=3, dy=6, size=7)
+            direct_label(ax, ax.get_xlim()[0], thr, f"operator threshold {thr:g} (supplied)", PALETTE["fail"], dx=3, dy=6, size=7)
         ax.set_xlabel("Measured depth [m]")
         ax.set_ylabel("Separation factor [-]")
         ax.set_title("Anti-collision fan (from supplied data)", fontsize=9.5, loc="left")
@@ -602,7 +611,7 @@ def trajectory_views(survey: Dict[str, Sequence[float]], offsets: Optional[Dict[
     return fig
 
 
-def trajectory_3d(survey: Dict[str, Sequence[float]], path: Path, offsets: Optional[Dict[str, Dict[str, Sequence[float]]]] = None, size: Tuple[int, int] = (1100, 800)) -> str:
+def trajectory_3d(survey: dict[str, Sequence[float]], path: Path, offsets: dict[str, dict[str, Sequence[float]]] | None = None, size: tuple[int, int] = (1100, 800)) -> str:
     """Render a 3D view to ``path`` (PNG): PyVista off-screen when available, otherwise matplotlib 3D. Returns the renderer name."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -641,7 +650,7 @@ def trajectory_3d(survey: Dict[str, Sequence[float]], path: Path, offsets: Optio
 
 
 # ----------------------------------------------------------------------------- registry
-CHARTS: Dict[str, Callable[..., plt.Figure]] = {
+CHARTS: dict[str, Callable[..., plt.Figure]] = {
     "nodal": nodal_chart, "wellbore_profiles": wellbore_profiles, "operating_envelope": operating_envelope_chart, "envelope_table": envelope_table_figure,
     "alternatives_scorecard": alternatives_scorecard, "alternatives_radar": alternatives_radar, "pareto": pareto_chart, "waterfall": waterfall_chart,
     "tornado": tornado_chart, "sensitivity_heatmap": sensitivity_heatmap, "profile_bands": profile_bands, "gantt": gantt_chart, "risk_matrix": risk_matrix,
@@ -649,15 +658,15 @@ CHARTS: Dict[str, Callable[..., plt.Figure]] = {
 }
 
 
-def render(name: str, out_stem: Path, provenance_inputs: Any, caption: str = "", synthetic: bool = True, formats: Sequence[str] = ("png",), ledger_refs: Optional[List[str]] = None,
-           sources: Optional[List[str]] = None, **kwargs: Any) -> Dict[str, str]:
+def render(name: str, out_stem: Path, provenance_inputs: Any, caption: str = "", synthetic: bool = True, formats: Sequence[str] = ("png",), ledger_refs: list[str] | None = None,
+           sources: list[str] | None = None, **kwargs: Any) -> dict[str, str]:
     """Render chart ``name`` with ``kwargs`` and save it (PNG at 300 dpi by default) with a provenance sidecar."""
     fig = CHARTS[name](**kwargs)
     prov = provenance_record(Path(out_stem).name, name, "integrated_well_planning.iwp_graphics." + CHARTS[name].__name__, provenance_inputs, caption, synthetic, sources, ledger_refs)
     return save_figure(fig, Path(out_stem), prov, formats)
 
 
-from . import iwp_charts_extra as _extra  # noqa: E402
+from . import iwp_charts_extra as _extra
 
 CHARTS.update({"multi_line": _extra.multi_line_chart, "hbar_grouped": _extra.hbar_grouped_chart, "grouped_bar": _extra.grouped_bar_chart, "pressure_window": _extra.pressure_window_chart, "percentile": _extra.percentile_chart,
                "casing_programme": _extra.casing_programme_sheet, "offset_map": _extra.offset_map_chart})

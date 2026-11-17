@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 FISKERIDIR = "https://gis.fiskeridir.no/server/rest/services/Yggdrasil"
 MILJODIR = "https://kart.miljodirektoratet.no/arcgis/rest/services"
@@ -28,15 +28,15 @@ TERMS = (
 )
 
 
-def _wfs(type_name: str, theme: str, what: str) -> Dict[str, Any]:
+def _wfs(type_name: str, theme: str, what: str) -> dict[str, Any]:
     return {"kind": "wfs", "url": EMODNET_HA, "type_name": type_name, "theme": theme, "what": what, "owner": "EMODnet"}
 
 
-def _arcgis(base: str, layer: int, theme: str, what: str, owner: str) -> Dict[str, Any]:
+def _arcgis(base: str, layer: int, theme: str, what: str, owner: str) -> dict[str, Any]:
     return {"kind": "arcgis", "url": base, "layer": layer, "theme": theme, "what": what, "owner": owner}
 
 
-def _raster(layer: int, service: str, theme: str, what: str) -> Dict[str, Any]:
+def _raster(layer: int, service: str, theme: str, what: str) -> dict[str, Any]:
     return {
         "kind": "raster",
         "url": f"{FISKERIDIR}/{service}/MapServer",
@@ -47,7 +47,7 @@ def _raster(layer: int, service: str, theme: str, what: str) -> Dict[str, Any]:
     }
 
 
-SOURCES: Dict[str, Dict[str, Any]] = {
+SOURCES: dict[str, dict[str, Any]] = {
     # Fishing and trawling exposure (drives trawl pull-over, burial and rock-dump scope)
     "fishing_bottom_otter_trawls": _wfs("emodnet:fishingbottomottertrawls", "fishing", "Bottom otter trawl effort, 0.05 deg C-squares, European seas"),
     "fishing_beam_trawls": _wfs("emodnet:fishingbeamtrawls", "fishing", "Beam trawl effort, C-squares"),
@@ -101,6 +101,6 @@ SOURCES: Dict[str, Dict[str, Any]] = {
 THEMES = sorted({spec["theme"] for spec in SOURCES.values()})
 
 
-def keys_for_theme(*themes: str) -> List[str]:
+def keys_for_theme(*themes: str) -> list[str]:
     """Return the registry keys whose theme is one of ``themes`` (sorted)."""
     return sorted(k for k, s in SOURCES.items() if s["theme"] in themes)

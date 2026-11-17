@@ -1,7 +1,5 @@
-import io
 
 import pytest
-
 from norwegian_continental_shelf_data import NcsDataset, load_dataset
 
 

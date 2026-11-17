@@ -1,5 +1,4 @@
 import pytest
-
 from subsea_layout_geometry import SubseaLayoutModel
 
 

@@ -19,8 +19,8 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import fit_separator_pt as fit  # noqa: E402
-import run_forward_separator as rfs  # noqa: E402
+import fit_separator_pt as fit
+import run_forward_separator as rfs
 
 
 def lhs(n, d, rng):

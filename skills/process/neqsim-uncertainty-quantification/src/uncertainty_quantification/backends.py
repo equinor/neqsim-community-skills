@@ -21,7 +21,8 @@ input with a uniform one.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from collections.abc import Callable, Sequence
+from typing import Any
 
 from .distributions import Distribution
 
@@ -50,7 +51,7 @@ def chaospy_available() -> bool:
     return _try_import("chaospy") is not None
 
 
-def unit_problem(parameters: Sequence[Distribution]) -> Dict[str, Any]:
+def unit_problem(parameters: Sequence[Distribution]) -> dict[str, Any]:
     """SALib problem definition in unit space, one uniform per parameter."""
     return {
         "num_vars": len(parameters),
@@ -61,7 +62,7 @@ def unit_problem(parameters: Sequence[Distribution]) -> Dict[str, Any]:
 
 def to_parameter_values(
     parameters: Sequence[Distribution], unit_point: Sequence[float]
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Map one unit-space point onto engineering values through the marginals."""
     return {
         parameter.name: parameter.ppf(float(coordinate))
@@ -73,8 +74,8 @@ def saltelli_samples(
     parameters: Sequence[Distribution],
     n: int,
     calc_second_order: bool = False,
-    seed: Optional[int] = None,
-) -> List[Dict[str, float]]:
+    seed: int | None = None,
+) -> list[dict[str, float]]:
     """Saltelli design mapped onto engineering values.
 
     The evaluation count is ``n * (num_vars + 2)`` without second-order terms,
@@ -84,7 +85,7 @@ def saltelli_samples(
     salib = _try_import("SALib")
     if salib is None:
         raise BackendUnavailableError(
-            "SALib is not installed — {}".format(SALIB_INSTALL_HINT)
+            f"SALib is not installed — {SALIB_INSTALL_HINT}"
         )
     from SALib.sample import sobol as sobol_sample  # type: ignore
 
@@ -99,7 +100,7 @@ def sobol_indices(
     parameters: Sequence[Distribution],
     outputs: Sequence[float],
     calc_second_order: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Variance-based Sobol' indices from outputs of a Saltelli design.
 
     ``outputs`` must be in the order produced by :func:`saltelli_samples`.
@@ -109,7 +110,7 @@ def sobol_indices(
     salib = _try_import("SALib")
     if salib is None:
         raise BackendUnavailableError(
-            "SALib is not installed — {}".format(SALIB_INSTALL_HINT)
+            f"SALib is not installed — {SALIB_INSTALL_HINT}"
         )
     import numpy as np  # type: ignore
     from SALib.analyze import sobol as sobol_analyze  # type: ignore
@@ -130,11 +131,11 @@ def sobol_indices(
 
 def morris_screening(
     parameters: Sequence[Distribution],
-    model: Callable[[Dict[str, float]], float],
+    model: Callable[[dict[str, float]], float],
     trajectories: int = 10,
     levels: int = 4,
-    seed: Optional[int] = None,
-) -> Dict[str, Any]:
+    seed: int | None = None,
+) -> dict[str, Any]:
     """Morris elementary-effects screening — cheap ranking for many parameters.
 
     Use it to decide which parameters are worth a full Sobol' or Monte Carlo
@@ -143,7 +144,7 @@ def morris_screening(
     salib = _try_import("SALib")
     if salib is None:
         raise BackendUnavailableError(
-            "SALib is not installed — {}".format(SALIB_INSTALL_HINT)
+            f"SALib is not installed — {SALIB_INSTALL_HINT}"
         )
     import numpy as np  # type: ignore
     from SALib.analyze import morris as morris_analyze  # type: ignore
@@ -168,11 +169,11 @@ def morris_screening(
 
 def fit_polynomial_chaos(
     parameters: Sequence[Distribution],
-    model: Callable[[Dict[str, float]], float],
+    model: Callable[[dict[str, float]], float],
     order: int = 3,
-    samples: Optional[int] = None,
-    seed: Optional[int] = None,
-) -> Dict[str, Any]:
+    samples: int | None = None,
+    seed: int | None = None,
+) -> dict[str, Any]:
     """Fit a polynomial chaos surrogate in unit space and read statistics off it.
 
     Returns the surrogate, the joint distribution, mean, standard deviation, and
@@ -181,7 +182,7 @@ def fit_polynomial_chaos(
     chaospy = _try_import("chaospy")
     if chaospy is None:
         raise BackendUnavailableError(
-            "chaospy is not installed — {}".format(CHAOSPY_INSTALL_HINT)
+            f"chaospy is not installed — {CHAOSPY_INSTALL_HINT}"
         )
     import chaospy as cp  # type: ignore
     import numpy as np  # type: ignore
@@ -212,8 +213,8 @@ def fit_polynomial_chaos(
 
 
 def sample_surrogate(
-    fit: Dict[str, Any], n: int = 100000, seed: Optional[int] = None
-) -> List[float]:
+    fit: dict[str, Any], n: int = 100000, seed: int | None = None
+) -> list[float]:
     """Draw a large cheap sample from a fitted polynomial chaos surrogate.
 
     This is where the saving appears: percentiles come from a huge surrogate
@@ -222,7 +223,7 @@ def sample_surrogate(
     chaospy = _try_import("chaospy")
     if chaospy is None:
         raise BackendUnavailableError(
-            "chaospy is not installed — {}".format(CHAOSPY_INSTALL_HINT)
+            f"chaospy is not installed — {CHAOSPY_INSTALL_HINT}"
         )
     import numpy as np  # type: ignore
 

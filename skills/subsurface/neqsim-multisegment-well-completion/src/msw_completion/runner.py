@@ -7,7 +7,6 @@ import io
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 from .msw import keyword_blocks, split_schedule
 
@@ -20,7 +19,7 @@ class CompletorUnavailable(RuntimeError):
     """completor cannot be imported."""
 
 
-def completor_version() -> Optional[str]:
+def completor_version() -> str | None:
     try:
         from importlib.metadata import version
 
@@ -29,7 +28,7 @@ def completor_version() -> Optional[str]:
         return None
 
 
-def run_completor(case_text: str, schedule_text: str, output_path: Union[str, Path]) -> Dict[str, object]:
+def run_completor(case_text: str, schedule_text: str, output_path: str | Path) -> dict[str, object]:
     """Run completor on schedule text and write the advanced schedule to ``output_path``.
 
     A whole deck may be passed: only the SCHEDULE section is processed and the rest is kept unchanged.
@@ -44,7 +43,7 @@ def run_completor(case_text: str, schedule_text: str, output_path: Union[str, Pa
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     tmp = output_path.with_suffix(output_path.suffix + ".schedule.tmp")
-    records: List[str] = []
+    records: list[str] = []
 
     class _Collect(logging.Handler):
         def emit(self, record: logging.LogRecord) -> None:
@@ -67,22 +66,22 @@ def run_completor(case_text: str, schedule_text: str, output_path: Union[str, Pa
     return {"output": str(output_path), "warnings": warnings, "completor_version": completor_version()}
 
 
-def _num(token: Optional[str]) -> Optional[float]:
+def _num(token: str | None) -> float | None:
     try:
         return float(token) if token is not None else None
     except ValueError:
         return None
 
 
-def read_device_layer(deck_text: str) -> Dict[str, Dict[str, object]]:
+def read_device_layer(deck_text: str) -> dict[str, dict[str, object]]:
     """Summarise a completor output deck per well: segments, branches and devices per segment.
 
     Device rows carry ``segment``, ``kind`` and ``devices`` (from the scale factor ``-1/N`` for AICD and ICD;
     for valves completor multiplies Cv by N instead, so ``cv_segment`` is reported).
     """
-    wells: Dict[str, Dict[str, object]] = {}
+    wells: dict[str, dict[str, object]] = {}
 
-    def well(name: str) -> Dict[str, object]:
+    def well(name: str) -> dict[str, object]:
         return wells.setdefault(name, {"segments": 0, "branches": set(), "devices": [], "md_by_segment": {}})
 
     for _, _, recs in keyword_blocks(deck_text, "WELSEGS"):
@@ -126,7 +125,7 @@ def read_device_layer(deck_text: str) -> Dict[str, Dict[str, object]]:
         devices = sorted(entry["devices"], key=lambda d: d["segment"])
         for d in devices:
             d["md"] = entry["md_by_segment"].get(d["segment"])
-        counts: Dict[str, int] = {}
+        counts: dict[str, int] = {}
         for d in devices:
             counts[d["kind"]] = counts.get(d["kind"], 0) + 1
         summary[name] = {"segments": entry["segments"], "branches": len(entry["branches"]),

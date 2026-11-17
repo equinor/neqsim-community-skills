@@ -18,7 +18,6 @@ from __future__ import annotations
 import heapq
 import math
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
 
 import numpy as np
 
@@ -49,7 +48,7 @@ class SeismicCube:
         """Sample value (ms) at a fractional sample index."""
         return float(self.samples[0] + index * self.dt)
 
-    def index_of(self, inline: int, crossline: int) -> Tuple[int, int]:
+    def index_of(self, inline: int, crossline: int) -> tuple[int, int]:
         """Array indices of an inline/crossline pair.
 
         Raises:
@@ -60,14 +59,14 @@ class SeismicCube:
         except IndexError as exc:
             raise ValueError(f"inline {inline} / crossline {crossline} is not in the survey") from exc
 
-    def nearest_trace(self, x: float, y: float) -> Tuple[int, int, float]:
+    def nearest_trace(self, x: float, y: float) -> tuple[int, int, float]:
         """Indices of the trace nearest a map point and the snap distance."""
         d2 = (self.x - x) ** 2 + (self.y - y) ** 2
         d2 = np.where(np.isfinite(d2), d2, np.inf)
         i, j = np.unravel_index(int(np.argmin(d2)), d2.shape)
         return int(i), int(j), float(math.sqrt(d2[i, j]))
 
-    def grid_geometry(self) -> Dict[str, float]:
+    def grid_geometry(self) -> dict[str, float]:
         """Surface geometry: crosslines along the column axis, inlines along the row axis."""
         ii, jj = np.meshgrid(np.arange(self.inlines.size), np.arange(self.crosslines.size), indexing="ij")
         ok = np.isfinite(self.x) & np.isfinite(self.y)
@@ -90,7 +89,7 @@ def load_cube(path, header_bytes=None, max_samples: int = MAX_SAMPLES_IN_MEMORY)
     Raises:
         ValueError: for unstructured or pre-stack files, or cubes larger than ``max_samples``.
     """
-    from segy_seismic_reading import DEFAULT_HEADER_BYTES, open_segy, trace_coordinates  # noqa: PLC0415
+    from segy_seismic_reading import DEFAULT_HEADER_BYTES, open_segy, trace_coordinates
 
     with open_segy(path, header_bytes or DEFAULT_HEADER_BYTES) as (handle, used, note):
         if used is None:
@@ -115,7 +114,7 @@ def load_cube(path, header_bytes=None, max_samples: int = MAX_SAMPLES_IN_MEMORY)
     return SeismicCube(data, inlines, crosslines, samples, x, y, str(path))
 
 
-def _pick(trace: np.ndarray, centre: float, half_window: int, sign: int) -> Optional[Tuple[float, float]]:
+def _pick(trace: np.ndarray, centre: float, half_window: int, sign: int) -> tuple[float, float] | None:
     """Best extremum of polarity ``sign`` within ``half_window`` samples of ``centre`` (parabolic refine)."""
     n = trace.size
     lo, hi = max(1, int(math.floor(centre)) - half_window), min(n - 2, int(math.ceil(centre)) + half_window)
@@ -193,7 +192,7 @@ def track_horizon(cube: SeismicCube, seed_inline: int, seed_crossline: int, seed
     return surface
 
 
-def seed_from_well(cube: SeismicCube, x: float, y: float, depth_m: float, velocity) -> Dict[str, float]:
+def seed_from_well(cube: SeismicCube, x: float, y: float, depth_m: float, velocity) -> dict[str, float]:
     """Seed at a well: nearest trace to the well and the time of a known top from a velocity model.
 
     Returns:

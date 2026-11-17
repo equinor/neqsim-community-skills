@@ -16,7 +16,6 @@ reported as available=False and its calculation is skipped with an explicit reas
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Dict, List, Optional
 
 from .runtime import RuntimeStatus, ensure_runtime
 
@@ -31,7 +30,7 @@ class LedgerEntry:
     calculation: str
     status: str
     implementation: str
-    requires: List[str] = field(default_factory=list)
+    requires: list[str] = field(default_factory=list)
     validation_evidence: str = ""
     limits: str = ""
     route_if_not_available: str = ""
@@ -126,7 +125,7 @@ JAVA_FOLLOW_UPS = [
 ]
 
 
-def build_ledger(runtime: Optional[RuntimeStatus] = None) -> List[LedgerEntry]:
+def build_ledger(runtime: RuntimeStatus | None = None) -> list[LedgerEntry]:
     """Return the ledger with ``available`` set from the runtime probe."""
     rt = runtime or ensure_runtime()
     out = []
@@ -137,12 +136,12 @@ def build_ledger(runtime: Optional[RuntimeStatus] = None) -> List[LedgerEntry]:
     return out
 
 
-def ledger_rows(runtime: Optional[RuntimeStatus] = None) -> List[Dict[str, object]]:
+def ledger_rows(runtime: RuntimeStatus | None = None) -> list[dict[str, object]]:
     """Ledger as dictionaries (for JSON, Word tables)."""
     return [asdict(e) for e in build_ledger(runtime)]
 
 
-def status_counts(runtime: Optional[RuntimeStatus] = None) -> Dict[str, int]:
+def status_counts(runtime: RuntimeStatus | None = None) -> dict[str, int]:
     """Count ledger rows per status label."""
     counts = {s: 0 for s in STATUS}
     for e in build_ledger(runtime):

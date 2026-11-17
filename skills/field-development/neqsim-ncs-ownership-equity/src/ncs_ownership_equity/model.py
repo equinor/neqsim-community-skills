@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Union
 
 TOLERANCE_PCT = 0.01
 Series = Union[Sequence[float], Mapping[Any, float]]
@@ -19,20 +20,20 @@ class Stake:
     """One company's interest in an owner (licence or business arrangement area)."""
 
     company: str
-    company_id: Optional[int]
+    company_id: int | None
     interest_pct: float
-    sdfi_pct: Optional[float] = None
-    valid_from: Optional[date] = None
-    valid_to: Optional[date] = None
+    sdfi_pct: float | None = None
+    valid_from: date | None = None
+    valid_to: date | None = None
     is_operator: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {"company": self.company, "company_id": self.company_id, "interest_pct": self.interest_pct,
                 "sdfi_pct": self.sdfi_pct, "valid_from": _iso(self.valid_from), "valid_to": _iso(self.valid_to),
                 "is_operator": self.is_operator}
 
 
-def _iso(value: Optional[date]) -> Optional[str]:
+def _iso(value: date | None) -> str | None:
     return value.isoformat() if value else None
 
 
@@ -48,15 +49,15 @@ class OwnershipRecord:
     name: str
     as_of: date
     basis: str
-    stakes: List[Stake]
-    npdid: Optional[int] = None
-    owner_kind: Optional[str] = None
-    owner_name: Optional[str] = None
-    operator: Optional[str] = None
-    included_in_field: Optional[str] = None
-    last_updated: Optional[date] = None
+    stakes: list[Stake]
+    npdid: int | None = None
+    owner_kind: str | None = None
+    owner_name: str | None = None
+    operator: str | None = None
+    included_in_field: str | None = None
+    last_updated: date | None = None
     source: str = ""
-    warnings: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     @property
     def total_pct(self) -> float:
@@ -67,9 +68,9 @@ class OwnershipRecord:
         """True when the interests add up to 100 % within tolerance."""
         return abs(self.total_pct - 100.0) <= TOLERANCE_PCT
 
-    def fractions(self) -> Dict[str, float]:
+    def fractions(self) -> dict[str, float]:
         """Equity fractions by company, normalised by 100 (not by the total)."""
-        out: Dict[str, float] = {}
+        out: dict[str, float] = {}
         for stake in self.stakes:
             out[stake.company] = out.get(stake.company, 0.0) + stake.interest_pct / 100.0
         return out
@@ -90,7 +91,7 @@ class OwnershipRecord:
     def fraction_of(self, company: str) -> float:
         return self.find(company).interest_pct / 100.0
 
-    def allocate(self, gross: Series) -> Dict[str, Series]:
+    def allocate(self, gross: Series) -> dict[str, Series]:
         """Split a gross series (volumes, revenue, capex, opex) into each partner's net share."""
         return {name: scale(gross, frac) for name, frac in self.fractions().items()}
 
@@ -98,9 +99,9 @@ class OwnershipRecord:
         """One company's net share of a gross series."""
         return scale(gross, self.fraction_of(company))
 
-    def to_economics_handoff(self, company: Optional[str] = None) -> Dict[str, Any]:
+    def to_economics_handoff(self, company: str | None = None) -> dict[str, Any]:
         """Dict a field-economics or NPV step can consume (equity fractions plus caveats)."""
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             "asset": self.name, "kind": self.kind, "as_of": self.as_of.isoformat(), "basis": self.basis,
             "owner": {"kind": self.owner_kind, "name": self.owner_name}, "operator": self.operator,
             "equity_fraction": self.fractions(), "total_pct": self.total_pct, "complete": self.is_complete,
@@ -114,7 +115,7 @@ class OwnershipRecord:
             data["company_fraction"] = stake.interest_pct / 100.0
         return data
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {"kind": self.kind, "name": self.name, "npdid": self.npdid, "as_of": self.as_of.isoformat(),
                 "basis": self.basis, "owner_kind": self.owner_kind, "owner_name": self.owner_name,
                 "operator": self.operator, "included_in_field": self.included_in_field,
@@ -154,9 +155,9 @@ def portfolio_net(items: Sequence[tuple], company: str) -> Series:
     return total
 
 
-def check_prospect_stakes(stakes: Mapping[str, float], allow_partial: bool) -> List[str]:
+def check_prospect_stakes(stakes: Mapping[str, float], allow_partial: bool) -> list[str]:
     """Validate user-supplied prospect interests and return warnings."""
-    warnings: List[str] = []
+    warnings: list[str] = []
     if not stakes:
         raise OwnershipError("a prospect needs at least one partner")
     if any(v < 0 for v in stakes.values()):

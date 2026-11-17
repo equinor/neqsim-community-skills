@@ -1,5 +1,4 @@
 import pytest
-
 from resource_classification_screening import ResourceClassificationModel
 
 

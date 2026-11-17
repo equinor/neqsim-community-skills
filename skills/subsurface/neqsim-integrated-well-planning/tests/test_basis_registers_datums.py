@@ -1,10 +1,17 @@
-import copy
 
 import pytest
-
-from integrated_well_planning import datums, examples_data as ed
-from integrated_well_planning.basis import (CASES, basis_to_registers, case_value, load_basis, rng, save_basis, template_basis, validate_basis)
-from integrated_well_planning.registers import Registers, RegisterItem, get_path, registers_from_basis
+from integrated_well_planning import datums
+from integrated_well_planning import examples_data as ed
+from integrated_well_planning.basis import (
+    basis_to_registers,
+    case_value,
+    load_basis,
+    rng,
+    save_basis,
+    template_basis,
+    validate_basis,
+)
+from integrated_well_planning.registers import RegisterItem, Registers, get_path
 
 
 def _cases():

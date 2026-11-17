@@ -5,8 +5,8 @@ Educational, public-method screening only. Units: metres, kilonewtons, kilonewto
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence, Tuple
 
 G = 9.81
 
@@ -59,7 +59,7 @@ class ReachResult:
     limiting: str
 
 
-def build_hold_profile(tvd: float, departure: float, env: WellEnvironment = WellEnvironment()) -> Optional[Tuple[float, float, float]]:
+def build_hold_profile(tvd: float, departure: float, env: WellEnvironment = WellEnvironment()) -> tuple[float, float, float] | None:
     """Return (hold inclination deg, measured depth m, build radius m) for a build-and-hold path, or None if unreachable."""
     if tvd <= env.kop_m or departure < 0.0:
         raise ValueError("tvd must exceed the kick-off point and departure must be non-negative")
@@ -84,7 +84,7 @@ def build_hold_profile(tvd: float, departure: float, env: WellEnvironment = Well
     return inc, md, radius
 
 
-def survey(tvd: float, departure: float, env: WellEnvironment = WellEnvironment(), step: float = 10.0) -> Optional[Tuple[List[float], List[float], float]]:
+def survey(tvd: float, departure: float, env: WellEnvironment = WellEnvironment(), step: float = 10.0) -> tuple[list[float], list[float], float] | None:
     """Stations (md list, inclination list in degrees) and the total measured depth."""
     profile = build_hold_profile(tvd, departure, env)
     if profile is None:
@@ -96,7 +96,7 @@ def survey(tvd: float, departure: float, env: WellEnvironment = WellEnvironment(
     return mds, incs, md_total
 
 
-def _weights(mds: Sequence[float], string: DrillString) -> List[float]:
+def _weights(mds: Sequence[float], string: DrillString) -> list[float]:
     total = mds[-1]
     out = []
     for k in range(1, len(mds)):
@@ -112,7 +112,7 @@ def _weights(mds: Sequence[float], string: DrillString) -> List[float]:
 
 
 def torque_and_drag(mds: Sequence[float], incs: Sequence[float], string: DrillString, env: WellEnvironment, mode: str,
-                    weights: Optional[Sequence[float]] = None, preload_kn: float = 0.0) -> Tuple[float, float]:
+                    weights: Sequence[float] | None = None, preload_kn: float = 0.0) -> tuple[float, float]:
     """Soft-string load (kN) and surface torque (kNm), integrated from the bit up.
 
     mode: ``pickup``, ``slackoff`` or ``rotate``. ``preload_kn`` is a tension applied at the bit (use it for capstan checks).
@@ -141,7 +141,7 @@ def torque_and_drag(mds: Sequence[float], incs: Sequence[float], string: DrillSt
     return force / 1000.0, torque / 1000.0
 
 
-def screen_reach(tvd: float, departure: float, string: DrillString = DrillString(), env: WellEnvironment = WellEnvironment()) -> Optional[ReachResult]:
+def screen_reach(tvd: float, departure: float, string: DrillString = DrillString(), env: WellEnvironment = WellEnvironment()) -> ReachResult | None:
     """Torque-and-drag screening of one target. Returns None when the build-and-hold path cannot reach it."""
     s = survey(tvd, departure, env)
     if s is None:
@@ -177,7 +177,7 @@ def reach_limit(tvd: float, string: DrillString = DrillString(), env: WellEnviro
 class Assumptions:
     """Human-readable record of the screening basis."""
 
-    items: List[str] = field(default_factory=lambda: [
+    items: list[str] = field(default_factory=lambda: [
         "Build-and-hold path, constant build rate from the kick-off point; no azimuth change or drop section.",
         "Johancsik soft-string model with Coulomb friction; tool-joint radius for torque; 10 percent added on bottom.",
         "Friction factors are calibration inputs; calibrate to the longest historic well on the same rig before using a reach.",

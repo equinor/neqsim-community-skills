@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 from .comparison import (
     STATUS_FAIL,
@@ -35,21 +34,21 @@ def _slug(text: str) -> str:
 class BenchmarkReport:
     """A set of benchmark results plus the roll-up the report and gate need."""
 
-    results: List[BenchmarkResult] = field(default_factory=list)
+    results: list[BenchmarkResult] = field(default_factory=list)
     title: str = "Benchmark validation"
     description: str = ""
 
-    def add(self, result: BenchmarkResult) -> "BenchmarkReport":
+    def add(self, result: BenchmarkResult) -> BenchmarkReport:
         """Append one result and return self so calls can be chained."""
         self.results.append(result)
         return self
 
-    def extend(self, results: List[BenchmarkResult]) -> "BenchmarkReport":
+    def extend(self, results: list[BenchmarkResult]) -> BenchmarkReport:
         """Append several results and return self."""
         self.results.extend(results)
         return self
 
-    def counts(self) -> Dict[str, int]:
+    def counts(self) -> dict[str, int]:
         """Number of results per status."""
         tally = {STATUS_PASS: 0, STATUS_WARN: 0, STATUS_FAIL: 0, STATUS_INFO: 0}
         for result in self.results:
@@ -76,30 +75,28 @@ class BenchmarkReport:
         """True when enough graded comparisons exist to satisfy the task rules."""
         return self.graded_points() >= minimum
 
-    def sources_used(self) -> List[str]:
+    def sources_used(self) -> list[str]:
         """Distinct reference source keys, in first-seen order."""
-        seen: List[str] = []
+        seen: list[str] = []
         for result in self.results:
             if result.source_key not in seen:
                 seen.append(result.source_key)
         return seen
 
-    def citations(self) -> List[str]:
+    def citations(self) -> list[str]:
         """Distinct citation strings for the report's reference list."""
-        seen: List[str] = []
+        seen: list[str] = []
         for result in self.results:
             if result.citation and result.citation not in seen:
                 seen.append(result.citation)
         return seen
 
-    def blockers(self, minimum: int = MINIMUM_POINTS) -> List[str]:
+    def blockers(self, minimum: int = MINIMUM_POINTS) -> list[str]:
         """Reasons the benchmark block should not be presented as validated."""
-        issues: List[str] = []
+        issues: list[str] = []
         if not self.meets_minimum_points(minimum):
             issues.append(
-                "only {} graded comparison(s); at least {} are required".format(
-                    self.graded_points(), minimum
-                )
+                f"only {self.graded_points()} graded comparison(s); at least {minimum} are required"
             )
         failed = [r.name for r in self.results if r.status == STATUS_FAIL]
         if failed:
@@ -113,19 +110,19 @@ class BenchmarkReport:
             )
         return issues
 
-    def to_results_json(self) -> Dict[str, object]:
+    def to_results_json(self) -> dict[str, object]:
         """Keyed-object ``benchmark_validation`` block for ``results.json``.
 
         Summary fields are kept scalar so the report generator renders them as a
         readable row rather than a nested repr.
         """
-        block: Dict[str, object] = {}
-        used: Dict[str, int] = {}
+        block: dict[str, object] = {}
+        used: dict[str, int] = {}
         for result in self.results:
             key = _slug(result.name)
             used[key] = used.get(key, 0) + 1
             if used[key] > 1:
-                key = "{}_{}".format(key, used[key])
+                key = f"{key}_{used[key]}"
             block[key] = result.to_dict()
         tally = self.counts()
         blockers = self.blockers()
@@ -143,7 +140,7 @@ class BenchmarkReport:
         }
         return block
 
-    def to_results_json_list(self) -> List[Dict[str, object]]:
+    def to_results_json_list(self) -> list[dict[str, object]]:
         """Array form of the same block."""
         entries = []
         for result in self.results:
@@ -152,7 +149,7 @@ class BenchmarkReport:
             entries.append(payload)
         return entries
 
-    def to_markdown(self, max_note_chars: Optional[int] = 80) -> str:
+    def to_markdown(self, max_note_chars: int | None = 80) -> str:
         """Markdown table for a notebook cell or the report body."""
         header = (
             "| Case | Property | Model | Reference | Dev. % | Tol. % | Status |\n"
@@ -161,31 +158,19 @@ class BenchmarkReport:
         rows = []
         for result in self.results:
             deviation = (
-                "-" if result.deviation_pct is None else "{:+.3g}".format(result.deviation_pct)
+                "-" if result.deviation_pct is None else f"{result.deviation_pct:+.3g}"
             )
             rows.append(
-                "| {} | {} | {:.6g} {} | {:.6g} {} | {} | {:.3g} | {} |".format(
-                    result.name,
-                    result.property_name,
-                    result.model_value,
-                    result.unit,
-                    result.reference_value,
-                    result.unit,
-                    deviation,
-                    result.tolerance_pct,
-                    result.status,
-                )
+                f"| {result.name} | {result.property_name} | {result.model_value:.6g} {result.unit} | {result.reference_value:.6g} {result.unit} | {deviation} | {result.tolerance_pct:.3g} | {result.status} |"
             )
         table = header + "\n".join(rows)
-        summary = "\n\nOverall: **{}** ({} graded of {} points).".format(
-            self.overall_status, self.graded_points(), len(self.results)
-        )
+        summary = f"\n\nOverall: **{self.overall_status}** ({self.graded_points()} graded of {len(self.results)} points)."
         blockers = self.blockers()
         if blockers:
             summary += "\n\nBlockers:\n" + "\n".join("- " + b for b in blockers)
         if max_note_chars:
             notes = [
-                "- {}: {}".format(r.name, r.note[:max_note_chars])
+                f"- {r.name}: {r.note[:max_note_chars]}"
                 for r in self.results
                 if r.note
             ]

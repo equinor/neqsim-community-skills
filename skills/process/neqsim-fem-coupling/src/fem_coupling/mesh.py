@@ -21,11 +21,11 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from importlib.util import find_spec
 from math import isfinite, radians
 from pathlib import Path
-from typing import Mapping, Sequence
 
 # Beyond this in-plane aspect ratio the element gradients degrade noticeably for
 # linear elements, which is what a through-thickness temperature profile depends on.
@@ -362,13 +362,7 @@ class FemMeshSpec:
             for j in range(ny):
                 loop = loop_counter
                 lines.append(
-                    "Curve Loop({}) = {{{}, {}, -{}, -{}}};".format(
-                        loop,
-                        horizontal[(i, j)],
-                        vertical[(i + 1, j)],
-                        horizontal[(i, j + 1)],
-                        vertical[(i, j)],
-                    )
+                    f"Curve Loop({loop}) = {{{horizontal[(i, j)]}, {vertical[(i + 1, j)]}, -{horizontal[(i, j + 1)]}, -{vertical[(i, j)]}}};"
                 )
                 lines.append(f"Plane Surface({loop}) = {{{loop}}};")
                 lines.append(f"Transfinite Surface {{{loop}}};")
@@ -506,7 +500,7 @@ class FemMeshSpec:
         geo_path.write_text(self.geo_script(), encoding="utf-8")
         return geo_path
 
-    def generate(self, directory: str | Path, *, timeout_seconds: int = 300) -> "MeshOutcome":
+    def generate(self, directory: str | Path, *, timeout_seconds: int = 300) -> MeshOutcome:
         """Write the ``.geo`` and mesh it with Gmsh when Gmsh is available.
 
         Returns a :class:`MeshOutcome` describing what happened. When Gmsh is
@@ -524,7 +518,7 @@ class FemMeshSpec:
 
         if find_spec("gmsh") is not None:
             try:
-                import gmsh  # noqa: PLC0415 - optional dependency, imported on demand
+                import gmsh
 
                 gmsh.initialize()
                 try:
@@ -552,7 +546,7 @@ class FemMeshSpec:
 
         if shutil.which("gmsh"):
             try:
-                completed = subprocess.run(  # noqa: S603 - fixed command shape
+                completed = subprocess.run(
                     ["gmsh", f"-{dimension}", "-order", str(self.element_order),
                      geo_path.name, "-o", msh_path.name],
                     cwd=str(target),

@@ -9,7 +9,7 @@ number is fabricated for those assessments.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -18,7 +18,7 @@ from .integrity import pipe_dimensions, tubular_ratings
 from .registers import get_path
 
 
-def trajectory_from_basis(basis: Dict[str, Any]) -> Dict[str, Any]:
+def trajectory_from_basis(basis: dict[str, Any]) -> dict[str, Any]:
     """Compute the survey from a supplied station table, or from the build-and-hold description, and check datum consistency."""
     traj = get_path(basis, "trajectory") or {}
     md = float(traj["md_m"])
@@ -38,7 +38,7 @@ def trajectory_from_basis(basis: Dict[str, Any]) -> Dict[str, Any]:
     return {"survey": survey, "summary": summary, "source": source, "consistency_problems": problems, "status": "PASS" if not problems else "REVIEW"}
 
 
-def casing_ratings(basis: Dict[str, Any]) -> List[Dict[str, Any]]:
+def casing_ratings(basis: dict[str, Any]) -> list[dict[str, Any]]:
     """Formula ratings of every casing string (no loads): burst, collapse, body yield; ``available`` False without the drilling module."""
     rows = []
     for c in get_path(basis, "completion.casing") or []:
@@ -52,7 +52,7 @@ def casing_ratings(basis: Dict[str, Any]) -> List[Dict[str, Any]]:
     return rows
 
 
-def pressure_window(basis: Dict[str, Any]) -> Dict[str, Any]:
+def pressure_window(basis: dict[str, Any]) -> dict[str, Any]:
     """Pore/mud/fracture arithmetic at the casing shoes. No trip, kick or fracture margins are applied (none supplied)."""
     pts = get_path(basis, "drilling.pressure_window") or []
     if not pts:
@@ -88,7 +88,7 @@ INTERFACES = [
 ]
 
 
-def interface_specifications(basis: Dict[str, Any]) -> List[Dict[str, Any]]:
+def interface_specifications(basis: dict[str, Any]) -> list[dict[str, Any]]:
     """Interface specification per specialist assessment with available/missing inputs and an UNRESOLVED status."""
     checks = {
         "trajectory.stations": bool(get_path(basis, "trajectory.stations")),

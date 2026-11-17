@@ -9,7 +9,6 @@ import sys
 from pathlib import Path
 
 import numpy as np
-
 from well_design_study import wellplan_charts as wc
 from well_design_study import wellplan_graphics as wg
 from well_design_study.report import WellPlanReport

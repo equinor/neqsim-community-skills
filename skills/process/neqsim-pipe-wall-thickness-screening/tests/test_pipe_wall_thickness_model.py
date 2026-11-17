@@ -1,5 +1,4 @@
 import pytest
-
 from pipe_wall_thickness_screening import PipeWallThicknessModel
 
 

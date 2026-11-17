@@ -1,5 +1,4 @@
 import pytest
-
 from heat_exchanger_fouling_assessment import HeatExchangerFoulingModel
 
 BASE_CASE = dict(

@@ -3,12 +3,17 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from PIL import Image
-
-from integrated_well_planning import examples_data as ed, iwp_graphics as G, iwp_style as S
+from integrated_well_planning import examples_data as ed
+from integrated_well_planning import iwp_graphics as G
+from integrated_well_planning import iwp_style as S
 from integrated_well_planning.barriers import propose_barriers
 from integrated_well_planning.datums import build_and_hold
-from integrated_well_planning.iwp_drawings import barrier_schematic_sheet, render_sheet, well_schematic_sheet
+from integrated_well_planning.iwp_drawings import (
+    barrier_schematic_sheet,
+    render_sheet,
+    well_schematic_sheet,
+)
+from PIL import Image
 
 
 def _profile(n=10, depth=2500.0):

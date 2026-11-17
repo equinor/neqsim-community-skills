@@ -1,5 +1,4 @@
 import pytest
-
 from hydrate_screening import HydrateScreener
 
 

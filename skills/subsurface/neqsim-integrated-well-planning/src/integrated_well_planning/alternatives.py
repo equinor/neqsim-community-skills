@@ -6,31 +6,30 @@ enter only when the basis supplies them (with currency and source) and are carri
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any
 
-import numpy as np
-
-from .basis import CASES, PRODUCER_TYPES, case_value, rng
+from .basis import CASES, PRODUCER_TYPES, rng
 from .registers import get_path
 
 DEFAULT_CRITERIA = ["deliverability", "erosion_margin", "loading_margin", "energy_demand", "cost", "uncertainty_spread", "intervention_access"]
 
 
-def default_alternatives(basis: Dict[str, Any]) -> List[Dict[str, Any]]:
+def default_alternatives(basis: dict[str, Any]) -> list[dict[str, Any]]:
     """Alternatives to compare when the basis supplies none: tubing size x lift strategy (producers) or tubing size (injectors)."""
     wtype = get_path(basis, "well.type")
     d0 = float(get_path(basis, "completion.tubing.id_m"))
     sizes = sorted({round(d0 * f, 4) for f in (0.85, 1.0, 1.2)})
     alts = []
     for d in sizes:
-        alts.append({"id": "T{:.0f}".format(d * 1000), "label": "tubing ID {:.0f} mm".format(d * 1000), "overrides": {"tubing_id_m": d}})
+        alts.append({"id": f"T{d * 1000:.0f}", "label": f"tubing ID {d * 1000:.0f} mm", "overrides": {"tubing_id_m": d}})
     if wtype in PRODUCER_TYPES:
-        alts.append({"id": "T{:.0f}-GL".format(d0 * 1000), "label": "tubing ID {:.0f} mm + gas lift 100 kSm3/d".format(d0 * 1000),
+        alts.append({"id": f"T{d0 * 1000:.0f}-GL", "label": f"tubing ID {d0 * 1000:.0f} mm + gas lift 100 kSm3/d",
                      "overrides": {"tubing_id_m": d0, "lift_gas_sm3d": 1.0e5}, "lift": "gas_lift"})
     return alts
 
 
-def evaluate_alternatives(model: Any, basis: Dict[str, Any], alternatives: Optional[List[Dict[str, Any]]] = None, cases: Sequence[str] = CASES, producer: bool = True) -> List[Dict[str, Any]]:
+def evaluate_alternatives(model: Any, basis: dict[str, Any], alternatives: list[dict[str, Any]] | None = None, cases: Sequence[str] = CASES, producer: bool = True) -> list[dict[str, Any]]:
     """Run each alternative through the chain for each outcome case and collect comparable metrics."""
     alts = alternatives or get_path(basis, "alternatives") or default_alternatives(basis)
     results = []
@@ -40,7 +39,7 @@ def evaluate_alternatives(model: Any, basis: Dict[str, Any], alternatives: Optio
             r = model.operating_point(c, alt.get("overrides"), detail=(c == "base")) if producer else model.operating_point(c, alt.get("overrides"))
             per_case[c] = r
         base = per_case["base"]
-        row: Dict[str, Any] = {"id": alt["id"], "label": alt.get("label", alt["id"]), "overrides": alt.get("overrides", {}), "cost": alt.get("cost"), "qualitative": alt.get("qualitative", {}),
+        row: dict[str, Any] = {"id": alt["id"], "label": alt.get("label", alt["id"]), "overrides": alt.get("overrides", {}), "cost": alt.get("cost"), "qualitative": alt.get("qualitative", {}),
                                "lift": alt.get("lift", "none")}
         if producer:
             tub = base.get("tubing", {})
@@ -60,12 +59,12 @@ def evaluate_alternatives(model: Any, basis: Dict[str, Any], alternatives: Optio
     return results
 
 
-def scorecard(rows: List[Dict[str, Any]], weights: Optional[Dict[str, float]] = None, producer: bool = True) -> Dict[str, Any]:
+def scorecard(rows: list[dict[str, Any]], weights: dict[str, float] | None = None, producer: bool = True) -> dict[str, Any]:
     """Normalised 0-1 criterion scores (1 = best) and a weighted total; weights default to equal and are labelled ASSUMED."""
     crit = list(DEFAULT_CRITERIA) if producer else ["feasibility", "wellhead_pressure", "energy_demand", "fracture_margin", "cost", "uncertainty_spread", "intervention_access"]
     weights_used = dict(weights or {c: 1.0 for c in crit})
     weights_source = "supplied" if weights else "ASSUMED equal weights"
-    raw: Dict[str, Dict[str, Optional[float]]] = {c: {} for c in crit}
+    raw: dict[str, dict[str, float | None]] = {c: {} for c in crit}
     for r in rows:
         i = r["id"]
         if producer:
@@ -90,12 +89,12 @@ def scorecard(rows: List[Dict[str, Any]], weights: Optional[Dict[str, float]] = 
     return score_raw([r["id"] for r in rows], crit, raw, weights_used, weights_source)
 
 
-def score_raw(ids: Sequence[str], crit: Sequence[str], raw: Dict[str, Dict[str, Optional[float]]], weights_used: Dict[str, float], weights_source: str = "ASSUMED equal weights") -> Dict[str, Any]:
+def score_raw(ids: Sequence[str], crit: Sequence[str], raw: dict[str, dict[str, float | None]], weights_used: dict[str, float], weights_source: str = "ASSUMED equal weights") -> dict[str, Any]:
     """Normalise raw criterion values (higher = better, ``None`` = no data) to 0-1 per criterion and compute the weighted total per alternative.
 
     Criteria without data for any alternative are excluded from the total (not scored zero). Use this directly for study-specific criteria.
     """
-    scores: Dict[str, Dict[str, Optional[float]]] = {}
+    scores: dict[str, dict[str, float | None]] = {}
     for c in crit:
         vals = [v for v in raw[c].values() if v is not None]
         scores[c] = {}
@@ -116,7 +115,7 @@ def score_raw(ids: Sequence[str], crit: Sequence[str], raw: Dict[str, Dict[str, 
             "note": "scores are relative to the alternatives compared; criteria without data are excluded from the weighted total, not scored zero"}
 
 
-def pareto_front(points: Dict[str, Sequence[float]], maximise: Sequence[bool]) -> List[str]:
+def pareto_front(points: dict[str, Sequence[float]], maximise: Sequence[bool]) -> list[str]:
     """Non-dominated ids for points given as {id: (x, y, ...)} with a per-axis maximise flag."""
     ids = list(points)
     front = []
@@ -135,7 +134,7 @@ def pareto_front(points: Dict[str, Sequence[float]], maximise: Sequence[bool]) -
     return front
 
 
-def tornado(model: Any, basis: Dict[str, Any], producer: bool = True, parameters: Optional[List[str]] = None) -> Dict[str, Any]:
+def tornado(model: Any, basis: dict[str, Any], producer: bool = True, parameters: list[str] | None = None) -> dict[str, Any]:
     """One-at-a-time sensitivity: swing of the base-case metric when each parameter moves to its low/high value.
 
     Metric: stock-tank/standard rate at the stable operating point (producers) or required wellhead pressure (injectors).
@@ -157,7 +156,7 @@ def tornado(model: Any, basis: Dict[str, Any], producer: bool = True, parameters
     return {"metric": "q_op [Sm3/d]" if producer else "required WHP [bara]", "reference": ref, "rows": rows}
 
 
-def sensitivity_grid(model: Any, case: str, x_param: str, x_vals: List[float], y_param: str, y_vals: List[float]) -> Dict[str, Any]:
+def sensitivity_grid(model: Any, case: str, x_param: str, x_vals: list[float], y_param: str, y_vals: list[float]) -> dict[str, Any]:
     """Two-parameter grid of operating rate (producer) for a heat map."""
     z = []
     for y in y_vals:
@@ -165,10 +164,10 @@ def sensitivity_grid(model: Any, case: str, x_param: str, x_vals: List[float], y
     return {"x_param": x_param, "x": x_vals, "y_param": y_param, "y": y_vals, "q_op": z}
 
 
-def deliverability_profile(model: Any, basis: Dict[str, Any], years: Sequence[float], cases: Sequence[str] = CASES) -> Dict[str, Any]:
+def deliverability_profile(model: Any, basis: dict[str, Any], years: Sequence[float], cases: Sequence[str] = CASES) -> dict[str, Any]:
     """Deliverability (plateau capacity) versus time with linear depletion. NOT a production forecast and not a recovery estimate."""
     dep = float(get_path(basis, "reservoir.depletion_bar_per_year") or 0.0)
-    out: Dict[str, Any] = {"years": list(years), "cases": {}, "target": None, "note": "deliverability at depleted reservoir pressure with constant other inputs; not a production forecast, no recovery inferred"}
+    out: dict[str, Any] = {"years": list(years), "cases": {}, "target": None, "note": "deliverability at depleted reservoir pressure with constant other inputs; not a production forecast, no recovery inferred"}
     for c in cases:
         p0 = model.params(c)["pressure_bara"]
         qs = []

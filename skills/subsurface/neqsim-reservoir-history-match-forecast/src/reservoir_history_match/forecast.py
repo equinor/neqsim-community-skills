@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Sequence, Union
 
-import numpy as np
 import pandas as pd
 
 from .field import Field, SimResult
@@ -26,9 +25,9 @@ class Scenario:
 
     start: pd.Timestamp
     end: pd.Timestamp
-    target_gas_sm3d: Union[float, Callable, pd.Series]
-    min_whp_bara: Union[float, Callable, pd.Series] = 30.0
-    schedule: Dict[str, tuple] = field(default_factory=dict)
+    target_gas_sm3d: float | Callable | pd.Series
+    min_whp_bara: float | Callable | pd.Series = 30.0
+    schedule: dict[str, tuple] = field(default_factory=dict)
     step_days: float = 30.0
     abandon_sm3d: float = 0.5e6
 

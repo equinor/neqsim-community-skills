@@ -6,17 +6,17 @@ import math
 import textwrap
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.collections import LineCollection  # noqa: E402
-from matplotlib.patches import Circle  # noqa: E402
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
+from matplotlib.patches import Circle
 
-from .layout import cross_section_layout  # noqa: E402
-from .runner import DesignResult  # noqa: E402
+from .layout import cross_section_layout
+from .runner import DesignResult
 
 TYPE_COLOURS = {
     "hydraulic": "#1f77b4",
@@ -76,7 +76,7 @@ def _finish(fig, meta: FigureMeta, path: Path, pdf: bool = False) -> Path:
     return path
 
 
-def draw_cross_section(ax, result: DesignResult) -> Dict[str, Any]:
+def draw_cross_section(ax, result: DesignResult) -> dict[str, Any]:
     """Draw the cross-section (outer sheath, armour wires, inner sheath, filler, elements)."""
     lay = cross_section_layout(result)
     ax.set_aspect("equal")
@@ -327,7 +327,7 @@ def figure_mechanical(result: DesignResult, meta: FigureMeta, path: Path) -> Pat
     return _finish(fig, meta, path)
 
 
-def figure_electrical(result: DesignResult, meta: FigureMeta, path: Path) -> Optional[Path]:
+def figure_electrical(result: DesignResult, meta: FigureMeta, path: Path) -> Path | None:
     if not result.data.get("powerSweep"):
         return None
     fig = _new_figure(figsize=(9, 5))
@@ -357,14 +357,14 @@ def figure_on_a_page(result: DesignResult, meta: FigureMeta, path: Path) -> Path
     return _finish(fig, meta, path, pdf=True)
 
 
-def render_all(result: DesignResult, out_dir: Path, meta: FigureMeta) -> Dict[str, Path]:
+def render_all(result: DesignResult, out_dir: Path, meta: FigureMeta) -> dict[str, Path]:
     """Render every figure into ``out_dir`` and return name -> path (electrical only if a load exists)."""
     out_dir = Path(out_dir)
 
     def sub(title: str) -> FigureMeta:
         return FigureMeta(title=title, basis_version=meta.basis_version, source=meta.source)
 
-    figs: Dict[str, Path] = {
+    figs: dict[str, Path] = {
         "cross_section": figure_cross_section(result, sub(meta.title + ": cross-section"), out_dir / "fig1_cross_section.png"),
         "hydraulics": figure_hydraulics(result, sub(meta.title + ": line hydraulics"), out_dir / "fig2_hydraulics.png"),
         "mechanical": figure_mechanical(result, sub(meta.title + ": tension and bending"), out_dir / "fig3_mechanical.png"),

@@ -8,8 +8,8 @@ per year, money in million USD, prices in USD per barrel.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence, Union
 
 from .profit_oil_table import ProfitOilTable
 
@@ -42,8 +42,8 @@ class PscBidResult:
     contractor_cash_undiscounted_musd: float
     state_take_undiscounted_musd: float
     bid_verdict: str
-    assumptions: List[str] = field(default_factory=list)
-    effective_profit_oil_share: Optional[float] = None
+    assumptions: list[str] = field(default_factory=list)
+    effective_profit_oil_share: float | None = None
 
 
 class PscBidModel:
@@ -61,7 +61,7 @@ class PscBidModel:
         share_per_usd_above_reference: float = 0.0,
         reference_price: float = 40.0,
         price_share_steps: Sequence[tuple] = (),
-        share_table: Optional[ProfitOilTable] = None,
+        share_table: ProfitOilTable | None = None,
         realisation_discount_usd: float = 0.0,
     ) -> None:
         self.oil_price = oil_price
@@ -93,7 +93,7 @@ class PscBidModel:
         discovery_delay_years: int = 4,
         volume_scales: Sequence[float] = (1.0,),
         volume_weights: Sequence[float] = (1.0,),
-        rate_per_producer_bbld: Union[None, float, Sequence[float]] = None,
+        rate_per_producer_bbld: None | float | Sequence[float] = None,
     ) -> PscBidResult:
         """Evaluate the bid at the offered share and solve the break-even share.
 
@@ -178,7 +178,7 @@ class PscBidModel:
             effective_profit_oil_share=effective,
         )
 
-    def _rates(self, rate, n_years: int) -> Optional[List[float]]:
+    def _rates(self, rate, n_years: int) -> list[float] | None:
         """Per-year rate per producer for the share table, or None when no table is used."""
         if self.share_table is None:
             return None
@@ -191,7 +191,7 @@ class PscBidModel:
             raise ValueError("rate_per_producer_bbld must be a number or have one value per year")
         return rates
 
-    def effective_share_profile(self, offer, production_mmbbl, rate_per_producer_bbld=None) -> List[float]:
+    def effective_share_profile(self, offer, production_mmbbl, rate_per_producer_bbld=None) -> list[float]:
         """State profit-oil share per year at the offered share (constant without a share table)."""
         if self.share_table is None:
             return [self._constant_state_share(offer)] * len(production_mmbbl)

@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import List
 
 from .geometry import SegyGeometry, inspect_segy
 
@@ -38,7 +37,7 @@ def to_evidence(geometry: SegyGeometry) -> dict:
         "source": {
             "path": geometry.path,
             "sha256": geometry.sha256,
-            "read_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "read_utc": datetime.now(UTC).isoformat(timespec="seconds"),
             "reader": "segyio",
         },
         "trace_count": geometry.trace_count,
@@ -70,7 +69,7 @@ def to_evidence(geometry: SegyGeometry) -> dict:
     }
 
 
-def scan_folder(folder, recursive: bool = True, max_files: int = 200) -> List[dict]:
+def scan_folder(folder, recursive: bool = True, max_files: int = 200) -> list[dict]:
     """Inspect every SEG-Y file in a folder (read only); failures are reported, not raised."""
     root = Path(folder)
     pattern = "**/*" if recursive else "*"

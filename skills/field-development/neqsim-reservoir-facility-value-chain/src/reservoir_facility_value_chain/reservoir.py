@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 
-from .gasprops import Gas, P_STD
+from .gasprops import P_STD, Gas
 
 
 def fit_pz_line(cum_gas, p_over_z, reject_sigma: float = 2.0, max_iter: int = 8):
@@ -84,7 +84,7 @@ class RSDeliverability:
         return max(v, 0.0) ** 0.5 - P_STD
 
     @classmethod
-    def fit(cls, pr_bara, whp_barg, rate, n_bounds: tuple[float, float] | None = (0.5, 1.0)) -> "RSDeliverability":
+    def fit(cls, pr_bara, whp_barg, rate, n_bounds: tuple[float, float] | None = (0.5, 1.0)) -> RSDeliverability:
         """Log-log least squares; if the exponent falls outside n_bounds it is clipped and C re-fitted."""
         xs, ys = [], []
         for pr, w, q in zip(pr_bara, whp_barg, rate):

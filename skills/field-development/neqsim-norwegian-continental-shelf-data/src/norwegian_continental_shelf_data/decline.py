@@ -15,8 +15,8 @@ qualified human review is required before any decision.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence, Tuple
 
 
 @dataclass(frozen=True)
@@ -34,7 +34,7 @@ class ArpsFit:
 
 
 def fit_arps_decline(
-    series: Sequence[Tuple[float, float]],
+    series: Sequence[tuple[float, float]],
     *,
     from_peak: bool = True,
 ) -> ArpsFit:
@@ -94,7 +94,7 @@ def fit_arps_decline(
     return fit_with_r2
 
 
-def _linear_regression(xs: Sequence[float], ys: Sequence[float]) -> Tuple[float, float, float]:
+def _linear_regression(xs: Sequence[float], ys: Sequence[float]) -> tuple[float, float, float]:
     """Ordinary least squares. Returns (slope, intercept, r_squared)."""
     n = len(xs)
     mean_x = sum(xs) / n
@@ -120,7 +120,7 @@ def _rate_space_r2(ts: Sequence[float], qs: Sequence[float], predict) -> float:
     return 1.0 - ss_res / ss_tot
 
 
-def _fit_exponential(ts, qs, t0) -> Optional[Tuple[ArpsFit, float]]:
+def _fit_exponential(ts, qs, t0) -> tuple[ArpsFit, float] | None:
     # ln(q) = ln(qi) - D t
     ln_q = [math.log(q) for q in qs]
     slope, intercept, _ = _linear_regression(ts, ln_q)
@@ -145,9 +145,9 @@ def _fit_exponential(ts, qs, t0) -> Optional[Tuple[ArpsFit, float]]:
     return fit, r2
 
 
-def _fit_hyperbolic(ts, qs, t0) -> Optional[Tuple[ArpsFit, float]]:
+def _fit_hyperbolic(ts, qs, t0) -> tuple[ArpsFit, float] | None:
     # For a fixed b in (0, 1]: q^(-b) = qi^(-b) (1 + b Di t) is linear in t.
-    best: Optional[Tuple[ArpsFit, float]] = None
+    best: tuple[ArpsFit, float] | None = None
     b = 0.1
     while b <= 1.0 + 1e-9:
         ys = [q ** (-b) for q in qs]
@@ -193,22 +193,22 @@ class ProductionForecast:
 
     model: str
     economic_limit_rate: float
-    years_to_limit: Optional[float]
-    profile: List[Tuple[float, float]]  # (time, rate) from the forecast start
+    years_to_limit: float | None
+    profile: list[tuple[float, float]]  # (time, rate) from the forecast start
     remaining_volume: float
-    cumulative_to_date: Optional[float]
-    estimated_ultimate_recovery: Optional[float]
-    assumptions: List[str] = field(default_factory=list)
+    cumulative_to_date: float | None
+    estimated_ultimate_recovery: float | None
+    assumptions: list[str] = field(default_factory=list)
 
 
 def forecast_production(
     fit: ArpsFit,
     *,
     economic_limit_rate: float,
-    start_time: Optional[float] = None,
+    start_time: float | None = None,
     max_years: float = 50.0,
     timestep_years: float = 1.0,
-    cumulative_to_date: Optional[float] = None,
+    cumulative_to_date: float | None = None,
 ) -> ProductionForecast:
     """Project a forward rate profile and volumes from an Arps ``fit``.
 
@@ -224,9 +224,9 @@ def forecast_production(
 
     origin = fit.peak_time if start_time is None else float(start_time)
     t_offset = origin - fit.peak_time
-    profile: List[Tuple[float, float]] = []
+    profile: list[tuple[float, float]] = []
     remaining = 0.0
-    years_to_limit: Optional[float] = None
+    years_to_limit: float | None = None
 
     steps = int(math.ceil(max_years / timestep_years))
     prev_rate = _predict_rate(fit, t_offset)
@@ -242,7 +242,7 @@ def forecast_production(
             break
         prev_rate = rate
 
-    eur: Optional[float] = None
+    eur: float | None = None
     if cumulative_to_date is not None:
         _require_non_negative("cumulative_to_date", cumulative_to_date)
         eur = round(cumulative_to_date + remaining, 6)

@@ -1,10 +1,19 @@
 import os
 
 import pytest
-
 from opm_open_decks import (
-    CASES, OpmDataClient, TooLargeError, case_names, expand_repeats, get_case, include_paths, keyword_blocks,
-    keyword_records, resolve_include, summarize_deck, to_floats,
+    CASES,
+    OpmDataClient,
+    TooLargeError,
+    case_names,
+    expand_repeats,
+    get_case,
+    include_paths,
+    keyword_blocks,
+    keyword_records,
+    resolve_include,
+    summarize_deck,
+    to_floats,
 )
 
 DECK = """-- header comment with / slash

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite
-from typing import Mapping, Sequence
-
 
 FLAG_ALIASES = {
     "water": {"water", "h2o"},

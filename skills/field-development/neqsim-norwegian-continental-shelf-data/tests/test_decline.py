@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from norwegian_continental_shelf_data import (
     ArpsFit,
     fit_arps_decline,

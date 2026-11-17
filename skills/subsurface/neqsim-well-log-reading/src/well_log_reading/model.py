@@ -9,7 +9,6 @@ in :mod:`well_log_reading.units` convert the depth index to metres.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -26,7 +25,7 @@ class LogCurve:
     long_name: str = ""
 
     @property
-    def canonical(self) -> Optional[str]:
+    def canonical(self) -> str | None:
         """Canonical mnemonic (GR, RHOB, NPHI, ...) or ``None`` if unknown."""
         return canonical_mnemonic(self.name, self.unit, self.long_name)
 
@@ -44,7 +43,7 @@ class LogFrame:
     index_name: str
     index_unit: str
     index: np.ndarray
-    curves: Dict[str, LogCurve] = field(default_factory=dict)
+    curves: dict[str, LogCurve] = field(default_factory=dict)
     index_type: str = ""
 
     @property
@@ -52,7 +51,7 @@ class LogFrame:
         """True when the index is a depth that can be converted to metres."""
         return depth_factor_to_m(self.index_unit) is not None
 
-    def depth_curve(self) -> Optional["LogCurve"]:
+    def depth_curve(self) -> LogCurve | None:
         """Return the depth channel of a time-indexed frame (TDEP, DEPT), or None.
 
         Station and tension logs are recorded against time with depth as an
@@ -114,7 +113,7 @@ class LogFrame:
 
         Array channels are skipped; reach them through :attr:`curves`.
         """
-        import pandas as pd  # noqa: PLC0415  (optional dependency)
+        import pandas as pd
 
         if depth_in_m and self.has_depth:
             index = pd.Index(self.depth_m(), name="DEPTH_M")
@@ -127,7 +126,7 @@ class LogFrame:
         }
         return pd.DataFrame(data, index=index)
 
-    def inventory(self) -> List[dict]:
+    def inventory(self) -> list[dict]:
         """Summarise every curve: unit, canonical name, valid fraction and range of data."""
         rows = []
         if self.has_depth:
@@ -173,11 +172,11 @@ class WellLog:
     well_name: str = ""
     field_name: str = ""
     company: str = ""
-    frames: List[LogFrame] = field(default_factory=list)
-    metadata: Dict[str, str] = field(default_factory=dict)
-    warnings: List[str] = field(default_factory=list)
+    frames: list[LogFrame] = field(default_factory=list)
+    metadata: dict[str, str] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
 
-    def frame(self, name: Optional[str] = None) -> LogFrame:
+    def frame(self, name: str | None = None) -> LogFrame:
         """Return a frame by name, or the depth frame with most samples when ``name`` is None.
 
         Raises:

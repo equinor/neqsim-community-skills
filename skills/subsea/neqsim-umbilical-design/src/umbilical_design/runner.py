@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from .spec import UmbilicalSpec
 
@@ -23,10 +23,10 @@ REQUIRED_KEYS = (
 class DesignResult:
     """Parsed output of ``UmbilicalMechanicalDesign.toJson()``."""
 
-    data: Dict[str, Any]
+    data: dict[str, Any]
 
     @property
-    def checks(self) -> Dict[str, bool]:
+    def checks(self) -> dict[str, bool]:
         return dict(self.data["designChecks"])
 
     @property
@@ -35,11 +35,11 @@ class DesignResult:
         return bool(checks) and all(checks.values())
 
     @property
-    def elements(self) -> List[Dict[str, Any]]:
+    def elements(self) -> list[dict[str, Any]]:
         return list(self.data["elementResults"])
 
     @property
-    def fluid_lines(self) -> List[Dict[str, Any]]:
+    def fluid_lines(self) -> list[dict[str, Any]]:
         return [e for e in self.elements if e.get("type") in ("hydraulic", "chemical")]
 
     @property
@@ -53,14 +53,14 @@ class DesignResult:
     def result(self, key: str) -> float:
         return float(self.data["calculatedResults"][key])
 
-    def save(self, path: Union[str, Path]) -> Path:
+    def save(self, path: str | Path) -> Path:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(self.data, indent=1), encoding="utf-8")
         return path
 
 
-def load_result(source: Union[str, Path, Dict[str, Any]]) -> DesignResult:
+def load_result(source: str | Path | dict[str, Any]) -> DesignResult:
     """Load a saved design JSON (path or dict) and check that it has the expected sections."""
     if isinstance(source, dict):
         data = source
@@ -75,7 +75,7 @@ def load_result(source: Union[str, Path, Dict[str, Any]]) -> DesignResult:
     return DesignResult(data)
 
 
-def _umbilical_class(ns: Optional[Any]):
+def _umbilical_class(ns: Any | None):
     if ns is not None:
         cls = ns.JClass("neqsim.process.equipment.subsea.Umbilical")
     else:
@@ -91,7 +91,7 @@ def _umbilical_class(ns: Optional[Any]):
     return cls
 
 
-def run_design(spec: UmbilicalSpec, ns: Optional[Any] = None) -> DesignResult:
+def run_design(spec: UmbilicalSpec, ns: Any | None = None) -> DesignResult:
     """Build the NeqSim ``Umbilical`` for ``spec``, run the mechanical design and parse the result.
 
     ``ns`` is an optional namespace with a ``JClass`` helper (the NeqSim dev setup); without

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, List, Sequence
 
 from .units import BAR_PER_SG_M, M_PER_IN
 
@@ -47,7 +47,7 @@ def _loss_pa_per_m(mud: MudRheology, q_m3s: float, d_hyd_in: float, area_m2: flo
     return max(lam, turb)
 
 
-def circulation(sections: Sequence[FlowSection], mud: MudRheology, flow_lpm: float, nozzle_tfa_in2: float = 0.6, pump_limit_bar: float = 345.0) -> Dict[str, object]:
+def circulation(sections: Sequence[FlowSection], mud: MudRheology, flow_lpm: float, nozzle_tfa_in2: float = 0.6, pump_limit_bar: float = 345.0) -> dict[str, object]:
     """Pressure losses, ECD profile and pump pressure for one flow rate.
 
     Sections are ordered from the surface downward. The annulus sections carry the return flow upward; the ECD at the
@@ -55,7 +55,7 @@ def circulation(sections: Sequence[FlowSection], mud: MudRheology, flow_lpm: flo
     """
     q = flow_lpm / 1000.0 / 60.0
     dp_pipe = 0.0
-    ann_dp_each: List[float] = []
+    ann_dp_each: list[float] = []
     for s in sections:
         area_p = math.pi / 4.0 * (s.pipe_id_in * M_PER_IN) ** 2
         dp_pipe += _loss_pa_per_m(mud, q, s.pipe_id_in, area_p, False) * s.length_md_m / 1e5
@@ -78,6 +78,6 @@ def circulation(sections: Sequence[FlowSection], mud: MudRheology, flow_lpm: flo
             "ecd_bottom_sg": ecd_rows[-1]["ecd_sg"] if ecd_rows else mud.sg}
 
 
-def flow_sweep(sections: Sequence[FlowSection], mud: MudRheology, flows_lpm: Sequence[float], **kw) -> List[Dict[str, object]]:
+def flow_sweep(sections: Sequence[FlowSection], mud: MudRheology, flows_lpm: Sequence[float], **kw) -> list[dict[str, object]]:
     """Circulation results for several flow rates."""
     return [circulation(sections, mud, q, **kw) for q in flows_lpm]

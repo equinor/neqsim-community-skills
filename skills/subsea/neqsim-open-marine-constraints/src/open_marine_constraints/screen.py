@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from datetime import UTC, datetime
+from typing import Any
 
 from .client import MarineClient, SourceError
 from .geometry import (
@@ -42,7 +43,7 @@ IMPLICATIONS = {
 }
 
 
-def _name(properties: Dict[str, Any]) -> str:
+def _name(properties: dict[str, Any]) -> str:
     for key in NAME_KEYS:
         value = properties.get(key)
         if value not in (None, ""):
@@ -50,7 +51,7 @@ def _name(properties: Dict[str, Any]) -> str:
     return ""
 
 
-def latest_period(features: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def latest_period(features: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Keep only the newest averaging period of the EMODnet effort layers.
 
     The layers hold several overlapping 4-year averaging periods per C-square; counting all of them would
@@ -62,17 +63,17 @@ def latest_period(features: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     newest = max(str((f.get("properties") or {}).get("validto", "")) for f in periodic)
     return [f for f in features if "avgyears" not in (f.get("properties") or {}) or str(f["properties"].get("validto", "")) == newest]
 
-def _screen_features(features: List[Dict[str, Any]], samples_xy: List[Any], step_m: float, route_xy: List[Any], buffer_m: float, proj: LocalProjection, top_n: int) -> Dict[str, Any]:
+def _screen_features(features: list[dict[str, Any]], samples_xy: list[Any], step_m: float, route_xy: list[Any], buffer_m: float, proj: LocalProjection, top_n: int) -> dict[str, Any]:
     stride = max(1, len(samples_xy) // 200)
     dist_samples = samples_xy[::stride] + [samples_xy[-1]]
     min_x = min(p[0] for p in samples_xy) - buffer_m
     max_x = max(p[0] for p in samples_xy) + buffer_m
     min_y = min(p[1] for p in samples_xy) - buffer_m
     max_y = max(p[1] for p in samples_xy) + buffer_m
-    entries: List[Dict[str, Any]] = []
+    entries: list[dict[str, Any]] = []
     km_inside = 0.0
     inside_samples_total = 0
-    effort_values: List[float] = []
+    effort_values: list[float] = []
     for feature in features:
         geometry = feature.get("geometry")
         if not geometry:
@@ -108,7 +109,7 @@ def _screen_features(features: List[Dict[str, Any]], samples_xy: List[Any], step
             }
         )
     entries.sort(key=lambda e: e["distance_km"])
-    summary: Dict[str, Any] = {
+    summary: dict[str, Any] = {
         "features_in_box": len(entries),
         "within_buffer": sum(1 for e in entries if e["within_buffer"]),
         "intersecting": sum(1 for e in entries if e["inside_samples"] or e["crossings"]),
@@ -126,7 +127,7 @@ def _screen_features(features: List[Dict[str, Any]], samples_xy: List[Any], step
     return summary
 
 
-def _sample_raster(client: MarineClient, key: str, route: Sequence[LonLat], step_km: float, max_samples: int) -> Dict[str, Any]:
+def _sample_raster(client: MarineClient, key: str, route: Sequence[LonLat], step_km: float, max_samples: int) -> dict[str, Any]:
     length_km = route_length_m(route) / 1000.0
     step_km = max(step_km, length_km / max_samples) if length_km > 0 else step_km
     points = densify(route, step_km * 1000.0)
@@ -162,7 +163,7 @@ def screen_route(
     raster_step_km: float = 5.0,
     max_raster_samples: int = 60,
     top_n: int = 5,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Screen a lon/lat route (a single point is allowed) against ``layers`` from ``sources.SOURCES``.
 
     A layer that fails is reported under ``errors`` and does not stop the others. Distances are planar on a
@@ -178,8 +179,8 @@ def screen_route(
     samples = [p for p, _ in densify(pts, step_m)]
     samples_xy = [proj.forward(*p) for p in samples]
     route_xy = [proj.forward(*p) for p in pts]
-    results: Dict[str, Any] = {}
-    errors: Dict[str, str] = {}
+    results: dict[str, Any] = {}
+    errors: dict[str, str] = {}
     for key in layers:
         spec = SOURCES[key]
         try:
@@ -208,7 +209,7 @@ def screen_route(
     }
 
 
-def screen_earthquakes(client: MarineClient, route: Sequence[LonLat], radius_km: float = 150.0, min_magnitude: float = 4.5, start_year: int = 1900) -> Dict[str, Any]:
+def screen_earthquakes(client: MarineClient, route: Sequence[LonLat], radius_km: float = 150.0, min_magnitude: float = 4.5, start_year: int = 1900) -> dict[str, Any]:
     """Count USGS catalogue earthquakes within ``radius_km`` of the route; a historic catalogue, not a hazard model."""
     pts = [tuple(p) for p in route]
     bbox = route_bbox(pts, radius_km)
@@ -234,13 +235,13 @@ def screen_earthquakes(client: MarineClient, route: Sequence[LonLat], radius_km:
     }
 
 
-def _year(millis: Optional[float]) -> Optional[int]:
+def _year(millis: float | None) -> int | None:
     if millis is None:
         return None
-    return datetime.fromtimestamp(millis / 1000.0, tz=timezone.utc).year
+    return datetime.fromtimestamp(millis / 1000.0, tz=UTC).year
 
 
-def summary_rows(result: Dict[str, Any]) -> List[Dict[str, Any]]:
+def summary_rows(result: dict[str, Any]) -> list[dict[str, Any]]:
     """Flatten ``screen_route`` output to one row per layer for a report table."""
     rows = []
     for key, entry in result["layers"].items():

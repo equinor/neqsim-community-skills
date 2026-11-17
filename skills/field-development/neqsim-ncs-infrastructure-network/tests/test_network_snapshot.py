@@ -1,7 +1,6 @@
 """Behaviour of the bundled snapshot (open Sodir / norskpetroleum / Gassco data)."""
 
 import pytest
-
 from ncs_infrastructure_network import NcsNetwork
 from ncs_infrastructure_network import neqsim_bridge as nb
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import exp, isfinite
-from typing import Tuple
 
 _HOURS_PER_YEAR = 8760.0
 
@@ -19,7 +18,7 @@ class ReliabilityDataResult:
     expected_failures: float
     availability_warning: str
     neqsim_available: bool
-    assumptions: Tuple[str, ...]
+    assumptions: tuple[str, ...]
 
 
 class ReliabilityDataModel:

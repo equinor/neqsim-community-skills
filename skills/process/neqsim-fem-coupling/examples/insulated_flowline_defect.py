@@ -76,9 +76,8 @@ def build_mesh_spec(basis, refinement: int = 1) -> FemMeshSpec:
 def fluid_state() -> FemFluidState:
     """Fluid properties from NeqSim when it is installed, otherwise stated values."""
     try:
-        from neqsim.thermo import TPflash, fluid  # noqa: PLC0415
-
-        from fem_coupling import fluid_state_from_neqsim  # noqa: PLC0415
+        from fem_coupling import fluid_state_from_neqsim
+        from neqsim.thermo import TPflash, fluid
 
         gas = fluid("srk")
         gas.addComponent("methane", 0.82)
@@ -251,7 +250,7 @@ def main() -> None:
             return None
         return read_case_results(directory)
 
-    print("")
+    print()
     results = solve(spec, CASE_DIR)
     if results is None:
         return

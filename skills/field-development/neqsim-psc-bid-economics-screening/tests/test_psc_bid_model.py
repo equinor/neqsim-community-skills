@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from psc_bid_economics_screening import PscBidModel
 
 PRODUCTION = [10.0, 25.0, 30.0, 28.0, 24.0, 20.0, 16.0, 13.0, 10.0, 8.0]

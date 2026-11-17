@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Optional, Sequence
 
 from .candidates import rank_candidates
 from .profile import build_profile, profile_statistics
@@ -11,20 +11,20 @@ from .sizing import OilProperties, PipelineDesignBasis, size_pipeline
 
 
 def run_concept(
-    source: Dict[str, object],
-    landing: Dict[str, object],
+    source: dict[str, object],
+    landing: dict[str, object],
     props: OilProperties,
-    rates_sm3d: Dict[str, float],
+    rates_sm3d: dict[str, float],
     design_case: str,
     turndown_case: str,
-    hosts: Optional[Iterable[Dict[str, object]]] = None,
-    feeds_into: Optional[Dict[str, Sequence[str]]] = None,
-    terminal_hosts: Optional[Iterable[str]] = None,
-    basis_overrides: Optional[Dict[str, float]] = None,
-    fetch: Optional[Callable[[str], dict]] = None,
-    cache_path: Optional[Path] = None,
+    hosts: Iterable[dict[str, object]] | None = None,
+    feeds_into: dict[str, Sequence[str]] | None = None,
+    terminal_hosts: Iterable[str] | None = None,
+    basis_overrides: dict[str, float] | None = None,
+    fetch: Callable[[str], dict] | None = None,
+    cache_path: Path | None = None,
     spacing_km: float = 0.5,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Screen a new export line from ``source`` to ``landing``.
 
     Args:

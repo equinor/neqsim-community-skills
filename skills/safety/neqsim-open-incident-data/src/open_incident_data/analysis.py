@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import math
 from collections import Counter
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Dict, Iterable, List, Optional, Sequence
 
 from .parse import Investigation, Structure
 
@@ -25,15 +25,15 @@ CAVEATS = (
 class RateEstimate:
     """Investigation rate per structure-year with an exact Poisson interval."""
 
-    labels: List[str]
+    labels: list[str]
     period: str
     count: int
     structure_years: float
-    rate_per_structure_year: Optional[float]
-    lower: Optional[float]
-    upper: Optional[float]
+    rate_per_structure_year: float | None
+    lower: float | None
+    upper: float | None
     confidence: float
-    filters: Dict[str, object] = field(default_factory=dict)
+    filters: dict[str, object] = field(default_factory=dict)
     caveats: Sequence[str] = CAVEATS
 
     def to_dict(self) -> dict:
@@ -82,7 +82,7 @@ def structure_years(
     *,
     major_only: bool = False,
     manned_only: bool = False,
-    areas: Optional[Iterable[str]] = None,
+    areas: Iterable[str] | None = None,
 ) -> float:
     """Sum installed time (years) of the structures inside ``[start, end]``; blank removal date means still installed."""
     wanted = {a.upper() for a in areas} if areas else None
@@ -97,7 +97,7 @@ def structure_years(
     return total_days / 365.25
 
 
-def label_counts(investigations: Iterable[Investigation], start_year: int, end_year: int) -> List[tuple]:
+def label_counts(investigations: Iterable[Investigation], start_year: int, end_year: int) -> list[tuple]:
     """Return ``(label, count)`` for single labels in the period, most frequent first."""
     counter: Counter = Counter()
     for item in investigations:
@@ -106,7 +106,7 @@ def label_counts(investigations: Iterable[Investigation], start_year: int, end_y
     return counter.most_common()
 
 
-def annual_counts(investigations: Iterable[Investigation], labels: Iterable[str]) -> Dict[int, int]:
+def annual_counts(investigations: Iterable[Investigation], labels: Iterable[str]) -> dict[int, int]:
     """Investigations per year that carry any of ``labels`` (case-insensitive)."""
     wanted = {l.lower() for l in labels}
     counter: Counter = Counter()
@@ -125,7 +125,7 @@ def estimate_rate(
     *,
     major_only: bool = False,
     manned_only: bool = False,
-    areas: Optional[Iterable[str]] = None,
+    areas: Iterable[str] | None = None,
     confidence: float = 0.90,
 ) -> RateEstimate:
     """Count investigations carrying any of ``labels`` and divide by structure-years for the same filters.

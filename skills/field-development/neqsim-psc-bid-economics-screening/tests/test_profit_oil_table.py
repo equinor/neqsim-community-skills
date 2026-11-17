@@ -1,8 +1,12 @@
 import math
 
 import pytest
-
-from psc_bid_economics_screening import ProfitOilTable, adjustment_pp, effective_share, load_annex_xx
+from psc_bid_economics_screening import (
+    ProfitOilTable,
+    adjustment_pp,
+    effective_share,
+    load_annex_xx,
+)
 
 
 def test_grid_dimensions_and_open_top_band() -> None:

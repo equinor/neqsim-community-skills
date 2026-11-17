@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import List, Optional
 
 import numpy as np
 
@@ -60,7 +59,7 @@ def to_evidence(log: WellLog) -> dict:
             "path": log.source_path,
             "format": log.source_format,
             "sha256": log.sha256,
-            "read_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "read_utc": datetime.now(UTC).isoformat(timespec="seconds"),
             "reader": "dlisio" if log.source_format in ("dlis", "lis") else "built-in LAS 2.0",
         },
         "well_name": log.well_name,
@@ -77,7 +76,7 @@ def to_evidence(log: WellLog) -> dict:
     }
 
 
-def write_frame_csv(log: WellLog, out_dir, frame_name: Optional[str] = None) -> Path:
+def write_frame_csv(log: WellLog, out_dir, frame_name: str | None = None) -> Path:
     """Write one frame's scalar curves as CSV (depth in metres when depth indexed)."""
     frame = log.frame(frame_name)
     out = Path(out_dir)
@@ -88,7 +87,7 @@ def write_frame_csv(log: WellLog, out_dir, frame_name: Optional[str] = None) -> 
     return path
 
 
-def scan_folder(folder, recursive: bool = True, max_files: int = 500) -> List[dict]:
+def scan_folder(folder, recursive: bool = True, max_files: int = 500) -> list[dict]:
     """Read every DLIS/LIS/LAS file in a folder and return one evidence record each.
 
     The folder is only read. Files that fail are reported with an ``error``

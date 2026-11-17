@@ -1,8 +1,7 @@
 from datetime import date
 
-import pytest
-
 import brazil_offshore_infrastructure_market as bim
+import pytest
 
 
 def test_datasets_load_with_sources_and_as_of() -> None:

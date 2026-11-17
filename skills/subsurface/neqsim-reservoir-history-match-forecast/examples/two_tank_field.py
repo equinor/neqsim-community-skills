@@ -1,8 +1,16 @@
 """Two formations, four wells: generate a history, match it, forecast, and print the wellstream handed to a process model."""
 import numpy as np
 import pandas as pd
-
-from reservoir_history_match import (DepletionPath, Field, FluidModel, Matcher, Param, Scenario, Tank, TankSpec, Well, forecast, well_streams_at)
+from reservoir_history_match import (
+    FluidModel,
+    Matcher,
+    Param,
+    Scenario,
+    TankSpec,
+    Well,
+    forecast,
+    well_streams_at,
+)
 
 LIGHT = {"nitrogen": 0, "CO2": 0, "methane": 0, "ethane": 0, "propane": 0, "i-butane": 0, "n-butane": 0, "i-pentane": 0, "n-pentane": 0, "n-hexane": 0}
 TBP = [("C7", 96.0, 0.74), ("C10", 150.0, 0.80), ("C15", 210.0, 0.85), ("C25", 350.0, 0.90)]

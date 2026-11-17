@@ -8,8 +8,13 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
-
-from dynamic_identification import align, find_assemblies, frozen_mask, run_identification, saturation
+from dynamic_identification import (
+    align,
+    find_assemblies,
+    frozen_mask,
+    run_identification,
+    saturation,
+)
 from dynamic_identification.__main__ import main
 
 needs_tsa = pytest.mark.skipif(find_assemblies() is None, reason="TimeSeriesAnalysis assemblies not installed")
@@ -122,11 +127,16 @@ def test_missing_file_blocks(tmp_path):
 @needs_tsa
 def test_neqsim_physics_checks_identified_dynamics_and_separates_faults():
     pytest.importorskip("neqsim")
-    from neqsim import jneqsim
-
     from dynamic_identification import identify_unit
-    from dynamic_identification.neqsim_bridge import (automation_evaluator, compare_gains, physics_residuals,
-                                                      simulate_unit, steady_gains, two_residual_diagnosis)
+    from dynamic_identification.neqsim_bridge import (
+        automation_evaluator,
+        compare_gains,
+        physics_residuals,
+        simulate_unit,
+        steady_gains,
+        two_residual_diagnosis,
+    )
+    from neqsim import jneqsim
 
     gas = jneqsim.thermo.system.SystemSrkEos(298.15, 30.0)
     for name, x in (("methane", 0.9), ("ethane", 0.07), ("propane", 0.03)):
@@ -186,8 +196,14 @@ def test_neqsim_physics_checks_identified_dynamics_and_separates_faults():
 
 
 def test_step_forecast_recovers_timing_and_beats_persistence():
-    from dynamic_identification.step_prediction import (detect_steps, fit_step_dynamics, fopdt_step,
-                                                        hybrid_step_forecast, pooled_dynamics, score_forecast)
+    from dynamic_identification.step_prediction import (
+        detect_steps,
+        fit_step_dynamics,
+        fopdt_step,
+        hybrid_step_forecast,
+        pooled_dynamics,
+        score_forecast,
+    )
 
     rng = np.random.default_rng(7)
     t = np.arange(-7200.0, 21600.0 + 1.0, 300.0)
@@ -217,8 +233,15 @@ def test_step_forecast_recovers_timing_and_beats_persistence():
 
 
 def test_advisory_loop_plans_gates_and_paces_moves():
-    from dynamic_identification.advisory import (gain_update, linear_soft_sensor, physics_gate, plan_moves,
-                                                 response_time, schedule_moves, sensitivity_matrix)
+    from dynamic_identification.advisory import (
+        gain_update,
+        linear_soft_sensor,
+        physics_gate,
+        plan_moves,
+        response_time,
+        schedule_moves,
+        sensitivity_matrix,
+    )
 
     base = {"oil": 15000.0, "sep_load": 92.0, "gas_inj": 94.0}
     G = sensitivity_matrix(base, {"subsea": (10.0, {"oil": 15600.0, "sep_load": 97.5, "gas_inj": 96.6}),

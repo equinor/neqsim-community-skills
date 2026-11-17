@@ -7,9 +7,9 @@ metre over the few tens of kilometres a subsea field spans.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from math import asin, cos, degrees, radians, sin, sqrt
-from typing import Iterable, Mapping, Sequence
 
 EARTH_RADIUS_M = 6_371_008.8
 #: Metres per degree of latitude on the WGS84 ellipsoid at mid latitudes.

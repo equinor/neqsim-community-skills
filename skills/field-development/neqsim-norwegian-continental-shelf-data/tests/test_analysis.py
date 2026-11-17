@@ -1,5 +1,4 @@
 import pytest
-
 from norwegian_continental_shelf_data import (
     AnnualProduction,
     NcsField,

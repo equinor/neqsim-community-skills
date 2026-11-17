@@ -10,16 +10,16 @@ closes.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping, Optional, Sequence
+from typing import Any
 
 import pandas as pd
-
 
 COUNT = "__detail_lines__"
 
 
-def to_number(value: Any) -> Optional[float]:
+def to_number(value: Any) -> float | None:
     """Convert a spreadsheet cell to a float.
 
     Args:
@@ -47,7 +47,7 @@ def to_number(value: Any) -> Optional[float]:
     return -number if negative else number
 
 
-def _clean(value: Any) -> Optional[str]:
+def _clean(value: Any) -> str | None:
     """Return a stripped string label or ``None`` when blank."""
     if value is None:
         return None
@@ -78,7 +78,7 @@ def parse_hierarchical_rows(
     rows: Iterable[Sequence[Any]],
     label_cols: Sequence[int],
     value_cols: Mapping[str, int],
-    extra_cols: Optional[Mapping[str, int]] = None,
+    extra_cols: Mapping[str, int] | None = None,
     first_row: int = 1,
     total_prefix: str = "TOTAL",
 ) -> ParsedStatement:

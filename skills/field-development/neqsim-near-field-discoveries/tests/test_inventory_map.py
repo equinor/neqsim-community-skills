@@ -1,9 +1,13 @@
 import json
 
 import pytest
-
 from near_field_discoveries import Discovery, area_clusters, near_field, plot_near_field
-from near_field_discoveries.geo import cluster_points, haversine_km, point_in_rings, point_to_rings_km
+from near_field_discoveries.geo import (
+    cluster_points,
+    haversine_km,
+    point_in_rings,
+    point_to_rings_km,
+)
 
 
 def rec(name, lon, lat, stage="not_evaluated", oe=None, kind="discovery", rings=None):

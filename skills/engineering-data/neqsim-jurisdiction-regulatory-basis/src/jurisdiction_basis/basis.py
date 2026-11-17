@@ -1,6 +1,12 @@
 """Build a reviewable jurisdiction block for a study from the public profiles."""
 
-from .activity_register import ACTIVITY_TOPICS, DESIGN_QUESTIONS, ORIENTATION, REGISTER, TOPICS
+from .activity_register import (
+    ACTIVITY_TOPICS,
+    DESIGN_QUESTIONS,
+    ORIENTATION,
+    REGISTER,
+    TOPICS,
+)
 from .profiles import ALIASES, PROFILES
 
 LAYER_RULE = (

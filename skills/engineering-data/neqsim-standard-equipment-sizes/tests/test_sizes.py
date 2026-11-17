@@ -1,5 +1,4 @@
 import pytest
-
 from standard_equipment_sizes import (
     lowest_b165_class_ambient,
     next_motor_kw,

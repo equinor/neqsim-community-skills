@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
-CellCentre = Tuple[float, float, float]
+CellCentre = tuple[float, float, float]
 _KEYWORD = re.compile(r"^[A-Z][A-Z0-9_]{0,7}\s*$")
 
 
@@ -28,14 +28,14 @@ def strip_comment(line: str) -> str:
     return line
 
 
-def tokens(text: str) -> List[str]:
+def tokens(text: str) -> list[str]:
     """Split record text into tokens, keeping quoted strings and expanding nothing."""
     return re.findall(r"'[^']*'|\S+", text)
 
 
-def expand(values: Iterable[str]) -> List[Optional[str]]:
+def expand(values: Iterable[str]) -> list[str | None]:
     """Expand ``n*value`` repeats and ``n*`` defaults (None)."""
-    out: List[Optional[str]] = []
+    out: list[str | None] = []
     for tok in values:
         match = re.fullmatch(r"(\d+)\*(.*)", tok)
         if match:
@@ -45,7 +45,7 @@ def expand(values: Iterable[str]) -> List[Optional[str]]:
     return out
 
 
-def keyword_blocks(text: str, keyword: str) -> List[Tuple[int, int, List[List[Optional[str]]]]]:
+def keyword_blocks(text: str, keyword: str) -> list[tuple[int, int, list[list[str | None]]]]:
     """Return ``(start_line, end_line, records)`` for every occurrence of a record-list keyword."""
     lines = text.splitlines()
     blocks = []
@@ -53,8 +53,8 @@ def keyword_blocks(text: str, keyword: str) -> List[Tuple[int, int, List[List[Op
     while i < len(lines):
         if lines[i].strip().upper() == keyword:
             start = i
-            records: List[List[Optional[str]]] = []
-            current: List[str] = []
+            records: list[list[str | None]] = []
+            current: list[str] = []
             i += 1
             while i < len(lines):
                 body = strip_comment(lines[i]).strip()
@@ -75,12 +75,12 @@ def keyword_blocks(text: str, keyword: str) -> List[Tuple[int, int, List[List[Op
     return blocks
 
 
-def array_keyword(text: str, keyword: str) -> Optional[List[float]]:
+def array_keyword(text: str, keyword: str) -> list[float] | None:
     """Values of a single-record array keyword (DXV, TOPS, ...) or None when absent."""
     lines = text.splitlines()
     for i, line in enumerate(lines):
         if line.strip().upper() == keyword:
-            values: List[str] = []
+            values: list[str] = []
             for body in lines[i + 1:]:
                 body = strip_comment(body)
                 if "/" in body:
@@ -91,7 +91,7 @@ def array_keyword(text: str, keyword: str) -> Optional[List[float]]:
     return None
 
 
-def split_schedule(deck: str) -> Tuple[str, str]:
+def split_schedule(deck: str) -> tuple[str, str]:
     """Split a deck at the SCHEDULE keyword into (everything before, the schedule section)."""
     match = re.search(r"^SCHEDULE\s*$", deck, flags=re.MULTILINE)
     if not match:
@@ -106,13 +106,13 @@ class RegularGrid:
     nx: int
     ny: int
     nz: int
-    dx: List[float]
-    dy: List[float]
-    dz: List[float]
-    tops: List[float] = field(default_factory=list)
+    dx: list[float]
+    dy: list[float]
+    dz: list[float]
+    tops: list[float] = field(default_factory=list)
 
     @classmethod
-    def from_deck(cls, deck: str) -> "RegularGrid":
+    def from_deck(cls, deck: str) -> RegularGrid:
         dims = array_keyword(deck, "DIMENS")
         if not dims:
             raise ValueError("DIMENS not found")
@@ -149,16 +149,16 @@ class RegularGrid:
         return {"X": self.dx[i - 1], "Y": self.dy[j - 1]}.get(direction.upper(), self.dz[k - 1])
 
 
-def _name(token: Optional[str]) -> str:
+def _name(token: str | None) -> str:
     return (token or "").strip("'")
 
 
-def connections(schedule: str) -> Dict[str, List[Tuple[int, int, int, str]]]:
+def connections(schedule: str) -> dict[str, list[tuple[int, int, int, str]]]:
     """Connections ``(i, j, k, direction)`` per well from the first COMPDAT block, in listed order."""
     blocks = keyword_blocks(schedule, "COMPDAT")
     if not blocks:
         return {}
-    result: Dict[str, List[Tuple[int, int, int, str]]] = {}
+    result: dict[str, list[tuple[int, int, int, str]]] = {}
     for rec in blocks[0][2]:
         rec = rec + [None] * (14 - len(rec))
         well = _name(rec[0])
@@ -169,8 +169,8 @@ def connections(schedule: str) -> Dict[str, List[Tuple[int, int, int, str]]]:
     return result
 
 
-def _msw_text(well: str, conns: Sequence[Tuple[int, int, int, str]], centre: Callable[[int, int, int], CellCentre],
-              length: Callable[[int, int, int, str], float], diameter: float, roughness: float) -> Tuple[str, dict]:
+def _msw_text(well: str, conns: Sequence[tuple[int, int, int, str]], centre: Callable[[int, int, int], CellCentre],
+              length: Callable[[int, int, int, str], float], diameter: float, roughness: float) -> tuple[str, dict]:
     points = [centre(i, j, k) for i, j, k, _ in conns]
     md_centre = [0.0]
     for a, b in zip(points, points[1:]):
@@ -194,9 +194,9 @@ def _msw_text(well: str, conns: Sequence[Tuple[int, int, int, str]], centre: Cal
     return "\n".join(welsegs + [""] + compsegs) + "\n", info
 
 
-def add_plain_msw(deck: str, wells: Optional[Sequence[str]] = None, diameter_m: float = 0.15,
+def add_plain_msw(deck: str, wells: Sequence[str] | None = None, diameter_m: float = 0.15,
                   roughness_m: float = 1.0e-4,
-                  cell_centres: Optional[Callable[[int, int, int], CellCentre]] = None) -> Tuple[str, List[dict]]:
+                  cell_centres: Callable[[int, int, int], CellCentre] | None = None) -> tuple[str, list[dict]]:
     """Add WELSEGS/COMPSEGS (one segment per connection) and WSEGDIMS so completor can process the wells.
 
     Returns the new deck and one record per converted well (connections, top and end measured depth).

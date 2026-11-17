@@ -1,5 +1,4 @@
 import pytest
-
 from separator_modelling import SeparatorModel
 
 

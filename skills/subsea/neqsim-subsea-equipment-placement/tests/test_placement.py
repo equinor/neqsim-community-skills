@@ -1,10 +1,23 @@
 import math
 
 import pytest
-
 from subsea_equipment_placement import (
-    Limit, Line, PlacementBasis, Structure, Target, Zone, candidate_grid, rank_sites, screen_route, screen_site, to_geojson,
-    polyline_crossings, point_polygon_distance, to_local, to_lonlat, slope_deg,
+    Limit,
+    Line,
+    PlacementBasis,
+    Structure,
+    Target,
+    Zone,
+    candidate_grid,
+    point_polygon_distance,
+    polyline_crossings,
+    rank_sites,
+    screen_route,
+    screen_site,
+    slope_deg,
+    to_geojson,
+    to_local,
+    to_lonlat,
 )
 
 SUPPLIED = lambda v, u="m": Limit(v, u, "test basis", "SUPPLIED")

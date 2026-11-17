@@ -34,7 +34,7 @@ def discover_packages():
         for package in find_packages(where=str(src), exclude=("*.tests", "*.tests.*")):
             top = package.split(".", 1)[0]
             if top not in package_dir:
-                package_dir[top] = "{}/{}".format(rel_src, top)
+                package_dir[top] = f"{rel_src}/{top}"
             packages.append(package)
     return packages, package_dir
 

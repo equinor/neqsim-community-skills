@@ -9,14 +9,14 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Dict, Iterable, List, Mapping, Optional, Union
+from collections.abc import Iterable, Mapping
 
 from .placement import APPROVED_BASES, Limit
 
 BASES = ("APPROVED", "SUPPLIED", "ASSUMED", "NONE")
 
 # key -> description, unit, direction of the check, check ids that use it, and what normally closes it
-LIMIT_CATALOG: Dict[str, dict] = {
+LIMIT_CATALOG: dict[str, dict] = {
     "zone_clearance_m": {"description": "Smallest distance to an active hard exclusion zone", "unit": "m", "operator": ">=", "checks": ["ZONE"],
                          "closed_by": "authority or safety-zone rules for the area"},
     "structure_clearance_m": {"description": "Smallest distance to an existing structure or the host", "unit": "m", "operator": ">=", "checks": ["STRUCT"],
@@ -54,14 +54,14 @@ def limits_template() -> dict:
                                                             "operator": v["operator"]} for k, v in LIMIT_CATALOG.items()}}
 
 
-def write_limits_template(path: Union[str, os.PathLike]) -> str:
+def write_limits_template(path: str | os.PathLike) -> str:
     """Write :func:`limits_template` as JSON and return the path, to be filled by the design basis owner."""
     with open(path, "w", encoding="utf-8") as handle:
         json.dump(limits_template(), handle, indent=2)
     return str(path)
 
 
-def _read(source: Union[str, os.PathLike, Mapping]) -> Mapping:
+def _read(source: str | os.PathLike | Mapping) -> Mapping:
     if isinstance(source, Mapping):
         return source
     with open(source, "r", encoding="utf-8") as handle:
@@ -73,7 +73,7 @@ def _read(source: Union[str, os.PathLike, Mapping]) -> Mapping:
     return json.loads(text)
 
 
-def load_limits(source: Union[str, os.PathLike, Mapping]) -> Dict[str, Limit]:
+def load_limits(source: str | os.PathLike | Mapping) -> dict[str, Limit]:
     """Validate and load a limits document (dict, JSON or YAML file) into ``{key: Limit}``.
 
     Rules: keys must be in :data:`LIMIT_CATALOG`; a value is a finite number or null; the unit must match the catalogue; ``basis`` is one of
@@ -84,8 +84,8 @@ def load_limits(source: Union[str, os.PathLike, Mapping]) -> Dict[str, Limit]:
     limits = data.get("limits", data) if isinstance(data, Mapping) else None
     if not isinstance(limits, Mapping):
         raise ValueError("the limits document must be a mapping (optionally under a 'limits' key)")
-    problems: List[str] = []
-    out: Dict[str, Limit] = {}
+    problems: list[str] = []
+    out: dict[str, Limit] = {}
     for key, rec in limits.items():
         if key == "schema":
             continue
@@ -116,7 +116,7 @@ def load_limits(source: Union[str, os.PathLike, Mapping]) -> Dict[str, Limit]:
     return out
 
 
-def limits_gap_register(limits: Mapping[str, Limit], keys: Optional[Iterable[str]] = None) -> List[dict]:
+def limits_gap_register(limits: Mapping[str, Limit], keys: Iterable[str] | None = None) -> list[dict]:
     """One row per catalogue limit: ``CLOSED`` when approved or supplied with a source, otherwise ``OPEN`` with what closes it.
 
     Use it in every report so an ASSUMED screening value is listed as a gap, never read as a requirement.
@@ -124,7 +124,7 @@ def limits_gap_register(limits: Mapping[str, Limit], keys: Optional[Iterable[str
     rows = []
     for key in (list(keys) if keys is not None else list(LIMIT_CATALOG)):
         spec = LIMIT_CATALOG[key]
-        lim: Optional[Limit] = limits.get(key)
+        lim: Limit | None = limits.get(key)
         closed = lim is not None and lim.approved
         rows.append({"key": key, "description": spec["description"], "unit": spec["unit"], "operator": spec["operator"], "checks": spec["checks"],
                      "status": "CLOSED" if closed else "OPEN", "basis": "NONE" if lim is None else lim.basis,

@@ -29,8 +29,8 @@ slate supplied by the user); this module only performs the molar split.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, List, Sequence, Tuple
 
 # Screening C7+ molecular-weight correlation for the constant split factor
 # (paper Section 2.2): S ~= C7PLUS_INTERCEPT - C7PLUS_SLOPE * MW_C7+ (g/mol),
@@ -80,7 +80,7 @@ def c7plus_split_correlation(mw_c7plus: float, eps: float = DEFAULT_EPS) -> floa
 def constant_pa_split(
     core_totals: Sequence[float],
     split_factor: float,
-) -> Tuple[List[float], List[float]]:
+) -> tuple[list[float], list[float]]:
     """Split each heavy-lump total into paraffinic and aromatic copies.
 
     Applies a single constant split factor ``S`` to every heavy lump (paper
@@ -111,7 +111,7 @@ def two_endpoint_pa_split(
     split_light: float,
     split_heavy: float,
     eps: float = DEFAULT_EPS,
-) -> Tuple[List[float], List[float]]:
+) -> tuple[list[float], list[float]]:
     """Split heavy lumps with an MW-interpolated two-endpoint split factor.
 
     Implements the general form (paper Eq. 4): the per-lump split factor is
@@ -143,8 +143,8 @@ def two_endpoint_pa_split(
             raise ValueError(f"{name} must be in [0, 1]")
     mw_lo, mw_hi = min(mws), max(mws)
     span = mw_hi - mw_lo
-    paraffinic: List[float] = []
-    aromatic: List[float] = []
+    paraffinic: list[float] = []
+    aromatic: list[float] = []
     for z, mw in zip(totals, mws):
         if span <= 0.0:
             s_i = split_light
@@ -172,11 +172,11 @@ class CoreLumpMap:
         unchanged by the split).
     """
 
-    core_labels: List[str]
-    core_totals: List[float]
-    paraffinic_index: List[int]
-    aromatic_index: List[int]
-    light_index: List[int]
+    core_labels: list[str]
+    core_totals: list[float]
+    paraffinic_index: list[int]
+    aromatic_index: list[int]
+    light_index: list[int]
 
 
 def recombine_core_totals(
@@ -214,10 +214,10 @@ def recombine_core_totals(
     if not paraffinic_suffix or not aromatic_suffix:
         raise ValueError("paraffinic_suffix and aromatic_suffix must be non-empty")
 
-    par_by_label: Dict[str, int] = {}
-    aro_by_label: Dict[str, int] = {}
-    light_index: List[int] = []
-    order: List[str] = []
+    par_by_label: dict[str, int] = {}
+    aro_by_label: dict[str, int] = {}
+    light_index: list[int] = []
+    order: list[str] = []
     par_suffix = paraffinic_suffix.upper()
     aro_suffix = aromatic_suffix.upper()
     for idx, name in enumerate(names):
@@ -239,10 +239,10 @@ def recombine_core_totals(
         else:
             light_index.append(idx)
 
-    core_labels: List[str] = []
-    core_totals: List[float] = []
-    paraffinic_index: List[int] = []
-    aromatic_index: List[int] = []
+    core_labels: list[str] = []
+    core_totals: list[float] = []
+    paraffinic_index: list[int] = []
+    aromatic_index: list[int] = []
     for label in order:
         if label not in par_by_label:
             raise ValueError(f"aromatic copy '{label}{aromatic_suffix}' has no paraffinic pair")
@@ -270,7 +270,7 @@ def apply_constant_split_to_vector(
     split_factor: float,
     paraffinic_suffix: str = "P",
     aromatic_suffix: str = "A",
-) -> List[float]:
+) -> list[float]:
     """Re-split a P/A component vector with a new constant split factor ``S``.
 
     Recovers each heavy-lump total from the current paraffinic/aromatic pair
@@ -316,9 +316,9 @@ class SourceToPaMap:
     :ivar sum_in: total mole fraction of the (normalized) source composition.
     """
 
-    light_fractions: Dict[str, float]
-    core_totals: Dict[str, float]
-    unmatched_light: List[str]
+    light_fractions: dict[str, float]
+    core_totals: dict[str, float]
+    unmatched_light: list[str]
     sum_in: float
 
 
@@ -401,9 +401,9 @@ def map_source_to_pa_core_totals(
     if normalize and total_in > 0.0:
         fractions = [f / total_in for f in fractions]
 
-    light_fractions: Dict[str, float] = {}
-    core_totals: Dict[str, float] = {label: 0.0 for label in labels}
-    unmatched_light: List[str] = []
+    light_fractions: dict[str, float] = {}
+    core_totals: dict[str, float] = {label: 0.0 for label in labels}
+    unmatched_light: list[str] = []
     _ = heavy_min_molecular_weight  # reserved guard; heavy set is "not a light name"
     for name, frac, mw in zip(names, fractions, mws):
         key = norm(name)

@@ -14,7 +14,7 @@ _SEGY_SRC = Path(__file__).resolve().parents[2] / "neqsim-seismic-segy-reading" 
 if _SEGY_SRC.is_dir() and str(_SEGY_SRC) not in sys.path:
     sys.path.insert(0, str(_SEGY_SRC))  # sibling skill; the plugin installs both together
 
-from seismic_structure import (  # noqa: E402
+from seismic_structure import (
     analyse_closure,
     build_layered_grid,
     calibrate_velocity,
@@ -29,8 +29,8 @@ from seismic_structure import (  # noqa: E402
     write_irap,
     write_zmap,
 )
-from seismic_structure.__main__ import main  # noqa: E402
-from seismic_structure.surface import Surface  # noqa: E402
+from seismic_structure.__main__ import main
+from seismic_structure.surface import Surface
 
 Z0, A = 2000.0, 1.0e-4  # paraboloid dome: z = Z0 + A r^2 (m), edge of a 4 x 4 km grid at 2400 m
 

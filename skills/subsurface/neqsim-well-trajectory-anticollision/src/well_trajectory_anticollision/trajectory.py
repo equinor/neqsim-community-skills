@@ -6,8 +6,8 @@ Angles are passed in degrees at the public API and handled in radians internally
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Optional, Sequence
 
 import numpy as np
 
@@ -58,14 +58,14 @@ class Wellpath:
     xyz: np.ndarray
     inc: np.ndarray
     az: np.ndarray
-    cov: Optional[np.ndarray] = None
-    parent: Optional[str] = None
-    tie_md: Optional[float] = None
+    cov: np.ndarray | None = None
+    parent: str | None = None
+    tie_md: float | None = None
     info: dict = field(default_factory=dict)
 
     @classmethod
     def from_survey(cls, name: str, md, inc_deg, az_deg, start_xyz=(0.0, 0.0, 0.0), cov=None,
-                    xyz=None, parent: Optional[str] = None) -> "Wellpath":
+                    xyz=None, parent: str | None = None) -> Wellpath:
         """Build from a survey listing. Positions are computed by minimum curvature unless ``xyz`` is given."""
         md = np.asarray(md, float)
         order = np.argsort(md)

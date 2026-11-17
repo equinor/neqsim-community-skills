@@ -1,4 +1,8 @@
-from .model import DynamicEquipment, DynamicPreparationPlan, DynamicProcessPreparationModel
+from .model import (
+    DynamicEquipment,
+    DynamicPreparationPlan,
+    DynamicProcessPreparationModel,
+)
 
 __all__ = [
     "DynamicEquipment",

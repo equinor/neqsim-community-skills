@@ -1,5 +1,4 @@
 import pytest
-
 from pump_hydraulics_screening import PumpHydraulicsModel
 
 

@@ -4,10 +4,18 @@ import zipfile
 from datetime import date
 
 import pytest
-
 from open_incident_data import (
-    BseeClient, SourceError, annual_counts, estimate_rate, label_counts, parse_date, parse_investigations,
-    parse_structures, poisson_interval, split_labels, structure_years,
+    BseeClient,
+    SourceError,
+    annual_counts,
+    estimate_rate,
+    label_counts,
+    parse_date,
+    parse_investigations,
+    parse_structures,
+    poisson_interval,
+    split_labels,
+    structure_years,
 )
 from open_incident_data.sources import SOURCES
 

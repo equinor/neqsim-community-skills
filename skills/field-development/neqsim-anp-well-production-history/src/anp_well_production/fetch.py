@@ -7,14 +7,15 @@ import hashlib
 import html
 import json
 import re
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 from urllib.parse import urljoin
 
 from .catalog import FAMILIES
 
 
-def extract_links(page_html: str, family: str, base: Optional[str] = None) -> List[Dict[str, str]]:
+def extract_links(page_html: str, family: str, base: str | None = None) -> list[dict[str, str]]:
     """List the data-file links of one family on an ANP open-data page.
 
     The page is the only reliable index: file names change between years, so a
@@ -56,7 +57,7 @@ def _default_get(url: str, timeout: float) -> bytes:
     except ImportError:  # pragma: no cover - exercised only without requests
         import urllib.request
 
-        with urllib.request.urlopen(url, timeout=timeout) as resp:  # noqa: S310
+        with urllib.request.urlopen(url, timeout=timeout) as resp:
             return resp.read()
 
 
@@ -64,9 +65,9 @@ def download(
     url: str,
     cache_dir: str | Path,
     offline: bool = False,
-    getter: Optional[Callable[[str, float], bytes]] = None,
+    getter: Callable[[str, float], bytes] | None = None,
     timeout: float = 300.0,
-) -> Tuple[Path, Dict[str, Any]]:
+) -> tuple[Path, dict[str, Any]]:
     """Download one file into a task-local cache and write a provenance log.
 
     The log (``<file>.log.json``) holds the URL, retrieval time, byte count and
@@ -101,7 +102,7 @@ def download(
     log = {
         "url": url,
         "file": path.name,
-        "retrieved_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+        "retrieved_utc": _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"),
         "bytes": len(raw),
         "sha256": hashlib.sha256(raw).hexdigest(),
         "status": "downloaded",

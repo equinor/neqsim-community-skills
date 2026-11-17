@@ -1,7 +1,6 @@
 import re
 from pathlib import Path
 
-
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SKILL_ROOT = REPOSITORY_ROOT / "skills"
 CATALOG = REPOSITORY_ROOT / "community-skills.yaml"

@@ -9,15 +9,24 @@ stamp when the basis is synthetic.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Circle, Polygon, Rectangle
 
 from .barriers import BarrierState
-from .iwp_style import LW, PALETTE, a3_sheet, direct_label, provenance_record, save_figure, sheet_axes, status_color
+from .iwp_style import (
+    LW,
+    PALETTE,
+    a3_sheet,
+    direct_label,
+    provenance_record,
+    save_figure,
+    sheet_axes,
+)
 from .registers import get_path
 
 FRACTIONS = {0.375: "3/8", 0.625: "5/8", 0.5: "1/2", 0.25: "1/4", 0.75: "3/4", 0.875: "7/8", 0.125: "1/8"}
@@ -26,10 +35,10 @@ FRACTIONS = {0.375: "3/8", 0.625: "5/8", 0.5: "1/2", 0.25: "1/4", 0.75: "3/4", 0
 def _fmt_in(od: float) -> str:
     whole = int(od)
     frac = round(od - whole, 3)
-    return '{} {}"'.format(whole, FRACTIONS[frac]) if frac in FRACTIONS else '{:g}"'.format(od)
+    return f'{whole} {FRACTIONS[frac]}"' if frac in FRACTIONS else f'{od:g}"'
 
 
-def _md_to_tvd(survey: Optional[Dict[str, Sequence[float]]], md_td: float, tvd_td: float):
+def _md_to_tvd(survey: dict[str, Sequence[float]] | None, md_td: float, tvd_td: float):
     if survey:
         return lambda md: float(np.interp(md, survey["md"], survey["tvd"]))
     return lambda md: float(md) * tvd_td / md_td
@@ -47,8 +56,8 @@ def _tree(ax, y_top: float, subsea: bool, width: float = 0.22) -> None:
     ax.text(0, y_top - h * 0.12, "subsea tree" if subsea else "tree", ha="center", va="bottom", fontsize=6.5)
 
 
-def well_schematic_sheet(basis: Dict[str, Any], survey: Optional[Dict[str, Sequence[float]]] = None, drawing_no: str = "IWP-DWG-001", revision: str = "A",
-                         revisions: Optional[List[Tuple[str, str, str]]] = None) -> plt.Figure:
+def well_schematic_sheet(basis: dict[str, Any], survey: dict[str, Sequence[float]] | None = None, drawing_no: str = "IWP-DWG-001", revision: str = "A",
+                         revisions: list[tuple[str, str, str]] | None = None) -> plt.Figure:
     """Draw the well schematic on an A3 sheet from the planning basis (and the survey for MD/TVD and deviation tracks)."""
     comp = get_path(basis, "completion") or {}
     md_td, tvd_td = float(get_path(basis, "trajectory.md_m")), float(get_path(basis, "trajectory.tvd_m"))
@@ -85,9 +94,9 @@ def well_schematic_sheet(basis: Dict[str, Any], survey: Optional[Dict[str, Seque
     md_of_tvd = (lambda z: float(np.interp(z, survey["tvd"], survey["md"]))) if survey else (lambda z: z * md_td / tvd_td)
     for z in ticks:
         ax_s.plot([0, 1], [z, z], color=PALETTE["grid"], lw=0.5)
-        ax_s.text(0.1, z, "{:.0f}".format(md_of_tvd(z)), fontsize=6.5, ha="center", va="center", color=PALETTE["muted"], bbox=dict(fc="white", ec="none", pad=0.5))
-        ax_s.text(0.5, z, "{:.0f}".format(z), fontsize=6.8, ha="center", va="center", fontweight="bold", bbox=dict(fc="white", ec="none", pad=0.5))
-        ax_s.text(0.9, z, "{:.0f}".format(z - rkb), fontsize=6.5, ha="center", va="center", color=PALETTE["muted"], bbox=dict(fc="white", ec="none", pad=0.5))
+        ax_s.text(0.1, z, f"{md_of_tvd(z):.0f}", fontsize=6.5, ha="center", va="center", color=PALETTE["muted"], bbox=dict(fc="white", ec="none", pad=0.5))
+        ax_s.text(0.5, z, f"{z:.0f}", fontsize=6.8, ha="center", va="center", fontweight="bold", bbox=dict(fc="white", ec="none", pad=0.5))
+        ax_s.text(0.9, z, f"{z - rkb:.0f}", fontsize=6.5, ha="center", va="center", color=PALETTE["muted"], bbox=dict(fc="white", ec="none", pad=0.5))
     # schematic track
     ax_w.set_xlim(-1.0, 1.6)
     ax_w.set_xticks([])
@@ -95,7 +104,7 @@ def well_schematic_sheet(basis: Dict[str, Any], survey: Optional[Dict[str, Seque
     for s in ("left", "bottom", "top", "right"):
         ax_w.spines[s].set_visible(False)
     forms = comp.get("formations") or []
-    right_labels: List[Tuple[float, str, str, str]] = []
+    right_labels: list[tuple[float, str, str, str]] = []
     for k, f in enumerate(forms):
         if f.get("kind") == "contact":
             ax_w.plot([-1.0, 1.6], [f["top_tvd_m"]] * 2, color=PALETTE["water"], lw=1.3, ls="--")
@@ -110,7 +119,7 @@ def well_schematic_sheet(basis: Dict[str, Any], survey: Optional[Dict[str, Seque
         sb = wd + rkb
         ax_w.add_patch(Rectangle((-1.0, 0), 2.6, sb, fc=PALETTE["seawater"], ec="none", alpha=0.9, zorder=0))
         ax_w.plot([-1.0, 1.6], [sb, sb], color="#1B4F72", lw=1.5)
-        ax_w.text(-0.98, sb, "seabed  {:g} m MSL".format(-wd), fontsize=7, va="bottom", color="#1B4F72", fontweight="bold")
+        ax_w.text(-0.98, sb, f"seabed  {-wd:g} m MSL", fontsize=7, va="bottom", color="#1B4F72", fontweight="bold")
         top_y = sb
     else:
         ax_w.plot([-1.0, 1.6], [0, 0], color="#6B4F2A", lw=1.5)
@@ -118,7 +127,7 @@ def well_schematic_sheet(basis: Dict[str, Any], survey: Optional[Dict[str, Seque
         top_y = 0.0
     casings = sorted(comp.get("casing") or [], key=lambda c: -c["od_in"])
     max_od = max([c["od_in"] for c in casings] + [20.0])
-    hw = lambda od: 0.82 * od / max_od  # noqa: E731
+    hw = lambda od: 0.82 * od / max_od
     tub = comp.get("tubing") or {}
     for k, c in enumerate(casings):
         top = m2t(c.get("top_md_m", 0.0))
@@ -147,7 +156,7 @@ def well_schematic_sheet(basis: Dict[str, Any], survey: Optional[Dict[str, Seque
         for sgn in (-1, 1):
             ax_w.plot([sgn * oh] * 2, [shoe, tvd_td], color=PALETTE["steel"], lw=1.0, ls="--", zorder=3)
         ax_w.plot([-oh, oh], [tvd_td, tvd_td], color=PALETTE["steel"], lw=1.0, zorder=3)
-        ax_w.text(0, tvd_td + 8, "TD {:.0f} m MD / {:.0f} m TVD".format(md_td, tvd_td), ha="center", va="top", fontsize=7, fontweight="bold")
+        ax_w.text(0, tvd_td + 8, f"TD {md_td:.0f} m MD / {tvd_td:.0f} m TVD", ha="center", va="top", fontsize=7, fontweight="bold")
     min_gap = 0.024 * tvd_td
     order = sorted(range(len(right_labels)), key=lambda i: right_labels[i][0])
     ys = {}
@@ -191,7 +200,7 @@ def well_schematic_sheet(basis: Dict[str, Any], survey: Optional[Dict[str, Seque
     for md_m in (comp.get("lift") or {}).get("mandrels_md_m", []) or []:
         my = m2t(md_m)
         ax_w.add_patch(Rectangle((th, my - 9), 0.07, 18, fc=PALETTE["gas"], ec="black", lw=0.4, zorder=6))
-        ax_w.text(th + 0.1, my, "GLM {:.0f}".format(md_m), fontsize=6.0, va="center", color=PALETTE["gas"], fontweight="bold")
+        ax_w.text(th + 0.1, my, f"GLM {md_m:.0f}", fontsize=6.0, va="center", color=PALETTE["gas"], fontweight="bold")
     inj = wtype in ("water_injector", "gas_injector")
     for pf in comp.get("perforations") or []:
         y0, y1 = m2t(pf["top_md_m"]), m2t(pf["base_md_m"])
@@ -226,7 +235,7 @@ def well_schematic_sheet(basis: Dict[str, Any], survey: Optional[Dict[str, Seque
         ax_p.set_title("Pressure window [sg EMW]", fontsize=7.5, pad=2)
     if pw:
         z = np.array([p["tvd_m"] for p in pw])
-        emw = lambda key: np.array([p[key] / (0.0980665 * p["tvd_m"]) for p in pw])  # noqa: E731
+        emw = lambda key: np.array([p[key] / (0.0980665 * p["tvd_m"]) for p in pw])
         pore, frac, mud = emw("pore_bara"), emw("frac_bara"), emw("mud_bara")
         ax_p.fill_betweenx(z, pore, frac, color=PALETTE["band_low_high"], alpha=0.35, lw=0)
         ax_p.plot(pore, z, color=PALETTE["pressure"], lw=LW["normal"])
@@ -281,8 +290,8 @@ def well_schematic_sheet(basis: Dict[str, Any], survey: Optional[Dict[str, Seque
     return fig
 
 
-def barrier_schematic_sheet(states: List[BarrierState], basis: Dict[str, Any], drawing_no: str = "IWP-DWG-002", revision: str = "A",
-                            revisions: Optional[List[Tuple[str, str, str]]] = None) -> plt.Figure:
+def barrier_schematic_sheet(states: list[BarrierState], basis: dict[str, Any], drawing_no: str = "IWP-DWG-002", revision: str = "A",
+                            revisions: list[tuple[str, str, str]] | None = None) -> plt.Figure:
     """Barrier schematics per well state on an A3 sheet.
 
     Upper half: one stylised well per state with the primary envelope (solid blue) and secondary envelope (dashed red), numbered element markers at their depth
@@ -344,11 +353,11 @@ def barrier_schematic_sheet(states: List[BarrierState], basis: Dict[str, Any], d
         y -= 0.012
         for e in st.elements:
             col = PALETTE["primary_barrier"] if e.envelope == "primary" else PALETTE["secondary_barrier"]
-            head = "{}  {}".format(e.id, e.name)
+            head = f"{e.id}  {e.name}"
             for j, line in enumerate(textwrap.wrap(head, 60)[:2]):
                 ax2.text(0, y, line, fontsize=6.9, fontweight="bold", va="top", color=col)
                 y -= 0.03
-            body = "{} | {}".format(e.function, e.verification_status)
+            body = f"{e.function} | {e.verification_status}"
             for line in textwrap.wrap(body, 66)[:2]:
                 ax2.text(0.02, y, line, fontsize=6.3, va="top", color=PALETTE["text"])
                 y -= 0.027
@@ -366,8 +375,8 @@ def barrier_schematic_sheet(states: List[BarrierState], basis: Dict[str, Any], d
     return fig
 
 
-def render_sheet(fig, out_stem: Path, name: str, inputs: Any, drawing_no: str, caption: str, synthetic: bool = True, ledger_refs: Optional[List[str]] = None,
-                 formats: Sequence[str] = ("png", "pdf", "svg")) -> Dict[str, str]:
+def render_sheet(fig, out_stem: Path, name: str, inputs: Any, drawing_no: str, caption: str, synthetic: bool = True, ledger_refs: list[str] | None = None,
+                 formats: Sequence[str] = ("png", "pdf", "svg")) -> dict[str, str]:
     """Save a drawing sheet as 300 dpi PNG plus vector PDF and SVG with a provenance sidecar."""
     prov = provenance_record(Path(out_stem).name, name, "integrated_well_planning.iwp_drawings." + name, inputs, caption, synthetic, [], ledger_refs, drawing_no)
     return save_figure(fig, Path(out_stem), prov, formats)

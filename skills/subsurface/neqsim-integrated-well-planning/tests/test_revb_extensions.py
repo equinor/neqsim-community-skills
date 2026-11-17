@@ -6,12 +6,17 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from PIL import Image
-
-from integrated_well_planning import examples_data as ed, iwp_charts_extra as X, iwp_graphics as G
+from integrated_well_planning import examples_data as ed
+from integrated_well_planning import iwp_charts_extra as X
+from integrated_well_planning import iwp_graphics as G
 from integrated_well_planning.alternatives import score_raw
-from integrated_well_planning.barriers import EXPLORATION_STATES, barrier_summary, propose_exploration_barriers
+from integrated_well_planning.barriers import (
+    EXPLORATION_STATES,
+    barrier_summary,
+    propose_exploration_barriers,
+)
 from integrated_well_planning.nodal import solve_nodal
+from PIL import Image
 
 
 def _png_ok(path, min_w=400):
@@ -167,7 +172,11 @@ def test_lump_to_cpa_fluid_keeps_library_components_and_adds_one_plus_fraction(j
 
 
 def test_e300_fluid_round_trip_and_basis_resolution(java, tmp_path):
-    from integrated_well_planning.model_chain import build_fluid, e300_path, read_e300_fluid
+    from integrated_well_planning.model_chain import (
+        build_fluid,
+        e300_path,
+        read_e300_fluid,
+    )
     from integrated_well_planning.runtime import jclass
 
     src = jclass("SystemSrkEos")(273.15 + 80.0, 150.0)
@@ -181,7 +190,7 @@ def test_e300_fluid_round_trip_and_basis_resolution(java, tmp_path):
     try:
         reader.write(src, str(path))
     except Exception as exc:  # noqa: BLE001
-        pytest.skip("E300 writer unavailable: {}".format(exc))
+        pytest.skip(f"E300 writer unavailable: {exc}")
     f = read_e300_fluid(str(path))
     assert f.getNumberOfComponents() == 3
     b = copy.deepcopy(ed.gas_condensate_producer_subsea())
@@ -226,7 +235,10 @@ def test_wgr_changes_the_water_mass_flow(java):
 
 
 def test_compare_methods_returns_drift_flux_reference_and_each_correlation(gc_model):
-    from integrated_well_planning.hydraulics_compare import PIPE_METHODS, compare_methods
+    from integrated_well_planning.hydraulics_compare import (
+        PIPE_METHODS,
+        compare_methods,
+    )
 
     q = 0.1 * gc_model.ipr("base")["aof"]
     whp = float(gc_model.back_pressure("base", q)["wellhead_pressure_bara"]) + 20.0

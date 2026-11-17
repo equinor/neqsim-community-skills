@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from norwegian_continental_shelf_data import (
     CO2_SOURCE_SPLIT_2024,
     GAS_CO2_FACTOR_KG_PER_SM3,

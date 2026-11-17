@@ -16,12 +16,11 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
 DEFAULT_VERSION = "1.4.38"
 ASSEMBLY = "TimeSeriesAnalysis"
 _CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-_loaded: Optional[Path] = None
+_loaded: Path | None = None
 
 
 class TsaUnavailable(RuntimeError):
@@ -32,7 +31,7 @@ def default_bundle_dir(version: str = DEFAULT_VERSION) -> Path:
     return Path.home() / ".neqsim" / "timeseriesanalysis" / version
 
 
-def find_assemblies(version: str = DEFAULT_VERSION) -> Optional[Path]:
+def find_assemblies(version: str = DEFAULT_VERSION) -> Path | None:
     """Directory holding ``TimeSeriesAnalysis.dll``, or None."""
     candidates = []
     if os.environ.get("TIMESERIESANALYSIS_ASSEMBLY_PATH"):
@@ -64,7 +63,7 @@ def load(version: str = DEFAULT_VERSION) -> Path:
         from pythonnet import load as load_runtime
 
         load_runtime("coreclr")
-    except Exception as exc:  # noqa: BLE001 - also raised when another runtime is already loaded
+    except Exception as exc:
         if "already" not in str(exc).lower():
             raise TsaUnavailable(f".NET runtime (CoreCLR) could not be loaded: {exc}. Install the .NET 8 runtime "
                                  f"or newer, and pythonnet (declared in this skill's pyproject.toml).") from exc
@@ -88,7 +87,7 @@ _PROJECT = """<Project Sdk="Microsoft.NET.Sdk">
 """
 
 
-def setup_assemblies(version: str = DEFAULT_VERSION, dest: Optional[Path] = None) -> Path:
+def setup_assemblies(version: str = DEFAULT_VERSION, dest: Path | None = None) -> Path:
     """Publish TimeSeriesAnalysis and its dependencies from NuGet into ``dest`` with the .NET SDK.
 
     Run once, on purpose. It needs ``dotnet`` on PATH and network access to nuget.org.

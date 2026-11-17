@@ -7,7 +7,7 @@ ASSUMED by the author, labelled as such, and are not an acceptance criterion. Sc
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .registers import get_path
 
@@ -21,7 +21,7 @@ DEFAULT_SCHEDULE = [
 ]
 
 
-def schedule_tasks(basis: Dict[str, Any]) -> List[Dict[str, Any]]:
+def schedule_tasks(basis: dict[str, Any]) -> list[dict[str, Any]]:
     """Gantt tasks with sequential start days (base durations); durations from ``basis.schedule`` or the labelled synthetic default."""
     tasks = [dict(t) for t in (get_path(basis, "schedule") or DEFAULT_SCHEDULE)]
     start = 0.0
@@ -31,7 +31,7 @@ def schedule_tasks(basis: Dict[str, Any]) -> List[Dict[str, Any]]:
     return tasks
 
 
-def time_depth(basis: Dict[str, Any]) -> Dict[str, List]:
+def time_depth(basis: dict[str, Any]) -> dict[str, list]:
     """Time-depth curves (low/base/high) built from the schedule and the casing shoe depths (piecewise linear, synthetic when the schedule is)."""
     tasks = schedule_tasks(basis)
     shoes = [0.0] + [c["shoe_md_m"] for c in sorted(get_path(basis, "completion.casing") or [], key=lambda c: c["shoe_md_m"])] + [float(get_path(basis, "trajectory.md_m"))]
@@ -48,9 +48,9 @@ def time_depth(basis: Dict[str, Any]) -> Dict[str, List]:
     return out
 
 
-def build_risks(basis: Dict[str, Any], res: Dict[str, Any], gaps: List[Any]) -> List[Dict[str, Any]]:
+def build_risks(basis: dict[str, Any], res: dict[str, Any], gaps: list[Any]) -> list[dict[str, Any]]:
     """Risk register entries from findings (envelope statuses, data gaps, unresolved assessments)."""
-    risks: List[Dict[str, Any]] = []
+    risks: list[dict[str, Any]] = []
 
     def add(title: str, lk: int, cq: int, mitigation: str, owner: str = "well planning lead") -> None:
         risks.append({"id": len(risks) + 1, "title": title, "likelihood": lk, "consequence": cq, "mitigation": mitigation, "owner": owner, "scoring": "ASSUMED qualitative"})
@@ -68,13 +68,13 @@ def build_risks(basis: Dict[str, Any], res: Dict[str, Any], gaps: List[Any]) -> 
         add("Target rate not deliverable in the pessimistic case", 3, 4, "acquire well-test/pressure data; design flexibility for lift")
     for g in gaps:
         sev = {"BLOCKING": 5, "MAJOR": 3, "MINOR": 2}.get(getattr(g, "severity", "MINOR"), 2)
-        add("Data gap: {}".format(g.key), 3, sev, g.consequence[:60], "study lead")
+        add(f"Data gap: {g.key}", 3, sev, g.consequence[:60], "study lead")
     for spec in res.get("interface_specs", []):
         add("Unresolved specialist assessment: {}".format(spec["assessment"]), 3, 4, "hand off to {}".format(spec["receiver"]), "discipline lead")
     return risks[:14]
 
 
-def decision_tree_nodes(alt: Dict[str, Any]) -> List[Dict[str, Any]]:
+def decision_tree_nodes(alt: dict[str, Any]) -> list[dict[str, Any]]:
     """Decision tree: select the completion alternative, then the reservoir outcome (low/base/high) and whether the target is met."""
     nodes = [{"id": "root", "parent": None, "label": "Select completion", "kind": "decision"}]
     for r in alt.get("alternatives", []):

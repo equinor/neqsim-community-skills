@@ -1,5 +1,4 @@
 import pytest
-
 from flow_induced_vibration_screening import FlowInducedVibrationModel
 
 

@@ -17,7 +17,6 @@ clear :class:`RuntimeError` instead of an opaque import error.
 from __future__ import annotations
 
 from importlib.util import find_spec
-from typing import Optional
 
 _DEFAULT_WATER_KIJ = 0.5
 _DEFAULT_RESERVOIR_TEMP_C = 100.0
@@ -51,7 +50,7 @@ def read_e300_to_neqsim(
     path: str,
     add_water: bool = False,
     water_kij: float = _DEFAULT_WATER_KIJ,
-    pseudo_name: Optional[str] = None,
+    pseudo_name: str | None = None,
 ):
     """Read an E300 file into a NeqSim fluid.
 

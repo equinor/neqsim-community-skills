@@ -16,8 +16,9 @@ Cell ordering is Eclipse ordering throughout: I fastest, then J, then K.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Mapping, Optional, Sequence
+from typing import Any
 
 #: Written into the GRID section.
 GRID_KEYWORDS = ("PORO", "PERMX", "PERMY", "PERMZ", "NTG", "ACTNUM", "MULTNUM")
@@ -100,7 +101,7 @@ class GridDimensions:
     nx: int
     ny: int
     nz: int
-    source: Optional[str] = None
+    source: str | None = None
 
     @property
     def cell_count(self) -> int:
@@ -121,7 +122,7 @@ class StaticModelArrays:
     provenance: dict[str, str] = field(default_factory=dict)
 
     def add(self, keyword: str, values: Sequence[float], *,
-            unit: Optional[str] = None, source: Optional[str] = None) -> "StaticModelArrays":
+            unit: str | None = None, source: str | None = None) -> StaticModelArrays:
         key = str(keyword).strip().upper()
         self.arrays[key] = list(values)
         if unit:
@@ -140,7 +141,7 @@ def validate_array(
     values: Sequence[float],
     grid: GridDimensions,
     *,
-    unit: Optional[str] = None,
+    unit: str | None = None,
 ) -> dict[str, Any]:
     """Check one cell array against the grid and the keyword's physical bounds."""
     key = str(keyword).strip().upper()
@@ -278,7 +279,7 @@ def write_keyword_include(
     keyword: str,
     values: Sequence[float],
     *,
-    comment: Optional[str] = None,
+    comment: str | None = None,
 ) -> str:
     """Render one keyword as an OPM Flow INCLUDE file body."""
     key = str(keyword).strip().upper()
@@ -293,7 +294,7 @@ def write_keyword_include(
 def build_static_model_deck_input(
     model: StaticModelArrays,
     *,
-    kv_kh: Optional[float] = None,
+    kv_kh: float | None = None,
     rebase_zero_based_regions: bool = False,
 ) -> dict[str, Any]:
     """Validate a retrieved static model and render its GRID/PROPS includes.
@@ -385,8 +386,8 @@ def reconcile_volume(
     *,
     computed_stoiip_m3: float,
     reported_p50_m3: float,
-    reported_p10_m3: Optional[float] = None,
-    reported_p90_m3: Optional[float] = None,
+    reported_p10_m3: float | None = None,
+    reported_p90_m3: float | None = None,
     tolerance_fraction: float = 0.15,
 ) -> dict[str, Any]:
     """Check a rebuilt in-place volume against the reported one.

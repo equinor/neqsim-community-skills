@@ -9,17 +9,17 @@ from __future__ import annotations
 
 import os
 import re
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 __all__ = [
-    "OlgaInstallation",
-    "OlgaNotFoundError",
     "DEFAULT_SEARCH_ROOTS",
     "LICENSE_ENV_VARS",
-    "find_olga_installations",
+    "OlgaInstallation",
+    "OlgaNotFoundError",
     "find_olga",
+    "find_olga_installations",
     "license_environment",
     "olgas_point_model_roots",
 ]
@@ -29,7 +29,7 @@ class OlgaNotFoundError(RuntimeError):
     """Raised when no usable OLGA installation can be located."""
 
 
-DEFAULT_SEARCH_ROOTS: Tuple[str, ...] = (
+DEFAULT_SEARCH_ROOTS: tuple[str, ...] = (
     r"C:\Program Files\Schlumberger",
     r"C:\Program Files (x86)\Schlumberger",
     r"C:\Apps\Schlumberger",
@@ -37,7 +37,7 @@ DEFAULT_SEARCH_ROOTS: Tuple[str, ...] = (
 )
 
 #: Environment variables that influence OLGA licence checkout.
-LICENSE_ENV_VARS: Tuple[str, ...] = (
+LICENSE_ENV_VARS: tuple[str, ...] = (
     "LM_LICENSE_FILE",
     "SLBSLS_LICENSE_FILE",
     "SLB_LICENSE_FILE",
@@ -57,7 +57,7 @@ _ENGINE_NAME_RE = re.compile(r"^olga-.+\.exe$", re.IGNORECASE)
 _VERSION_NUMBERS_RE = re.compile(r"\d+")
 
 #: Auxiliary executables shipped with OLGA, relative to the installation root.
-_TOOL_RELPATHS: Dict[str, str] = {
+_TOOL_RELPATHS: dict[str, str] = {
     "gui": "OPGFramework.exe",
     "opi_launcher": "opi.exe",
     "exit_code_lookup": "OlgaExecutables/exit_code_lookup.exe",
@@ -88,15 +88,15 @@ class OlgaInstallation:
     version: str
     engine: Path
     tools: Mapping[str, Path] = field(default_factory=dict)
-    sample_cases: Optional[Path] = None
+    sample_cases: Path | None = None
 
     @property
-    def version_key(self) -> Tuple[int, ...]:
+    def version_key(self) -> tuple[int, ...]:
         """Numeric sort key derived from the version string."""
         return tuple(int(n) for n in _VERSION_NUMBERS_RE.findall(self.version))
 
     @property
-    def gui(self) -> Optional[Path]:
+    def gui(self) -> Path | None:
         """Path to the OLGA graphical front end, if installed."""
         return self.tools.get("gui")
 
@@ -104,7 +104,7 @@ class OlgaInstallation:
         """Return an auxiliary executable path or raise ``KeyError``."""
         return self.tools[name]
 
-    def describe(self) -> Dict[str, object]:
+    def describe(self) -> dict[str, object]:
         """Return a JSON-friendly summary of the installation."""
         return {
             "root": str(self.root),
@@ -119,7 +119,7 @@ def _is_excluded(name: str) -> bool:
     return any(pattern.match(name) for pattern in _EXCLUDED_DIR_PATTERNS)
 
 
-def _find_engine(root: Path) -> Optional[Path]:
+def _find_engine(root: Path) -> Path | None:
     for directory in (root / "OlgaExecutables", root):
         if not directory.is_dir():
             continue
@@ -141,8 +141,8 @@ def _engine_version(engine: Path, root: Path) -> str:
     return match.group("version") if match else stem
 
 
-def _collect_tools(root: Path) -> Dict[str, Path]:
-    tools: Dict[str, Path] = {}
+def _collect_tools(root: Path) -> dict[str, Path]:
+    tools: dict[str, Path] = {}
     for name, relpath in _TOOL_RELPATHS.items():
         if "*" in relpath:
             matches = sorted(root.glob(relpath))
@@ -155,7 +155,7 @@ def _collect_tools(root: Path) -> Dict[str, Path]:
     return tools
 
 
-def _build_installation(root: Path) -> Optional[OlgaInstallation]:
+def _build_installation(root: Path) -> OlgaInstallation | None:
     engine = _find_engine(root)
     if engine is None:
         return None
@@ -170,9 +170,9 @@ def _build_installation(root: Path) -> Optional[OlgaInstallation]:
 
 
 def find_olga_installations(
-    search_roots: Optional[Sequence[str | os.PathLike[str]]] = None,
-    env: Optional[Mapping[str, str]] = None,
-) -> List[OlgaInstallation]:
+    search_roots: Sequence[str | os.PathLike[str]] | None = None,
+    env: Mapping[str, str] | None = None,
+) -> list[OlgaInstallation]:
     """Return every OLGA installation found, newest version first.
 
     Resolution order:
@@ -189,7 +189,7 @@ def find_olga_installations(
         Discovered installations sorted newest-first. Empty if OLGA is absent.
     """
     environ = os.environ if env is None else env
-    found: Dict[Path, OlgaInstallation] = {}
+    found: dict[Path, OlgaInstallation] = {}
 
     explicit_engine = environ.get("OLGA_ENGINE") or environ.get("OLGA_EXE")
     if explicit_engine:
@@ -225,16 +225,16 @@ def find_olga_installations(
     return sorted(found.values(), key=lambda i: (i.version_key, i.version), reverse=True)
 
 
-def _split_paths(value: Optional[str]) -> Iterable[Path]:
+def _split_paths(value: str | None) -> Iterable[Path]:
     if not value:
         return ()
     return (Path(part) for part in value.split(os.pathsep) if part.strip())
 
 
 def find_olga(
-    version: Optional[str] = None,
-    search_roots: Optional[Sequence[str | os.PathLike[str]]] = None,
-    env: Optional[Mapping[str, str]] = None,
+    version: str | None = None,
+    search_roots: Sequence[str | os.PathLike[str]] | None = None,
+    env: Mapping[str, str] | None = None,
 ) -> OlgaInstallation:
     """Return one OLGA installation, preferring the newest version.
 
@@ -259,7 +259,7 @@ def find_olga(
     return installations[0]
 
 
-def license_environment(env: Optional[Mapping[str, str]] = None) -> Dict[str, str]:
+def license_environment(env: Mapping[str, str] | None = None) -> dict[str, str]:
     """Return the licence-related environment variables that are set.
 
     OLGA checks out a licence at engine start-up; an unset or unreachable licence
@@ -269,7 +269,7 @@ def license_environment(env: Optional[Mapping[str, str]] = None) -> Dict[str, st
     return {name: environ[name] for name in LICENSE_ENV_VARS if environ.get(name)}
 
 
-def olgas_point_model_roots(env: Optional[Mapping[str, str]] = None) -> Dict[str, str]:
+def olgas_point_model_roots(env: Mapping[str, str] | None = None) -> dict[str, str]:
     """Return the ``OLGAS_SLB_*`` point-model roots exported by the installer.
 
     These point at the OLGA-S steady-state point model used by third-party hosts

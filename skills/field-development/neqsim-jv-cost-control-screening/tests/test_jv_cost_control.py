@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-
 from jv_cost_control import (
     check_identities,
     check_subtotals,

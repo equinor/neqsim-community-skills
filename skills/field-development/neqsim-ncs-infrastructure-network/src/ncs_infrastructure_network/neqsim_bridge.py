@@ -16,7 +16,7 @@ Only the public Python ``neqsim`` package is needed (``pip install neqsim``).
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .network import NcsNetwork
 
@@ -38,9 +38,9 @@ def _jneqsim():
 
 # --------------------------------------------------------------------------- specs
 
-def host_facility_spec(host: Dict[str, Any], *, gas_capacity_msm3d: Optional[float] = None,
-                       gas_utilization: Optional[float] = None, oil_capacity_bopd: Optional[float] = None,
-                       oil_utilization: Optional[float] = None) -> Dict[str, Any]:
+def host_facility_spec(host: dict[str, Any], *, gas_capacity_msm3d: float | None = None,
+                       gas_utilization: float | None = None, oil_capacity_bopd: float | None = None,
+                       oil_utilization: float | None = None) -> dict[str, Any]:
     """HostFacility.builder inputs for an NCS host. Capacities are NOT open data - pass them in."""
     kind = str(host.get("kind") or "").upper().replace(" ", "")
     ftype = next((v for k, v in _FACILITY_TYPES.items() if k in kind), "PLATFORM")
@@ -55,7 +55,7 @@ def host_facility_spec(host: Dict[str, Any], *, gas_capacity_msm3d: Optional[flo
 
 
 def tieback_screen_spec(network: NcsNetwork, discovery: str, *, n_hosts: int = 5,
-                        max_km: float = 150.0) -> Dict[str, Any]:
+                        max_km: float = 150.0) -> dict[str, Any]:
     """Everything TiebackAnalyzer.quickScreen needs for one discovery, plus the host's export route."""
     did = network.resolve(discovery)
     disc = network.discoveries.get(did) or network.fields.get(did)
@@ -79,8 +79,8 @@ def tieback_screen_spec(network: NcsNetwork, discovery: str, *, n_hosts: int = 5
 
 
 def trunk_hydraulics_spec(network: NcsNetwork, field: str, *, path_index: int = 0,
-                          rate_msm3d: Optional[float] = None, terminal_pressure_bar: float = 100.0,
-                          wall_m: float = DEFAULT_WALL_M) -> Dict[str, Any]:
+                          rate_msm3d: float | None = None, terminal_pressure_bar: float = 100.0,
+                          wall_m: float = DEFAULT_WALL_M) -> dict[str, Any]:
     """Pipe list for a field's gas export path, from table diameters and lengths."""
     paths = network.export_paths(field, "gas")
     if not paths:
@@ -105,7 +105,7 @@ def trunk_hydraulics_spec(network: NcsNetwork, field: str, *, path_index: int = 
 
 # --------------------------------------------------------------------------- NeqSim
 
-def build_host_facility(spec: Dict[str, Any]):
+def build_host_facility(spec: dict[str, Any]):
     """Instantiate neqsim HostFacility from ``host_facility_spec``."""
     j = _jneqsim()
     tieback = j.process.fielddevelopment.tieback
@@ -125,9 +125,9 @@ def build_host_facility(spec: Dict[str, Any]):
     return b.build()
 
 
-def run_tieback_screening(spec: Dict[str, Any], *, gas_price_usd_per_sm3: Optional[float] = None,
-                          oil_price_usd_per_bbl: Optional[float] = None, discount_rate: Optional[float] = None,
-                          max_distance_km: Optional[float] = None) -> List[Dict[str, Any]]:
+def run_tieback_screening(spec: dict[str, Any], *, gas_price_usd_per_sm3: float | None = None,
+                          oil_price_usd_per_bbl: float | None = None, discount_rate: float | None = None,
+                          max_distance_km: float | None = None) -> list[dict[str, Any]]:
     """Run TiebackAnalyzer.quickScreen for every host in a ``tieback_screen_spec``."""
     j = _jneqsim()
     analyzer = j.process.fielddevelopment.tieback.TiebackAnalyzer()
@@ -156,7 +156,7 @@ def run_tieback_screening(spec: Dict[str, Any], *, gas_price_usd_per_sm3: Option
     return out
 
 
-def _solve_path(j, fluid, spec: Dict[str, Any], inlet_bar: float):
+def _solve_path(j, fluid, spec: dict[str, Any], inlet_bar: float):
     """Pressure-pressure LoopedPipeNetwork solve; returns (network, mass flow kg/hr)."""
     net = j.process.equipment.network.LoopedPipeNetwork("ncs-export-path")
     net.setFluidTemplate(fluid)
@@ -179,8 +179,8 @@ def _solve_path(j, fluid, spec: Dict[str, Any], inlet_bar: float):
     return net, float(net.getPipeFlowRate(pipes[-1]["id"]))
 
 
-def run_trunk_hydraulics(spec: Dict[str, Any], *, inlet_pressure_bar: Optional[float] = None,
-                         max_inlet_bar: float = 250.0, iterations: int = 30) -> Dict[str, Any]:
+def run_trunk_hydraulics(spec: dict[str, Any], *, inlet_pressure_bar: float | None = None,
+                         max_inlet_bar: float = 250.0, iterations: int = 30) -> dict[str, Any]:
     """Hydraulic check of an export path with NeqSim ``LoopedPipeNetwork``.
 
     With ``inlet_pressure_bar`` the network is solved pressure-pressure and the

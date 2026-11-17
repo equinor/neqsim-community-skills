@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from weather_data.open_meteo import WeatherSeries
-from weather_data.site_conditions import estimate_pasquill_stability_class, summarize_site_conditions
+from weather_data.site_conditions import (
+    estimate_pasquill_stability_class,
+    summarize_site_conditions,
+)
 
 
 def _series(n_hours=48, wind=None, temperature=None, gust=None):

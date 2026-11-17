@@ -3,8 +3,13 @@ import os
 import urllib.parse
 
 import pytest
-
-from open_marine_constraints import MarineClient, SourceError, screen_earthquakes, screen_route, summary_rows
+from open_marine_constraints import (
+    MarineClient,
+    SourceError,
+    screen_earthquakes,
+    screen_route,
+    summary_rows,
+)
 from open_marine_constraints.client import check_url
 from open_marine_constraints.geometry import haversine_m, route_bbox, route_length_m
 from open_marine_constraints.sources import ALLOWED_HOSTS, SOURCES, keys_for_theme

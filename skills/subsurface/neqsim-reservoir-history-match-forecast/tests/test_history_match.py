@@ -4,9 +4,22 @@ import pytest
 
 pytest.importorskip("jneqsim")
 
-from reservoir_history_match import (  # noqa: E402
-    DepletionPath, FluidModel, Field, Matcher, Param, Scenario, Tank, TankSpec, Well, fit_deliverability, forecast, well_series,
-    well_streams_at, stream_table, history_forecast_table,
+from reservoir_history_match import (
+    DepletionPath,
+    Field,
+    FluidModel,
+    Matcher,
+    Param,
+    Scenario,
+    Tank,
+    TankSpec,
+    Well,
+    fit_deliverability,
+    forecast,
+    history_forecast_table,
+    stream_table,
+    well_series,
+    well_streams_at,
 )
 
 LIGHT = {"nitrogen": 0, "CO2": 0, "methane": 0, "ethane": 0, "propane": 0, "i-butane": 0, "n-butane": 0, "i-pentane": 0, "n-pentane": 0, "n-hexane": 0}

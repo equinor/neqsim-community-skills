@@ -1,5 +1,4 @@
 import pytest
-
 from pipe_route_profile import PipeRouteModel
 
 

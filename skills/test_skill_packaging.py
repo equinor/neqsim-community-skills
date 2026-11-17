@@ -32,7 +32,7 @@ def test_skill_package_names_are_unique() -> None:
 
 
 def test_setup_discovers_every_skill_package() -> None:
-    import setup as root_setup  # noqa: PLC0415  (imports the repo's setup.py)
+    import setup as root_setup
 
     expected = set(_top_level_packages())
     assert set(root_setup.PACKAGE_DIR) == expected

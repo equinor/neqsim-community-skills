@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
-GOTCHAS: List[str] = [
+GOTCHAS: list[str] = [
     "www.sodir.no pages return HTTP 403 to scripts: use factmaps.sodir.no (REST) and factpages.sodir.no (CSV/ZIP).",
     "DataService geometry is ED50 (EPSG:4230). Request out_sr=4326 for WGS84 before mixing with other maps.",
     "Server page limit is 2000 rows; the client pages automatically. Use where/bbox/out_fields to keep reads small.",
@@ -18,7 +18,7 @@ GOTCHAS: List[str] = [
     "Always record provenance (URL, rows, retrieval time) and cite: Norwegian Offshore Directorate, NLOD 2.0.",
 ]
 
-USE_CASES: Dict[str, Dict[str, Any]] = {
+USE_CASES: dict[str, dict[str, Any]] = {
     "wellbores": {
         "question": "Which wells exist near/within a field, block or box; type, status, depth, water depth, HC content?",
         "layers": ["wellbore (5000, point)"],
@@ -121,7 +121,7 @@ USE_CASES: Dict[str, Dict[str, Any]] = {
 }
 
 
-def use_case(topic: str) -> Dict[str, Any]:
+def use_case(topic: str) -> dict[str, Any]:
     """Return the recipe of a topic (key or unique prefix) with the global gotchas attached."""
     keys = [k for k in USE_CASES if k == topic or k.startswith(topic)]
     if len(keys) != 1:

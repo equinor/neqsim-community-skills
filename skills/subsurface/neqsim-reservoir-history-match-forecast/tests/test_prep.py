@@ -1,7 +1,11 @@
 import numpy as np
 import pandas as pd
-
-from reservoir_history_match.prep import deliverability_history, field_cgr_observations, monthly_rates, shut_in_pressure_observations
+from reservoir_history_match.prep import (
+    deliverability_history,
+    field_cgr_observations,
+    monthly_rates,
+    shut_in_pressure_observations,
+)
 
 
 def _wells():

@@ -1,14 +1,16 @@
 import json
 
 import pytest
-
 from ncs_infrastructure_network.build import build_snapshot, parse_capacity
 from ncs_infrastructure_network.network import NcsNetwork
-from ncs_infrastructure_network.open_api import (EntsogTransparency, SodirDataService, SodirFactPages,
-                                                 summarise_entry_flows)
+from ncs_infrastructure_network.open_api import (
+    EntsogTransparency,
+    SodirDataService,
+    SodirFactPages,
+    summarise_entry_flows,
+)
 from ncs_infrastructure_network.sources import sources_for
 from ncs_infrastructure_network.transport_parser import Gazetteer, parse_transport_text
-
 
 # --------------------------------------------------------------------------- open API clients
 

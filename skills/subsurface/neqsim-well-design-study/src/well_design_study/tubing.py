@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Sequence
-
-from .units import M_PER_IN
+from collections.abc import Sequence
 
 P_STD_BAR = 1.01325
 T_STD_K = 288.15
@@ -35,7 +33,7 @@ def turner_critical_velocity_ms(rho_gas_kg_m3: float, rho_liq_kg_m3: float, sigm
 
 def tubing_table(q_sm3d_list: Sequence[float], ids_mm: Sequence[float], p_bar: float, t_c: float, z: float,
                  rho_gas_kg_m3: float, rho_mix_kg_m3: float, rho_liq_kg_m3: float = 700.0, sigma_n_m: float = 0.02,
-                 c_factor: float = 100.0) -> List[Dict[str, float]]:
+                 c_factor: float = 100.0) -> list[dict[str, float]]:
     """Velocity, erosional ratio and Turner ratio for each (rate, tubing ID) at one pressure and temperature."""
     ve = erosional_velocity_ms(rho_mix_kg_m3, c_factor)
     vt = turner_critical_velocity_ms(rho_gas_kg_m3, rho_liq_kg_m3, sigma_n_m)

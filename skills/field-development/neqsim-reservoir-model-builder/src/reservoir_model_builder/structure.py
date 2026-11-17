@@ -27,8 +27,8 @@ should say so itself.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Callable, Mapping, Sequence
 
 from .parameters import Parameter
 
@@ -218,9 +218,7 @@ def resolve_play(play: str | None = None, sea_area: str | None = None) -> str:
         return play
     if play:
         raise KeyError(
-            "unknown play '{}'; expected one of {}".format(
-                play, sorted(STRUCTURAL_STYLE)
-            )
+            f"unknown play '{play}'; expected one of {sorted(STRUCTURAL_STYLE)}"
         )
     key = (sea_area or "generic").strip().lower().replace(" ", "_")
     return SEA_AREA_DEFAULT_PLAY.get(key, "generic_anticline")
@@ -255,7 +253,7 @@ def assume_structure(
             value=float(style["dip_deg"]),
             unit="deg",
             provenance="analogue",
-            reference="{} structural style".format(key),
+            reference=f"{key} structural style",
             low=0.5 * float(style["dip_deg"]),
             high=2.0 * float(style["dip_deg"]),
         ),
@@ -264,7 +262,7 @@ def assume_structure(
             value=float(style["relief_m"]),
             unit="m",
             provenance="analogue",
-            reference="{} structural style".format(key),
+            reference=f"{key} structural style",
             low=0.5 * float(style["relief_m"]),
             high=1.8 * float(style["relief_m"]),
         ),
@@ -282,7 +280,7 @@ def assume_structure(
             value=float(style["fault_throw_m"]),
             unit="m",
             provenance="analogue",
-            reference="{} structural style".format(key),
+            reference=f"{key} structural style",
             low=0.5 * float(style["fault_throw_m"]),
             high=2.0 * float(style["fault_throw_m"]),
         )
@@ -300,7 +298,7 @@ def assume_structure(
             value=str(style["description"]),
             provenance="analogue",
             rationale=(
-                "Dominant trap style of the play. Analogues: {}.".format(analogues)
+                f"Dominant trap style of the play. Analogues: {analogues}."
             ),
             would_be_replaced_by="3D seismic interpretation and a depth structure map",
         ),
@@ -431,10 +429,8 @@ def solve_contact_for_volume(
     if not (low_volume <= target_volume <= high_volume):
         raise ValueError(
             "assumed structure cannot hold the target volume: bracket gives "
-            "{:.4g} to {:.4g}, target is {:.4g}. Increase the relief, the area "
-            "or the porosity, or question the reported volume.".format(
-                low_volume, high_volume, target_volume
-            )
+            f"{low_volume:.4g} to {high_volume:.4g}, target is {target_volume:.4g}. Increase the relief, the area "
+            "or the porosity, or question the reported volume."
         )
     for _ in range(iterations):
         middle = 0.5 * (shallow_m + deep_m)
@@ -539,7 +535,7 @@ def assumption_register(model: StructuralModel) -> list[dict]:
         rows.append(
             {
                 "element": name,
-                "value": "{:g} {}".format(parameter.value, parameter.unit).strip(),
+                "value": f"{parameter.value:g} {parameter.unit}".strip(),
                 "provenance": parameter.provenance,
                 "rationale": parameter.reference,
                 "would_be_replaced_by": "field measurement",

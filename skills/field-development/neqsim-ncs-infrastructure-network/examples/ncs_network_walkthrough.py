@@ -10,8 +10,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from ncs_infrastructure_network import NcsNetwork  # noqa: E402
-from ncs_infrastructure_network import neqsim_bridge as nb  # noqa: E402
+from ncs_infrastructure_network import NcsNetwork
+from ncs_infrastructure_network import neqsim_bridge as nb
 
 net = NcsNetwork.load()
 print(json.dumps(net.summary(), indent=1))

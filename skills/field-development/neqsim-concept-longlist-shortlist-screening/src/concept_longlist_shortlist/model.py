@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import itertools
 import random
-from typing import Any, Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any
 
 PASS = "pass"
 FAIL = "fail"

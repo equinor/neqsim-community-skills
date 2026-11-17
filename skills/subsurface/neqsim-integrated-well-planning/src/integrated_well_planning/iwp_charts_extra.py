@@ -6,17 +6,25 @@ direct labels with collision avoidance, units on every axis, shaded bands, no le
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence, Tuple
 import textwrap
+from collections.abc import Sequence
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Polygon, Rectangle
 
-from .iwp_style import CATEGORICAL, LW, PALETTE, a3_sheet, band, direct_label, sheet_axes
+from .iwp_style import (
+    CATEGORICAL,
+    LW,
+    PALETTE,
+    a3_sheet,
+    band,
+    sheet_axes,
+)
 
 
-def _spread_labels(ys: Sequence[float], unit_gap: float, heights: Optional[Sequence[int]] = None) -> List[float]:
+def _spread_labels(ys: Sequence[float], unit_gap: float, heights: Sequence[int] | None = None) -> list[float]:
     """Push label y-positions apart (sorted order preserved); a label of ``h`` text lines needs ``unit_gap * h`` of room, neighbours share their half heights."""
     hs = list(heights) if heights is not None else [1] * len(ys)
     order = list(np.argsort(ys))
@@ -29,10 +37,10 @@ def _spread_labels(ys: Sequence[float], unit_gap: float, heights: Optional[Seque
     return out
 
 
-def multi_line_chart(series: Sequence[Dict[str, Any]], xlabel: str, ylabel: str, title: str = "", hlines: Optional[Sequence[Dict[str, Any]]] = None,
-                     vlines: Optional[Sequence[Dict[str, Any]]] = None, xlim: Optional[Tuple[float, float]] = None, ylim: Optional[Tuple[float, float]] = None,
-                     size: Tuple[float, float] = (7.4, 4.6), label_right: bool = True, invert_y: bool = False, annotations: Optional[Sequence[Dict[str, Any]]] = None,
-                     shade: Optional[Sequence[Dict[str, Any]]] = None) -> plt.Figure:
+def multi_line_chart(series: Sequence[dict[str, Any]], xlabel: str, ylabel: str, title: str = "", hlines: Sequence[dict[str, Any]] | None = None,
+                     vlines: Sequence[dict[str, Any]] | None = None, xlim: tuple[float, float] | None = None, ylim: tuple[float, float] | None = None,
+                     size: tuple[float, float] = (7.4, 4.6), label_right: bool = True, invert_y: bool = False, annotations: Sequence[dict[str, Any]] | None = None,
+                     shade: Sequence[dict[str, Any]] | None = None) -> plt.Figure:
     """Line chart with direct labels.
 
     Args:
@@ -43,7 +51,7 @@ def multi_line_chart(series: Sequence[Dict[str, Any]], xlabel: str, ylabel: str,
         shade: ``[{"x0", "x1", "color", "label"}]`` shaded x-ranges with a text label at the top.
     """
     fig, ax = plt.subplots(figsize=size)
-    ends: List[Tuple[float, float, str, str]] = []
+    ends: list[tuple[float, float, str, str]] = []
     for i, s in enumerate(series):
         col = s.get("color", CATEGORICAL[i % len(CATEGORICAL)])
         x, y = np.asarray(s["x"], float), np.asarray(s["y"], float)
@@ -114,8 +122,8 @@ def multi_line_chart(series: Sequence[Dict[str, Any]], xlabel: str, ylabel: str,
     return fig
 
 
-def grouped_bar_chart(categories: Sequence[str], groups: Dict[str, Sequence[Optional[float]]], ylabel: str, title: str = "", value_fmt: str = "{:.0f}", colors: Optional[Sequence[str]] = None,
-                      hline: Optional[Dict[str, Any]] = None, size: Tuple[float, float] = (7.4, 4.4), note: Optional[Dict[str, str]] = None) -> plt.Figure:
+def grouped_bar_chart(categories: Sequence[str], groups: dict[str, Sequence[float | None]], ylabel: str, title: str = "", value_fmt: str = "{:.0f}", colors: Sequence[str] | None = None,
+                      hline: dict[str, Any] | None = None, size: tuple[float, float] = (7.4, 4.4), note: dict[str, str] | None = None) -> plt.Figure:
     """Grouped vertical bars with value labels; ``None`` values are drawn as hatched ``n/a`` markers. ``note`` adds a small text below a category."""
     fig, ax = plt.subplots(figsize=size)
     n = len(groups)
@@ -159,8 +167,8 @@ def grouped_bar_chart(categories: Sequence[str], groups: Dict[str, Sequence[Opti
     return fig
 
 
-def hbar_grouped_chart(categories: Sequence[str], groups: Dict[str, Sequence[Optional[float]]], xlabel: str, title: str = "", value_fmt: str = "{:.2f}", colors: Optional[Sequence[str]] = None,
-                       limit: Optional[Dict[str, Any]] = None, size: Tuple[float, float] = (8.0, 4.8), wrap: int = 34) -> plt.Figure:
+def hbar_grouped_chart(categories: Sequence[str], groups: dict[str, Sequence[float | None]], xlabel: str, title: str = "", value_fmt: str = "{:.2f}", colors: Sequence[str] | None = None,
+                       limit: dict[str, Any] | None = None, size: tuple[float, float] = (8.0, 4.8), wrap: int = 34) -> plt.Figure:
     """Horizontal grouped bars with wrapped category labels (best for long load-case names). ``None`` values are skipped; ``limit`` draws a vertical limit line ``{"x", "label"}``."""
     fig, ax = plt.subplots(figsize=size)
     n = len(groups)
@@ -194,10 +202,10 @@ def hbar_grouped_chart(categories: Sequence[str], groups: Dict[str, Sequence[Opt
     return fig
 
 
-def pressure_window_chart(pore: Dict[str, Sequence[Tuple[float, float]]], frac: Dict[str, Sequence[Tuple[float, float]]], strings: Sequence[Dict[str, Any]],
-                          points: Optional[Sequence[Dict[str, Any]]] = None, td_m: Optional[float] = None, title: str = "Pressure window (equivalent mud weight)",
-                          mud_floor_ceiling: Optional[Dict[str, Sequence[Tuple[float, float]]]] = None, size: Tuple[float, float] = (6.2, 7.6),
-                          xlim: Tuple[float, float] = (0.9, 2.15)) -> plt.Figure:
+def pressure_window_chart(pore: dict[str, Sequence[tuple[float, float]]], frac: dict[str, Sequence[tuple[float, float]]], strings: Sequence[dict[str, Any]],
+                          points: Sequence[dict[str, Any]] | None = None, td_m: float | None = None, title: str = "Pressure window (equivalent mud weight)",
+                          mud_floor_ceiling: dict[str, Sequence[tuple[float, float]]] | None = None, size: tuple[float, float] = (6.2, 7.6),
+                          xlim: tuple[float, float] = (0.9, 2.15)) -> plt.Figure:
     """Pore and fracture curves (low/base/high), planned mud weights per hole section, casing shoes and offset measurements against TVD.
 
     Args:
@@ -261,7 +269,7 @@ def pressure_window_chart(pore: Dict[str, Sequence[Tuple[float, float]]], frac: 
     return fig
 
 
-def percentile_chart(samples: Dict[str, Sequence[float]], xlabel: str, title: str = "", size: Tuple[float, float] = (7.2, 3.8), bins: int = 40, ncols: Optional[int] = None) -> plt.Figure:
+def percentile_chart(samples: dict[str, Sequence[float]], xlabel: str, title: str = "", size: tuple[float, float] = (7.2, 3.8), bins: int = 40, ncols: int | None = None) -> plt.Figure:
     """Histogram per sample set with P10/P50/P90 lines (low value = P10) and direct value labels, one panel per set."""
     n = len(samples)
     nc = ncols or n
@@ -275,7 +283,7 @@ def percentile_chart(samples: Dict[str, Sequence[float]], xlabel: str, title: st
         top_y = ax.get_ylim()[1]
         for p, lab, col, ha, yf in ((p10, "P10", PALETTE["pass"], "right", 0.97), (p50, "P50", PALETTE["text"], "center", 0.80), (p90, "P90", PALETTE["fail"], "left", 0.97)):
             ax.axvline(p, color=col, lw=LW["normal"], zorder=3)
-            ax.annotate("{} {:.0f}".format(lab, p), (p, top_y * yf), xytext=(-3 if ha == "right" else (3 if ha == "left" else 0), 0), textcoords="offset points", fontsize=7.8, color=col, fontweight="bold",
+            ax.annotate(f"{lab} {p:.0f}", (p, top_y * yf), xytext=(-3 if ha == "right" else (3 if ha == "left" else 0), 0), textcoords="offset points", fontsize=7.8, color=col, fontweight="bold",
                         va="top", ha=ha, bbox=dict(boxstyle="round,pad=0.12", fc="white", ec="none", alpha=0.85))
         ax.set_xlim(max(0.0, float(np.percentile(v, 0.2)) * 0.8), float(np.percentile(v, 99.6)))
         ax.set_xlabel(name if len(samples) > 1 else xlabel)
@@ -290,7 +298,7 @@ def percentile_chart(samples: Dict[str, Sequence[float]], xlabel: str, title: st
     return fig
 
 
-def casing_programme_sheet(plan: Dict[str, Any], drawing_no: str = "IWP-DWG-001", revision: str = "A", revisions: Optional[List[Tuple[str, str, str]]] = None) -> plt.Figure:
+def casing_programme_sheet(plan: dict[str, Any], drawing_no: str = "IWP-DWG-001", revision: str = "A", revisions: list[tuple[str, str, str]] | None = None) -> plt.Figure:
     """A3 casing-programme / well-schematic sheet for a vertical or near-vertical well without completion (exploration, appraisal, suspended well).
 
     ``plan`` keys: ``title``, ``project``, ``well_id``, ``status``, ``note``, ``rkb_msl_m`` (air gap), ``water_depth_m``, ``td_m``, ``strings`` (``name, od_in, hole_in, top_m, shoe_m,
@@ -319,7 +327,7 @@ def casing_programme_sheet(plan: Dict[str, Any], drawing_no: str = "IWP-DWG-001"
     step = 250
     ax_s.text(0.5, ytop, "TVD / MD\n[m RKB]", fontsize=7, fontweight="bold", ha="center", va="bottom")
     for z in np.arange(0, td + 1, step):
-        ax_s.text(0.5, z, "{:.0f}".format(z), fontsize=7, ha="center", va="center", fontweight="bold", bbox=dict(fc="white", ec="none", pad=0.6))
+        ax_s.text(0.5, z, f"{z:.0f}", fontsize=7, ha="center", va="center", fontweight="bold", bbox=dict(fc="white", ec="none", pad=0.6))
     ax_w.set_xlim(-1.0, 1.6)
     ax_w.set_xticks([])
     ax_w.grid(False)
@@ -327,7 +335,7 @@ def casing_programme_sheet(plan: Dict[str, Any], drawing_no: str = "IWP-DWG-001"
         ax_w.spines[s].set_visible(False)
     ax_w.add_patch(Rectangle((-1.0, ytop), 2.6, seabed - ytop, fc=PALETTE["seawater"], ec="none", alpha=0.9, zorder=0))
     ax_w.plot([-1.0, 1.6], [seabed, seabed], color="#1B4F72", lw=1.5, zorder=1)
-    ax_w.text(-0.98, seabed - 6, "sea  (water depth {:g} m, RKB {:g} m above MSL)".format(wd, air), fontsize=7, va="bottom", color="#1B4F72", fontweight="bold")
+    ax_w.text(-0.98, seabed - 6, f"sea  (water depth {wd:g} m, RKB {air:g} m above MSL)", fontsize=7, va="bottom", color="#1B4F72", fontweight="bold")
     ax_w.text(-0.98, ytop + 4, plan.get("bop", {}).get("label", "marine riser and BOP"), fontsize=7, va="top", color=PALETTE["text"])
     forms = list(plan.get("formations") or [])
     for k, f in enumerate(forms):
@@ -338,8 +346,8 @@ def casing_programme_sheet(plan: Dict[str, Any], drawing_no: str = "IWP-DWG-001"
     # draw strings: widest first, centred, with a fixed half width per OD
     strings = sorted(plan["strings"], key=lambda s: -s["od_in"])
     max_od = max(s["od_in"] for s in strings)
-    hw = lambda od: 0.62 * (od / max_od) ** 0.6  # noqa: E731 - compressed width scale keeps the small liners readable
-    labels_y: List[float] = []
+    hw = lambda od: 0.62 * (od / max_od) ** 0.6
+    labels_y: list[float] = []
     for s in strings:
         half = hw(s["od_in"])
         wall = 0.022
@@ -361,7 +369,7 @@ def casing_programme_sheet(plan: Dict[str, Any], drawing_no: str = "IWP-DWG-001"
                 break
             ytxt += 48
         labels_y.append(ytxt)
-        ax_w.annotate("{}\nshoe {:g} m{}".format(lab, shoe, "  (top {:g} m)".format(top) if top > seabed + 5 else ""), (half + 0.06, shoe - 6), xytext=(0.70, ytxt), textcoords="data", fontsize=7.2,
+        ax_w.annotate("{}\nshoe {:g} m{}".format(lab, shoe, f"  (top {top:g} m)" if top > seabed + 5 else ""), (half + 0.06, shoe - 6), xytext=(0.70, ytxt), textcoords="data", fontsize=7.2,
                       va="center", ha="left", arrowprops=dict(arrowstyle="-", lw=0.5, color=PALETTE["muted"]), bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.9), zorder=7)
     oh = plan.get("open_hole")
     if oh:
@@ -448,11 +456,11 @@ def _fmt_od(od: float) -> str:
     whole = int(od)
     frac = round(od - whole, 3)
     names = {0.5: "1/2", 0.25: "1/4", 0.75: "3/4", 0.625: "5/8", 0.875: "7/8", 0.375: "3/8", 0.125: "1/8"}
-    return '{} {}"'.format(whole, names[frac]) if frac in names else '{:g}"'.format(od)
+    return f'{whole} {names[frac]}"' if frac in names else f'{od:g}"'
 
 
-def offset_map_chart(planned: Dict[str, Any], offsets: Sequence[Dict[str, Any]], paths: Optional[Sequence[Dict[str, Any]]] = None, infrastructure: Optional[Sequence[Dict[str, Any]]] = None,
-                     radius_m: float = 9000.0, title: str = "Location and offset wells", size: Tuple[float, float] = (7.2, 6.2)) -> plt.Figure:
+def offset_map_chart(planned: dict[str, Any], offsets: Sequence[dict[str, Any]], paths: Sequence[dict[str, Any]] | None = None, infrastructure: Sequence[dict[str, Any]] | None = None,
+                     radius_m: float = 9000.0, title: str = "Location and offset wells", size: tuple[float, float] = (7.2, 6.2)) -> plt.Figure:
     """Plan view around the planned well (origin) with offset wells, distance rings, optional well paths and infrastructure polylines.
 
     ``planned``: ``{"label"}``; ``offsets``: ``[{"label", "de_m", "dn_m", "kind"(optional: dry, oil, gas, other), "td_m"(optional)}]``; ``paths``: ``[{"label", "east", "north", "color"}]``;
@@ -462,7 +470,7 @@ def offset_map_chart(planned: Dict[str, Any], offsets: Sequence[Dict[str, Any]],
     for r in (2000, 5000, 8000):
         if r <= radius_m * 1.05:
             ax.add_patch(plt.Circle((0, 0), r, fill=False, ec=PALETTE["grid"], lw=0.8, ls="--", zorder=1))
-            ax.annotate("{:g} km".format(r / 1000.0), (r * 0.707, r * 0.707), fontsize=6.8, color=PALETTE["muted"], ha="left", va="bottom")
+            ax.annotate(f"{r / 1000.0:g} km", (r * 0.707, r * 0.707), fontsize=6.8, color=PALETTE["muted"], ha="left", va="bottom")
     for inf in infrastructure or []:
         ax.plot(inf["east"], inf["north"], color=inf.get("color", PALETTE["muted"]), ls=inf.get("ls", "-"), lw=1.4, zorder=2)
         if inf.get("label"):
@@ -472,7 +480,7 @@ def offset_map_chart(planned: Dict[str, Any], offsets: Sequence[Dict[str, Any]],
         if p.get("label"):
             ax.annotate(p["label"], (p["east"][-1], p["north"][-1]), xytext=(6, 6), textcoords="offset points", fontsize=7.4, fontweight="bold", color=p.get("color", PALETTE["accent1"]), zorder=8)
     kinds = {"gas": (PALETTE["gas"], "gas / condensate"), "oil": (PALETTE["oil"], "oil"), "dry": (PALETTE["muted"], "dry / other")}
-    placed: List[Tuple[float, float]] = []
+    placed: list[tuple[float, float]] = []
     for o in offsets:
         col = kinds.get(o.get("kind", "dry"), kinds["dry"])[0]
         ax.scatter([o["de_m"]], [o["dn_m"]], s=34, color=col, ec="white", lw=0.6, zorder=5)

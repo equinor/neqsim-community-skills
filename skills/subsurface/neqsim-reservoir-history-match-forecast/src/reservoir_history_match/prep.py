@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional, Sequence
-
 import numpy as np
 import pandas as pd
 
@@ -25,7 +23,7 @@ def field_cgr_observations(gas_daily: pd.Series, cond_daily: pd.Series, months: 
 
 def shut_in_pressure_observations(wells: pd.DataFrame, tank_col: str = "tank", wellbore_col: str = "wellbore", date_col: str = "date",
                                   hours_col: str = "on_stream_hrs", dh_col: str = "dh_press", min_age_days: int = 540, p_range=(30.0, 830.0),
-                                  exclude: Optional[dict] = None, quantile: float = 0.25, sigma: float = 20.0, min_days: int = 2) -> pd.DataFrame:
+                                  exclude: dict | None = None, quantile: float = 0.25, sigma: float = 20.0, min_days: int = 2) -> pd.DataFrame:
     """Static reservoir-pressure observations (bara) from downhole gauges of shut-in wells.
 
     A reading counts when the well is shut in (< 1 h on stream) and the wellbore is older than ``min_age_days`` (new completions
@@ -50,7 +48,7 @@ def shut_in_pressure_observations(wells: pd.DataFrame, tank_col: str = "tank", w
 
 
 def deliverability_history(wells: pd.DataFrame, well_col: str = "well", date_col: str = "date", gas_col: str = "gas_sm3", hours_col: str = "on_stream_hrs",
-                           whp_col: str = "whp_barg", water_col: Optional[str] = None, min_hours: float = 12.0) -> pd.DataFrame:
+                           whp_col: str = "whp_barg", water_col: str | None = None, min_hours: float = 12.0) -> pd.DataFrame:
     """Daily on-stream rate (kSm3/d) and tubing-head pressure (bara) per well for ``fit_deliverability``."""
     d = wells[wells[hours_col] > min_hours].copy()
     out = pd.DataFrame(dict(date=pd.to_datetime(d[date_col]), well=d[well_col], q_ksm3d=d[gas_col] / 1e3 / (d[hours_col].clip(lower=1) / 24.0), whp=d[whp_col] + 1.01325))

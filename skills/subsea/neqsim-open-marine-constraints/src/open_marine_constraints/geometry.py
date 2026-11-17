@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, Iterable, Iterator, List, Sequence, Tuple
+from collections.abc import Iterable, Iterator, Sequence
+from typing import Any
 
 EARTH_RADIUS_M = 6371008.8
-LonLat = Tuple[float, float]
-XY = Tuple[float, float]
+LonLat = tuple[float, float]
+XY = tuple[float, float]
 
 
 def haversine_m(a: LonLat, b: LonLat) -> float:
@@ -36,7 +37,7 @@ def route_length_m(route: Sequence[LonLat]) -> float:
     return sum(haversine_m(route[i], route[i + 1]) for i in range(len(route) - 1))
 
 
-def route_bbox(route: Sequence[LonLat], buffer_km: float = 0.0) -> Tuple[float, float, float, float]:
+def route_bbox(route: Sequence[LonLat], buffer_km: float = 0.0) -> tuple[float, float, float, float]:
     """Bounding box (min_lon, min_lat, max_lon, max_lat) of a route, widened by ``buffer_km`` on every side."""
     lons = [p[0] for p in route]
     lats = [p[1] for p in route]
@@ -46,11 +47,11 @@ def route_bbox(route: Sequence[LonLat], buffer_km: float = 0.0) -> Tuple[float, 
     return (min(lons) - dlon, min(lats) - dlat, max(lons) + dlon, max(lats) + dlat)
 
 
-def densify(route: Sequence[LonLat], step_m: float) -> List[Tuple[LonLat, float]]:
+def densify(route: Sequence[LonLat], step_m: float) -> list[tuple[LonLat, float]]:
     """Points along the route every ``step_m`` (ends included) with their chainage in metres."""
     if len(route) < 2:
         return [(tuple(route[0]), 0.0)] if route else []
-    out: List[Tuple[LonLat, float]] = [(tuple(route[0]), 0.0)]
+    out: list[tuple[LonLat, float]] = [(tuple(route[0]), 0.0)]
     chain = 0.0
     for a, b in zip(route[:-1], route[1:]):
         seg = haversine_m(a, b)
@@ -62,7 +63,7 @@ def densify(route: Sequence[LonLat], step_m: float) -> List[Tuple[LonLat, float]
     return out
 
 
-def _rings(geometry: Dict[str, Any]) -> Iterator[List[List[LonLat]]]:
+def _rings(geometry: dict[str, Any]) -> Iterator[list[list[LonLat]]]:
     """Yield polygons as [outer, hole, ...] ring lists."""
     kind = geometry.get("type")
     coords = geometry.get("coordinates", [])
@@ -76,7 +77,7 @@ def _rings(geometry: Dict[str, Any]) -> Iterator[List[List[LonLat]]]:
             yield from _rings(g)
 
 
-def _lines(geometry: Dict[str, Any]) -> Iterator[List[LonLat]]:
+def _lines(geometry: dict[str, Any]) -> Iterator[list[LonLat]]:
     kind = geometry.get("type")
     coords = geometry.get("coordinates", [])
     if kind == "LineString":
@@ -89,7 +90,7 @@ def _lines(geometry: Dict[str, Any]) -> Iterator[List[LonLat]]:
             yield from _lines(g)
 
 
-def _points(geometry: Dict[str, Any]) -> Iterator[LonLat]:
+def _points(geometry: dict[str, Any]) -> Iterator[LonLat]:
     kind = geometry.get("type")
     coords = geometry.get("coordinates", [])
     if kind == "Point":
@@ -144,7 +145,7 @@ def segments_intersect(a: XY, b: XY, c: XY, d: XY) -> bool:
     )
 
 
-def feature_geometry_xy(geometry: Dict[str, Any], proj: LocalProjection) -> Dict[str, Any]:
+def feature_geometry_xy(geometry: dict[str, Any], proj: LocalProjection) -> dict[str, Any]:
     """Project a GeoJSON geometry into local metres: polygons, lines and points plus a bounding box."""
     polys = [[[proj.forward(*p) for p in ring] for ring in poly] for poly in _rings(geometry)]
     lines = [[proj.forward(*p) for p in line] for line in _lines(geometry)]
@@ -155,7 +156,7 @@ def feature_geometry_xy(geometry: Dict[str, Any], proj: LocalProjection) -> Dict
     return {"polygons": polys, "lines": lines, "points": pts, "bbox": bbox}
 
 
-def inside_polygons(p: XY, polygons: Iterable[List[List[XY]]]) -> bool:
+def inside_polygons(p: XY, polygons: Iterable[list[list[XY]]]) -> bool:
     """True when ``p`` is inside any polygon (outer ring in, hole rings out)."""
     for rings in polygons:
         if rings and point_in_ring(p[0], p[1], rings[0]) and not any(point_in_ring(p[0], p[1], h) for h in rings[1:]):
@@ -163,7 +164,7 @@ def inside_polygons(p: XY, polygons: Iterable[List[List[XY]]]) -> bool:
     return False
 
 
-def distance_to_geometry(p: XY, geo: Dict[str, Any]) -> float:
+def distance_to_geometry(p: XY, geo: dict[str, Any]) -> float:
     """Distance in metres from ``p`` to a projected feature (0 inside a polygon)."""
     if inside_polygons(p, geo["polygons"]):
         return 0.0

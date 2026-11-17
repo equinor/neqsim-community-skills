@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite
-from typing import Optional, Tuple
 
 # Water hydrostatic gradient (bar/m) used to blend the effective gradient.
 _WATER_GRADIENT_BAR_PER_M = 0.0981
@@ -16,13 +15,13 @@ class ArtificialLiftResult:
     natural_rate_sm3_d: float
     required_pwf_bar: float
     required_pressure_reduction_bar: float
-    esp_required_head_m: Optional[float]
+    esp_required_head_m: float | None
     gas_lift_feasible: bool
     esp_feasible: bool
     recommended_method: str
     warning: str
     neqsim_available: bool
-    assumptions: Tuple[str, ...]
+    assumptions: tuple[str, ...]
 
 
 class ArtificialLiftModel:
@@ -50,8 +49,8 @@ class ArtificialLiftModel:
         target_rate_sm3_d: float,
         water_cut: float = 0.0,
         gas_lift_available: bool = True,
-        max_injection_gas_sm3_d: Optional[float] = None,
-        esp_max_head_m: Optional[float] = None,
+        max_injection_gas_sm3_d: float | None = None,
+        esp_max_head_m: float | None = None,
         fluid_gradient_bar_per_m: float = 0.09,
         well_depth_m: float = 2000.0,
     ) -> ArtificialLiftResult:
@@ -85,7 +84,7 @@ class ArtificialLiftModel:
             + _WATER_GRADIENT_BAR_PER_M * water_cut
         )
 
-        esp_required_head: Optional[float] = None
+        esp_required_head: float | None = None
         gas_lift_feasible = False
         esp_feasible = False
 

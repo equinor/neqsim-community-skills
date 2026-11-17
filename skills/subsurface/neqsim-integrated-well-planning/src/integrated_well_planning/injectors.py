@@ -8,20 +8,28 @@ tubing column and a NeqSim isentropic compression duty. Intentional-fracture inj
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
 from .basis import INJECTOR_TYPES
-from .model_chain import (case_params, effective_tubing_depths, gas_injectivity_coefficient, build_fluid, require, reservoir_properties, standard_factors,
-                          surface_temperature_C, thermal_model, SC_MOLAR_VOLUME_SM3_PER_KMOL)
+from .model_chain import (
+    build_fluid,
+    case_params,
+    effective_tubing_depths,
+    gas_injectivity_coefficient,
+    require,
+    reservoir_properties,
+    standard_factors,
+    thermal_model,
+)
 from .registers import get_path
 from .runtime import jclass
 
 WATER_DENSITY = 999.0
 
 
-def _bisect(f, lo: float, hi: float, tol: float = 0.02, maxit: int = 40) -> Optional[float]:
+def _bisect(f, lo: float, hi: float, tol: float = 0.02, maxit: int = 40) -> float | None:
     flo, fhi = f(lo), f(hi)
     if flo * fhi > 0:
         return None
@@ -40,10 +48,10 @@ def _bisect(f, lo: float, hi: float, tol: float = 0.02, maxit: int = 40) -> Opti
 class InjectorModel:
     """Reservoir-well-facility model of one injector."""
 
-    def __init__(self, basis: Dict[str, Any], segments: int = 10) -> None:
+    def __init__(self, basis: dict[str, Any], segments: int = 10) -> None:
         self.wtype = get_path(basis, "well.type")
         if self.wtype not in INJECTOR_TYPES:
-            raise ValueError("InjectorModel needs an injector well.type, got {}".format(self.wtype))
+            raise ValueError(f"InjectorModel needs an injector well.type, got {self.wtype}")
         require("InjectionWellHydraulics", "WellboreThermalModel", "ThermodynamicOperations")
         self.basis = basis
         self.segments = segments
@@ -53,7 +61,7 @@ class InjectorModel:
         self.roughness_m = float(get_path(basis, "completion.tubing.roughness_m") or 4.5e-5)
         self.std = standard_factors(basis) if self.gas else {}
 
-    def params(self, case: str, overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def params(self, case: str, overrides: dict[str, Any] | None = None) -> dict[str, Any]:
         """Resolve case parameters (injectivity improves with the ``high`` case)."""
         p = case_params(self.basis, case)
         p["injection_temperature_C"] = float(get_path(self.basis, "reservoir.injection_temperature_C") or 15.0)
@@ -62,16 +70,16 @@ class InjectorModel:
         p.update({k: v for k, v in (overrides or {}).items() if v is not None})
         return p
 
-    def mass_rate(self, p: Dict[str, Any], q: float) -> float:
+    def mass_rate(self, p: dict[str, Any], q: float) -> float:
         """Mass rate (kg/s) from the target volume rate (m3/d water or Sm3/d gas)."""
         if self.gas:
             return q * self.std["kg_per_sm3_gas_equivalent"] / 86400.0
         return q * WATER_DENSITY / 86400.0
 
-    def _fluid(self, p: Dict[str, Any]):
+    def _fluid(self, p: dict[str, Any]):
         return build_fluid(self.basis, p["injection_temperature_C"], 100.0)
 
-    def _hydraulics(self, p: Dict[str, Any], mass: float):
+    def _hydraulics(self, p: dict[str, Any], mass: float):
         fluid = self._fluid(p)
         tm = thermal_model(self.basis, mass, p["temperature_C"], direction="INJECTION", inlet_temperature_C=p["injection_temperature_C"])
         h = jclass("InjectionWellHydraulics")(fluid)
@@ -85,12 +93,12 @@ class InjectorModel:
             h.setReservoirViscosity(float(get_path(self.basis, "reservoir.reservoir_viscosity_pa_s") or 6.0e-4))
         return h, tm
 
-    def required_bhp(self, p: Dict[str, Any], q: float, h=None) -> Dict[str, float]:
+    def required_bhp(self, p: dict[str, Any], q: float, h=None) -> dict[str, float]:
         """Bottom-hole pressure needed to inject ``q`` into the matrix."""
         if not self.gas:
             mass = self.mass_rate(p, q)
             h = h or self._hydraulics(p, mass)[0]
-            f = lambda bhp: float(h.matrixMassRateKgPerS(bhp)) - mass  # noqa: E731
+            f = lambda bhp: float(h.matrixMassRateKgPerS(bhp)) - mass
             bhp = _bisect(f, p["pressure_bara"], p["pressure_bara"] + 800.0, tol=1e-3)
             return {"bhp_bara": bhp if bhp is not None else float("nan"), "method": "InjectionWellHydraulics.matrixMassRateKgPerS (bisection)"}
         t_k = p["temperature_C"] + 273.15
@@ -104,22 +112,22 @@ class InjectorModel:
         return {"bhp_bara": bhp, "method": "radial gas pseudo-steady, (pbh^2 - pres^2), NeqSim Z and viscosity at mean pressure", "injectivity_c": c, "z": props["z"],
                 "viscosity_cp": props["viscosity_cp"]}
 
-    def whp_for_bhp(self, p: Dict[str, Any], mass: float, bhp: float):
+    def whp_for_bhp(self, p: dict[str, Any], mass: float, bhp: float):
         """Wellhead pressure that gives ``bhp`` at the tubing shoe plus the hydraulics result at that point."""
         h, tm = self._hydraulics(p, mass)
-        f = lambda whp: float(h.calculateFromWellhead(float(whp)).getBottomholePressureBara()) - bhp  # noqa: E731
+        f = lambda whp: float(h.calculateFromWellhead(float(whp)).getBottomholePressureBara()) - bhp
         whp = _bisect(f, 1.5, max(bhp + 100.0, 50.0), tol=0.01)
         if whp is None:
             return None, None, h, tm
         return whp, h.calculateFromWellhead(float(whp)), h, tm
 
-    def operating_point(self, case: str, overrides: Optional[Dict[str, Any]] = None, rate: Optional[float] = None) -> Dict[str, Any]:
+    def operating_point(self, case: str, overrides: dict[str, Any] | None = None, rate: float | None = None) -> dict[str, Any]:
         """Required wellhead pressure, fracture margin, temperatures and surface duty for a rate."""
         p = self.params(case, overrides)
         q = float(rate if rate is not None else p["rate"])
         mass = self.mass_rate(p, q)
         bh = self.required_bhp(p, q)
-        out: Dict[str, Any] = {"case": case, "rate": q, "mass_kg_s": mass, "kind": "gas_injector" if self.gas else "water_injector", "bhp_required_bara": bh["bhp_bara"],
+        out: dict[str, Any] = {"case": case, "rate": q, "mass_kg_s": mass, "kind": "gas_injector" if self.gas else "water_injector", "bhp_required_bara": bh["bhp_bara"],
                                "injectivity_method": bh["method"], "warnings": [], "params": {k: v for k, v in p.items() if isinstance(v, (int, float, str))}}
         if not (bh["bhp_bara"] == bh["bhp_bara"]):
             out.update({"status": "NOT_FEASIBLE", "whp_required_bara": None})
@@ -158,7 +166,7 @@ class InjectorModel:
             out["power_kw"] = out["surface_duty"]["power_kw"]
         return out
 
-    def injectivity_curve(self, case: str, whps: List[float]) -> List[Dict[str, float]]:
+    def injectivity_curve(self, case: str, whps: list[float]) -> list[dict[str, float]]:
         """Matrix rate versus wellhead pressure (water injectors: NeqSim operating point; gas: bisection on rate)."""
         rows = []
         p = self.params(case)
@@ -182,7 +190,7 @@ class InjectorModel:
                 rows.append({"whp_bara": float(whp), "rate_sm3d": best or 0.0})
         return rows
 
-    def sweep_tubing(self, case: str, ids_m: List[float]) -> List[Dict[str, Any]]:
+    def sweep_tubing(self, case: str, ids_m: list[float]) -> list[dict[str, Any]]:
         """Required wellhead pressure and power for a list of tubing inner diameters."""
         rows = []
         for d in ids_m:
@@ -192,7 +200,7 @@ class InjectorModel:
         return rows
 
 
-def compression_duty(basis: Dict[str, Any], mass_kg_s: float, p_suction: float, t_suction_c: float, p_discharge: float, eta: float) -> Dict[str, float]:
+def compression_duty(basis: dict[str, Any], mass_kg_s: float, p_suction: float, t_suction_c: float, p_discharge: float, eta: float) -> dict[str, float]:
     """Isentropic compression duty (NeqSim PS flash) for the injection gas; efficiency is an input."""
     f = build_fluid(basis, t_suction_c, p_suction)
     ops = jclass("ThermodynamicOperations")(f)

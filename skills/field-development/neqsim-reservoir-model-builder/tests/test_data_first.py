@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from reservoir_model_builder.data_first import (
     DATA_LADDER,
     acquisition_plan,
@@ -11,7 +10,6 @@ from reservoir_model_builder.data_first import (
     data_first_gate,
     rank_of,
 )
-
 
 FULL = {
     "geometry": [{"source": "published_grid", "outcome": "used"}],

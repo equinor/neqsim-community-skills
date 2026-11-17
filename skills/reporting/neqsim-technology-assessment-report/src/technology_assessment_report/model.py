@@ -15,9 +15,10 @@ Markdown output needs no dependency. Word output needs ``python-docx``.
 from __future__ import annotations
 
 import datetime as _dt
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 REPORT_SCHEMA_VERSION = "technology_assessment_report.v1"
 
@@ -109,7 +110,7 @@ def _cell(value: Any) -> str:
     if value is None:
         return ""
     if isinstance(value, float):
-        return "{:g}".format(value)
+        return f"{value:g}"
     if isinstance(value, (list, tuple)):
         return "; ".join(str(v) for v in value)
     return str(value)
@@ -173,10 +174,10 @@ class Report:
             ("Status", m.status),
         ]
         out += ["| Item | Value |", "| --- | --- |"]
-        out += ["| {} | {} |".format(k, v) for k, v in control if v]
+        out += [f"| {k} | {v} |" for k, v in control if v]
         out.append("")
         for index, section in enumerate(self.sections, start=1):
-            out += ["## {}. {}".format(index, section.title), ""]
+            out += [f"## {index}. {section.title}", ""]
             table_no = 0
             for block in section.blocks:
                 if block.kind == "p":
@@ -186,7 +187,7 @@ class Report:
                     out.append("")
                 elif block.kind == "table":
                     table_no += 1
-                    out += ["**Table {}.{}: {}**".format(index, table_no, block.caption), ""]
+                    out += [f"**Table {index}.{table_no}: {block.caption}**", ""]
                     out.append("| " + " | ".join(block.headers) + " |")
                     out.append("| " + " | ".join("---" for _ in block.headers) + " |")
                     for row in block.rows:
@@ -237,7 +238,7 @@ def check_report_inputs(
     novel = [e for e in assessment["elements"] if e["qualification_required"]]
     if fmirr is None:
         if novel:
-            issues.append("No FMIRR supplied although {} element(s) need qualification.".format(len(novel)))
+            issues.append(f"No FMIRR supplied although {len(novel)} element(s) need qualification.")
         return issues
     if fmirr.get("schema_version") != "technology_fmirr.v1":
         raise ValueError("fmirr must be a technology_fmirr.v1 mapping")
@@ -402,7 +403,7 @@ def build_report(
     flagged = [(e["id"], f) for e in elements for f in e["flags"]]
     if flagged:
         sec.para("Consistency flags raised on the ratings:")
-        sec.bullets(["{}: {}".format(i, f) for i, f in flagged])
+        sec.bullets([f"{i}: {f}" for i, f in flagged])
 
     sec = new("role", "Enabling or enhancing technology")
     sec.para("Classification: {}. {}".format(summary["role"], summary["role_rationale"]))
@@ -632,7 +633,7 @@ def _write_docx(report: Report, path: Path) -> Path:
     first = doc.sections[0]
     first.header.paragraphs[0].text = meta.title
     footer = first.footer.paragraphs[0]
-    footer.text = "Security classification: {} - Status: {} - Page ".format(meta.classification, meta.status)
+    footer.text = f"Security classification: {meta.classification} - Status: {meta.status} - Page "
     field_run(footer, "PAGE")
     footer.add_run(" of ")
     field_run(footer, "NUMPAGES")
@@ -651,7 +652,7 @@ def _write_docx(report: Report, path: Path) -> Path:
             new_section.page_width, new_section.page_height = new_section.page_height, new_section.page_width
             new_section.left_margin = new_section.right_margin = doc.sections[0].left_margin
             landscape_open = False
-        doc.add_heading("{}. {}".format(index, section.title), 1)
+        doc.add_heading(f"{index}. {section.title}", 1)
         table_no = 0
         for block in section.blocks:
             if block.kind == "p":
@@ -662,7 +663,7 @@ def _write_docx(report: Report, path: Path) -> Path:
             elif block.kind == "table":
                 table_no += 1
                 caption = doc.add_paragraph()
-                caption.add_run("Table {}.{}: {}".format(index, table_no, block.caption)).bold = True
+                caption.add_run(f"Table {index}.{table_no}: {block.caption}").bold = True
                 tbl = doc.add_table(rows=1, cols=len(block.headers))
                 tbl.style = "Table Grid"
                 tbl.autofit = False

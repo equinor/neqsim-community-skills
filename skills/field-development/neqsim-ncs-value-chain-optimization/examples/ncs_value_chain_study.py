@@ -10,10 +10,16 @@ HERE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HERE / "src"))
 sys.path.insert(0, str(HERE.parent / "neqsim-ncs-infrastructure-network" / "src"))
 
-from ncs_infrastructure_network import NcsNetwork  # noqa: E402
-from ncs_value_chain_optimization import (NcsValueChainOptimizer, bottlenecks, curtailment,  # noqa: E402
-                                          make_scenario, production_uplift, tiein_ranking)
-from ncs_value_chain_optimization import neqsim_bridge as vb  # noqa: E402
+from ncs_infrastructure_network import NcsNetwork
+from ncs_value_chain_optimization import (
+    NcsValueChainOptimizer,
+    bottlenecks,
+    curtailment,
+    make_scenario,
+    production_uplift,
+    tiein_ranking,
+)
+from ncs_value_chain_optimization import neqsim_bridge as vb
 
 net = NcsNetwork.load()
 scenario = make_scenario(years=[2026, 2040],

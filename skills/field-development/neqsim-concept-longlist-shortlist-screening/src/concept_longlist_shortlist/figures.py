@@ -16,8 +16,9 @@ Figures:
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 ROLE_ORDER = ("host", "wells", "oil_export", "gas_disposal", "drive", "power")
 SHORT_LIST_COLOUR = "#1f6f8b"

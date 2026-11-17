@@ -9,7 +9,7 @@ host ranks where it does. Every weight is an input.
 from __future__ import annotations
 
 import math
-from typing import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 from .tools import haversine_km
 

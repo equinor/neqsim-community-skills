@@ -6,13 +6,12 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 from .runtime import DEFAULT_VERSION, TsaUnavailable, setup_assemblies
 from .workflow import run_identification
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="dynamic_identification")
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run", help="run the configured identification")

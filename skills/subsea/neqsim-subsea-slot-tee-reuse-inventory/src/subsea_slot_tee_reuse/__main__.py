@@ -5,7 +5,13 @@ import argparse
 import json
 import sys
 
-from . import free_slot_table, handoff, rank_reuse_options, summarize, validate_inventory
+from . import (
+    free_slot_table,
+    handoff,
+    rank_reuse_options,
+    summarize,
+    validate_inventory,
+)
 from .inventory import load
 
 

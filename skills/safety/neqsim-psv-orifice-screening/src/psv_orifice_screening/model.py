@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite, sqrt
 
-
 # Standard API 526 effective orifice areas in mm2 (from published in2 values).
 _API_ORIFICES: tuple[tuple[str, float], ...] = (
     ("D", 71.0),

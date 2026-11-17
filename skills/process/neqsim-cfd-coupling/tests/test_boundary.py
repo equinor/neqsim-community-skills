@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from cfd_coupling import (
     C_MU,
     FluidState,

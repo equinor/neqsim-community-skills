@@ -12,13 +12,13 @@ cell usually gets wrong:
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional
 
 from .reference_data import ReferencePoint
 
 #: Default acceptance tolerance in percent, by property.
-DEFAULT_TOLERANCE_PCT: Dict[str, float] = {
+DEFAULT_TOLERANCE_PCT: dict[str, float] = {
     "critical_temperature": 1.0,
     "critical_pressure": 2.0,
     "critical_density": 5.0,
@@ -68,13 +68,13 @@ class BenchmarkResult:
     model_value: float
     reference_value: float
     deviation: float
-    deviation_pct: Optional[float]
+    deviation_pct: float | None
     tolerance_pct: float
     status: str
     source_key: str
     citation: str
-    state: Dict[str, float] = field(default_factory=dict)
-    within_source_uncertainty: Optional[bool] = None
+    state: dict[str, float] = field(default_factory=dict)
+    within_source_uncertainty: bool | None = None
     independent: bool = True
     note: str = ""
 
@@ -90,22 +90,22 @@ class BenchmarkResult:
             parts.append(
                 "at "
                 + ", ".join(
-                    "{}={}".format(k, "{:g}".format(v) if isinstance(v, (int, float)) else v)
+                    "{}={}".format(k, f"{v:g}" if isinstance(v, (int, float)) else v)
                     for k, v in sorted(self.state.items())
                 )
             )
-        parts.append("vs {}".format(self.source_key))
+        parts.append(f"vs {self.source_key}")
         return " ".join(parts)
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         """Serialisable form used by the ``benchmark_validation`` block."""
-        payload: Dict[str, object] = {
+        payload: dict[str, object] = {
             "description": self.description(),
             "reference": self.source_key,
             "status": self.status,
             "property": self.property_name,
             "unit": self.unit,
-            "{}_value".format(self.model_label.lower()): self.model_value,
+            f"{self.model_label.lower()}_value": self.model_value,
             "reference_value": self.reference_value,
             "deviation": self.deviation,
             "tolerance_pct": self.tolerance_pct,
@@ -129,7 +129,7 @@ class BenchmarkCase:
     name: str
     model_value: float
     reference: ReferencePoint
-    tolerance_pct: Optional[float] = None
+    tolerance_pct: float | None = None
     model_label: str = "neqsim"
     model_tier: str = "correlation"
     informational: bool = False
@@ -140,7 +140,7 @@ def compare(
     name: str,
     model_value: float,
     reference: ReferencePoint,
-    tolerance_pct: Optional[float] = None,
+    tolerance_pct: float | None = None,
     model_label: str = "neqsim",
     model_tier: str = "correlation",
     informational: bool = False,
@@ -170,17 +170,17 @@ def compare(
         status = STATUS_FAIL
 
     source_uncertainty = reference.effective_uncertainty_pct()
-    within_uncertainty: Optional[bool] = None
+    within_uncertainty: bool | None = None
     if deviation_pct is not None and source_uncertainty is not None:
         within_uncertainty = abs(deviation_pct) <= source_uncertainty
 
-    notes: List[str] = []
+    notes: list[str] = []
     if note:
         notes.append(note)
     if not independent:
         notes.append(
-            "reference tier '{}' does not outrank model tier '{}' — consistency "
-            "check only, not a benchmark".format(reference.source.tier, model_tier)
+            f"reference tier '{reference.source.tier}' does not outrank model tier '{model_tier}' — consistency "
+            "check only, not a benchmark"
         )
     if reference.note:
         notes.append(reference.note)
@@ -205,7 +205,7 @@ def compare(
     )
 
 
-def compare_many(cases: Iterable[BenchmarkCase]) -> List[BenchmarkResult]:
+def compare_many(cases: Iterable[BenchmarkCase]) -> list[BenchmarkResult]:
     """Compare a batch of cases, preserving order."""
     return [
         compare(

@@ -47,7 +47,6 @@ import re
 import sys
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 NAME_RE = re.compile(r'^\s*name:\s*["\']?([^"\'\n]+?)["\']?\s*$', re.MULTILINE)
@@ -56,10 +55,7 @@ SKILL_ID_RE = re.compile(r"(?<![a-z0-9-])((?:neqsim|enterprise)-[a-z0-9]+(?:-[a-
 
 # Common words that carry little discriminating signal for skill descriptions.
 STOPWORDS = frozenset(
-    """a an and the of to for in on with use used using when this that these those
-    or as is are be by from at into it its screening skill agent neqsim enterprise
-    company style community method methods before verified review human required
-    placeholder demo internal workflows workflow task tasks not final only public""".split()
+    ["a", "an", "and", "the", "of", "to", "for", "in", "on", "with", "use", "used", "using", "when", "this", "that", "these", "those", "or", "as", "is", "are", "be", "by", "from", "at", "into", "it", "its", "screening", "skill", "agent", "neqsim", "enterprise", "company", "style", "community", "method", "methods", "before", "verified", "review", "human", "required", "placeholder", "demo", "internal", "workflows", "workflow", "task", "tasks", "not", "final", "only", "public"]
 )
 
 
@@ -67,7 +63,7 @@ def repo_root_from_script() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def read_frontmatter(path: Path) -> Optional[Dict[str, str]]:
+def read_frontmatter(path: Path) -> dict[str, str] | None:
     try:
         text = path.read_text(encoding="utf-8-sig")
     except OSError:
@@ -82,8 +78,8 @@ def read_frontmatter(path: Path) -> Optional[Dict[str, str]]:
     return {"name": name_m.group(1).strip(), "description": desc, "path": str(path)}
 
 
-def collect_skills(skills_dir: Path) -> List[Dict[str, str]]:
-    out: List[Dict[str, str]] = []
+def collect_skills(skills_dir: Path) -> list[dict[str, str]]:
+    out: list[dict[str, str]] = []
     for skill_md in sorted(skills_dir.glob("*/*/SKILL.md")):
         fm = read_frontmatter(skill_md)
         if fm:
@@ -96,7 +92,7 @@ def tokenize(text: str) -> frozenset:
     return frozenset(w for w in words if w not in STOPWORDS and len(w) > 2)
 
 
-def similarity(a: Dict[str, str], b: Dict[str, str]) -> float:
+def similarity(a: dict[str, str], b: dict[str, str]) -> float:
     """Blend token Jaccard and sequence ratio over the descriptions (0..1)."""
     ta, tb = tokenize(a["description"]), tokenize(b["description"])
     if ta and tb:
@@ -109,8 +105,8 @@ def similarity(a: Dict[str, str], b: Dict[str, str]) -> float:
     return round(0.5 * jacc + 0.4 * seq + 0.1 * name_seq, 3)
 
 
-def find_duplicates(skills: List[Dict[str, str]], threshold: float) -> List[Tuple[float, str, str]]:
-    pairs: List[Tuple[float, str, str]] = []
+def find_duplicates(skills: list[dict[str, str]], threshold: float) -> list[tuple[float, str, str]]:
+    pairs: list[tuple[float, str, str]] = []
     for i in range(len(skills)):
         for j in range(i + 1, len(skills)):
             score = similarity(skills[i], skills[j])
@@ -120,8 +116,8 @@ def find_duplicates(skills: List[Dict[str, str]], threshold: float) -> List[Tupl
     return pairs
 
 
-def _candidate_agent_dirs(repo_root: Path) -> List[Path]:
-    candidates: List[Path] = []
+def _candidate_agent_dirs(repo_root: Path) -> list[Path]:
+    candidates: list[Path] = []
     for env in ("NEQSIM_COMMUNITY_AGENTS_DIR", "NEQSIM_ENTERPRISE_AGENTS_DIR"):
         val = os.environ.get(env)
         if val:
@@ -132,7 +128,7 @@ def _candidate_agent_dirs(repo_root: Path) -> List[Path]:
     return [c for c in candidates if (c / "agents").is_dir()]
 
 
-def referenced_skill_ids(agent_dirs: List[Path]) -> Optional[set]:
+def referenced_skill_ids(agent_dirs: list[Path]) -> set | None:
     if not agent_dirs:
         return None
     referenced: set = set()
@@ -165,7 +161,7 @@ def referenced_by_skills(skills_dir: Path) -> set:
     return referenced
 
 
-def find_orphans(skills: List[Dict[str, str]], skills_dir: Path, repo_root: Path):
+def find_orphans(skills: list[dict[str, str]], skills_dir: Path, repo_root: Path):
     agent_dirs = _candidate_agent_dirs(repo_root)
     by_agents = referenced_skill_ids(agent_dirs)
     if by_agents is None:

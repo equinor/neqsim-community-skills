@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from surf_cooldown_screening import SurfCooldownModel
 
 

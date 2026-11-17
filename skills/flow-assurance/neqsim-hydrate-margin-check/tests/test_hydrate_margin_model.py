@@ -1,5 +1,4 @@
 import pytest
-
 from hydrate_margin_check import HydrateMarginModel
 
 

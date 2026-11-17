@@ -1,9 +1,14 @@
 import json
 
 import pytest
-
 from subsea_equipment_placement import (
-    LIMIT_CATALOG, Limit, PlacementBasis, limits_gap_register, limits_template, load_limits, screen_site, write_limits_template,
+    LIMIT_CATALOG,
+    PlacementBasis,
+    limits_gap_register,
+    limits_template,
+    load_limits,
+    screen_site,
+    write_limits_template,
 )
 
 

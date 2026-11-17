@@ -11,10 +11,9 @@ for sibling in (
 ):
     sys.path.insert(0, str(sibling))
 
-from technology_assessment import from_dict as assessment_from_dict  # noqa: E402
-from technology_fmirr import from_dict as fmirr_from_dict  # noqa: E402
-
-from technology_assessment_report import ReportMeta, build_report, check_report_inputs  # noqa: E402
+from technology_assessment import from_dict as assessment_from_dict
+from technology_assessment_report import ReportMeta, build_report, check_report_inputs
+from technology_fmirr import from_dict as fmirr_from_dict
 
 
 def _load(path):

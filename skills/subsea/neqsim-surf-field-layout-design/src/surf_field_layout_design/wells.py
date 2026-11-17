@@ -12,9 +12,9 @@ no anti-collision, no casing or completion design, no geosteering.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from math import atan2, ceil, cos, degrees, hypot, radians, sin
-from typing import Sequence
+from math import cos, hypot, radians, sin
 
 from .geo import LocalFrame
 from .layout import SurfLayout, _place

@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
-
-from .casing_design import DesignFactors, GRADES, Pipe, StringBasis, check_string, select_string, wellhead_rating_class
+from .casing_design import (
+    DesignFactors,
+    Pipe,
+    StringBasis,
+    check_string,
+    select_string,
+    wellhead_rating_class,
+)
 from .casing_seats import PlannedSection, evaluate_plan
-from .pressure import EmwCurve, PressureModel, curve_from_points
-from .units import BAR_PER_SG_M
+from .pressure import PressureModel, curve_from_points
 
-STANDARDS_REGISTER: List[Dict[str, str]] = [
+STANDARDS_REGISTER: list[dict[str, str]] = [
     {"id": "NORSOK D-010", "topic": "Well integrity in drilling and well operations: barriers, casing design basis, well control, abandonment plugs", "status": "NEEDS_REVIEW",
      "note": "Requirements are referenced, not quoted; verify the revision and clauses against the licensed document."},
     {"id": "API TR 5C3 / ISO 10400", "topic": "Casing and tubing performance properties: collapse, burst, axial, triaxial", "status": "IMPLEMENTED_NEEDS_REVIEW",
@@ -23,7 +27,7 @@ STANDARDS_REGISTER: List[Dict[str, str]] = [
 ]
 
 
-def build_pressure_model(spec: Dict[str, object]) -> PressureModel:
+def build_pressure_model(spec: dict[str, object]) -> PressureModel:
     """Build a PressureModel from ``spec['pressure']`` with keys pore and frac, each {low|base|high: [[tvd, sg], ...]}."""
     p = spec["pressure"]
     pore = {k: curve_from_points(v) for k, v in p["pore"].items()}
@@ -32,7 +36,7 @@ def build_pressure_model(spec: Dict[str, object]) -> PressureModel:
     return PressureModel(pore, frac, float(ref.get("water_depth_m", 0.0)), float(ref.get("air_gap_m", 0.0)), list(p.get("notes", [])))
 
 
-def _sections(spec) -> List[PlannedSection]:
+def _sections(spec) -> list[PlannedSection]:
     out = []
     prev_strength = None
     for s in spec["sections"]:
@@ -42,7 +46,7 @@ def _sections(spec) -> List[PlannedSection]:
     return out
 
 
-def run_well_study(spec: Dict[str, object]) -> Dict[str, object]:
+def run_well_study(spec: dict[str, object]) -> dict[str, object]:
     """Run window, seat, kick-tolerance and casing-string design from a specification dict.
 
     ``spec`` keys: ``name``, ``reference`` (water_depth_m, air_gap_m), ``pressure``, ``sections`` (name, hole_in,
@@ -65,7 +69,7 @@ def run_well_study(spec: Dict[str, object]) -> Dict[str, object]:
                          pore_case=mar.get("pore_case", "high"), frac_case=mar.get("frac_case", "low"),
                          trip_margin_sg=mar.get("trip_margin_sg", 0.04), frac_margin_sg=mar.get("frac_margin_sg", 0.03),
                          kick_basis=kick.get("basis", "mud"))
-    strings: List[Dict[str, object]] = []
+    strings: list[dict[str, object]] = []
     comp = spec.get("completion", {})
     max_t = float(spec.get("max_temp_c", 20.0))
     sections = spec["sections"]
@@ -115,11 +119,11 @@ def run_well_study(spec: Dict[str, object]) -> Dict[str, object]:
     return {"name": spec.get("name", "well"), "model": model, "plan": plan, "strings": strings, "wellhead": wh, "design_factors": dfs.__dict__,
             "checks": checks, "readiness": "BLOCKED_BY_FAILED_CHECKS" if blocked else "SCREENING_READY_FOR_HUMAN_REVIEW", "standards": STANDARDS_REGISTER}
 
-def validation_checks(model: PressureModel, plan: List[Dict[str, object]], strings: List[Dict[str, object]], wellhead: Optional[Dict[str, float]]) -> List[Dict[str, str]]:
+def validation_checks(model: PressureModel, plan: list[dict[str, object]], strings: list[dict[str, object]], wellhead: dict[str, float] | None) -> list[dict[str, str]]:
     """Fail-closed checks: geometry, window, kick tolerance, casing selection and a published-rating cross-check."""
-    out: List[Dict[str, str]] = []
+    out: list[dict[str, str]] = []
 
-    def add(name: str, ok: Optional[bool], detail: str) -> None:
+    def add(name: str, ok: bool | None, detail: str) -> None:
         out.append({"check": name, "status": "PASS" if ok else ("N/A" if ok is None else "FAIL"), "detail": detail})
 
     ref = Pipe(9.625, 0.472, "N80").ratings(20.0)

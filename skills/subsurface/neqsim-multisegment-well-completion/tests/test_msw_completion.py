@@ -6,10 +6,23 @@ import json
 import math
 
 import pytest
-
-from msw_completion import (Aicd, DensityValve, PhaseProperties, Sicd, Valve, Zone, add_plain_msw, build_case,
-                            calibrate_strength, compare_at_same_oil, pressure_drop_bar, rate_for_pressure_drop,
-                            read_device_layer, run_completion_workflow, validate_design)
+from msw_completion import (
+    Aicd,
+    DensityValve,
+    PhaseProperties,
+    Sicd,
+    Valve,
+    Zone,
+    add_plain_msw,
+    build_case,
+    calibrate_strength,
+    compare_at_same_oil,
+    pressure_drop_bar,
+    rate_for_pressure_drop,
+    read_device_layer,
+    run_completion_workflow,
+    validate_design,
+)
 from msw_completion.__main__ import main
 from msw_completion.devices import emulsion_viscosity
 

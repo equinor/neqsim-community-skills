@@ -9,8 +9,9 @@ below sea level) such as ``anp_open_data.bathymetry.fetch_etopo_grid`` returns.
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 from .geo import circle_points, rings_from_geometry
 from .inventory import Inventory

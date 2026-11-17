@@ -7,7 +7,6 @@ import io
 import re
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import List, Optional, Tuple
 
 from .sources import SOURCES
 
@@ -20,7 +19,7 @@ class Investigation:
     lease: str
     area: str
     block: str
-    labels: Tuple[str, ...]
+    labels: tuple[str, ...]
     status: str
 
 
@@ -34,11 +33,11 @@ class Structure:
     major: bool
     manned_24h: bool
     installed: date
-    removed: Optional[date]
-    water_depth_ft: Optional[float]
+    removed: date | None
+    water_depth_ft: float | None
 
 
-def parse_date(text: str) -> Optional[date]:
+def parse_date(text: str) -> date | None:
     """Parse ``M/D/YYYY`` (as BSEE writes it); returns ``None`` for blank or malformed text."""
     value = (text or "").strip()
     for pattern in ("%m/%d/%Y", "%Y-%m-%d"):
@@ -49,15 +48,14 @@ def parse_date(text: str) -> Optional[date]:
     return None
 
 
-def split_labels(accident_type: str) -> Tuple[str, ...]:
+def split_labels(accident_type: str) -> tuple[str, ...]:
     """Split a composite label such as ``"- Fire - Required Muster "`` into ``("Fire", "Required Muster")``."""
     text = (accident_type or "").strip()
-    if text.startswith("-"):
-        text = text[1:]
+    text = text.removeprefix("-")
     return tuple(part.strip() for part in re.split(r"\s+-\s+", text.strip()) if part.strip())
 
 
-def _rows(text: str, source: str) -> List[dict]:
+def _rows(text: str, source: str) -> list[dict]:
     reader = csv.DictReader(io.StringIO(text))
     missing = [c for c in SOURCES[source]["columns"] if c not in (reader.fieldnames or [])]
     if missing:
@@ -65,9 +63,9 @@ def _rows(text: str, source: str) -> List[dict]:
     return list(reader)
 
 
-def parse_investigations(text: str) -> List[Investigation]:
+def parse_investigations(text: str) -> list[Investigation]:
     """Parse ``mv_acc_investigations.txt``; rows with an unreadable date are dropped."""
-    out: List[Investigation] = []
+    out: list[Investigation] = []
     for row in _rows(text, "investigations"):
         occurred = parse_date(row["DATE_OCCURRED"])
         if occurred is None:
@@ -78,15 +76,15 @@ def parse_investigations(text: str) -> List[Investigation]:
     return out
 
 
-def parse_structures(text: str) -> List[Structure]:
+def parse_structures(text: str) -> list[Structure]:
     """Parse ``mv_platstruc_structures.txt``; structures without an install date are dropped."""
-    out: List[Structure] = []
+    out: list[Structure] = []
     for row in _rows(text, "structures"):
         installed = parse_date(row["INSTALL_DATE"])
         if installed is None:
             continue
         try:
-            depth: Optional[float] = float(row["WATER_DEPTH"])
+            depth: float | None = float(row["WATER_DEPTH"])
         except ValueError:
             depth = None
         out.append(Structure(row["STRUCTURE_NUMBER"].strip(), row["AREA_CODE"].strip(), row["STRUC_TYPE_CODE"].strip(),

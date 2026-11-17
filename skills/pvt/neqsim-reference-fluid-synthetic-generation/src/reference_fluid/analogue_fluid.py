@@ -20,8 +20,9 @@ Plant-agnostic and offline.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Iterable, Mapping, Optional, Sequence
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from typing import Any
 
 PROVENANCE_RANKS = {
     "correlation": 0,
@@ -68,8 +69,8 @@ def estimate_reservoir_conditions(
     water_depth_m: float = 0.0,
     sea_area: str = "generic_offshore",
     pressure_regime: str = "hydrostatic",
-    measured_temperature_C: Optional[float] = None,
-    measured_pressure_bara: Optional[float] = None,
+    measured_temperature_C: float | None = None,
+    measured_pressure_bara: float | None = None,
 ) -> dict[str, Any]:
     """Temperature and pressure at a datum, with provenance on each.
 
@@ -155,7 +156,7 @@ FLUID_TYPE_BANDS: tuple[dict[str, Any], ...] = (
 BOUNDARY_FRACTION = 0.15
 
 
-def classify_fluid_type(gor_sm3_sm3: float, api_degrees: Optional[float] = None) -> dict[str, Any]:
+def classify_fluid_type(gor_sm3_sm3: float, api_degrees: float | None = None) -> dict[str, Any]:
     """Name the fluid type from solution GOR, and say when it sits on a boundary."""
     if gor_sm3_sm3 < 0:
         raise ValueError("gor_sm3_sm3 cannot be negative.")
@@ -278,7 +279,7 @@ class Assumption:
     impact: str
     retire_with: str
     retired: bool = False
-    retired_by: Optional[str] = None
+    retired_by: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {"id": self.identifier, "assumption": self.assumption,
@@ -294,10 +295,10 @@ def build_analogue_fluid_basis(
     water_depth_m: float = 0.0,
     sea_area: str = "generic_offshore",
     pressure_regime: str = "hydrostatic",
-    measured_temperature_C: Optional[float] = None,
-    measured_pressure_bara: Optional[float] = None,
-    measured_gor_sm3_sm3: Optional[float] = None,
-    measured_api_degrees: Optional[float] = None,
+    measured_temperature_C: float | None = None,
+    measured_pressure_bara: float | None = None,
+    measured_gor_sm3_sm3: float | None = None,
+    measured_api_degrees: float | None = None,
     gor_uncertainty_fraction: float = 0.35,
     api_uncertainty_degrees: float = 3.0,
 ) -> dict[str, Any]:
@@ -519,7 +520,7 @@ GOR_DEFINITIONS: dict[str, str] = {
 
 
 def reconcile_gor_definitions(values: Mapping[str, float],
-                              *, quoted: Optional[float] = None) -> dict[str, Any]:
+                              *, quoted: float | None = None) -> dict[str, Any]:
     """Report the spread between GOR definitions before one is quoted as *the* GOR.
 
     A single "GOR: 290" on a slide does not say which definition it is, and the

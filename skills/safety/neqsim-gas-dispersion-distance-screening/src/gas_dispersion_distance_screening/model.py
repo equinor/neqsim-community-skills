@@ -68,8 +68,7 @@ class GaussianDispersionModel:
             conc = self._concentration(
                 release_rate, wind_speed, stab, x, release_height
             )
-            if conc > peak:
-                peak = conc
+            peak = max(peak, conc)
             if conc >= target_concentration:
                 hazard_distance = x
             x *= ratio

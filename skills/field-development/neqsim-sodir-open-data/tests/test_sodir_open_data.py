@@ -3,10 +3,20 @@ import re
 from urllib.parse import parse_qs, urlparse
 
 import pytest
-
 from sodir_open_data import (
-    BULK_DATASETS, USE_CASES, SodirOpenData, bulk_download_url, describe, factpages_table_url, field_names,
-    items, resolve_id, search, sql_quote, to_date, use_case,
+    BULK_DATASETS,
+    USE_CASES,
+    SodirOpenData,
+    bulk_download_url,
+    describe,
+    factpages_table_url,
+    field_names,
+    items,
+    resolve_id,
+    search,
+    sql_quote,
+    to_date,
+    use_case,
 )
 from sodir_open_data.client import point_lonlat, to_float
 

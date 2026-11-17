@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
-
+from typing import Any
 
 _NATIVE_TEXT_EXTENSIONS = {".txt", ".md", ".rtf", ".html", ".xml", ".json"}
 _TABLE_EXTENSIONS = {".csv", ".tsv", ".xls", ".xlsx", ".xlsm", ".ods"}
@@ -26,7 +26,7 @@ class ExtractionStep:
     required: bool = True
 
 
-def _markdown_normalize_step(purpose: str) -> "ExtractionStep":
+def _markdown_normalize_step(purpose: str) -> ExtractionStep:
     """Return the optional token-efficient Markdown rendition step."""
     return ExtractionStep("markdown_normalize", purpose, required=False)
 

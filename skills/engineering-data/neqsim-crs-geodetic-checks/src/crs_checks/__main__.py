@@ -6,13 +6,12 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 from .transform import CrsError, transform
 from .workflow import run_crs_check
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="crs_checks")
     sub = parser.add_subparsers(dest="command", required=True)
     check = sub.add_parser("check", help="run the configured CRS checks")

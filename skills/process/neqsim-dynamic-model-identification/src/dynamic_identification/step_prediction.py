@@ -10,7 +10,7 @@ numpy; the data-only cross-check uses ``identify_unit`` and ``simulate_unit``.
 """
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -26,7 +26,7 @@ def fopdt_step(t_s: Sequence[float], dy: float, tau_s: float, delay_s: float) ->
 
 
 def hybrid_step_forecast(y0: float, dy_ss: float, tau_s: float, delay_s: float, horizon_s: float,
-                         timebase_s: float = 60.0) -> Dict[str, object]:
+                         timebase_s: float = 60.0) -> dict[str, object]:
     """Forecast after a move at ``t = 0``: the steady change from physics and the timing from identified dynamics.
 
     Returns the time axis, the trajectory and the times at which 63 % and 95 % of the change is reached.
@@ -38,8 +38,8 @@ def hybrid_step_forecast(y0: float, dy_ss: float, tau_s: float, delay_s: float, 
 
 
 def fit_step_dynamics(t_s: Sequence[float], y: Sequence[float], baseline_s: float = 3600.0,
-                      taus_s: Optional[Iterable[float]] = None, delays_s: Optional[Iterable[float]] = None,
-                      dy_fixed: Optional[float] = None) -> Dict[str, float]:
+                      taus_s: Iterable[float] | None = None, delays_s: Iterable[float] | None = None,
+                      dy_fixed: float | None = None) -> dict[str, float]:
     """Fit gain, time constant and delay to one step window (step at ``t = 0``; negative times are the baseline).
 
     Grid search over ``tau`` and ``delay``; for each pair the step size is the least-squares value (or ``dy_fixed``).
@@ -76,7 +76,7 @@ def fit_step_dynamics(t_s: Sequence[float], y: Sequence[float], baseline_s: floa
             "noise_std": noise, "snr": abs(dy) / noise if noise > 0 else float("inf"), "n_after": int(after.sum())}
 
 
-def pooled_dynamics(fits: Sequence[Mapping[str, float]], min_snr: float = 3.0) -> Dict[str, float]:
+def pooled_dynamics(fits: Sequence[Mapping[str, float]], min_snr: float = 3.0) -> dict[str, float]:
     """Median time constant and delay over fitted moves whose signal-to-noise ratio is at least ``min_snr``."""
     good = [f for f in fits if f.get("snr", 0.0) >= min_snr]
     if not good:
@@ -86,7 +86,7 @@ def pooled_dynamics(fits: Sequence[Mapping[str, float]], min_snr: float = 3.0) -
 
 
 def score_forecast(y_meas: Sequence[float], y_pred: Sequence[float], y0: float,
-                   tail: int = 12) -> Dict[str, float]:
+                   tail: int = 12) -> dict[str, float]:
     """Compare a forecast with the measured response after the move.
 
     ``skill`` is ``1 - rms / rms_persistence`` against the naive forecast "nothing changes" (``y0``): positive means
@@ -104,12 +104,12 @@ def score_forecast(y_meas: Sequence[float], y_pred: Sequence[float], y0: float,
 
 
 def detect_steps(moves: pd.DataFrame, min_step: float, step_samples: int, quiet_before: int, quiet_after: int,
-                 max_ripple: float = 1.0, max_other_move: float = 1.0) -> List[Dict[str, object]]:
+                 max_ripple: float = 1.0, max_other_move: float = 1.0) -> list[dict[str, object]]:
     """Isolated steps: one column moves at least ``min_step`` within ``step_samples`` while it and all other
     columns stay within ``max_ripple`` / ``max_other_move`` for ``quiet_before`` samples before and ``quiet_after``
     samples after. ``moves`` holds the manipulated variables (for example every well choke) on a regular time base.
     """
-    out: List[Dict[str, object]] = []
+    out: list[dict[str, object]] = []
     for col in moves.columns:
         x = moves[col].to_numpy(dtype=float)
         others = moves.drop(columns=col).to_numpy(dtype=float)

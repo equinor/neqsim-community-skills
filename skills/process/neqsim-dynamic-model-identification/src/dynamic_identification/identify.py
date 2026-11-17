@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -23,7 +23,7 @@ def _arr(Array, Double, values: Sequence[float]):
     return Array[Double](to_tsa(values))
 
 
-def _num(value) -> Optional[float]:
+def _num(value) -> float | None:
     try:
         v = float(value)
     except (TypeError, ValueError):
@@ -31,7 +31,7 @@ def _num(value) -> Optional[float]:
     return v if math.isfinite(v) and v != BAD_DATA_ID else None
 
 
-def _fitting(fitting) -> Dict[str, object]:
+def _fitting(fitting) -> dict[str, object]:
     return {
         "able_to_identify": bool(fitting.WasAbleToIdentify),
         "solver": str(fitting.SolverID),
@@ -43,7 +43,7 @@ def _fitting(fitting) -> Dict[str, object]:
 
 
 def _dataset(dynamic, Array, Double, timebase_s: float, y: Sequence[float], inputs: Sequence[Sequence[float]],
-             y_setpoint: Optional[Sequence[float]] = None):
+             y_setpoint: Sequence[float] | None = None):
     if not 1 <= len(inputs) <= 6:
         raise ValueError("TimeSeriesAnalysis takes one to six inputs")
     n = len(y)
@@ -58,7 +58,7 @@ def _dataset(dynamic, Array, Double, timebase_s: float, y: Sequence[float], inpu
     return ds
 
 
-def _unit_parameters(model, names: List[str]) -> Dict[str, object]:
+def _unit_parameters(model, names: list[str]) -> dict[str, object]:
     p = model.GetModelParameters()
     gains = [float(g) for g in p.LinearGains] if p.LinearGains is not None else []
     u0 = [float(v) for v in p.U0] if p.U0 is not None else []
@@ -80,8 +80,8 @@ def _unit_parameters(model, names: List[str]) -> Dict[str, object]:
 _UNIT_METHODS = {"auto": "Identify", "linear": "IdentifyLinear", "static": "IdentifyLinearAndStatic"}
 
 
-def identify_unit(y: Sequence[float], inputs: Dict[str, Sequence[float]], timebase_s: float,
-                  estimate_delay: bool = True, method: str = "best") -> Dict[str, object]:
+def identify_unit(y: Sequence[float], inputs: dict[str, Sequence[float]], timebase_s: float,
+                  estimate_delay: bool = True, method: str = "best") -> dict[str, object]:
     """Identify an open-loop process model (gain per input, time constant, time delay, bias).
 
     Use for an output driven by inputs that are not themselves set by feedback from that output. NaN marks bad
@@ -121,8 +121,8 @@ _CONTROLLER_TYPES = ("Unset", "Flow", "Pressure", "Level", "Temperature", "Duty"
 
 
 def identify_pid(pv: Sequence[float], sp: Sequence[float], out: Sequence[float], timebase_s: float,
-                 controller_type: str = "Unset", u_range: Optional[Sequence[float]] = None,
-                 y_range: Optional[Sequence[float]] = None) -> Dict[str, object]:
+                 controller_type: str = "Unset", u_range: Sequence[float] | None = None,
+                 y_range: Sequence[float] | None = None) -> dict[str, object]:
     """Identify PI(D) parameters from measurement, setpoint and controller output.
 
     ``u_range`` and ``y_range`` give the controller's output and measurement ranges when known; Kp is then
@@ -146,7 +146,7 @@ def identify_pid(pv: Sequence[float], sp: Sequence[float], out: Sequence[float],
 
 
 def identify_closed_loop(pv: Sequence[float], sp: Sequence[float], out: Sequence[float], timebase_s: float,
-                         pid: Optional[Dict[str, float]] = None, detect_frozen: bool = True) -> Dict[str, object]:
+                         pid: dict[str, float] | None = None, detect_frozen: bool = True) -> dict[str, object]:
     """Identify the process model and the disturbance from closed-loop data (output driven by feedback).
 
     ``pid`` (``kp``, ``ti_s``, ``td_s``) can be the known tuning; without it TimeSeriesAnalysis estimates it.

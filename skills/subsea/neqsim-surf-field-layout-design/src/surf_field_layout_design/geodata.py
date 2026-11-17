@@ -12,8 +12,8 @@ layout needs; met-ocean data is what an FPSO heading needs.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Callable, Mapping, Sequence
 from urllib.parse import urlencode
 
 

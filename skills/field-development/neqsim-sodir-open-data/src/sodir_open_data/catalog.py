@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from importlib import resources
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-CATEGORIES: Dict[int, str] = {
+CATEGORIES: dict[int, str] = {
     1: "Administrative (blocks, quadrants, sub-areas, area status)",
     2: "Geology (structural elements, stratigraphy)",
     3: "Licences (production licences, APA/TFO, AFEX, business arrangement areas, petreg)",
@@ -26,18 +26,18 @@ def category_of(layer_id: int) -> str:
 
 
 @lru_cache(maxsize=1)
-def load_catalog() -> Dict[str, Any]:
+def load_catalog() -> dict[str, Any]:
     """Load the bundled catalog JSON (see ``refresh.py`` to regenerate it from the live service)."""
     with resources.files("sodir_open_data").joinpath("data/dataservice_catalog.json").open("r", encoding="utf-8") as fh:
         return json.load(fh)
 
 
-def items() -> List[Dict[str, Any]]:
+def items() -> list[dict[str, Any]]:
     """Return every layer and table entry."""
     return list(load_catalog()["items"])
 
 
-def resolve_id(layer: "str | int") -> int:
+def resolve_id(layer: str | int) -> int:
     """Resolve a DataService layer/table name or id to its numeric id."""
     if isinstance(layer, int):
         return layer
@@ -50,7 +50,7 @@ def resolve_id(layer: "str | int") -> int:
     raise KeyError(f"unknown Sodir DataService layer or table {layer!r}; use search() to find it")
 
 
-def get(layer: "str | int") -> Dict[str, Any]:
+def get(layer: str | int) -> dict[str, Any]:
     """Return the catalog entry of a layer or table."""
     layer_id = resolve_id(layer)
     for item in items():
@@ -59,7 +59,7 @@ def get(layer: "str | int") -> Dict[str, Any]:
     raise KeyError(f"layer id {layer_id} is not in the bundled catalog; run refresh to update it")
 
 
-def search(text: str, limit: int = 15) -> List[Dict[str, Any]]:
+def search(text: str, limit: int = 15) -> list[dict[str, Any]]:
     """Rank entries by how many query words hit the name, description or field names."""
     words = [w for w in text.lower().replace("_", " ").split() if w]
     scored = []
@@ -74,12 +74,12 @@ def search(text: str, limit: int = 15) -> List[Dict[str, Any]]:
     return [dict(i, score=s) for s, i in scored[:limit]]
 
 
-def field_names(layer: "str | int") -> List[str]:
+def field_names(layer: str | int) -> list[str]:
     """Return the attribute names of a layer or table."""
     return [f["name"] for f in get(layer).get("fields", [])]
 
 
-def describe(layer: "str | int", with_fields: bool = True) -> str:
+def describe(layer: str | int, with_fields: bool = True) -> str:
     """Return a short text description of a layer or table, optionally listing attribute descriptions."""
     item = get(layer)
     kind = item["kind"] + (f"/{item['geometry']}" if item.get("geometry") else "")
@@ -91,7 +91,7 @@ def describe(layer: "str | int", with_fields: bool = True) -> str:
     return "\n".join(lines)
 
 
-def find_key_columns(layer: "str | int") -> Optional[List[str]]:
+def find_key_columns(layer: str | int) -> list[str] | None:
     """Return the ``*Npdid*`` join-key columns of a layer (Sodir's stable identifiers)."""
     keys = [n for n in field_names(layer) if "npdid" in n.lower()]
     return keys or None

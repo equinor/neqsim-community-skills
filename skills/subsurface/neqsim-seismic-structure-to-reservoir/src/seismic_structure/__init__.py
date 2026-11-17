@@ -1,7 +1,20 @@
 """Seismic structure to reservoir model: surfaces, horizon tracking, depth conversion, closure, volumes, grid."""
 
-from .closure import Closure, analyse_closure, contact_for_volume, contact_sweep, find_crest, volumes_at_contact
-from .discovery import choose_top_surface, discover, geometry_attempts, geometry_candidates, read_well_tops
+from .closure import (
+    Closure,
+    analyse_closure,
+    contact_for_volume,
+    contact_sweep,
+    find_crest,
+    volumes_at_contact,
+)
+from .discovery import (
+    choose_top_surface,
+    discover,
+    geometry_attempts,
+    geometry_candidates,
+    read_well_tops,
+)
 from .grid import LayeredGrid, build_layered_grid
 from .io import grid_points, read_surface, write_irap, write_zmap
 from .surface import Surface, surface_from_function

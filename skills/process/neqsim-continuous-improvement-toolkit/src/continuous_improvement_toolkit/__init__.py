@@ -27,5 +27,12 @@ def __getattr__(name):
     raise AttributeError("module %r has no attribute %r" % (__name__, name))
 
 
-__all__ = ["TagreaderAdapter", "SourceResult", "fit_gp", "expected_improvement", "propose_next",
-           "enkf_update", "identifiability"]
+__all__ = [
+    "SourceResult",
+    "TagreaderAdapter",
+    "enkf_update",
+    "expected_improvement",
+    "fit_gp",
+    "identifiability",
+    "propose_next",
+]

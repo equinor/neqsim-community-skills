@@ -13,11 +13,17 @@ mechanical-design workflows and to a qualified subsea engineering review.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from math import ceil, cos, hypot, pi, radians, sin
-from typing import Sequence
 
-from .geo import LocalFrame, feature_collection, line_feature, point_feature, polygon_feature
+from .geo import (
+    LocalFrame,
+    feature_collection,
+    line_feature,
+    point_feature,
+    polygon_feature,
+)
 
 #: Nominal line sizes commonly available for subsea flowlines and risers, inches.
 NOMINAL_SIZES_INCH = (4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 24.0, 28.0, 30.0)

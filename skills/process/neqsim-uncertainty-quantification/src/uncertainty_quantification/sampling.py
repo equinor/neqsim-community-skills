@@ -13,9 +13,9 @@ the optional SALib backend.
 from __future__ import annotations
 
 import random
-from typing import Callable, Dict, List, Optional, Sequence
+from collections.abc import Callable, Sequence
 
-Sample = List[float]
+Sample = list[float]
 
 _PRIMES: Sequence[int] = (
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
@@ -29,19 +29,19 @@ class SamplingError(ValueError):
 
 def _check(n: int, dim: int) -> None:
     if n <= 0:
-        raise SamplingError("n must be positive, got {}".format(n))
+        raise SamplingError(f"n must be positive, got {n}")
     if dim <= 0:
-        raise SamplingError("dim must be positive, got {}".format(dim))
+        raise SamplingError(f"dim must be positive, got {dim}")
 
 
-def random_samples(n: int, dim: int, seed: Optional[int] = None) -> List[Sample]:
+def random_samples(n: int, dim: int, seed: int | None = None) -> list[Sample]:
     """Plain seeded pseudo-random sampling."""
     _check(n, dim)
     rng = random.Random(seed)
     return [[rng.random() for _ in range(dim)] for _ in range(n)]
 
 
-def latin_hypercube(n: int, dim: int, seed: Optional[int] = None) -> List[Sample]:
+def latin_hypercube(n: int, dim: int, seed: int | None = None) -> list[Sample]:
     """Latin hypercube: one sample per stratum in every dimension.
 
     Guarantees the marginal of each input is covered evenly, which removes the
@@ -49,7 +49,7 @@ def latin_hypercube(n: int, dim: int, seed: Optional[int] = None) -> List[Sample
     """
     _check(n, dim)
     rng = random.Random(seed)
-    columns: List[List[float]] = []
+    columns: list[list[float]] = []
     for _ in range(dim):
         strata = [(i + rng.random()) / n for i in range(n)]
         rng.shuffle(strata)
@@ -67,7 +67,7 @@ def _radical_inverse(index: int, base: int) -> float:
     return result
 
 
-def halton(n: int, dim: int, seed: Optional[int] = None, skip: int = 20) -> List[Sample]:
+def halton(n: int, dim: int, seed: int | None = None, skip: int = 20) -> list[Sample]:
     """Deterministic low-discrepancy Halton sequence.
 
     ``seed`` shifts the start of the sequence so repeated studies can be varied;
@@ -78,7 +78,7 @@ def halton(n: int, dim: int, seed: Optional[int] = None, skip: int = 20) -> List
     _check(n, dim)
     if dim > len(_PRIMES):
         raise SamplingError(
-            "halton supports up to {} dimensions, got {}".format(len(_PRIMES), dim)
+            f"halton supports up to {len(_PRIMES)} dimensions, got {dim}"
         )
     offset = skip + (int(seed) if seed is not None else 0)
     return [
@@ -86,7 +86,7 @@ def halton(n: int, dim: int, seed: Optional[int] = None, skip: int = 20) -> List
     ]
 
 
-SAMPLERS: Dict[str, Callable[..., List[Sample]]] = {
+SAMPLERS: dict[str, Callable[..., list[Sample]]] = {
     "random": random_samples,
     "lhs": latin_hypercube,
     "halton": halton,
@@ -96,14 +96,14 @@ SAMPLERS: Dict[str, Callable[..., List[Sample]]] = {
 DEFAULT_SAMPLER = "lhs"
 
 
-def available_samplers() -> List[str]:
+def available_samplers() -> list[str]:
     """Names accepted by :func:`generate_unit_samples`."""
     return sorted(SAMPLERS)
 
 
 def generate_unit_samples(
-    n: int, dim: int, method: str = DEFAULT_SAMPLER, seed: Optional[int] = None
-) -> List[Sample]:
+    n: int, dim: int, method: str = DEFAULT_SAMPLER, seed: int | None = None
+) -> list[Sample]:
     """Generate ``n`` unit-hypercube points with the named sampler."""
     key = method.strip().lower()
     if key not in SAMPLERS:

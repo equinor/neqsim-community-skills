@@ -1,9 +1,7 @@
 """Tests for the adsorbent capillary condensation screening model."""
 
-import math
 
 import pytest
-
 from adsorbent_capillary_condensation_screening import (
     CapillaryCondensationScreeningModel,
     micropore_filling_fraction,

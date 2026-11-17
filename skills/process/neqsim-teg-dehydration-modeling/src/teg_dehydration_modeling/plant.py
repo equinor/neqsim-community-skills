@@ -11,15 +11,15 @@ plant. The helper emission functions only need a NeqSim stream object.
 from __future__ import annotations
 
 __all__ = [
-    "GAS_COMPONENTS",
     "DEFAULT_FEED",
-    "NMVOC",
+    "GAS_COMPONENTS",
     "GHG_CH4",
+    "NMVOC",
     "build_teg_plant",
-    "comp_mass_flows_kg_hr",
-    "teg_mass_fraction",
-    "glycol_purity_wt",
     "classify_emissions",
+    "comp_mass_flows_kg_hr",
+    "glycol_purity_wt",
+    "teg_mass_fraction",
 ]
 
 # Public, synthetic natural-gas component list and a representative composition.

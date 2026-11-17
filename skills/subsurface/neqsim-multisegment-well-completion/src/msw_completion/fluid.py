@@ -7,12 +7,10 @@ liquid water density by around 20 %. Brine is denser than pure water; pass ``wat
 
 from __future__ import annotations
 
-from typing import Dict, Optional
-
 from .devices import PhaseProperties
 
 
-def _hydrocarbon_fluid(jneqsim, components: Optional[Dict[str, float]], e300: Optional[str], temperature_c: float,
+def _hydrocarbon_fluid(jneqsim, components: dict[str, float] | None, e300: str | None, temperature_c: float,
                        pressure_bara: float, eos: str):
     if e300:
         fluid = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite.read(str(e300))
@@ -30,7 +28,7 @@ def _hydrocarbon_fluid(jneqsim, components: Optional[Dict[str, float]], e300: Op
     return fluid
 
 
-def _pure_water(jneqsim, temperature_c: float, pressure_bara: float) -> Dict[str, float]:
+def _pure_water(jneqsim, temperature_c: float, pressure_bara: float) -> dict[str, float]:
     water = jneqsim.thermo.system.SystemSrkCPAstatoil(temperature_c + 273.15, pressure_bara)
     water.addComponent("water", 1.0)
     water.setMixingRule(10)
@@ -40,10 +38,10 @@ def _pure_water(jneqsim, temperature_c: float, pressure_bara: float) -> Dict[str
     return {"water_density": float(phase.getDensity("kg/m3")), "water_viscosity": float(phase.getViscosity("cP"))}
 
 
-def phase_properties_from_neqsim(components: Optional[Dict[str, float]], temperature_c: float, pressure_bara: float,
-                                 eos: str = "SRK", fallback: Optional[Dict[str, float]] = None,
-                                 e300: Optional[str] = None,
-                                 water: Optional[Dict[str, float]] = None) -> Dict[str, object]:
+def phase_properties_from_neqsim(components: dict[str, float] | None, temperature_c: float, pressure_bara: float,
+                                 eos: str = "SRK", fallback: dict[str, float] | None = None,
+                                 e300: str | None = None,
+                                 water: dict[str, float] | None = None) -> dict[str, object]:
     """Oil, water and gas densities (kg/m3) and viscosities (cP) at device conditions.
 
     A hydrocarbon phase that does not form (oil above the dew point, gas above the bubble point) takes its value
@@ -58,7 +56,7 @@ def phase_properties_from_neqsim(components: Optional[Dict[str, float]], tempera
     fluid.setMultiPhaseCheck(True)
     jneqsim.thermodynamicoperations.ThermodynamicOperations(fluid).TPflash()
     fluid.initProperties()
-    values: Dict[str, float] = {}
+    values: dict[str, float] = {}
     found = []
     for key in ("oil", "gas"):
         if fluid.hasPhaseType(key):

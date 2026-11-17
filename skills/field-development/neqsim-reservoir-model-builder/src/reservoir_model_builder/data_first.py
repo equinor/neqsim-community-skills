@@ -18,7 +18,8 @@ caller assembled.
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Mapping, Optional, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any
 
 #: Ranked data sources for each modelling ingredient, best first. The
 #: ``loses`` text is what silently degrades if a study settles for the next
@@ -82,7 +83,7 @@ def _ladder(ingredient: str) -> tuple[dict[str, Any], ...]:
             f"{sorted(DATA_LADDER)}") from error
 
 
-def rank_of(ingredient: str, source: str) -> Optional[int]:
+def rank_of(ingredient: str, source: str) -> int | None:
     for rung in _ladder(ingredient):
         if rung["source"] == source:
             return int(rung["rank"])
@@ -101,7 +102,7 @@ def best_available(
     ladder = _ladder(ingredient)
     by_source = {str(item.get("source")): item for item in attempts}
 
-    used: Optional[dict[str, Any]] = None
+    used: dict[str, Any] | None = None
     skipped: list[dict[str, Any]] = []
     for rung in ladder:
         record = by_source.get(rung["source"])

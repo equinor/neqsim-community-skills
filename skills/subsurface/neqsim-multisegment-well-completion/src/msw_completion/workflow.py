@@ -22,11 +22,17 @@ import copy
 import json
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .case import DEVICE_KEYWORD, build_case
-from .devices import (DEVICE_CLASSES, PhaseProperties, calibrate_strength, device_from_dict, pressure_drop_bar,
-                      single_phase_drops)
+from .devices import (
+    DEVICE_CLASSES,
+    PhaseProperties,
+    calibrate_strength,
+    device_from_dict,
+    pressure_drop_bar,
+    single_phase_drops,
+)
 from .msw import add_plain_msw, keyword_blocks, split_schedule
 from .runner import CompletorUnavailable, read_device_layer, run_completor
 from .screening import Zone, compare_at_same_oil
@@ -34,11 +40,11 @@ from .screening import Zone, compare_at_same_oil
 SCHEMA = "well_completion_evidence.v1"
 
 
-def _device_table(design: Dict[str, Any], kind: str) -> List[Dict[str, Any]]:
+def _device_table(design: dict[str, Any], kind: str) -> list[dict[str, Any]]:
     return design.get(DEVICE_KEYWORD[kind.upper()]) or []
 
 
-def _device(design: Dict[str, Any], ref: Dict[str, Any]):
+def _device(design: dict[str, Any], ref: dict[str, Any]):
     kind = str(ref["type"]).upper()
     for row in _device_table(design, kind):
         if int(row["number"]) == int(ref["number"]):
@@ -46,7 +52,7 @@ def _device(design: Dict[str, Any], ref: Dict[str, Any]):
     raise ValueError(f"{kind} device {ref['number']} is not defined in the design")
 
 
-def _properties(config: Dict[str, Any], evidence: Dict[str, Any]) -> Optional[PhaseProperties]:
+def _properties(config: dict[str, Any], evidence: dict[str, Any]) -> PhaseProperties | None:
     if config.get("phase_properties"):
         evidence["sources"].append({"item": "phase_properties", "source": config.get("phase_properties_source",
                                                                                      "user input")})
@@ -66,7 +72,7 @@ def _properties(config: Dict[str, Any], evidence: Dict[str, Any]) -> Optional[Ph
     return None
 
 
-def _wsegdims_check(deck: str, layer: Dict[str, Dict[str, object]], evidence: Dict[str, Any]) -> None:
+def _wsegdims_check(deck: str, layer: dict[str, dict[str, object]], evidence: dict[str, Any]) -> None:
     head, _ = split_schedule(deck)
     blocks = keyword_blocks(head, "WSEGDIMS")
     if not blocks or not blocks[0][2]:
@@ -81,7 +87,7 @@ def _wsegdims_check(deck: str, layer: Dict[str, Dict[str, object]], evidence: Di
                                         f"exceed WSEGDIMS {max_seg} {max_br}")
 
 
-def _plot(devices: Dict[str, Any], props: PhaseProperties, path: Path, rate_max: float) -> Optional[str]:
+def _plot(devices: dict[str, Any], props: PhaseProperties, path: Path, rate_max: float) -> str | None:
     try:
         import matplotlib
 
@@ -107,10 +113,10 @@ def _plot(devices: Dict[str, Any], props: PhaseProperties, path: Path, rate_max:
     return str(path)
 
 
-def run_completion_workflow(config: Dict[str, Any]) -> Dict[str, Any]:
+def run_completion_workflow(config: dict[str, Any]) -> dict[str, Any]:
     """Run the configured steps and return a ``well_completion_evidence.v1`` record."""
     out_dir = Path(config["out_dir"]) if config.get("out_dir") else None
-    evidence: Dict[str, Any] = {"schema": SCHEMA, "status": "ok", "verification": "unverified", "sources": [],
+    evidence: dict[str, Any] = {"schema": SCHEMA, "status": "ok", "verification": "unverified", "sources": [],
                                 "warnings": [], "missing": [], "outputs": {}, "steps": []}
     design = copy.deepcopy(config.get("design") or {})
     source = config.get("parameter_source")

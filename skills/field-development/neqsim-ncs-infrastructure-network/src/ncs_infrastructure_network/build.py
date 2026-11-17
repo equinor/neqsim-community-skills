@@ -17,12 +17,24 @@ Snapshot schema ``ncs_network_snapshot.v1``::
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import UTC, datetime
+from typing import Any
 
-from .open_api import (NORSKPETROLEUM_TABLES, EntsogTransparency, SodirDataService, default_fetch,
-                       read_norskpetroleum_capacity_xlsx)
-from .topology import ARC_OVERRIDES, CURATED_ARCS, CURATED_NODES, MARKET_LINKS, node_id, norm
+from .open_api import (
+    NORSKPETROLEUM_TABLES,
+    EntsogTransparency,
+    SodirDataService,
+    default_fetch,
+    read_norskpetroleum_capacity_xlsx,
+)
+from .topology import (
+    ARC_OVERRIDES,
+    CURATED_ARCS,
+    CURATED_NODES,
+    MARKET_LINKS,
+    node_id,
+    norm,
+)
 from .transport_parser import Gazetteer, parse_transport_text
 
 SCHEMA = "ncs_network_snapshot.v1"
@@ -38,10 +50,10 @@ CANDIDATE_DISCOVERY_STATUSES = {
 }
 
 
-def fetch_raw(fetch=default_fetch, *, timeout: float = 120.0) -> Dict[str, Any]:
+def fetch_raw(fetch=default_fetch, *, timeout: float = 120.0) -> dict[str, Any]:
     """Read every open source the snapshot needs. Network, bounded, read-only."""
     ds = SodirDataService(fetch, timeout=timeout)
-    raw: Dict[str, Any] = {
+    raw: dict[str, Any] = {
         "field": ds.query("field", return_geometry=True, out_sr=4326, max_offset=0.05),
         "discovery": ds.query("discovery", return_geometry=True, out_sr=4326, max_offset=0.05),
         "field_description": ds.query("field_description",
@@ -64,7 +76,7 @@ def fetch_raw(fetch=default_fetch, *, timeout: float = 120.0) -> Dict[str, Any]:
 
 # --------------------------------------------------------------------------- helpers
 
-def _num(value: Any) -> Optional[float]:
+def _num(value: Any) -> float | None:
     if value in (None, ""):
         return None
     try:
@@ -73,7 +85,7 @@ def _num(value: Any) -> Optional[float]:
         return None
 
 
-def parse_capacity(raw: Any) -> Tuple[Optional[float], Optional[List[float]]]:
+def parse_capacity(raw: Any) -> tuple[float | None, list[float] | None]:
     """Return (conservative capacity, [low, high]) from '46', 46, '10-27' or '10–27'."""
     if raw in (None, ""):
         return None, None
@@ -87,7 +99,7 @@ def parse_capacity(raw: Any) -> Tuple[Optional[float], Optional[List[float]]]:
     return numbers[0], None
 
 
-def _centroid(geometry: Optional[Dict[str, Any]]) -> Tuple[Optional[float], Optional[float]]:
+def _centroid(geometry: dict[str, Any] | None) -> tuple[float | None, float | None]:
     if not geometry:
         return None, None
     if "x" in geometry and "y" in geometry:
@@ -104,7 +116,7 @@ def resolve_name(name: str, gazetteer: Gazetteer) -> str:
     return gazetteer.aliases.get(key) or node_id(name)
 
 
-def _reachable_by_table(arcs: List[Dict[str, Any]], src: str, dst: str, medium: str, max_hops: int = 4) -> bool:
+def _reachable_by_table(arcs: list[dict[str, Any]], src: str, dst: str, medium: str, max_hops: int = 4) -> bool:
     """True when table/curated arcs already connect src to dst in 2+ hops.
 
     Prose often says "exported via Statpipe to Karsto"; a direct text arc
@@ -125,22 +137,22 @@ def _reachable_by_table(arcs: List[Dict[str, Any]], src: str, dst: str, medium: 
 
 # --------------------------------------------------------------------------- build
 
-def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) -> Dict[str, Any]:
+def build_snapshot(raw: dict[str, Any], *, generated_utc: str | None = None) -> dict[str, Any]:
     field_rows = raw.get("field", [])
     field_names = {r["fldName"] for r in field_rows if r.get("fldName")}
     base = Gazetteer.build()
     field_ids = {name: resolve_name(name, base) for name in field_names}
     gazetteer = Gazetteer.build({name: fid for name, fid in field_ids.items()})
 
-    nodes: Dict[str, Dict[str, Any]] = {n["id"]: dict(n) for n in CURATED_NODES}
-    arcs: List[Dict[str, Any]] = []
+    nodes: dict[str, dict[str, Any]] = {n["id"]: dict(n) for n in CURATED_NODES}
+    arcs: list[dict[str, Any]] = []
     arc_keys = set()
 
-    def ensure_node(nid: str, name: Optional[str] = None, kind: str = "hub") -> None:
+    def ensure_node(nid: str, name: str | None = None, kind: str = "hub") -> None:
         if nid not in nodes:
             nodes[nid] = {"id": nid, "name": name or nid.replace("_", " ").title(), "kind": kind}
 
-    def add_arc(arc: Dict[str, Any]) -> None:
+    def add_arc(arc: dict[str, Any]) -> None:
         key = (arc["from"], arc["to"], arc["medium"])
         if key in arc_keys or arc["from"] == arc["to"]:
             return
@@ -183,7 +195,7 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
                  "source": "curated", "primary": True, "kind": "market_link"})
 
     # 3) fields
-    fields: Dict[str, Dict[str, Any]] = {}
+    fields: dict[str, dict[str, Any]] = {}
     for row in field_rows:
         name = row.get("fldName")
         if not name:
@@ -205,7 +217,7 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
     by_npdid = {f["npdid"]: fid for fid, f in fields.items()}
 
     # reserves: latest version per field (Sodir: oil/cond MSm3, gas GSm3, NGL Mtonn, OE MSm3oe)
-    latest: Dict[Any, Dict[str, Any]] = {}
+    latest: dict[Any, dict[str, Any]] = {}
     for row in raw.get("field_reserves", []):
         npd = row.get("fldNpdidField")
         if npd not in latest or (row.get("fldVersion") or 0) >= (latest[npd].get("fldVersion") or 0):
@@ -229,7 +241,7 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
         }
 
     # yearly production (Sodir: oil/NGL/cond MSm3, gas GSm3)
-    discovery_profiles: Dict[Any, Dict[str, Any]] = {}
+    discovery_profiles: dict[Any, dict[str, Any]] = {}
     for row in raw.get("profiles", []):
         if row.get("prfPeriod", "year") != "year":
             continue
@@ -277,7 +289,7 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
 
     # 4) discoveries
     reserves_by_disc = {r.get("dscNpdidDiscovery"): r for r in raw.get("discovery_reserves", [])}
-    discoveries: Dict[str, Dict[str, Any]] = {}
+    discoveries: dict[str, dict[str, Any]] = {}
     for row in raw.get("discovery", []):
         status = row.get("dscCurrentActivityStatus")
         if status not in CANDIDATE_DISCOVERY_STATUSES:
@@ -303,7 +315,7 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
         }
 
     # 5) host facilities (surface, processing, in service) for tie-back screening
-    hosts: List[Dict[str, Any]] = []
+    hosts: list[dict[str, Any]] = []
     for row in raw.get("facility", []):
         functions = str(row.get("fclFunctions") or "")
         if row.get("fclPhase") != "IN SERVICE" or "PROCESSING" not in functions:
@@ -328,7 +340,7 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
 
     return {
         "schema": SCHEMA,
-        "generated_utc": generated_utc or datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_utc": generated_utc or datetime.now(UTC).isoformat(timespec="seconds"),
         "licence": "Sodir data NLOD 2.0; norskpetroleum.no and gassco.eu reused with attribution",
         "units": {"gas_capacity": "MSm3/d", "liquid_capacity": "Sm3/d", "reserves_oil": "MSm3",
                   "reserves_gas": "GSm3", "reserves_ngl": "Mtonn", "production_gas": "GSm3/yr",
@@ -338,7 +350,7 @@ def build_snapshot(raw: Dict[str, Any], *, generated_utc: Optional[str] = None) 
     }
 
 
-def fetch_entsog_calibration(date_from: str, date_to: str, fetch=default_fetch) -> Dict[str, Any]:
+def fetch_entsog_calibration(date_from: str, date_to: str, fetch=default_fetch) -> dict[str, Any]:
     """Observed daily entry flows per Norwegian receiving terminal (for calibration)."""
     from .open_api import summarise_entry_flows
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite
-from typing import Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -15,11 +14,11 @@ class PipingFlexibilityResult:
     displacement_stress_mpa: float
     allowable_stress_range_mpa: float
     displacement_stress_ratio: float
-    flange_pressure_ratio: Optional[float]
+    flange_pressure_ratio: float | None
     stress_warning: str
     flange_warning: str
     neqsim_available: bool
-    assumptions: Tuple[str, ...]
+    assumptions: tuple[str, ...]
 
 
 class PipingFlexibilityModel:
@@ -54,8 +53,8 @@ class PipingFlexibilityModel:
         youngs_modulus_mpa: float = 200000.0,
         thermal_expansion_coeff_per_k: float = 1.2e-5,
         allowable_stress_mpa: float = 138.0,
-        flange_rating_class: Optional[int] = None,
-        flange_allowable_pressure_bar: Optional[float] = None,
+        flange_rating_class: int | None = None,
+        flange_allowable_pressure_bar: float | None = None,
     ) -> PipingFlexibilityResult:
         self._require_positive("outside_diameter_mm", outside_diameter_mm)
         self._require_positive("wall_thickness_mm", wall_thickness_mm)
@@ -95,7 +94,7 @@ class PipingFlexibilityModel:
         allowable_stress_range = self.stress_range_factor * allowable_stress_mpa
         displacement_stress_ratio = displacement_stress / allowable_stress_range
 
-        flange_pressure_ratio: Optional[float] = None
+        flange_pressure_ratio: float | None = None
         if flange_allowable_pressure_bar is not None:
             flange_pressure_ratio = design_pressure_bar / flange_allowable_pressure_bar
 
@@ -142,7 +141,7 @@ class PipingFlexibilityModel:
 
     @staticmethod
     def _flange_warning(
-        design_pressure_bar: float, flange_allowable_pressure_bar: Optional[float]
+        design_pressure_bar: float, flange_allowable_pressure_bar: float | None
     ) -> str:
         if flange_allowable_pressure_bar is None:
             return "no-rating"

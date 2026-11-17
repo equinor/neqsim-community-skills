@@ -1,5 +1,4 @@
 import pytest
-
 from document_intelligence_extraction import (
     DocumentIntelligenceExtractor,
     EvidenceFact,

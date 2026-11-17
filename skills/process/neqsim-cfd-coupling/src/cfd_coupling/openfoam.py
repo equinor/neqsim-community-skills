@@ -30,10 +30,11 @@ import re
 import shlex
 import shutil
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from math import cos, isfinite, radians, sin
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from .boundary import CfdBoundaryConditions
 from .multiphase import GRAVITY_M_PER_S2, MultiphaseBoundaryConditions
@@ -319,11 +320,7 @@ class _FoamCaseBase:
         if self.mesh.kind == "external" or self.mesh.first_cell_height_m is None:
             return ()
 
-        if self.mesh.kind == "pipe":
-            thickness = (self.mesh.diameter_m / 2.0) * (1.0 - self.mesh.core_fraction)
-            cells = self.mesh.radial_cells
-            direction = "radial"
-        elif self.mesh.kind == "bend":
+        if self.mesh.kind == "pipe" or self.mesh.kind == "bend":
             thickness = (self.mesh.diameter_m / 2.0) * (1.0 - self.mesh.core_fraction)
             cells = self.mesh.radial_cells
             direction = "radial"
@@ -1672,7 +1669,7 @@ def _run_foam_command(
         argv = ["bash", "-lc", f"source {shlex.quote(environment)} >/dev/null 2>&1 && {command}"]
 
     try:
-        completed = subprocess.run(  # noqa: S603 - commands come from a fixed set
+        completed = subprocess.run(
             argv,
             cwd=str(case_dir),
             capture_output=True,

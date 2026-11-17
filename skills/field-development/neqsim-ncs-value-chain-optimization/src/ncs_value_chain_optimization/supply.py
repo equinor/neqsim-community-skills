@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 GSM3_YR_TO_MSM3_D = 1000.0 / 365.0
 MSM3_YR_TO_SM3_D = 1.0e6 / 365.0
@@ -27,7 +27,7 @@ GAS_VOLUME_FACTOR = 1000.0   # GSm3 -> MSm3 (gas rate in MSm3/d)
 LIQUID_VOLUME_FACTOR = 1.0e6  # MSm3 -> Sm3 (liquid rate in Sm3/d)
 
 # Years after the reference year before a discovery can produce, by Sodir status.
-DISCOVERY_START_OFFSET: Dict[str, Optional[int]] = {
+DISCOVERY_START_OFFSET: dict[str, int | None] = {
     "Production decided": 2,
     "Approved for production": 2,
     "Production in clarification phase": 4,
@@ -44,24 +44,24 @@ RC_LABEL = {"3F": "approved", "4F": "in planning", "5F": "likely", "7F": "not ev
 class EntityProfile:
     entity: str
     kind: str  # "field" | "discovery"
-    gas_msm3d: Dict[int, float] = field(default_factory=dict)
-    liquid_sm3d: Dict[int, float] = field(default_factory=dict)
-    method: Dict[str, str] = field(default_factory=dict)
-    capped_by_reserves: Dict[str, bool] = field(default_factory=dict)
-    start_year: Optional[int] = None
+    gas_msm3d: dict[int, float] = field(default_factory=dict)
+    liquid_sm3d: dict[int, float] = field(default_factory=dict)
+    method: dict[str, str] = field(default_factory=dict)
+    capped_by_reserves: dict[str, bool] = field(default_factory=dict)
+    start_year: int | None = None
 
     def rate(self, year: int, medium: str) -> float:
         series = self.gas_msm3d if medium == "gas" else self.liquid_sm3d
         return series.get(year, 0.0)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {"entity": self.entity, "kind": self.kind, "start_year": self.start_year, "method": self.method,
                 "capped_by_reserves": self.capped_by_reserves,
                 "gas_msm3d": {str(k): round(v, 4) for k, v in sorted(self.gas_msm3d.items())},
                 "liquid_sm3d": {str(k): round(v, 2) for k, v in sorted(self.liquid_sm3d.items())}}
 
 
-def _exp_decline(points: List[Tuple[float, float]]) -> Optional[Tuple[float, float]]:
+def _exp_decline(points: list[tuple[float, float]]) -> tuple[float, float] | None:
     """(qi at last point, decline 1/yr) from a log-linear fit of the post-peak series."""
     if len(points) < 3:
         return None
@@ -82,7 +82,7 @@ def _exp_decline(points: List[Tuple[float, float]]) -> Optional[Tuple[float, flo
     return window[-1][1], -slope
 
 
-def _decline_from_arps(points: List[Tuple[float, float]]) -> Optional[Tuple[float, float, str]]:
+def _decline_from_arps(points: list[tuple[float, float]]) -> tuple[float, float, str] | None:
     """Effective annual decline from the community Arps fit, if available."""
     try:
         from norwegian_continental_shelf_data.decline import fit_arps_decline  # type: ignore
@@ -102,10 +102,10 @@ def _decline_from_arps(points: List[Tuple[float, float]]) -> Optional[Tuple[floa
     return points[-1][1], d_now, f"arps-{arps.model} (b={b:.2f}, R2={arps.r_squared:.2f})"
 
 
-def forecast_series(history: Dict[int, float], *, last_year: int, end_year: int,
-                    remaining: Optional[float], volume_factor: float, min_decline: float = 0.04,
+def forecast_series(history: dict[int, float], *, last_year: int, end_year: int,
+                    remaining: float | None, volume_factor: float, min_decline: float = 0.04,
                     plateau_decline: float = 0.12, window_years: int = 10,
-                    economic_limit_fraction: float = 0.02) -> Tuple[Dict[int, float], str, bool]:
+                    economic_limit_fraction: float = 0.02) -> tuple[dict[int, float], str, bool]:
     """Forecast one commodity for years ``last_year+1..end_year``.
 
     ``history`` maps year to average daily rate; ``remaining`` is remaining
@@ -123,7 +123,7 @@ def forecast_series(history: Dict[int, float], *, last_year: int, end_year: int,
         q0, decline, method = base, 0.0, "plateau (no decline yet)"
     budget = remaining * volume_factor if remaining and remaining > 0 else None  # rate-days available
     peak = max(history.values())
-    out: Dict[int, float] = {}
+    out: dict[int, float] = {}
     used = 0.0
     rate = q0
     capped = False
@@ -148,13 +148,13 @@ def forecast_series(history: Dict[int, float], *, last_year: int, end_year: int,
 
 
 def discovery_profile(recoverable: float, *, volume_factor: float, start_year: int, end_year: int,
-                      plateau_fraction: float = 0.12, plateau_years: int = 4, decline: float = 0.15) -> Dict[int, float]:
+                      plateau_fraction: float = 0.12, plateau_years: int = 4, decline: float = 0.15) -> dict[int, float]:
     """Screening profile: one build-up year at 50 %, plateau at ``plateau_fraction``/yr, exponential decline."""
     if not recoverable or recoverable <= 0:
         return {}
     budget = recoverable * volume_factor
     plateau_rate = budget * plateau_fraction / 365.0
-    out: Dict[int, float] = {}
+    out: dict[int, float] = {}
     used, year, rate = 0.0, start_year, plateau_rate * 0.5
     phase_year = 0
     while year <= end_year and used < budget * 0.999:
@@ -172,9 +172,9 @@ def discovery_profile(recoverable: float, *, volume_factor: float, start_year: i
     return out
 
 
-def build_supply(network: Any, *, reference_year: Optional[int] = None, end_year: int = 2045,
+def build_supply(network: Any, *, reference_year: int | None = None, end_year: int = 2045,
                  include_discoveries: bool = True, include_not_evaluated: bool = False,
-                 overrides: Optional[Dict[str, Dict[str, Dict[str, float]]]] = None) -> Dict[str, EntityProfile]:
+                 overrides: dict[str, dict[str, dict[str, float]]] | None = None) -> dict[str, EntityProfile]:
     """Profiles for every field and candidate discovery in an ``NcsNetwork``.
 
     ``reference_year`` is the last complete production year (default: snapshot
@@ -183,7 +183,7 @@ def build_supply(network: Any, *, reference_year: Optional[int] = None, end_year
     if reference_year is None:
         generated = str(network.snapshot.get("generated_utc", ""))[:4]
         reference_year = (int(generated) - 1) if generated.isdigit() else 2025
-    profiles: Dict[str, EntityProfile] = {}
+    profiles: dict[str, EntityProfile] = {}
     for fid, fld in network.fields.items():
         prod = fld.get("production", {})
         gas_hist = {int(y): r.get("gas_bsm3", 0.0) * GSM3_YR_TO_MSM3_D for y, r in prod.items()
@@ -235,6 +235,6 @@ def build_supply(network: Any, *, reference_year: Optional[int] = None, end_year
     return profiles
 
 
-def total_supply(profiles: Dict[str, EntityProfile], year: int) -> Dict[str, float]:
+def total_supply(profiles: dict[str, EntityProfile], year: int) -> dict[str, float]:
     return {"gas_msm3d": sum(p.rate(year, "gas") for p in profiles.values()),
             "liquid_sm3d": sum(p.rate(year, "liquid") for p in profiles.values())}

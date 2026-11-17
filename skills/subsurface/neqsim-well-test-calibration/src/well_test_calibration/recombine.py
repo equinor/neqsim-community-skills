@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, Sequence, Tuple
+from collections.abc import Iterable, Sequence
 
 P_ATM = 1.01325
 MOL_PER_SM3 = 42.29    # mol per Sm3 of ideal gas at 15 C, 1.01325 bara
@@ -25,7 +25,7 @@ def _phase_m3(phase) -> float:
 
 
 def stock_tank_rates(fluid, z: Sequence[float], kg_per_h: float, mol_per_h: float, p_sep_barg: float, t_sep_c: float,
-                     train: Iterable[Tuple[float, float]] = ((0.0, 15.0),)) -> Tuple[float, float]:
+                     train: Iterable[tuple[float, float]] = ((0.0, 15.0),)) -> tuple[float, float]:
     """Stock-tank oil and total gas (Sm3/d) of a well stream taken through a separation train.
 
     The separator oil is re-flashed stage by stage (``train`` = [(p_barg, t_C), ...], last stage = stock tank), as an
@@ -59,7 +59,7 @@ def stock_tank_rates(fluid, z: Sequence[float], kg_per_h: float, mol_per_h: floa
 
 def recombine_separator_volumes(fluid, p_sep_barg: float, t_oil_c: float, gas_act_m3h: float, oil_act_m3h: float,
                                 water_m3h: float = 0.0, t_gas_c: float = None, water_name: str = "water",
-                                train: Iterable[Tuple[float, float]] = ((0.0, 15.0),)) -> Dict[str, object]:
+                                train: Iterable[tuple[float, float]] = ((0.0, 15.0),)) -> dict[str, object]:
     """Well-stream composition and standard rates from measured ACTUAL gas and oil volumes at the test separator.
 
     ``fluid`` is a NeqSim fluid of the right reservoir/formation (it sets the phase compositions at separator
@@ -80,7 +80,7 @@ def recombine_separator_volumes(fluid, p_sep_barg: float, t_oil_c: float, gas_ac
     mol = [ng * g.getComponent(i).getx() + no * o.getComponent(i).getx() for i in range(n)]
     if water_m3h:
         if water_name not in names:
-            raise ValueError("water is measured but the fluid has no '{}' component".format(water_name))
+            raise ValueError(f"water is measured but the fluid has no '{water_name}' component")
         mol[names.index(water_name)] += water_m3h * 1.0e6 / 18.015
     tot = sum(mol)
     z = [m / tot for m in mol]

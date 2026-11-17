@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import pytest
-
-from benchmark_reference_data.comparison import STATUS_FAIL, STATUS_PASS, STATUS_WARN, compare
+from benchmark_reference_data.comparison import (
+    STATUS_FAIL,
+    STATUS_PASS,
+    STATUS_WARN,
+    compare,
+)
 from benchmark_reference_data.reference_data import find_anchor
 from benchmark_reference_data.report import BenchmarkReport
 

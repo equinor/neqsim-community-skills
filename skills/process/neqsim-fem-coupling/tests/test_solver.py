@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from fem_coupling import (
     BoundaryCondition,
     ConductionProblem,

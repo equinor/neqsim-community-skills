@@ -7,14 +7,14 @@ Physical partitioning only (SRK-CPA, gas / oil / aqueous). Aqueous ionisation of
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 H2S_MOLAR_MASS_G_MOL = 34.081
 WATER_MOLAR_MASS_G_MOL = 18.015
 WATER_DENSITY_KG_M3 = 998.0
 
-DEFAULT_COMPOSITION: Dict[str, float] = {
+DEFAULT_COMPOSITION: dict[str, float] = {
     "nitrogen": 0.004,
     "CO2": 0.020,
     "methane": 0.560,
@@ -60,11 +60,11 @@ class TrainResult:
     """H2S mass balance of a separator train fed with a given wellstream."""
 
     wellstream_h2s_mol_fraction: float
-    stages: List[StageResult]
+    stages: list[StageResult]
     to_gas_fraction: float
     to_oil_fraction: float
     to_water_fraction: float
-    warnings: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -77,7 +77,7 @@ class ConversionResult:
     stage_index: int
     conversion_factor: float
     train: TrainResult
-    warnings: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
 
 def _jneqsim():
@@ -105,7 +105,7 @@ def is_sour_service(h2s_mol_fraction: float, pressure_bara: float, threshold_kpa
 
 
 def make_wellstream(
-    composition: Optional[Dict[str, float]] = None,
+    composition: dict[str, float] | None = None,
     water_mol_fraction: float = 0.0,
     h2s_mol_fraction: float = 0.0,
     temperature_c: float = 70.0,
@@ -180,11 +180,11 @@ def run_train(fluid, stages: Sequence[SeparatorStage], flow_mol_s: float = 1.0) 
     if not stages:
         raise ValueError("at least one separator stage is required")
     jn = _jneqsim()
-    warnings: List[str] = []
+    warnings: list[str] = []
     current = fluid.clone()
     current.init(0)
     h2s_in =  float(current.getPhase(0).getComponent("H2S").getz()) * flow_mol_s
-    results: List[StageResult] = []
+    results: list[StageResult] = []
     gas_total = oil_total = water_total = 0.0
     current_flow = flow_mol_s
     for idx, st in enumerate(stages):
@@ -316,19 +316,19 @@ def wellstream_h2s_from_separator_gas(
 
 
 def conversion_factor_curve(
-    composition: Optional[Dict[str, float]],
+    composition: dict[str, float] | None,
     stages: Sequence[SeparatorStage],
     water_mol_fractions: Sequence[float],
     stage_index: int = 0,
     probe_h2s_ppmv: float = 100.0,
     eos: str = "cpa",
-) -> List[Tuple[float, float]]:
+) -> list[tuple[float, float]]:
     """Wellstream-to-separator-gas H2S factor versus water mole fraction (the module's lookup table).
 
     In the dilute limit gas H2S is linear in wellstream H2S, so one probe level suffices.
     """
     probe = probe_h2s_ppmv * 1.0e-6
-    out: List[Tuple[float, float]] = []
+    out: list[tuple[float, float]] = []
     for wf in water_mol_fractions:
         fl = make_wellstream(composition, water_mol_fraction=wf, h2s_mol_fraction=probe, eos=eos)
         y = run_train(fl, list(stages[: stage_index + 1])).stages[-1].gas_h2s_ppmv
@@ -353,10 +353,10 @@ class RecombinationResult:
     y_h2s_measured: float
     n_iter: int
     converged: bool
-    warnings: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
 
-def _phase_by_type(flashed) -> Dict[str, object]:
+def _phase_by_type(flashed) -> dict[str, object]:
     out = {}
     for i in range(int(flashed.getNumberOfPhases())):
         ph = flashed.getPhase(i)
@@ -374,7 +374,7 @@ def _flash_stage(fluid, stage: SeparatorStage):
     return f
 
 
-def separator_gor_and_gas_h2s(fluid, stage: SeparatorStage) -> Tuple[float, float]:
+def separator_gor_and_gas_h2s(fluid, stage: SeparatorStage) -> tuple[float, float]:
     """GOR (standard gas Sm3 per actual separator-oil m3) and separator-gas H2S mole fraction.
 
     Volumes come from the phase compressibility factor, as for an ideal-gas standard volume,
@@ -395,7 +395,7 @@ def recombine_to_gor_and_h2s(
     stage: SeparatorStage,
     gor_measured: float,
     y_h2s_measured: float,
-    water_mol_fraction: Optional[float] = None,
+    water_mol_fraction: float | None = None,
     max_iter: int = 30,
     tol: float = 1.0e-4,
 ) -> RecombinationResult:
@@ -422,7 +422,7 @@ def recombine_to_gor_and_h2s(
     w = z0[i_w] if (i_w is not None and water_mol_fraction is None) else (water_mol_fraction or 0.0)
     if w > 0 and i_w is None:
         raise ValueError("water_mol_fraction given but fluid has no water component")
-    warnings: List[str] = []
+    warnings: list[str] = []
     t_k, p_pa = stage.temperature_c + 273.15, stage.pressure_bara * 1.0e5
     v_gas_sc = _R * _T_SC_K / _P_SC_PA
     converged = False
@@ -482,10 +482,10 @@ def recombine_to_gor_and_h2s(
     )
 
 
-def parse_e300_names_and_zi(path: str) -> Tuple[List[str], List[float]]:
+def parse_e300_names_and_zi(path: str) -> tuple[list[str], list[float]]:
     """Component names (CNAMES) and overall composition (ZI) of an Eclipse E300 file, in file order."""
-    names: List[str] = []
-    zi: List[float] = []
+    names: list[str] = []
+    zi: list[float] = []
     section = None
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
         for raw in fh:
@@ -524,7 +524,7 @@ def load_e300_fluid(path: str, add_water: bool = False):
     return fluid
 
 
-def apply_e300_composition(fluid, model_e300: str, composition) -> List[str]:
+def apply_e300_composition(fluid, model_e300: str, composition) -> list[str]:
     """Set the wellstream composition of an E300-based fluid without touching its EOS model.
 
     composition is a FluidMagic E300 export (path), a dict keyed by the E300 CNAMES, or a list in

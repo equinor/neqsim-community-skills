@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence
 
 from .pressure import PressureModel
 from .units import BAR_PER_SG_M, M_PER_IN
@@ -25,8 +25,8 @@ def kick_tolerance(
     ann_cap_m3pm: float,
     kick_intensity_sg: float = 0.06,
     influx_sg: float = 0.25,
-    formation_sg: Optional[float] = None,
-) -> Dict[str, float]:
+    formation_sg: float | None = None,
+) -> dict[str, float]:
     """Single-bubble gas kick tolerance at a casing shoe, well shut in.
 
     The formation pressure at ``next_td_tvd_m`` is ``(mud_sg + kick_intensity_sg)`` hydrostatic. The influx of
@@ -83,7 +83,7 @@ class PlannedSection:
     mud_sg: float
     drill_pipe_od_in: float = 5.5
     riserless: bool = False
-    strength_at_top_sg: Optional[float] = None
+    strength_at_top_sg: float | None = None
     open_hole: bool = False
 
 
@@ -99,7 +99,7 @@ def evaluate_plan(
     frac_margin_sg: float = 0.03,
     step_m: float = 10.0,
     kick_basis: str = "mud",
-) -> List[Dict[str, object]]:
+) -> list[dict[str, object]]:
     """Check each planned section against the mud-weight window and kick tolerance.
 
     Each section is drilled with the mud weight ``mud_sg``; it passes the window check if ``mud_sg`` stays within
@@ -112,8 +112,8 @@ def evaluate_plan(
     Sections flagged ``riserless`` get no kick tolerance (no shut-in is possible), and ``strength_at_top_sg`` replaces the
     model fracture EMW at the shoe when a planned or measured leak-off value must be checked.
     """
-    out: List[Dict[str, object]] = []
-    prev_shoe: Optional[float] = None
+    out: list[dict[str, object]] = []
+    prev_shoe: float | None = None
     for s in sections:
         top = s.top_tvd_m if prev_shoe is None else prev_shoe
         n = max(2, int((s.shoe_tvd_m - top) / step_m) + 1)
@@ -132,7 +132,7 @@ def evaluate_plan(
         cap = min(w["max_mw_sg"] for w in win)
         i_need = max(range(len(win)), key=lambda i: win[i]["min_mw_sg"])
         i_cap = min(range(len(win)), key=lambda i: win[i]["max_mw_sg"])
-        row: Dict[str, object] = {
+        row: dict[str, object] = {
             "section": s.name,
             "hole_in": s.hole_in,
             "casing_od_in": s.casing_od_in,
@@ -187,14 +187,14 @@ def propose_seats_bottom_up(
     frac_margin_sg: float = 0.03,
     step_m: float = 10.0,
     min_section_m: float = 150.0,
-) -> List[Dict[str, float]]:
+) -> list[dict[str, float]]:
     """Walk upward from TD and propose the shallowest shoes that satisfy window and kick tolerance.
 
     A seat at depth Ds is acceptable for a section ending at Db when the low fracture EMW at Ds minus the margin
     covers the mud weight needed at Db (pore high + trip margin) and the kick tolerance exceeds ``kt_min_m3``.
     The walk stops when a seat at or above ``shallow_limit_tvd_m`` is acceptable.
     """
-    seats: List[Dict[str, float]] = []
+    seats: list[dict[str, float]] = []
     db = td_tvd_m
     guard = 0
     while db > shallow_limit_tvd_m and guard < 10:

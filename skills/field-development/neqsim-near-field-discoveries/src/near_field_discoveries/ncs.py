@@ -20,9 +20,15 @@ import json
 import re
 import urllib.parse
 import urllib.request
-from typing import Any, Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
+from typing import Any
 
-from .geo import bbox_around, lines_from_geometry, point_from_geometry, rings_from_geometry
+from .geo import (
+    bbox_around,
+    lines_from_geometry,
+    point_from_geometry,
+    rings_from_geometry,
+)
 from .models import Discovery
 
 Fetch = Callable[[str, float], bytes]
@@ -46,7 +52,7 @@ GAP_NO_PLAN = "Sodir publishes no PDO or concept for this record; the licensee's
 def default_fetch(url: str, timeout: float = 90.0) -> bytes:
     """Bounded read-only GET."""
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - fixed https host
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
         return resp.read()
 
 
@@ -86,7 +92,7 @@ def _query(fetch: Fetch, layer: str, where: str = "1=1", *, envelope: tuple[floa
             break
     if log is not None:
         log.append({"layer": layer, "url": base, "rows": len(rows), "ok": True,
-                    "retrieved_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+                    "retrieved_utc": _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"),
                     "licence": "NLOD 2.0 (Sodir)"})
     return rows
 
@@ -127,28 +133,28 @@ def extract_plan_flags(text: str | None) -> list[str]:
         return []
     t = text
     flags: list[str] = []
-    if re.search(r"stand[- ]?alone", t, re.I):
+    if re.search(r"stand[- ]?alone", t, re.IGNORECASE):
         flags.append("stand-alone")
-    if re.search(r"tie[d]?[- ]?(back|in)", t, re.I):
+    if re.search(r"tie[d]?[- ]?(back|in)", t, re.IGNORECASE):
         flags.append("tie-back")
     for m in _HOST_RE.finditer(t):
         host = m.group(1).strip()
         if ("host:" + host) not in flags:
             flags.append("host:" + host)
-    if re.search(r"plan for development and operation|\bPDO\b", t, re.I):
+    if re.search(r"plan for development and operation|\bPDO\b", t, re.IGNORECASE):
         flags.append("pdo")
-    if re.search(r"developed together|joint development|area development|unitis|unitiz", t, re.I):
+    if re.search(r"developed together|joint development|area development|unitis|unitiz", t, re.IGNORECASE):
         flags.append("joint-development")
-    if re.search(r"no (current )?plans|not (been )?further (assessed|evaluated)|will not be developed", t, re.I):
+    if re.search(r"no (current )?plans|not (been )?further (assessed|evaluated)|will not be developed", t, re.IGNORECASE):
         flags.append("no-plans")
-    if re.search(r"(appraisal|exploration) well .{0,40}(will be|is planned|planned)", t, re.I):
+    if re.search(r"(appraisal|exploration) well .{0,40}(will be|is planned|planned)", t, re.IGNORECASE):
         flags.append("drilling-planned")
     return flags
 
 
 def _ms_date(value: Any) -> str | None:
     if isinstance(value, (int, float)) and value > 0:
-        return _dt.datetime.fromtimestamp(value / 1000.0, _dt.timezone.utc).date().isoformat()
+        return _dt.datetime.fromtimestamp(value / 1000.0, _dt.UTC).date().isoformat()
     return None
 
 

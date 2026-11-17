@@ -10,8 +10,8 @@ per-target weights, and NeqSim's characterization plus PVT-simulation workflow.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Callable, Dict, Mapping, Sequence, Tuple
 
 
 @dataclass(frozen=True)
@@ -72,8 +72,8 @@ class RegressionResult:
 
     factor: float
     objective: float
-    residuals: Dict[str, float]
-    predicted: Dict[str, float]
+    residuals: dict[str, float]
+    predicted: dict[str, float]
     iterations: int
     converged: bool
 

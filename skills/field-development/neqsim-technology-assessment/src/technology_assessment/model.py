@@ -13,8 +13,9 @@ judgement; it does not replace an expert-panel assessment.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
+from typing import Any
 
 SCHEMA_VERSION = "technology_assessment.v1"
 
@@ -163,7 +164,7 @@ class BenefitRisk:
 
 def _require_choice(name: str, value: str, choices: Sequence[str]) -> None:
     if value not in choices:
-        raise ValueError("{} must be one of {}, got {!r}".format(name, list(choices), value))
+        raise ValueError(f"{name} must be one of {list(choices)}, got {value!r}")
 
 
 def categorize(
@@ -295,12 +296,12 @@ class TechnologyAssessment:
         if not element.element_id.strip():
             raise ValueError("element_id must be non-empty")
         if element.element_id in self._elements:
-            raise ValueError("duplicate element_id {!r}".format(element.element_id))
+            raise ValueError(f"duplicate element_id {element.element_id!r}")
         _require_choice("technology_novelty", element.technology_novelty, TECHNOLOGY_NOVELTY)
         _require_choice("application_area", element.application_area, APPLICATION_AREA)
         _require_choice("qualified_by", element.qualified_by, QUALIFIED_BY)
         if not isinstance(element.trl, int) or isinstance(element.trl, bool) or not 0 <= element.trl <= 7:
-            raise ValueError("trl of {!r} must be an integer 0-7".format(element.element_id))
+            raise ValueError(f"trl of {element.element_id!r} must be an integer 0-7")
         self._elements[element.element_id] = element
 
     def add_step_out(self, item: StepOutItem) -> None:
@@ -346,12 +347,12 @@ class TechnologyAssessment:
                 continue
             if parent not in self._elements:
                 raise ValueError(
-                    "element {!r} has unknown parent {!r}".format(element.element_id, parent)
+                    f"element {element.element_id!r} has unknown parent {parent!r}"
                 )
             seen = {element.element_id}
             while parent is not None:
                 if parent in seen:
-                    raise ValueError("cycle in decomposition at {!r}".format(parent))
+                    raise ValueError(f"cycle in decomposition at {parent!r}")
                 seen.add(parent)
                 parent = self._elements[parent].parent_id
 
@@ -425,7 +426,7 @@ class TechnologyAssessment:
         covered = {item.dimension for item in self._step_out}
         gaps = [_REQUIRED_STEP_OUT_NOTE.format(dim) for dim in STEP_OUT_DIMENSIONS if dim not in covered]
         gaps += [
-            "Step-out {}: no documented experience basis; collect reference experience before relying on it.".format(dim)
+            f"Step-out {dim}: no documented experience basis; collect reference experience before relying on it."
             for dim in undocumented
         ]
         return rows, gaps
@@ -501,7 +502,7 @@ class TechnologyAssessment:
             ("environment", self.environment),
         ):
             if not value:
-                data_gaps.append("Qualification basis: {} missing.".format(field_name))
+                data_gaps.append(f"Qualification basis: {field_name} missing.")
         if not self.functions:
             data_gaps.append("Qualification basis: functions missing.")
         if not self.performance_expectations:

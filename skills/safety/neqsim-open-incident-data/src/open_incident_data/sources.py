@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 HOST = "https://www.data.bsee.gov"
 DATA_CENTER_PAGE = f"{HOST}/Main/RawData.aspx"
@@ -12,7 +12,7 @@ TERMS = (
     "users to read the BSEE disclaimer before downloading. Cite 'BSEE Data Center' with the retrieval date."
 )
 
-SOURCES: Dict[str, Dict[str, Any]] = {
+SOURCES: dict[str, dict[str, Any]] = {
     "investigations": {
         "path": "/Other/Files/IncInvRawData.zip",
         "member": "mv_acc_investigations.txt",

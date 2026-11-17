@@ -6,15 +6,16 @@ import hashlib
 import json
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 from .sources import ALLOWED_HOSTS, SOURCES, TERMS, USGS
 
 Fetch = Callable[[str, float, int], bytes]
-BBox = Tuple[float, float, float, float]  # min_lon, min_lat, max_lon, max_lat (WGS84 degrees)
+BBox = tuple[float, float, float, float]  # min_lon, min_lat, max_lon, max_lat (WGS84 degrees)
 USER_AGENT = "neqsim-open-marine-constraints/0.1 (+https://github.com/equinor/neqsim-community-skills)"
 MAX_BYTES = 25_000_000
 PAGE = 1000
@@ -27,7 +28,7 @@ class SourceError(RuntimeError):
 def default_fetch(url: str, timeout: float = 60.0, max_bytes: int = MAX_BYTES) -> bytes:
     """Perform a GET and read at most ``max_bytes``; raises ``SourceError`` when the body is longer."""
     request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 " + USER_AGENT, "Accept": "application/json"})
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - allow-listed https hosts
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         body = response.read(max_bytes + 1)
     if len(body) > max_bytes:
         raise SourceError(f"{url} is larger than {max_bytes} bytes; narrow the bounding box")
@@ -44,9 +45,9 @@ class ReadRecord:
     size: int
     cached: bool = False
     terms: str = TERMS
-    retrieved_utc: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    retrieved_utc: str = field(default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds"))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return the record as a plain dict."""
         return dict(self.__dict__)
 
@@ -56,7 +57,7 @@ class FeatureSet:
     """Features of one layer inside a box; ``truncated`` is True when the cap or the server limit cut the list."""
 
     source: str
-    features: List[Dict[str, Any]]
+    features: list[dict[str, Any]]
     truncated: bool = False
 
 
@@ -67,7 +68,7 @@ def check_url(url: str) -> None:
         raise SourceError(f"{url} is not an allow-listed https host")
 
 
-def _build(url: str, params: Dict[str, Any]) -> str:
+def _build(url: str, params: dict[str, Any]) -> str:
     path = urllib.parse.quote(url, safe=":/%")
     return path + "?" + urllib.parse.urlencode(params, quote_via=urllib.parse.quote, safe=",:")
 
@@ -75,13 +76,13 @@ def _build(url: str, params: Dict[str, Any]) -> str:
 class MarineClient:
     """Read layers from the registry in ``sources.SOURCES`` with provenance and an optional disk cache."""
 
-    def __init__(self, fetch: Fetch = default_fetch, cache_dir: Optional[Path] = None, *, timeout: float = 60.0) -> None:
+    def __init__(self, fetch: Fetch = default_fetch, cache_dir: Path | None = None, *, timeout: float = 60.0) -> None:
         self.fetch = fetch
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.timeout = timeout
-        self.records: List[ReadRecord] = []
+        self.records: list[ReadRecord] = []
 
-    def _get_json(self, source: str, url: str) -> Dict[str, Any]:
+    def _get_json(self, source: str, url: str) -> dict[str, Any]:
         check_url(url)
         cache_file = self.cache_dir / (hashlib.sha1(url.encode("utf-8")).hexdigest() + ".json") if self.cache_dir else None
         cached = cache_file is not None and cache_file.exists()
@@ -108,9 +109,9 @@ class MarineClient:
             return self._arcgis(key, spec, bbox, max_features)
         raise ValueError(f"{key} is a raster layer; use identify() or sample_route()")
 
-    def _wfs(self, key: str, spec: Dict[str, Any], bbox: BBox, max_features: int) -> FeatureSet:
+    def _wfs(self, key: str, spec: dict[str, Any], bbox: BBox, max_features: int) -> FeatureSet:
         min_lon, min_lat, max_lon, max_lat = bbox
-        out: List[Dict[str, Any]] = []
+        out: list[dict[str, Any]] = []
         truncated = False
         while len(out) < max_features:
             params = {
@@ -133,8 +134,8 @@ class MarineClient:
             truncated = True
         return FeatureSet(key, out, truncated)
 
-    def _arcgis(self, key: str, spec: Dict[str, Any], bbox: BBox, max_features: int) -> FeatureSet:
-        out: List[Dict[str, Any]] = []
+    def _arcgis(self, key: str, spec: dict[str, Any], bbox: BBox, max_features: int) -> FeatureSet:
+        out: list[dict[str, Any]] = []
         seen = set()
         truncated = False
         url = f"{spec['url']}/{spec['layer']}/query"
@@ -167,7 +168,7 @@ class MarineClient:
             truncated = True
         return FeatureSet(key, out, truncated)
 
-    def identify(self, key: str, lon: float, lat: float, half_width_deg: float = 0.25) -> Dict[str, Any]:
+    def identify(self, key: str, lon: float, lat: float, half_width_deg: float = 0.25) -> dict[str, Any]:
         """Sample a raster layer at one point; returns ``has_data``, ``class_value``, ``pixel`` and raw attributes."""
         spec = _spec(key)
         if spec["kind"] != "raster":
@@ -209,12 +210,12 @@ class MarineClient:
         feats = data.get("features", [])
         return FeatureSet("usgs_earthquakes", feats, len(feats) >= limit)
 
-    def provenance(self) -> List[Dict[str, Any]]:
+    def provenance(self) -> list[dict[str, Any]]:
         """All read records as dicts."""
         return [r.to_dict() for r in self.records]
 
 
-def _spec(key: str) -> Dict[str, Any]:
+def _spec(key: str) -> dict[str, Any]:
     if key not in SOURCES:
         raise KeyError(f"unknown layer {key!r}; see sources.SOURCES")
     return SOURCES[key]

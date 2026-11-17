@@ -1,5 +1,4 @@
 import pytest
-
 from dynamic_instrument_controller_setup import DynamicInstrumentControllerModel
 
 

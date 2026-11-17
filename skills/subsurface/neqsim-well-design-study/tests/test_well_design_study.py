@@ -2,14 +2,42 @@ import math
 
 import numpy as np
 import pytest
-
-from well_design_study import (CostBasis, DesignFactors, EmwCurve, FlowSection, MudRheology, NptEvent, Pipe, PlannedSection, PressureModel, SectionTime,
-                               StringBasis, StringComponent, build_and_hold, calibration_points, check_string, circulation, collapse_rating_psi,
-                               burst_rating_psi, envelope, erosional_velocity_ms, evaluate_plan, kick_tolerance, minimum_curvature, monte_carlo,
-                               overburden_sg, propose_seats_bottom_up, run_well_study, select_string, time_depth_stats, torque_and_drag,
-                               turner_critical_velocity_ms, wellhead_rating_class)
+from well_design_study import (
+    CostBasis,
+    DesignFactors,
+    EmwCurve,
+    FlowSection,
+    MudRheology,
+    NptEvent,
+    Pipe,
+    PlannedSection,
+    PressureModel,
+    SectionTime,
+    StringBasis,
+    StringComponent,
+    build_and_hold,
+    burst_rating_psi,
+    calibration_points,
+    check_string,
+    circulation,
+    collapse_rating_psi,
+    envelope,
+    erosional_velocity_ms,
+    evaluate_plan,
+    kick_tolerance,
+    minimum_curvature,
+    monte_carlo,
+    overburden_sg,
+    propose_seats_bottom_up,
+    run_well_study,
+    select_string,
+    time_depth_stats,
+    torque_and_drag,
+    turner_critical_velocity_ms,
+    wellhead_rating_class,
+)
 from well_design_study.casing_design import GRADES, yield_psi
-from well_design_study.units import BAR_PER_SG_M, bar_to_psi
+from well_design_study.units import BAR_PER_SG_M
 
 
 def model():

@@ -9,7 +9,7 @@ import pytest
 
 segyio = pytest.importorskip("segyio")
 
-from segy_seismic_reading import (  # noqa: E402
+from segy_seismic_reading import (
     extract_fence,
     inspect_segy,
     read_crossline,
@@ -21,7 +21,7 @@ from segy_seismic_reading import (  # noqa: E402
     trace_at_xy,
     write_cube,
 )
-from segy_seismic_reading.__main__ import main  # noqa: E402
+from segy_seismic_reading.__main__ import main
 
 ILINES = np.arange(100, 106)
 XLINES = np.arange(200, 208)

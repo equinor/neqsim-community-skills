@@ -74,7 +74,7 @@ def rewrite_references(renames, apply: bool) -> int:
             updated = updated.replace(old_rel.replace("/", "\\"), new_rel.replace("/", "\\"))
         if updated != text:
             touched += 1
-            print("rewrite {}".format(path.relative_to(ROOT).as_posix()))
+            print(f"rewrite {path.relative_to(ROOT).as_posix()}")
             if apply:
                 path.write_text(updated, encoding="utf-8")
     return touched
@@ -92,9 +92,9 @@ def main(argv=None) -> int:
 
     for old, new in renames:
         if new.exists():
-            print("ERROR: target already exists: {}".format(new), file=sys.stderr)
+            print(f"ERROR: target already exists: {new}", file=sys.stderr)
             return 1
-        print("git mv {} -> {}".format(old.relative_to(ROOT).as_posix(), new.name))
+        print(f"git mv {old.relative_to(ROOT).as_posix()} -> {new.name}")
         if args.apply:
             subprocess.run(["git", "mv", str(old), str(new)], check=True, cwd=str(ROOT))
 

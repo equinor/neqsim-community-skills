@@ -5,9 +5,17 @@ from __future__ import annotations
 import json
 
 import pytest
-
-from crs_checks import (AmbiguousOperationError, CrsError, axis_check, datum_sensitivity, geojson_check,
-                        projection_factors, route_lengths, run_crs_check, transform)
+from crs_checks import (
+    AmbiguousOperationError,
+    CrsError,
+    axis_check,
+    datum_sensitivity,
+    geojson_check,
+    projection_factors,
+    route_lengths,
+    run_crs_check,
+    transform,
+)
 from crs_checks.__main__ import main
 
 NORTH_SEA = (2.610422, 60.290422)  # lon, lat on ED50, south of 62 N

@@ -17,17 +17,18 @@ milestones; ``plot_gantt`` renders it (matplotlib optional).
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from collections.abc import Iterable, Sequence
+from typing import Any
 
 DECISION_YEAR = 2026
-MATURATION: Dict[str, List[Tuple[str, int]]] = {
+MATURATION: dict[str, list[tuple[str, int]]] = {
     "undrilled": [("exploration well", 1), ("appraisal", 1), ("DG1-DG2 concept", 1), ("DG3 FEED", 1), ("execution", 2)],
     "discovered": [("appraisal", 1), ("DG1-DG2 concept", 1), ("DG3 FEED", 1), ("execution", 2)],
     "appraised": [("DG1-DG2 concept", 1), ("DG3 FEED", 1), ("execution", 2)],
     "sanctioned": [("execution", 2)],
 }
-HOST_PROJECT_PHASES: List[Tuple[str, str, int]] = [("DG0 study", "study_years", 1), ("DG1-DG3", "concept_years", 1), ("execution", "execution_years", 2)]
-DEFAULT_TURNAROUNDS: List[int] = list(range(2027, 2061, 2))
+HOST_PROJECT_PHASES: list[tuple[str, str, int]] = [("DG0 study", "study_years", 1), ("DG1-DG3", "concept_years", 1), ("execution", "execution_years", 2)]
+DEFAULT_TURNAROUNDS: list[int] = list(range(2027, 2061, 2))
 EXTENSION_LEAD_YEARS = 5
 STUDY_COST_FRACTION = 0.05
 PHASE_COLOURS = {"exploration well": "#8c564b", "appraisal": "#e377c2", "DG1-DG2 concept": "#bcbd22", "DG3 FEED": "#ff7f0e",
@@ -35,7 +36,7 @@ PHASE_COLOURS = {"exploration well": "#8c564b", "appraisal": "#e377c2", "DG1-DG2
                  "programme revision / DG": "#ff7f0e", "execution (life-extension actions)": "#d62728"}
 
 
-def _phases(template: Sequence[Tuple[str, int]], start_year: int) -> Tuple[List[Dict[str, Any]], int]:
+def _phases(template: Sequence[tuple[str, int]], start_year: int) -> tuple[list[dict[str, Any]], int]:
     out, y = [], start_year
     for name, dur in template:
         if dur <= 0:
@@ -45,14 +46,14 @@ def _phases(template: Sequence[Tuple[str, int]], start_year: int) -> Tuple[List[
     return out, y
 
 
-def next_turnaround(year: int, turnarounds: Optional[Iterable[int]] = None) -> int:
+def next_turnaround(year: int, turnarounds: Iterable[int] | None = None) -> int:
     """First turnaround year at or after ``year`` (the year itself when the calendar has none)."""
     cal = sorted(turnarounds) if turnarounds is not None else DEFAULT_TURNAROUNDS
     return next((t for t in cal if t >= year), year)
 
 
-def prospect_timeline(prospect: Dict[str, Any], decision_year: int = DECISION_YEAR, requires_turnaround: bool = True,
-                      turnarounds: Optional[Iterable[int]] = None) -> Dict[str, Any]:
+def prospect_timeline(prospect: dict[str, Any], decision_year: int = DECISION_YEAR, requires_turnaround: bool = True,
+                      turnarounds: Iterable[int] | None = None) -> dict[str, Any]:
     """Stage-gate plan for one prospect.
 
     ``prospect`` needs ``name``; optional ``status`` (undrilled/discovered/appraised/sanctioned), ``phase_years``
@@ -74,8 +75,8 @@ def prospect_timeline(prospect: Dict[str, Any], decision_year: int = DECISION_YE
             "sanction_year": next((p["end"] for p in phases if p["phase"] == "DG3 FEED"), start)}
 
 
-def project_timeline(project: Dict[str, Any], decision_year: int = DECISION_YEAR, needed_by: Optional[int] = None,
-                     horizon_year: int = 2055, turnarounds: Optional[Iterable[int]] = None) -> Dict[str, Any]:
+def project_timeline(project: dict[str, Any], decision_year: int = DECISION_YEAR, needed_by: int | None = None,
+                     horizon_year: int = 2055, turnarounds: Iterable[int] | None = None) -> dict[str, Any]:
     """Plan for a host modification, ASAP or just in time for ``needed_by``.
 
     ``project`` needs ``id``; optional ``name``, ``capex_musd``, ``study_cost_musd`` (default 5 % of capex),
@@ -100,7 +101,7 @@ def project_timeline(project: Dict[str, Any], decision_year: int = DECISION_YEAR
     phases, _ = _phases(durations, start)
     capex = float(project.get("capex_musd", 0.0))
     study = float(project.get("study_cost_musd", capex * STUDY_COST_FRACTION))
-    cost: Dict[int, float] = {}
+    cost: dict[int, float] = {}
     for ph in phases:
         years = list(range(ph["start"], ph["end"] + 1))
         amount = study if ph["phase"] == "DG0 study" else (capex - study if ph["phase"] == "execution" else 0.0)
@@ -113,8 +114,8 @@ def project_timeline(project: Dict[str, Any], decision_year: int = DECISION_YEAR
             "cost_by_year_musd": cost, "capex_musd": capex, "needed_by": needed_by}
 
 
-def life_extension_timeline(programme_end_year: int, pool_by_year: Dict[int, float], decision_year: int = DECISION_YEAR,
-                            lead_years: int = EXTENSION_LEAD_YEARS, actions: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+def life_extension_timeline(programme_end_year: int, pool_by_year: dict[int, float], decision_year: int = DECISION_YEAR,
+                            lead_years: int = EXTENSION_LEAD_YEARS, actions: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """When a host life extension must be decided and executed.
 
     ``pool_by_year`` = not-yet-sanctioned life-extension cost (MUSD) by required year. The decision deadline is the
@@ -122,7 +123,7 @@ def life_extension_timeline(programme_end_year: int, pool_by_year: Dict[int, flo
     """
     end = int(programme_end_year)
     pool = {int(y): float(v) for y, v in (pool_by_year or {}).items()}
-    item = "Host life extension beyond {}".format(end)
+    item = f"Host life extension beyond {end}"
     if not pool:
         return {"item": item, "kind": "life_extension", "phases": [], "decision_deadline": end - lead_years,
                 "cost_by_year_musd": {}, "programme_end_year": end, "actions": actions or []}
@@ -134,14 +135,14 @@ def life_extension_timeline(programme_end_year: int, pool_by_year: Dict[int, flo
             "cost_by_year_musd": dict(sorted(pool.items())), "programme_end_year": end, "actions": actions or []}
 
 
-def discounted(cost_by_year: Dict[int, float], rate: float, base_year: int = DECISION_YEAR) -> float:
+def discounted(cost_by_year: dict[int, float], rate: float, base_year: int = DECISION_YEAR) -> float:
     """Present value at ``base_year`` of a cost calendar."""
     return sum(float(v) / (1.0 + rate) ** max(int(y) - base_year, 0) for y, v in cost_by_year.items())
 
 
-def portfolio_plan(chosen: List[Dict[str, Any]], prospects: List[Dict[str, Any]], project_ids: Iterable[str], projects: List[Dict[str, Any]],
-                   life_extension: Optional[Dict[str, Any]] = None, decision_year: int = DECISION_YEAR, horizon_year: int = 2055,
-                   turnarounds: Optional[Iterable[int]] = None) -> Dict[str, Any]:
+def portfolio_plan(chosen: list[dict[str, Any]], prospects: list[dict[str, Any]], project_ids: Iterable[str], projects: list[dict[str, Any]],
+                   life_extension: dict[str, Any] | None = None, decision_year: int = DECISION_YEAR, horizon_year: int = 2055,
+                   turnarounds: Iterable[int] | None = None) -> dict[str, Any]:
     """Combined timeline for a selected portfolio.
 
     ``chosen`` rows need ``prospect`` and ``start_year`` (optional ``last_year`` or ``profile`` {year: ...}).
@@ -149,8 +150,8 @@ def portfolio_plan(chosen: List[Dict[str, Any]], prospects: List[Dict[str, Any]]
     (information first). Host projects are scheduled just in time for the first chosen start year.
     ``life_extension`` is the dict from :func:`life_extension_timeline` (included when given).
     """
-    rows: List[Dict[str, Any]] = []
-    capex_calendar: Dict[int, float] = {}
+    rows: list[dict[str, Any]] = []
+    capex_calendar: dict[int, float] = {}
     by_name = {p["name"]: p for p in prospects}
     for c in chosen:
         tl = prospect_timeline(by_name.get(c["prospect"], {"name": c["prospect"]}), decision_year, turnarounds=turnarounds)
@@ -183,7 +184,7 @@ def portfolio_plan(chosen: List[Dict[str, Any]], prospects: List[Dict[str, Any]]
             "milestones": [{"year": y, "milestone": m} for y, m in milestones if y]}
 
 
-def plot_gantt(plan: Dict[str, Any], path: str, title: str = "Project plan") -> str:
+def plot_gantt(plan: dict[str, Any], path: str, title: str = "Project plan") -> str:
     """Render the plan as a Gantt chart (needs matplotlib)."""
     import matplotlib
     matplotlib.use("Agg")

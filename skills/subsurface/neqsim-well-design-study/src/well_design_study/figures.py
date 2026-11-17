@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
 
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
+import matplotlib.pyplot as plt
+import numpy as np
 
-from .pressure import PressureModel  # noqa: E402
+from .pressure import PressureModel
 
 
 def _save(fig, path: Path) -> Path:
@@ -21,9 +21,9 @@ def _save(fig, path: Path) -> Path:
     return path
 
 
-def window_plot(model: PressureModel, sections: Sequence[Dict[str, object]], path: Path, td_tvd_m: float,
-                offsets: Optional[Dict[str, Sequence[Dict[str, object]]]] = None, title: str = "Pressure and mud-weight window",
-                extras: Optional[Sequence[Dict[str, object]]] = None) -> Path:
+def window_plot(model: PressureModel, sections: Sequence[dict[str, object]], path: Path, td_tvd_m: float,
+                offsets: dict[str, Sequence[dict[str, object]]] | None = None, title: str = "Pressure and mud-weight window",
+                extras: Sequence[dict[str, object]] | None = None) -> Path:
     """Pore and fracture curves (low/base/high), planned mud weights, casing shoes and offset-well points.
 
     ``extras`` adds labelled point series (dicts with label, x, y, optional marker, color, size), for example planned leak-off values.
@@ -62,8 +62,8 @@ def window_plot(model: PressureModel, sections: Sequence[Dict[str, object]], pat
     return _save(fig, path)
 
 
-def schematic(strings: Sequence[Dict[str, object]], path: Path, water_depth_m: float, air_gap_m: float, tops: Optional[Sequence[Sequence[object]]] = None,
-              td_m: Optional[float] = None, title: str = "Casing and hole schematic") -> Path:
+def schematic(strings: Sequence[dict[str, object]], path: Path, water_depth_m: float, air_gap_m: float, tops: Sequence[Sequence[object]] | None = None,
+              td_m: float | None = None, title: str = "Casing and hole schematic") -> Path:
     """Nested casing schematic: shoes, hole sizes and optional formation tops (name, TVD)."""
     fig, ax = plt.subplots(figsize=(7.4, 9.0))
     td = td_m or max(float(s["shoe_tvd_m"]) for s in strings)
@@ -101,7 +101,7 @@ def schematic(strings: Sequence[Dict[str, object]], path: Path, water_depth_m: f
     return _save(fig, path)
 
 
-def design_factor_plot(rows: Sequence[Dict[str, object]], path: Path, minimums: Dict[str, float], title: str = "Casing design factors") -> Path:
+def design_factor_plot(rows: Sequence[dict[str, object]], path: Path, minimums: dict[str, float], title: str = "Casing design factors") -> Path:
     """Design factors per string against the minimum requirement."""
     names = [str(r["string"]) for r in rows]
     checks = ["burst_df", "collapse_df", "tension_df", "triaxial_df"]
@@ -123,7 +123,7 @@ def design_factor_plot(rows: Sequence[Dict[str, object]], path: Path, minimums: 
     return _save(fig, path)
 
 
-def time_depth_plot(curves: Dict[str, Sequence[Sequence[float]]], path: Path, title: str = "Time-depth: offset wells and plan") -> Path:
+def time_depth_plot(curves: dict[str, Sequence[Sequence[float]]], path: Path, title: str = "Time-depth: offset wells and plan") -> Path:
     """Time-depth curves: dict name -> [(days, depth_m), ...]."""
     fig, ax = plt.subplots(figsize=(8.2, 6.2))
     for name, pts in curves.items():
@@ -139,7 +139,7 @@ def time_depth_plot(curves: Dict[str, Sequence[Sequence[float]]], path: Path, ti
     return _save(fig, path)
 
 
-def histogram_plot(samples: Dict[str, np.ndarray], path: Path, xlabel: str, title: str, units: Optional[Dict[str, str]] = None) -> Path:
+def histogram_plot(samples: dict[str, np.ndarray], path: Path, xlabel: str, title: str, units: dict[str, str] | None = None) -> Path:
     """Distribution histograms with P10/P50/P90 marks; ``units`` maps a sample name to its axis unit (default: ``xlabel``)."""
     fig, axes = plt.subplots(1, len(samples), figsize=(5.4 * len(samples), 4.2), squeeze=False)
     for ax, (name, a) in zip(axes[0], samples.items()):
@@ -158,8 +158,8 @@ def histogram_plot(samples: Dict[str, np.ndarray], path: Path, xlabel: str, titl
     return _save(fig, path)
 
 
-def line_plot(series: Dict[str, Sequence[Sequence[float]]], path: Path, xlabel: str, ylabel: str, title: str, invert_y: bool = False,
-              hlines: Optional[Dict[str, float]] = None) -> Path:
+def line_plot(series: dict[str, Sequence[Sequence[float]]], path: Path, xlabel: str, ylabel: str, title: str, invert_y: bool = False,
+              hlines: dict[str, float] | None = None) -> Path:
     """Generic multi-series line plot (hookload vs MD, ECD vs flow, etc.)."""
     fig, ax = plt.subplots(figsize=(8.0, 5.6))
     for name, pts in series.items():

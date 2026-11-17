@@ -7,7 +7,7 @@ the drain inside the reservoir. Requires matplotlib.
 
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from .layout import SurfLayout
 from .wells import WellPath
@@ -43,8 +43,8 @@ def plot_reservoir_3d(
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
         import numpy as np
-        from matplotlib.patches import Patch
         from matplotlib.lines import Line2D
+        from matplotlib.patches import Patch
     except ImportError as error:  # pragma: no cover - optional dependency
         raise RuntimeError("the 3D view requires matplotlib and numpy") from error
 

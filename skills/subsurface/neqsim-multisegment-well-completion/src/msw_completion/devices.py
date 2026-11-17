@@ -17,12 +17,12 @@ Equations (OPM Flow ``MultisegmentWellSegments``):
 from __future__ import annotations
 
 from dataclasses import MISSING, asdict, dataclass
-from typing import Tuple, Union
+from typing import Union
 
 SECONDS_PER_DAY = 86400.0
 PA_PER_BAR = 1.0e5
 
-Fractions = Tuple[float, float, float]
+Fractions = tuple[float, float, float]
 
 
 @dataclass(frozen=True)
@@ -96,7 +96,7 @@ class DensityValve:
     gvf_high: float
     kind: str = "DENSITY"
 
-    def active_area(self, fractions: Fractions) -> Tuple[float, str]:
+    def active_area(self, fractions: Fractions) -> tuple[float, str]:
         """Area and state for a steady segment (closing thresholds, no hysteresis)."""
         _, fw, fg = _check_fractions(fractions)
         if fg > self.gvf_high:
@@ -147,7 +147,7 @@ def emulsion_viscosity(fo: float, fw: float, props: PhaseProperties, device: Sic
     return (v_start * (end - wlf) + v_end * (wlf - start)) / device.width
 
 
-def aicd_mixture(device: Aicd, fractions: Fractions, props: PhaseProperties) -> Tuple[float, float]:
+def aicd_mixture(device: Aicd, fractions: Fractions, props: PhaseProperties) -> tuple[float, float]:
     """AICD mixture density (kg/m3) and viscosity (cP)."""
     fo, fw, fg = _check_fractions(fractions)
     rho = (_pow(fo, device.a) * props.oil_density + _pow(fw, device.b) * props.water_density

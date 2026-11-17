@@ -14,18 +14,19 @@ import datetime as _dt
 import hashlib
 import json
 import platform
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any
 
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.font_manager as fm  # noqa: E402
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-from matplotlib.patches import Polygon, Rectangle  # noqa: E402
+import matplotlib.font_manager as fm
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Polygon, Rectangle
 
-PALETTE: Dict[str, str] = {
+PALETTE: dict[str, str] = {
     "pressure": "#0072B2", "temperature": "#D55E00", "gas": "#E69F00", "oil": "#2B8A3E", "water": "#56B4E9", "hydrate": "#CC79A7", "wax": "#8C6D31",
     "pass": "#3A923A", "warn": "#F2B134", "fail": "#C0392B", "review": "#7F8FA6", "na": "#BDBDBD",
     "primary_barrier": "#1F5FA8", "secondary_barrier": "#C0392B", "limit": "#333333", "grid": "#D9D9D9", "text": "#1A1A1A", "muted": "#6B6B6B",
@@ -39,7 +40,7 @@ LW = {"hair": 0.4, "thin": 0.7, "normal": 1.2, "thick": 1.9, "heavy": 2.8}
 A3_MM = (420.0, 297.0)
 MM = 1.0 / 25.4
 
-_FONT: Optional[str] = None
+_FONT: str | None = None
 
 
 def pick_font() -> str:
@@ -76,14 +77,14 @@ def status_color(status: str) -> str:
     return PALETTE["na"]
 
 
-def direct_label(ax, x: float, y: float, text: str, color: Optional[str] = None, dx: float = 0.0, dy: float = 0.0, ha: str = "left", va: str = "center", size: float = 8,
+def direct_label(ax, x: float, y: float, text: str, color: str | None = None, dx: float = 0.0, dy: float = 0.0, ha: str = "left", va: str = "center", size: float = 8,
                  weight: str = "bold", bbox: bool = False) -> Any:
     """Label a line/point directly on the plot (offset in points) instead of using a legend."""
     return ax.annotate(text, (x, y), xytext=(dx, dy), textcoords="offset points", ha=ha, va=va, fontsize=size, color=color or PALETTE["text"], fontweight=weight,
                        bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.85) if bbox else None)
 
 
-def band(ax, x, low, high, color: Optional[str] = None, alpha: float = 0.25, label: Optional[str] = None) -> None:
+def band(ax, x, low, high, color: str | None = None, alpha: float = 0.25, label: str | None = None) -> None:
     """Shaded low-high uncertainty band."""
     ax.fill_between(x, low, high, color=color or PALETTE["band_low_high"], alpha=alpha, linewidth=0, label=label)
 
@@ -98,19 +99,19 @@ def _hash(obj: Any) -> str:
     return hashlib.sha256(json.dumps(obj, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
 
 
-def provenance_record(figure_id: str, title: str, generator: str, inputs: Any, caption: str = "", synthetic: bool = True, sources: Optional[List[str]] = None,
-                      ledger_refs: Optional[List[str]] = None, drawing_no: str = "") -> Dict[str, Any]:
+def provenance_record(figure_id: str, title: str, generator: str, inputs: Any, caption: str = "", synthetic: bool = True, sources: list[str] | None = None,
+                      ledger_refs: list[str] | None = None, drawing_no: str = "") -> dict[str, Any]:
     """Provenance sidecar content for one figure."""
     return {"schema": "iwp_figure_provenance.v1", "figure_id": figure_id, "title": title, "caption": caption, "generator": generator, "inputs_sha256_16": _hash(inputs),
-            "created": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"), "synthetic": synthetic, "sources": sources or [], "ledger_refs": ledger_refs or [],
+            "created": _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"), "synthetic": synthetic, "sources": sources or [], "ledger_refs": ledger_refs or [],
             "drawing_no": drawing_no, "font": pick_font(), "matplotlib": matplotlib.__version__, "python": platform.python_version()}
 
 
-def save_figure(fig, stem: Path, provenance: Dict[str, Any], formats: Sequence[str] = ("png",), dpi: int = 300) -> Dict[str, str]:
+def save_figure(fig, stem: Path, provenance: dict[str, Any], formats: Sequence[str] = ("png",), dpi: int = 300) -> dict[str, str]:
     """Save a figure in the requested formats plus a ``<stem>.provenance.json`` sidecar; returns the written paths."""
     stem = Path(stem)
     stem.parent.mkdir(parents=True, exist_ok=True)
-    written: Dict[str, str] = {}
+    written: dict[str, str] = {}
     for fmt in formats:
         p = stem.with_suffix("." + fmt)
         fig.savefig(p, dpi=dpi, format=fmt, facecolor="white")
@@ -124,7 +125,7 @@ def save_figure(fig, stem: Path, provenance: Dict[str, Any], formats: Sequence[s
     return written
 
 
-def small_multiples(n: int, ncols: int = 3, size: Tuple[float, float] = (3.4, 2.7), sharex: bool = False, sharey: bool = False):
+def small_multiples(n: int, ncols: int = 3, size: tuple[float, float] = (3.4, 2.7), sharex: bool = False, sharey: bool = False):
     """Grid of small-multiple axes; unused axes are hidden."""
     nrows = int(np.ceil(n / ncols))
     fig, axes = plt.subplots(nrows, ncols, figsize=(size[0] * ncols, size[1] * nrows), sharex=sharex, sharey=sharey, squeeze=False)
@@ -135,8 +136,8 @@ def small_multiples(n: int, ncols: int = 3, size: Tuple[float, float] = (3.4, 2.
 
 
 def a3_sheet(title: str, drawing_no: str, revision: str = "A", project: str = "Integrated well planning", scale_text: str = "NTS", drawn_by: str = "neqsim-community",
-             status: str = "FOR REVIEW", revisions: Optional[List[Tuple[str, str, str]]] = None, synthetic: bool = True, north_arrow: bool = False, scale_bar_m: Optional[float] = None,
-             sheet_no: str = "1 of 1", content_note: str = "") -> Tuple[Any, Any, Tuple[float, float, float, float]]:
+             status: str = "FOR REVIEW", revisions: list[tuple[str, str, str]] | None = None, synthetic: bool = True, north_arrow: bool = False, scale_bar_m: float | None = None,
+             sheet_no: str = "1 of 1", content_note: str = "") -> tuple[Any, Any, tuple[float, float, float, float]]:
     """Create an A3 landscape sheet with border, title block and revision block.
 
     Returns:
@@ -157,7 +158,7 @@ def a3_sheet(title: str, drawing_no: str, revision: str = "A", project: str = "I
     tb_w = 190.0
     x0 = A3_MM[0] - m - tb_w
     ax.plot([x0, x0], [m, m + strip_h], color=PALETTE["text"], lw=1.0)
-    rows = [("Project", project), ("Title", title), ("Drawing no.", drawing_no), ("Scale / sheet", "{} / {}".format(scale_text, sheet_no))]
+    rows = [("Project", project), ("Title", title), ("Drawing no.", drawing_no), ("Scale / sheet", f"{scale_text} / {sheet_no}")]
     row_h = strip_h / 4.0
     for i, (k, v) in enumerate(rows):
         y = m + strip_h - (i + 1) * row_h
@@ -170,8 +171,8 @@ def a3_sheet(title: str, drawing_no: str, revision: str = "A", project: str = "I
     revs = revisions or [(revision, _dt.date.today().isoformat(), "Issued for review" + (" (SYNTHETIC)" if synthetic else ""))]
     for i, (r, d, desc) in enumerate(revs[-4:][::-1]):
         y = m + strip_h - 9.0 - i * 7.5
-        ax.text(rx + 2, y, "{:<3} {:<11} {}".format(r, d, desc[:36]), fontsize=6.5, va="center", family="monospace")
-    ax.text(m + 3, m + strip_h - 5.0, "STATUS: {}   DRAWN: {}".format(status, drawn_by), fontsize=7, va="center", fontweight="bold")
+        ax.text(rx + 2, y, f"{r:<3} {d:<11} {desc[:36]}", fontsize=6.5, va="center", family="monospace")
+    ax.text(m + 3, m + strip_h - 5.0, f"STATUS: {status}   DRAWN: {drawn_by}", fontsize=7, va="center", fontweight="bold")
     if synthetic:
         ax.text(m + 3, m + strip_h - 12.0, "SYNTHETIC DEMONSTRATION - NOT FIELD DATA, NOT FOR CONSTRUCTION", fontsize=7, color=PALETTE["fail"], va="center", fontweight="bold")
     if content_note:
@@ -190,11 +191,11 @@ def a3_sheet(title: str, drawing_no: str, revision: str = "A", project: str = "I
         for t in (0, 20, 40):
             ax.plot([sx + t, sx + t], [sy - 1.5, sy + 1.5], color=PALETTE["text"], lw=1.0)
         ax.text(sx, sy + 4, "0", ha="center", fontsize=6.5)
-        ax.text(sx + 40, sy + 4, "{:g} m".format(scale_bar_m), ha="center", fontsize=6.5)
+        ax.text(sx + 40, sy + 4, f"{scale_bar_m:g} m", ha="center", fontsize=6.5)
     return fig, ax, (m + 4.0, m + strip_h + 4.0, A3_MM[0] - 2 * m - 8.0, A3_MM[1] - 2 * m - strip_h - 8.0)
 
 
-def sheet_axes(fig, box_mm: Tuple[float, float, float, float], rel: Tuple[float, float, float, float], **kw):
+def sheet_axes(fig, box_mm: tuple[float, float, float, float], rel: tuple[float, float, float, float], **kw):
     """Add an axes at ``rel = (x, y, w, h)`` fractions of the sheet content box (millimetre-based placement)."""
     x0, y0, w, h = box_mm
     rx, ry, rw, rh = rel

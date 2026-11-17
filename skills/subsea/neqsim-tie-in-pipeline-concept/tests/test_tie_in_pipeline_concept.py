@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from tie_in_pipeline_concept import (
     OilProperties,
     PipelineDesignBasis,

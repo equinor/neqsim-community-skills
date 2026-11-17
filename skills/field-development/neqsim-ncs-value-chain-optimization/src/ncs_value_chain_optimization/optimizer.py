@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .scenario import make_scenario, validate_scenario
 from .supply import EntityProfile, build_supply
@@ -35,8 +35,8 @@ MEDIA = ("gas", "liquid")
 @dataclass
 class RoutedPath:
     medium: str
-    arcs: List[str]
-    nodes: List[str]
+    arcs: list[str]
+    nodes: list[str]
     exit: str
     tariff: float  # NOK per Sm3
 
@@ -46,16 +46,16 @@ class YearResult:
     year: int
     status: str
     objective_mnok: float
-    produced: Dict[str, Dict[str, float]] = field(default_factory=dict)      # entity -> {u, gas, liquid}
-    curtailed: Dict[str, Dict[str, float]] = field(default_factory=dict)
-    element_flow: Dict[str, float] = field(default_factory=dict)
-    element_capacity: Dict[str, float] = field(default_factory=dict)
-    shadow_price: Dict[str, float] = field(default_factory=dict)             # MNOK/yr per unit capacity
-    exits: Dict[str, float] = field(default_factory=dict)                    # market -> rate
-    unsold: Dict[str, Dict[str, float]] = field(default_factory=dict)        # no sales route (reinjection etc.)
-    unconnected: List[str] = field(default_factory=list)
+    produced: dict[str, dict[str, float]] = field(default_factory=dict)      # entity -> {u, gas, liquid}
+    curtailed: dict[str, dict[str, float]] = field(default_factory=dict)
+    element_flow: dict[str, float] = field(default_factory=dict)
+    element_capacity: dict[str, float] = field(default_factory=dict)
+    shadow_price: dict[str, float] = field(default_factory=dict)             # MNOK/yr per unit capacity
+    exits: dict[str, float] = field(default_factory=dict)                    # market -> rate
+    unsold: dict[str, dict[str, float]] = field(default_factory=dict)        # no sales route (reinjection etc.)
+    unconnected: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         util = {e: round(self.element_flow.get(e, 0.0) / c, 4) for e, c in self.element_capacity.items() if c}
         return {"year": self.year, "status": self.status, "objective_mnok": round(self.objective_mnok, 1),
                 "produced": self.produced, "curtailed": self.curtailed,
@@ -69,8 +69,8 @@ class YearResult:
 class NcsValueChainOptimizer:
     """Multi-year, capacity-constrained allocation of NCS production to markets."""
 
-    def __init__(self, network: Any, scenario: Optional[Dict[str, Any]] = None,
-                 profiles: Optional[Dict[str, EntityProfile]] = None) -> None:
+    def __init__(self, network: Any, scenario: dict[str, Any] | None = None,
+                 profiles: dict[str, EntityProfile] | None = None) -> None:
         self.network = network
         self.scenario = scenario or make_scenario()
         problems = validate_scenario(self.scenario)
@@ -82,23 +82,23 @@ class NcsValueChainOptimizer:
             include_discoveries=self.scenario.get("include_discoveries", True),
             include_not_evaluated=self.scenario.get("include_not_evaluated", False),
             overrides=self.scenario.get("forecast_overrides"))
-        self._paths: Dict[Tuple[str, str], List[RoutedPath]] = {}
-        self.tiebacks: Dict[str, Dict[str, Any]] = {}
+        self._paths: dict[tuple[str, str], list[RoutedPath]] = {}
+        self.tiebacks: dict[str, dict[str, Any]] = {}
 
     # ------------------------------------------------------------------ routing
-    def _tariff(self, medium: str, arcs: List[str]) -> float:
+    def _tariff(self, medium: str, arcs: list[str]) -> float:
         t = self.scenario["tariffs"]
         by_arc = t.get(f"{medium}_nok_per_sm3_by_arc", {})
         hits = [by_arc[a] for a in arcs if a in by_arc]
         return float(sum(hits)) if hits else float(t.get(f"{medium}_nok_per_sm3_default", 0.0))
 
-    def paths(self, entity: str, medium: str) -> List[RoutedPath]:
+    def paths(self, entity: str, medium: str) -> list[RoutedPath]:
         key = (entity, medium)
         if key in self._paths:
             return self._paths[key]
         net = self.network
         limit = int(self.scenario.get("max_paths_per_entity", 20))
-        prefix_arcs: List[str] = []
+        prefix_arcs: list[str] = []
         start = entity
         if entity in net.discoveries:
             host = self._tieback_host(entity, medium)
@@ -113,7 +113,7 @@ class NcsValueChainOptimizer:
         self._paths[key] = out
         return out
 
-    def _tieback_host(self, discovery: str, medium: str) -> Optional[Dict[str, Any]]:
+    def _tieback_host(self, discovery: str, medium: str) -> dict[str, Any] | None:
         cache_key = f"{discovery}:{medium}"
         if cache_key in self.tiebacks:
             return self.tiebacks[cache_key]
@@ -132,9 +132,9 @@ class NcsValueChainOptimizer:
         return chosen
 
     # ------------------------------------------------------------------ capacities
-    def capacities(self, year: int, medium: str) -> Dict[str, float]:
+    def capacities(self, year: int, medium: str) -> dict[str, float]:
         net = self.network
-        caps: Dict[str, float] = {}
+        caps: dict[str, float] = {}
         for arc_id, arc in net.arcs.items():
             if arc["medium"] == medium and arc.get("capacity") is not None:
                 caps[arc_id] = float(arc["capacity"])
@@ -166,11 +166,11 @@ class NcsValueChainOptimizer:
         # per-entity cost, NOK per Sm3 oil-equivalent (1000 Sm3 gas = 1 Sm3 oe), e.g. CO2 tax or OPEX
         field_cost = self.scenario.get("field_cost_nok_per_sm3oe", {})
         entities, var_meta = [], []  # var_meta: ("u", e) | ("x", e, medium, path_index)
-        cost: List[float] = []
+        cost: list[float] = []
         eq_rows, eq_cols, eq_vals, eq_rhs = [], [], [], []
-        unsold: Dict[str, Dict[str, float]] = {}
-        unconnected: List[str] = []
-        elem_users: Dict[Tuple[str, str], List[int]] = defaultdict(list)
+        unsold: dict[str, dict[str, float]] = {}
+        unconnected: list[str] = []
+        elem_users: dict[tuple[str, str], list[int]] = defaultdict(list)
         caps = {m: self.capacities(year, m) for m in MEDIA}
 
         for ent, prof in self.profiles.items():
@@ -233,7 +233,7 @@ class NcsValueChainOptimizer:
         if res.status != 0:
             return result
         x = res.x
-        u_of: Dict[str, float] = {}
+        u_of: dict[str, float] = {}
         for idx, meta in enumerate(var_meta):
             if meta[0] == "u":
                 u_of[meta[1]] = float(x[idx])
@@ -272,7 +272,7 @@ class NcsValueChainOptimizer:
                     result.element_capacity[el["element"]] = el["capacity"]
         return result
 
-    def run(self) -> Dict[str, Any]:
+    def run(self) -> dict[str, Any]:
         first, last = self.scenario["years"]
         rate = float(self.scenario["discount_rate"])
         years = [self.solve_year(y) for y in range(first, last + 1)]

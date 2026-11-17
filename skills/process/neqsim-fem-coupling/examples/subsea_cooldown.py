@@ -45,7 +45,7 @@ def fluid_properties() -> tuple[float, float, float]:
     the thermodynamics, not to the finite-element model.
     """
     try:
-        from neqsim.thermo import TPflash, fluid, hydt  # noqa: PLC0415
+        from neqsim.thermo import TPflash, fluid, hydt
 
         wet_gas = fluid("cpa")
         wet_gas.addComponent("methane", 0.85)

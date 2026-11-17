@@ -2,7 +2,6 @@ import json
 import urllib.parse
 
 import pytest
-
 from anp_open_data import (
     build_getfeature_url,
     fetch_layer,

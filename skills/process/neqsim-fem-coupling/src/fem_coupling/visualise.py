@@ -20,11 +20,12 @@ answer in finite elements.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 # Views generated for a three-dimensional mesh when none are named explicitly.
 _DEFAULT_3D_VIEWS = ("surface", "slice", "clip")
@@ -146,7 +147,7 @@ def render_field(
             ),
         )
 
-    import pyvista  # noqa: PLC0415 - optional dependency, imported on demand
+    import pyvista
 
     pyvista.OFF_SCREEN = True
     try:
@@ -286,7 +287,7 @@ def render_mesh(
             message="PyVista is not installed; open the mesh in Gmsh or ParaView instead.",
         )
 
-    import pyvista  # noqa: PLC0415 - optional dependency, imported on demand
+    import pyvista
 
     pyvista.OFF_SCREEN = True
     grid = pyvista.read(str(path))
@@ -323,7 +324,7 @@ def _resolve_field_file(directory: Path, field_file: str | None) -> Path | None:
     results = directory / "results.json"
     if results.exists():
         try:
-            import json  # noqa: PLC0415 - local, keeps the module import cheap
+            import json
 
             recorded = json.loads(results.read_text(encoding="utf-8")).get("field_file")
         except Exception:  # pragma: no cover - malformed results.json

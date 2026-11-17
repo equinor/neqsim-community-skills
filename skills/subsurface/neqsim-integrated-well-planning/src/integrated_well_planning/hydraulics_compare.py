@@ -8,10 +8,10 @@ model-uncertainty indicator, not a confidence interval.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from .model_chain import build_fluid, require
-from .runtime import jclass
 
 PIPE_METHODS = {
     "beggs_brill": ("PipeBeggsAndBrills", "Beggs and Brill (1973)"),
@@ -21,7 +21,7 @@ PIPE_METHODS = {
 }
 
 
-def _pipe_dp_bar(model: Any, method_class: str, mass_kg_s: float, water_moles: float, t_mean_c: float, p_in_bara: float, p: Dict[str, Any]) -> Optional[float]:
+def _pipe_dp_bar(model: Any, method_class: str, mass_kg_s: float, water_moles: float, t_mean_c: float, p_in_bara: float, p: dict[str, Any]) -> float | None:
     """Pressure drop (bar) of one isothermal upward pipe run from ``p_in_bara``; ``None`` when the correlation cannot run."""
     import jpype
 
@@ -34,7 +34,7 @@ def _pipe_dp_bar(model: Any, method_class: str, mass_kg_s: float, water_moles: f
     s.setTemperature(float(t_mean_c), "C")
     s.setPressure(float(p_in_bara), "bara")
     s.run()
-    cls = jpype.JClass("neqsim.process.equipment.pipeline.{}".format(method_class))
+    cls = jpype.JClass(f"neqsim.process.equipment.pipeline.{method_class}")
     pipe = cls("tubing", s)
     pipe.setLength(float(model.depths["md_m"]))
     pipe.setDiameter(float(p["tubing_id_m"]))
@@ -51,8 +51,8 @@ def _pipe_dp_bar(model: Any, method_class: str, mass_kg_s: float, water_moles: f
     return float(p_in_bara - pipe.getOutletStream().getPressure("bara"))
 
 
-def compare_methods(model: Any, case: str, q: float, whp_bara: float, overrides: Optional[Dict[str, Any]] = None,
-                    methods: Sequence[str] = tuple(PIPE_METHODS)) -> List[Dict[str, Any]]:
+def compare_methods(model: Any, case: str, q: float, whp_bara: float, overrides: dict[str, Any] | None = None,
+                    methods: Sequence[str] = tuple(PIPE_METHODS)) -> list[dict[str, Any]]:
     """Bottom-hole pressure required for rate ``q`` at wellhead pressure ``whp_bara`` by each hydraulic method.
 
     Returns one row per method with the BHP, the difference to the drift-flux reference and the drift-flux flow regime/loading indicators for the reference row.

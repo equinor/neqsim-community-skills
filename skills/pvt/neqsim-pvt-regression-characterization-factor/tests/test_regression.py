@@ -1,5 +1,4 @@
 import pytest
-
 from pvt_regression import (
     RegressionTarget,
     regress_characterization_factor,

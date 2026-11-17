@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import csv
 import math
-import statistics
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence
 
 import numpy as np
 
@@ -23,7 +22,7 @@ TABLES = {
 }
 
 
-def _num(x: object) -> Optional[float]:
+def _num(x: object) -> float | None:
     try:
         if x is None or str(x).strip() == "":
             return None
@@ -32,7 +31,7 @@ def _num(x: object) -> Optional[float]:
         return None
 
 
-def read_table(path: Path) -> List[Dict[str, str]]:
+def read_table(path: Path) -> list[dict[str, str]]:
     """Read a CSV into dict rows (empty list if the file does not exist)."""
     path = Path(path)
     if not path.exists():
@@ -41,7 +40,7 @@ def read_table(path: Path) -> List[Dict[str, str]]:
         return [dict(r) for r in csv.DictReader(fh)]
 
 
-def load_evidence(folder: Path) -> Dict[str, List[Dict[str, str]]]:
+def load_evidence(folder: Path) -> dict[str, list[dict[str, str]]]:
     """Load every standard offset table found in ``folder``."""
     return {k: read_table(Path(folder) / v) for k, v in TABLES.items()}
 
@@ -50,12 +49,12 @@ def load_evidence(folder: Path) -> Dict[str, List[Dict[str, str]]]:
 class CalibrationPoints:
     """Depth/EMW points extracted from offset wells, with provenance."""
 
-    frac: List[Dict[str, object]] = field(default_factory=list)
-    pore: List[Dict[str, object]] = field(default_factory=list)
-    mud: List[Dict[str, object]] = field(default_factory=list)
+    frac: list[dict[str, object]] = field(default_factory=list)
+    pore: list[dict[str, object]] = field(default_factory=list)
+    mud: list[dict[str, object]] = field(default_factory=list)
 
 
-def rebase_tvd(tvd_m: float, well_ref: Optional[Dict[str, float]], target: Optional[Dict[str, float]]) -> float:
+def rebase_tvd(tvd_m: float, well_ref: dict[str, float] | None, target: dict[str, float] | None) -> float:
     """Move a depth from the offset well's reference to the planned well's reference at equal depth below the mudline.
 
     ``well_ref`` and ``target`` hold ``rkb_m`` (air gap) and ``water_depth_m``. Without both, the depth is returned unchanged.
@@ -72,8 +71,8 @@ def rebase_tvd(tvd_m: float, well_ref: Optional[Dict[str, float]], target: Optio
     return ml_tgt + (tvd_m - ml_off)
 
 
-def calibration_points(evidence: Dict[str, List[Dict[str, str]]], well_refs: Optional[Dict[str, Dict[str, float]]] = None,
-                       target: Optional[Dict[str, float]] = None) -> CalibrationPoints:
+def calibration_points(evidence: dict[str, list[dict[str, str]]], well_refs: dict[str, dict[str, float]] | None = None,
+                       target: dict[str, float] | None = None) -> CalibrationPoints:
     """Extract strength (LOT, FIT), pressure and mud-weight points.
 
     LOT points are fracture-pressure estimates; FIT points are lower bounds (formation held the test pressure).
@@ -116,9 +115,9 @@ def calibration_points(evidence: Dict[str, List[Dict[str, str]]], well_refs: Opt
     return cp
 
 
-def envelope(points: Sequence[Dict[str, object]], key: str, bin_m: float = 250.0) -> List[Dict[str, float]]:
+def envelope(points: Sequence[dict[str, object]], key: str, bin_m: float = 250.0) -> list[dict[str, float]]:
     """Min / median / max of ``key`` in depth bins (for low, base, high curves). Sparse bins are returned as they are."""
-    bins: Dict[int, List[tuple]] = {}
+    bins: dict[int, list[tuple]] = {}
     for p in points:
         z = float(p["tvd_m"])
         bins.setdefault(int(z // bin_m), []).append((z, float(p[key])))
@@ -130,7 +129,7 @@ def envelope(points: Sequence[Dict[str, object]], key: str, bin_m: float = 250.0
     return out
 
 
-def time_depth_stats(rows: Sequence[Dict[str, str]]) -> Dict[str, object]:
+def time_depth_stats(rows: Sequence[dict[str, str]]) -> dict[str, object]:
     """Days per 1000 m and total days across offset wells (empirical P10, P50, P90 with the n used)."""
     d1000, total = [], []
     for r in rows:
@@ -141,17 +140,17 @@ def time_depth_stats(rows: Sequence[Dict[str, str]]) -> Dict[str, object]:
         if t:
             total.append(t)
 
-    def pct(a: List[float], p: float) -> Optional[float]:
+    def pct(a: list[float], p: float) -> float | None:
         return float(np.percentile(a, p)) if a else None
 
     return {"n_days_per_1000m": len(d1000), "days_per_1000m_p10": pct(d1000, 10), "days_per_1000m_p50": pct(d1000, 50), "days_per_1000m_p90": pct(d1000, 90),
             "n_total": len(total), "days_total_p10": pct(total, 10), "days_total_p50": pct(total, 50), "days_total_p90": pct(total, 90)}
 
 
-def problem_frequency(rows: Sequence[Dict[str, str]], wells: Optional[Iterable[str]] = None) -> Dict[str, Dict[str, object]]:
+def problem_frequency(rows: Sequence[dict[str, str]], wells: Iterable[str] | None = None) -> dict[str, dict[str, object]]:
     """Count recorded events by type, and the share of wells with at least one such event."""
-    by: Dict[str, set] = {}
-    count: Dict[str, int] = {}
+    by: dict[str, set] = {}
+    count: dict[str, int] = {}
     all_wells = set(wells or [r.get("well") for r in rows])
     for r in rows:
         t = (r.get("event type") or r.get("event_type") or "other").strip().lower()
@@ -205,7 +204,7 @@ def _tri(rng: np.random.Generator, p10: float, p50: float, p90: float, n: int) -
 
 
 def monte_carlo(sections: Sequence[SectionTime], npt: Sequence[NptEvent], cost: CostBasis, n: int = 20000, seed: int = 20261031,
-                common_sigma: float = 0.0) -> Dict[str, object]:
+                common_sigma: float = 0.0) -> dict[str, object]:
     """Monte Carlo of well days and cost: section times, NPT events, day-rate, materials and services uncertainty.
 
     ``common_sigma`` is the log-standard deviation of one performance factor that scales every section time of a sample
@@ -219,7 +218,7 @@ def monte_carlo(sections: Sequence[SectionTime], npt: Sequence[NptEvent], cost: 
         days_sec = {k: v * common for k, v in days_sec.items()}
     prod = sum(days_sec.values())
     npt_days = np.zeros(n)
-    npt_by: Dict[str, np.ndarray] = {}
+    npt_by: dict[str, np.ndarray] = {}
     for e in npt:
         occurs = rng.random(n) < e.probability
         dur = _tri(rng, e.p10, e.p50, e.p90, n) * occurs
@@ -231,7 +230,7 @@ def monte_carlo(sections: Sequence[SectionTime], npt: Sequence[NptEvent], cost: 
     svc = cost.services_mnok * rng.lognormal(0.0, cost.services_sigma, n)
     total = days * rate + mat + svc + cost.fixed_mnok
 
-    def pc(a: np.ndarray) -> Dict[str, float]:
+    def pc(a: np.ndarray) -> dict[str, float]:
         return {"p10": float(np.percentile(a, 10)), "p50": float(np.percentile(a, 50)), "p90": float(np.percentile(a, 90)), "mean": float(a.mean())}
 
     contrib = {k: float(np.corrcoef(v, total)[0, 1]) if v.std() > 0 else 0.0 for k, v in {**days_sec, **npt_by}.items()}

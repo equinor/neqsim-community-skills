@@ -5,11 +5,19 @@ from __future__ import annotations
 import csv
 import datetime as _dt
 import json
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
-from .geo import bearing_deg, circle_points, cluster_points, compass, haversine_km, point_to_rings_km
+from .geo import (
+    bearing_deg,
+    circle_points,
+    cluster_points,
+    compass,
+    haversine_km,
+    point_to_rings_km,
+)
 from .models import STAGE_LABELS, STAGES, Discovery
 
 OPEN_STAGES = ("in_development", "in_clarification", "not_evaluated", "unknown")

@@ -8,8 +8,8 @@ positive to negative with increasing rate; the reverse crossing is the unstable 
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Sequence
 
 import numpy as np
 
@@ -27,15 +27,15 @@ class Intersection:
 class NodalResult:
     """Result of :func:`solve_nodal`."""
 
-    rates: List[float]
-    inflow_pwf: List[float]
-    outflow_pwf: List[float]
-    intersections: List[Intersection] = field(default_factory=list)
-    operating_point: Optional[Intersection] = None
+    rates: list[float]
+    inflow_pwf: list[float]
+    outflow_pwf: list[float]
+    intersections: list[Intersection] = field(default_factory=list)
+    operating_point: Intersection | None = None
     status: str = "NO_INTERSECTION"
-    outflow_min_rate: Optional[float] = None
+    outflow_min_rate: float | None = None
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         """Return a JSON-friendly dictionary."""
         return {
             "status": self.status,
@@ -104,7 +104,7 @@ def surplus_at(inflow_pwf: Callable[[float], float], outflow_pwf: Callable[[floa
     return float(inflow_pwf(q)) - float(outflow_pwf(q))
 
 
-def composite_oil_ipr(p_res: float, p_bubble: float, pi_sm3d_per_bar: float) -> Dict[str, Callable[[float], float]]:
+def composite_oil_ipr(p_res: float, p_bubble: float, pi_sm3d_per_bar: float) -> dict[str, Callable[[float], float]]:
     """Linear (above bubble point) / Vogel (below) composite IPR after Standing.
 
     Returns:

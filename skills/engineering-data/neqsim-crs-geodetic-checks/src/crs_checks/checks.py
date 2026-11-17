@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Sequence
+from collections.abc import Sequence
 
 from .transform import AmbiguousOperationError, Point, transform
 
@@ -16,7 +16,7 @@ def _crs(code: str):
     return CRS.from_user_input(code)
 
 
-def to_geographic(points: Sequence[Point], crs: str) -> List[Point]:
+def to_geographic(points: Sequence[Point], crs: str) -> list[Point]:
     """Lon/lat on the CRS's own datum (a conversion, no datum change, so no operation choice)."""
     from pyproj import Transformer
 
@@ -27,7 +27,7 @@ def to_geographic(points: Sequence[Point], crs: str) -> List[Point]:
     return [t.transform(x, y) for x, y in points]
 
 
-def area_of_use_check(points: Sequence[Point], crs: str, margin_deg: float = 0.5) -> Dict[str, object]:
+def area_of_use_check(points: Sequence[Point], crs: str, margin_deg: float = 0.5) -> dict[str, object]:
     """Are the points inside the CRS area of use? Points far outside usually mean a wrong CRS or swapped axes."""
     c = _crs(crs)
     area = c.area_of_use
@@ -42,7 +42,7 @@ def area_of_use_check(points: Sequence[Point], crs: str, margin_deg: float = 0.5
             "lonlat": [(round(lon, 6), round(lat, 6)) for lon, lat in lonlat]}
 
 
-def axis_check(points: Sequence[Point], crs: str) -> List[str]:
+def axis_check(points: Sequence[Point], crs: str) -> list[str]:
     """Plausibility of the coordinate values for the CRS type (swapped lat/lon, degrees in a projected CRS...)."""
     c = _crs(crs)
     findings = []
@@ -70,13 +70,13 @@ def axis_check(points: Sequence[Point], crs: str) -> List[str]:
     return findings
 
 
-def geojson_check(document: Dict[str, object]) -> List[str]:
+def geojson_check(document: dict[str, object]) -> list[str]:
     """RFC 7946 GeoJSON is WGS 84 lon/lat; flag documents that are not."""
     findings = []
     if "crs" in document:
         findings.append(f"the document carries a 'crs' member ({document['crs']}): not RFC 7946; read the "
                         "coordinates in that CRS, not as WGS 84")
-    coords: List[float] = []
+    coords: list[float] = []
 
     def walk(node):
         if isinstance(node, (list, tuple)):
@@ -97,7 +97,7 @@ def geojson_check(document: Dict[str, object]) -> List[str]:
 
 
 def datum_sensitivity(points: Sequence[Point], candidates: Sequence[str],
-                      operations: Optional[Dict[str, str]] = None) -> Dict[str, object]:
+                      operations: dict[str, str] | None = None) -> dict[str, object]:
     """How far apart the same numbers land when read in each candidate CRS (for example ED50 vs WGS 84 UTM 31N).
 
     Each candidate is taken to WGS 84 (EPSG:4326). Named ``operations`` per candidate are used when given;
@@ -108,8 +108,8 @@ def datum_sensitivity(points: Sequence[Point], candidates: Sequence[str],
 
     geod = Geod(ellps="WGS84")
     operations = operations or {}
-    placed: Dict[str, List[Point]] = {}
-    used: Dict[str, Dict[str, object]] = {}
+    placed: dict[str, list[Point]] = {}
+    used: dict[str, dict[str, object]] = {}
     for crs in candidates:
         try:
             result = transform(points, crs, "EPSG:4326", operations.get(crs))
@@ -130,7 +130,7 @@ def datum_sensitivity(points: Sequence[Point], candidates: Sequence[str],
             "max_shift_m": max((p["max_shift_m"] for p in pairs), default=0.0)}
 
 
-def projection_factors(crs: str, lon: float, lat: float) -> Dict[str, float]:
+def projection_factors(crs: str, lon: float, lat: float) -> dict[str, float]:
     """Grid convergence (degrees) and point scale factor of a projected CRS at a geographic point."""
     from pyproj import Proj
 
@@ -143,7 +143,7 @@ def projection_factors(crs: str, lon: float, lat: float) -> Dict[str, float]:
             "areal_scale": float(factors.areal_scale)}
 
 
-def route_lengths(points: Sequence[Point], crs: str) -> Dict[str, float]:
+def route_lengths(points: Sequence[Point], crs: str) -> dict[str, float]:
     """Grid length against geodesic length on the CRS ellipsoid for a polyline in a projected CRS."""
     from pyproj import Geod
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from bisect import bisect_left
-from typing import Callable, Sequence
+from collections.abc import Callable, Sequence
 
 
 def capacity_from_sweep(rates: Sequence[float], utilisation: Sequence[float]) -> dict:

@@ -1,5 +1,4 @@
 import pytest
-
 from h2s_partitioning import (
     SeparatorStage,
     apply_e300_composition,

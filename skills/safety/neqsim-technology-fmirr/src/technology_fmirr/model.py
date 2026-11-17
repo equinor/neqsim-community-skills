@@ -12,8 +12,9 @@ version under version control. The module is dependency-free.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 SCHEMA_VERSION = "technology_fmirr.v1"
 
@@ -98,7 +99,7 @@ class FailureModeEntry:
 
 def _check_class(name: str, value: int) -> None:
     if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 5:
-        raise ValueError("{} must be an integer 1-5, got {!r}".format(name, value))
+        raise ValueError(f"{name} must be an integer 1-5, got {value!r}")
 
 
 def risk_level(
@@ -131,7 +132,7 @@ def risk_level(
     except (KeyError, IndexError) as exc:
         raise ValueError("risk matrix must cover probability and consequence classes 1-5") from exc
     if level not in RISK_LEVELS:
-        raise ValueError("risk matrix entries must be one of {}".format(list(RISK_LEVELS)))
+        raise ValueError(f"risk matrix entries must be one of {list(RISK_LEVELS)}")
     if high_consequence_floor and consequence_class == 5 and level == "Low":
         return "Medium"
     return level
@@ -189,10 +190,10 @@ class FmirrRegister:
         if not entry.entry_id.strip():
             raise ValueError("entry_id must be non-empty")
         if entry.entry_id in self._entries:
-            raise ValueError("duplicate entry_id {!r}".format(entry.entry_id))
+            raise ValueError(f"duplicate entry_id {entry.entry_id!r}")
         for name in ("item", "failure_mode"):
             if not getattr(entry, name).strip():
-                raise ValueError("{} must be non-empty for entry {!r}".format(name, entry.entry_id))
+                raise ValueError(f"{name} must be non-empty for entry {entry.entry_id!r}")
         _check_class("consequence_class", entry.consequence_class)
         _check_class("probability_class", entry.probability_class)
         self._entries[entry.entry_id] = entry
@@ -264,14 +265,11 @@ class FmirrRegister:
             if not entry.failure_mechanism.strip():
                 add("warning", eid, "Failure mechanism missing.")
             elif entry.failure_mechanism_class and entry.failure_mechanism_class not in FAILURE_MECHANISM_CLASSES:
-                add("warning", eid, "Mechanism class {!r} is not a recognised class.".format(
-                    entry.failure_mechanism_class))
+                add("warning", eid, f"Mechanism class {entry.failure_mechanism_class!r} is not a recognised class.")
             if entry.failure_cause_class and entry.failure_cause_class not in FAILURE_CAUSE_CLASSES:
-                add("warning", eid, "Cause class {!r} is not a recognised class.".format(
-                    entry.failure_cause_class))
+                add("warning", eid, f"Cause class {entry.failure_cause_class!r} is not a recognised class.")
             if entry.lifecycle_phase and entry.lifecycle_phase not in LIFECYCLE_PHASES:
-                add("info", eid, "Life-cycle phase {!r} is not in the standard list.".format(
-                    entry.lifecycle_phase))
+                add("info", eid, f"Life-cycle phase {entry.lifecycle_phase!r} is not in the standard list.")
             if row["critical"]:
                 if not entry.qualification_test.strip():
                     add("gap", eid, "Critical failure mode has no qualification activity (TEST) linked.")
@@ -336,7 +334,7 @@ class FmirrRegister:
         for phase in LIFECYCLE_PHASES:
             if phase not in covered:
                 findings.append(
-                    {"level": "gap", "entry_id": "", "text": "No failure mode registered for life-cycle phase: {}.".format(phase)}
+                    {"level": "gap", "entry_id": "", "text": f"No failure mode registered for life-cycle phase: {phase}."}
                 )
         linked = [r for r in critical if r["test"].strip()]
         return {

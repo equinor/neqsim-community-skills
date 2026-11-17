@@ -19,8 +19,9 @@ import re
 import statistics
 import unicodedata
 import urllib.parse
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
-from typing import Any, Callable, Iterable, Mapping
+from typing import Any
 
 from .tools import haversine_km
 
@@ -107,7 +108,7 @@ def _default_get(url: str, timeout: float) -> bytes:
     except ImportError:  # pragma: no cover - exercised only without requests
         import urllib.request
 
-        with urllib.request.urlopen(url, timeout=timeout) as resp:  # noqa: S310
+        with urllib.request.urlopen(url, timeout=timeout) as resp:
             return resp.read()
 
 
@@ -165,7 +166,7 @@ def fetch_layer(
         if data.get("type") != "FeatureCollection":
             raise ValueError("ANP WFS did not return a FeatureCollection for %s" % layer)
         fname.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-        retrieved = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+        retrieved = _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds")
         status = "downloaded"
     n = len(data.get("features", []))
     rec = {

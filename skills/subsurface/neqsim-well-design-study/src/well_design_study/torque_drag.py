@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -35,7 +36,7 @@ def minimum_curvature(stations: Sequence[Station]) -> list[Station]:
             stations[0].east,
         )
     ]
-    for a, b in zip(stations[:-1], stations[1:]):
+    for a, b in itertools.pairwise(stations):
         dmd = b.md - a.md
         i1, i2 = math.radians(a.inc_deg), math.radians(b.inc_deg)
         a1, a2 = math.radians(a.azi_deg), math.radians(b.azi_deg)

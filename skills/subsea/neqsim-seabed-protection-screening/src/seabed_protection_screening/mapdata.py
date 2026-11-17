@@ -12,6 +12,7 @@ accuracy and is not a positioning or datum authority.
 
 from __future__ import annotations
 
+import itertools
 import json
 import math
 from collections.abc import Mapping, Sequence
@@ -282,7 +283,7 @@ def build_route(
         raise ValueError("spacing_m must be positive")
     points = [RoutePoint(0.0, float(lonlat[0][0]), float(lonlat[0][1]))]
     kp = 0.0
-    for (lon1, lat1), (lon2, lat2) in zip(lonlat[:-1], lonlat[1:]):
+    for (lon1, lat1), (lon2, lat2) in itertools.pairwise(lonlat):
         length = haversine_m(lon1, lat1, lon2, lat2)
         steps = max(1, math.ceil(length / spacing_m))
         for index in range(1, steps + 1):

@@ -1,3 +1,4 @@
+import itertools
 import json
 import math
 
@@ -42,7 +43,7 @@ def test_route_has_monotonic_kp_and_expected_length():
     kps = [p.kp_m for p in route]
     assert kps == sorted(kps)
     assert route[-1].kp_m == pytest.approx(2 * 5558.0, rel=0.01)
-    assert max(b - a for a, b in zip(kps, kps[1:])) <= 500.0 + 1e-6
+    assert max(b - a for a, b in itertools.pairwise(kps)) <= 500.0 + 1e-6
 
 
 def test_polygon_sampling_honours_holes_and_rank_order():

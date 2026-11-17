@@ -17,6 +17,7 @@ owner. Only the standard library is needed; ``plot_overview`` needs matplotlib.
 from __future__ import annotations
 
 import csv
+import itertools
 import json
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
@@ -192,7 +193,7 @@ def polyline_length_km(parts: Sequence[Sequence[tuple[float, float]]]) -> float:
     """Geodesic (haversine) length of a multi-part polyline in km."""
     total = 0.0
     for part in parts:
-        for a, b in zip(part[:-1], part[1:]):
+        for a, b in itertools.pairwise(part):
             total += haversine_km(a[0], a[1], b[0], b[1])
     return total
 

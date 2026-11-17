@@ -9,6 +9,7 @@ rigorous ``neqsim.thermo.characterization`` Java classes for design-grade work.
 
 from __future__ import annotations
 
+import itertools
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -123,7 +124,7 @@ def gamma_mole_split(
     bounds = list(boundaries)
     if len(bounds) < 2:
         raise ValueError("boundaries must contain at least two values")
-    for lower, upper in zip(bounds, bounds[1:]):
+    for lower, upper in itertools.pairwise(bounds):
         if not (upper > lower):
             raise ValueError("boundaries must be strictly increasing")
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import math
 from collections.abc import Sequence
 
@@ -209,7 +210,7 @@ def route_lengths(points: Sequence[Point], crs: str) -> dict[str, float]:
         raise ValueError(
             f"{crs} is not a projected CRS; give the route in projected coordinates"
         )
-    grid = sum(math.dist(a, b) for a, b in zip(points, points[1:]))
+    grid = sum(math.dist(a, b) for a, b in itertools.pairwise(points))
     lonlat = to_geographic(points, crs)
     geod = Geod(a=c.ellipsoid.semi_major_metre, b=c.ellipsoid.semi_minor_metre)
     geodesic = geod.line_length([p[0] for p in lonlat], [p[1] for p in lonlat])

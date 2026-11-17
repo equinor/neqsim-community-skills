@@ -131,7 +131,7 @@ def build_profile(
     Returns:
         A :class:`RouteProfile`. Points without depth are listed in ``gaps`` and filled by linear interpolation.
     """
-    total, pts = great_circle_points(start, end, spacing_km)
+    _total, pts = great_circle_points(start, end, spacing_km)
     cache: dict[str, float | None] = {}
     if cache_path and Path(cache_path).exists():
         cache = json.loads(Path(cache_path).read_text(encoding="utf-8"))

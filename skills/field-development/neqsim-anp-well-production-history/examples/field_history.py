@@ -30,7 +30,7 @@ ROW = (
 
 
 def main() -> None:
-    headers, rows, meta = read_table_bytes(
+    headers, rows, _meta = read_table_bytes(
         (HEADER + "\n" + ROW + "\n").encode("cp1252")
     )
     records = normalize(headers, rows)

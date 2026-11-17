@@ -75,7 +75,7 @@ def e300_files(tmp_path_factory):
 
 
 def test_parse_names_and_zi(e300_files):
-    model, comp = e300_files
+    _model, comp = e300_files
     names, zi = parse_e300_names_and_zi(str(comp))
     assert names == NAMES
     assert sum(zi) == pytest.approx(1.0, abs=1e-4)

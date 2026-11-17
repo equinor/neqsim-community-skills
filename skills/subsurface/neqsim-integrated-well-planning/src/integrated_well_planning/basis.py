@@ -219,7 +219,7 @@ def validate_basis(
         v = get_path(basis, path)
         if v is not None:
             try:
-                low, _base, high = rng(
+                low, _base, _high = rng(
                     v
                     if path != "targets.rate"
                     else (v.get("values", v) if isinstance(v, dict) else v)

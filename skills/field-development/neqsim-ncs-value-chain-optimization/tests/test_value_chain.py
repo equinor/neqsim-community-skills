@@ -123,7 +123,7 @@ def test_outage_reduces_capacity():
 
 def test_forecast_is_capped_by_reserves_and_declines():
     hist = {2016 + i: 10.0 * (0.9**i) for i in range(10)}  # MSm3/d, declining
-    out, method, capped = forecast_series(
+    out, _method, capped = forecast_series(
         hist, last_year=2025, end_year=2060, remaining=5.0, volume_factor=1000.0
     )
     assert (
@@ -156,7 +156,7 @@ def ncs():
 
 
 def test_full_ncs_solves(ncs):
-    net, sc, opt, r = ncs
+    _net, _sc, _opt, r = ncs
     assert all(y["status"] == "optimal" for y in r["years"])
     first = r["years"][0]
     shipped = sum(p["gas_msm3d"] for p in first["produced"].values())
@@ -177,7 +177,7 @@ def test_supply_starts_from_history():
 
 
 def test_opportunities_on_ncs(ncs):
-    net, sc, opt, r = ncs
+    _net, _sc, opt, r = ncs
     ranking = tiein_ranking(r, gas_price=3.0, liquid_price=4500.0)
     assert ranking and ranking[0]["host"]
     uplift = production_uplift(opt, r, 2026)

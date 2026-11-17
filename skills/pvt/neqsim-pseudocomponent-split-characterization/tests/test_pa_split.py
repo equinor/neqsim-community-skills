@@ -63,7 +63,7 @@ def test_two_endpoint_reduces_to_constant():
 def test_two_endpoint_interpolates_in_mw():
     totals = [0.02, 0.02, 0.02]
     mws = [100.0, 200.0, 300.0]
-    par, aro = two_endpoint_pa_split(totals, mws, 0.8, 0.2)
+    par, _aro = two_endpoint_pa_split(totals, mws, 0.8, 0.2)
     # Middle lump S = 0.5 (linear midpoint), lightest 0.8, heaviest 0.2.
     assert par[0] / totals[0] == pytest.approx(0.8)
     assert par[1] / totals[1] == pytest.approx(0.5)

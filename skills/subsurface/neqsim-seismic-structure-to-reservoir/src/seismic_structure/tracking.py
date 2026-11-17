@@ -156,9 +156,8 @@ def _pick(
 ) -> tuple[float, float] | None:
     """Best extremum of polarity ``sign`` within ``half_window`` samples of ``centre`` (parabolic refine)."""
     n = trace.size
-    lo, hi = max(1, int(math.floor(centre)) - half_window), min(
-        n - 2, int(math.ceil(centre)) + half_window
-    )
+    lo = max(1, math.floor(centre) - half_window)
+    hi = min(n - 2, math.ceil(centre) + half_window)
     best = None
     for k in range(lo, hi + 1):
         a, b, c = sign * trace[k - 1], sign * trace[k], sign * trace[k + 1]
@@ -200,7 +199,7 @@ def track_horizon(
     i0, j0 = cube.index_of(seed_inline, seed_crossline)
     trace = cube.data[i0, j0]
     centre = (seed_time_ms - cube.samples[0]) / cube.dt
-    half = max(1, int(round(seed_window_ms / cube.dt)))
+    half = max(1, round(seed_window_ms / cube.dt))
     if polarity == "auto":
         candidates = [
             (p, s)

@@ -96,7 +96,7 @@ class ProfitOilTable:
             raise ValueError("rate must not be NaN")
         if len(self._rate_lo) == 1:
             return 0
-        idx = int(math.ceil(rate_bbld / RATE_STEP_BBLD)) - 1
+        idx = math.ceil(rate_bbld / RATE_STEP_BBLD) - 1
         return min(max(idx, 0), len(self._rate_lo) - 1)
 
     def adjustment_pp(self, price: float, rate_bbld: float) -> float:

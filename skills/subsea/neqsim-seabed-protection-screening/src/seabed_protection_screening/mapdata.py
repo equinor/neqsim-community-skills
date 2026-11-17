@@ -284,7 +284,7 @@ def build_route(
     kp = 0.0
     for (lon1, lat1), (lon2, lat2) in zip(lonlat[:-1], lonlat[1:]):
         length = haversine_m(lon1, lat1, lon2, lat2)
-        steps = max(1, int(math.ceil(length / spacing_m)))
+        steps = max(1, math.ceil(length / spacing_m))
         for index in range(1, steps + 1):
             frac = index / steps
             lon = lon1 + (lon2 - lon1) * frac

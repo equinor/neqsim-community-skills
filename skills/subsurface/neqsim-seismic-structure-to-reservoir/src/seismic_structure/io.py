@@ -243,8 +243,8 @@ def grid_points(
     x, y, z = (np.asarray(a, dtype=float) for a in (x, y, z))
     area = max((x.max() - x.min()) * (y.max() - y.min()), 1.0)
     inc = float(increment) if increment else max(math.sqrt(area / x.size), 1e-6)
-    ncol = int(round((x.max() - x.min()) / inc)) + 1
-    nrow = int(round((y.max() - y.min()) / inc)) + 1
+    ncol = round((x.max() - x.min()) / inc) + 1
+    nrow = round((y.max() - y.min()) / inc) + 1
     gi, gj = np.meshgrid(
         x.min() + np.arange(ncol) * inc, y.min() + np.arange(nrow) * inc, indexing="ij"
     )

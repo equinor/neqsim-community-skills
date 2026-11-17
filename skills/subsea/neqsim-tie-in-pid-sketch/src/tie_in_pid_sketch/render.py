@@ -151,7 +151,7 @@ def render_svg(sketch: TieInEndSketch) -> str:
     for el, x in zip(sketch.elements, xs):
         out.extend(_symbol(el, x, Y_LINE))
         tag = el.tag + ("*" if el.proposed and el.tag else "")
-        top = Y_LINE + 52 if el.kind not in ("equipment", "note_box") else Y_LINE + 52
+        top = Y_LINE + 52
         out.append(
             _txt(x, top, tag, 11, weight="bold", fill=INK if el.existing else NEW)
         )

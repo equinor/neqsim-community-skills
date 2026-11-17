@@ -157,8 +157,10 @@ class CfdCouplingModel:
 
         assumptions = [
             "This skill does not run CFD; it converts results from an existing study.",
-            ("Mass-transfer enhancement is taken as the square root of the shear "
-            "enhancement, because near-wall transfer scales with the friction velocity."),
+            (
+                "Mass-transfer enhancement is taken as the square root of the shear "
+                "enhancement, because near-wall transfer scales with the friction velocity."
+            ),
         ]
         if shear_source == "estimated_from_velocity":
             assumptions.append(
@@ -284,12 +286,18 @@ class CfdCouplingModel:
             mesh_independence_ok=mesh_ok,
             turbulence_model_class=model_class,
             assumptions=(
-                ("Screening quality gate for reusing a CFD study, not a CFD verification "
-                "and validation review."),
-                ("A 'usable_with_caution' verdict means derived factors should carry an "
-                "explicit uncertainty band in the receiving engineering model."),
-                ("Wall-function and resolved y+ bands follow standard practice and may be "
-                "tightened by a project CFD specification."),
+                (
+                    "Screening quality gate for reusing a CFD study, not a CFD verification "
+                    "and validation review."
+                ),
+                (
+                    "A 'usable_with_caution' verdict means derived factors should carry an "
+                    "explicit uncertainty band in the receiving engineering model."
+                ),
+                (
+                    "Wall-function and resolved y+ bands follow standard practice and may be "
+                    "tightened by a project CFD specification."
+                ),
             ),
         )
 
@@ -338,8 +346,10 @@ class CfdCouplingModel:
             name for name, available in required_inputs.items() if not available
         )
         findings: list[str] = [
-            ("Steady RANS may establish the mean flow but cannot identify or validate a "
-            "tonal source.")
+            (
+                "Steady RANS may establish the mean flow but cannot identify or validate a "
+                "tonal source."
+            )
         ]
         solver_sequence = [
             "steady RANS mean-flow initialization",
@@ -382,10 +392,14 @@ class CfdCouplingModel:
             findings=tuple(findings),
             assumptions=(
                 "This is a readiness gate, not a source-identification calculation.",
-                ("Agreement with overall dBA is insufficient; validation requires "
-                "frequency-resolved measurements at synchronized operating conditions."),
-                ("Human review by qualified CFD, acoustics, and vibration specialists is "
-                "required before a design or integrity decision."),
+                (
+                    "Agreement with overall dBA is insufficient; validation requires "
+                    "frequency-resolved measurements at synchronized operating conditions."
+                ),
+                (
+                    "Human review by qualified CFD, acoustics, and vibration specialists is "
+                    "required before a design or integrity decision."
+                ),
             ),
         )
 
@@ -418,10 +432,14 @@ class CfdCouplingModel:
 
         assumptions = [
             "Blasius smooth-pipe friction is used to estimate the friction velocity.",
-            ("The reported centroid height is the distance from the wall to the first cell "
-            "centre; a cell-centred solver therefore needs roughly twice that cell height."),
-            ("Fluid properties should come from a NeqSim flash of the actual fluid at the "
-            "local condition, not from generic tables."),
+            (
+                "The reported centroid height is the distance from the wall to the first cell "
+                "centre; a cell-centred solver therefore needs roughly twice that cell height."
+            ),
+            (
+                "Fluid properties should come from a NeqSim flash of the actual fluid at the "
+                "local condition, not from generic tables."
+            ),
         ]
         if reynolds < 2300.0:
             assumptions.append(

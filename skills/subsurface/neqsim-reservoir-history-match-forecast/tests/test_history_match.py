@@ -159,7 +159,8 @@ def test_single_tank_recovers_volume(specs):
                     "date": pick.date,
                     "tank": "A",
                     "kind": "p_res",
-                    "value": pick.p_res + np.random.default_rng(1).normal(0, 2, len(pick)),
+                    "value": pick.p_res
+                    + np.random.default_rng(1).normal(0, 2, len(pick)),
                     "sigma": 3.0,
                 }
             ),
@@ -264,7 +265,9 @@ def test_deliverability_fit_and_forecast(specs):
                 for t, s in wl.tank_weights.items()
             ) / sum(wl.tank_weights.values())
             q = row[w] / 1e3
-            hist.append({"date": d, "well": w, "q_ksm3d": q, "whp": wl.whp_for(pres, q)})
+            hist.append(
+                {"date": d, "well": w, "q_ksm3d": q, "whp": wl.whp_for(pres, q)}
+            )
     fit = fit_deliverability(sim, pd.DataFrame(hist))
     assert fit["W1"]["a"] == pytest.approx(30.0, rel=0.25)
     # forecast: low target is met, high target is capacity limited, pressure falls monotonically

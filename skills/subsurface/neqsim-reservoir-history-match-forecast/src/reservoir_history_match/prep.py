@@ -83,7 +83,13 @@ def shut_in_pressure_observations(
         m = pw.groupby("month")["median"].quantile(quantile)
         rows.append(
             pd.DataFrame(
-                {"date": m.index, "tank": tank, "kind": "p_res", "value": m.values, "sigma": sigma}
+                {
+                    "date": m.index,
+                    "tank": tank,
+                    "kind": "p_res",
+                    "value": m.values,
+                    "sigma": sigma,
+                }
             )
         )
     return (

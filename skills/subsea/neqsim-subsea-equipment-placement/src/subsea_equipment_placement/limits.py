@@ -194,7 +194,9 @@ def load_limits(source: str | os.PathLike | Mapping) -> dict[str, Limit]:
         unit = rec.get("unit", LIMIT_CATALOG[key]["unit"])
         if unit != LIMIT_CATALOG[key]["unit"]:
             problems.append(
-                "{}: unit {!r} does not match {!r}".format(key, unit, LIMIT_CATALOG[key]["unit"])
+                "{}: unit {!r} does not match {!r}".format(
+                    key, unit, LIMIT_CATALOG[key]["unit"]
+                )
             )
         basis = rec.get("basis", "NONE" if value is None else "ASSUMED")
         if basis not in BASES:

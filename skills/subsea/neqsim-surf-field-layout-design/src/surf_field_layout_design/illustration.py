@@ -553,9 +553,7 @@ def render_field_illustration(
     if horizon_artist is not None:
         bar_axis = figure.add_axes([0.045, 0.10, 0.013, 0.26])
         bar = figure.colorbar(horizon_artist, cax=bar_axis)
-        bar.set_label(
-            f"{horizon.name} [m TVDMSL]", fontsize=8.0, color=THEME["muted"]
-        )
+        bar.set_label(f"{horizon.name} [m TVDMSL]", fontsize=8.0, color=THEME["muted"])
         bar.ax.tick_params(labelsize=7.0, colors=THEME["muted"])
         bar.ax.invert_yaxis()
         bar.outline.set_edgecolor(THEME["callout_edge"])

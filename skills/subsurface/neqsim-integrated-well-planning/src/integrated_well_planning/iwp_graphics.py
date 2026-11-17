@@ -128,7 +128,13 @@ def nodal_chart(
             fontweight="bold",
             va="center",
             annotation_clip=False,
-            arrowprops={"arrowstyle": "-", "lw": 0.5, "color": col, "shrinkA": 0, "shrinkB": 2},
+            arrowprops={
+                "arrowstyle": "-",
+                "lw": 0.5,
+                "color": col,
+                "shrinkA": 0,
+                "shrinkB": 2,
+            },
         )
     i0 = int(0.18 * (len(q) - 1))
     direct_label(
@@ -1126,7 +1132,12 @@ def decision_tree(
                 ha="right",
                 zorder=4,
                 fontweight="bold",
-                bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.9},
+                bbox={
+                    "boxstyle": "round,pad=0.15",
+                    "fc": "white",
+                    "ec": "none",
+                    "alpha": 0.9,
+                },
             )
     ax.set_xlim(-2.4, max(depth.values()) + 2.6)
     ax.set_ylim(-0.8, counter[0])

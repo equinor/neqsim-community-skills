@@ -90,7 +90,13 @@ class FluidModel:
         """Per mole of feed: gas/liquid moles and volumes (m3), gas and liquid compositions. A single phase counts as gas."""
         f = self.flash(z, T_K, P_bara)
         out = {
-            "ng": 0.0, "nl": 0.0, "vg": 0.0, "vl": 0.0, "y": None, "x": None, "nph": f.getNumberOfPhases()
+            "ng": 0.0,
+            "nl": 0.0,
+            "vg": 0.0,
+            "vl": 0.0,
+            "y": None,
+            "x": None,
+            "nph": f.getNumberOfPhases(),
         }
         ntot = f.getTotalNumberOfMoles()
         for i in range(f.getNumberOfPhases()):

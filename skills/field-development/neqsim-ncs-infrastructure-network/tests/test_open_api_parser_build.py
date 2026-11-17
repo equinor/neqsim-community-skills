@@ -113,7 +113,9 @@ def test_parser_maps_statpipe_to_rich_gas_junction():
         "The oil is transported by tankers. Excess gas from Balder and Ringhorne is exported from the Jotun "
         "FPSO through the Statpipe system to Kårstø and from there on to continental Europe."
     )
-    gas = next(r for r in parse_transport_text("BALDER", text, GAZ) if r.medium == "gas")
+    gas = next(
+        r for r in parse_transport_text("BALDER", text, GAZ) if r.medium == "gas"
+    )
     assert gas.nodes == ["BALDER", "JOTUN", "STATPIPE_RICH_GAS", "KARSTO"]
 
 

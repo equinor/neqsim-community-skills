@@ -141,8 +141,10 @@ def derive_boundary_conditions(
 
     warnings: list[str] = []
     assumptions: list[str] = [
-        ("Fluid properties come from the actual fluid at the actual condition; "
-        "generic tables are not a substitute."),
+        (
+            "Fluid properties come from the actual fluid at the actual condition; "
+            "generic tables are not a substitute."
+        ),
     ]
 
     if velocity_m_per_s is None:

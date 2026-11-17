@@ -168,9 +168,7 @@ def fetch_layer(
         raw = (getter or _default_get)(url, timeout)
         data = json.loads(raw.decode("utf-8"))
         if data.get("type") != "FeatureCollection":
-            raise ValueError(
-                f"ANP WFS did not return a FeatureCollection for {layer}"
-            )
+            raise ValueError(f"ANP WFS did not return a FeatureCollection for {layer}")
         fname.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
         retrieved = _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds")
         status = "downloaded"

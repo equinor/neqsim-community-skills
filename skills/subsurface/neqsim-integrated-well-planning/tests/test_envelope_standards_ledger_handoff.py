@@ -274,7 +274,10 @@ def test_barrier_verification_requires_evidence():
     with pytest.raises(ValueError):
         barriers.set_verification(states, "P1", "production", "VERIFIED", "")
     barriers.set_verification(states, "P1", "production", "VERIFIED", "test record T-1")
-    assert next(e for e in states[0].elements if e.id == "P1").verification_status == "VERIFIED"
+    assert (
+        next(e for e in states[0].elements if e.id == "P1").verification_status
+        == "VERIFIED"
+    )
 
 
 def test_interface_specs_are_unresolved_and_state_missing_inputs():

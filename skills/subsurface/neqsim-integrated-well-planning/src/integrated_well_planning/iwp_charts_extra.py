@@ -116,7 +116,12 @@ def multi_line_chart(
                 fontsize=7.6,
                 color=col,
                 fontweight="bold",
-                bbox={"boxstyle": "round,pad=0.12", "fc": "white", "ec": "none", "alpha": 0.85},
+                bbox={
+                    "boxstyle": "round,pad=0.12",
+                    "fc": "white",
+                    "ec": "none",
+                    "alpha": 0.85,
+                },
                 zorder=6,
             )
             continue
@@ -196,9 +201,16 @@ def multi_line_chart(
             color=a.get("color", PALETTE["text"]),
             va="center",
             arrowprops={
-                "arrowstyle": "-", "lw": 0.6, "color": a.get("color", PALETTE["text"])
+                "arrowstyle": "-",
+                "lw": 0.6,
+                "color": a.get("color", PALETTE["text"]),
             },
-            bbox={"boxstyle": "round,pad=0.2", "fc": "white", "ec": "none", "alpha": 0.9},
+            bbox={
+                "boxstyle": "round,pad=0.2",
+                "fc": "white",
+                "ec": "none",
+                "alpha": 0.9,
+            },
         )
     if label_right and ends:
         y0, y1 = ax.get_ylim()
@@ -218,7 +230,11 @@ def multi_line_chart(
                 va="center",
                 annotation_clip=False,
                 arrowprops={
-                    "arrowstyle": "-", "lw": 0.5, "color": col, "shrinkA": 0, "shrinkB": 2
+                    "arrowstyle": "-",
+                    "lw": 0.5,
+                    "color": col,
+                    "shrinkA": 0,
+                    "shrinkB": 2,
                 },
             )
     ax.set_xlabel(xlabel)
@@ -313,7 +329,12 @@ def grouped_bar_chart(
                 fontsize=7.4,
                 color=hline.get("color", PALETTE["limit"]),
                 fontweight="bold",
-                bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.9},
+                bbox={
+                    "boxstyle": "round,pad=0.15",
+                    "fc": "white",
+                    "ec": "none",
+                    "alpha": 0.9,
+                },
                 zorder=6,
             )
     if n > 1:
@@ -524,7 +545,12 @@ def pressure_window_chart(
             color="#8A5A00",
             fontweight="bold",
             va="center",
-            bbox={"boxstyle": "round,pad=0.12", "fc": "white", "ec": "none", "alpha": 0.85},
+            bbox={
+                "boxstyle": "round,pad=0.12",
+                "fc": "white",
+                "ec": "none",
+                "alpha": 0.85,
+            },
             zorder=6,
         )
     marks = {
@@ -629,7 +655,12 @@ def percentile_chart(
                 fontweight="bold",
                 va="top",
                 ha=ha,
-                bbox={"boxstyle": "round,pad=0.12", "fc": "white", "ec": "none", "alpha": 0.85},
+                bbox={
+                    "boxstyle": "round,pad=0.12",
+                    "fc": "white",
+                    "ec": "none",
+                    "alpha": 0.85,
+                },
             )
         ax.set_xlim(
             max(0.0, float(np.percentile(v, 0.2)) * 0.8), float(np.percentile(v, 99.6))
@@ -844,7 +875,12 @@ def casing_programme_sheet(
             va="center",
             ha="left",
             arrowprops={"arrowstyle": "-", "lw": 0.5, "color": PALETTE["muted"]},
-            bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.9},
+            bbox={
+                "boxstyle": "round,pad=0.15",
+                "fc": "white",
+                "ec": "none",
+                "alpha": 0.9,
+            },
             zorder=7,
         )
     oh = plan.get("open_hole")
@@ -871,7 +907,12 @@ def casing_programme_sheet(
             va="center",
             fontweight="bold",
             arrowprops={"arrowstyle": "-", "lw": 0.5, "color": PALETTE["muted"]},
-            bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.9},
+            bbox={
+                "boxstyle": "round,pad=0.15",
+                "fc": "white",
+                "ec": "none",
+                "alpha": 0.9,
+            },
         )
     ax_w.plot([-0.6, 0.6], [td, td], color="black", lw=1.6, zorder=5)
     for f in forms:

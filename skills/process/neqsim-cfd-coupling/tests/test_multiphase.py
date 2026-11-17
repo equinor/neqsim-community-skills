@@ -221,7 +221,9 @@ def test_phases_without_a_flow_rate_are_rejected() -> None:
 
 def vof_case(**overrides) -> VofOpenFoamCase:
     settings = {
-        "boundary": derive_multiphase_conditions(state(0.30), hydraulic_diameter_m=0.3048),
+        "boundary": derive_multiphase_conditions(
+            state(0.30), hydraulic_diameter_m=0.3048
+        ),
         "mesh": MeshSpec(kind="pipe", diameter_m=0.3048, length_m=3.0),
         "name": "vof-test",
     }

@@ -236,12 +236,18 @@ def derive_multiphase_conditions(
         )
 
     assumptions = [
-        ("Phase properties, fractions and interfacial tension come from one NeqSim "
-        "flash at the inlet condition; they change along the geometry."),
-        ("Mixture density and viscosity use the no-slip (homogeneous) volume-fraction "
-        "average, so slip between the phases is not represented at the inlet."),
-        ("The maximum stable droplet follows the Hinze turbulent break-up correlation "
-        "and is an order-of-magnitude estimate, not a measured distribution."),
+        (
+            "Phase properties, fractions and interfacial tension come from one NeqSim "
+            "flash at the inlet condition; they change along the geometry."
+        ),
+        (
+            "Mixture density and viscosity use the no-slip (homogeneous) volume-fraction "
+            "average, so slip between the phases is not represented at the inlet."
+        ),
+        (
+            "The maximum stable droplet follows the Hinze turbulent break-up correlation "
+            "and is an order-of-magnitude estimate, not a measured distribution."
+        ),
     ]
     if flow_regime is None:
         assumptions.append(
@@ -285,23 +291,29 @@ def _recommend_model(
         return (
             "vof",
             "incompressibleVoF",
-            (f"A {regime} regime has a large-scale interface, which volume of fluid "
-            "resolves directly."),
+            (
+                f"A {regime} regime has a large-scale interface, which volume of fluid "
+                "resolves directly."
+            ),
         )
     if regime in {"mist", "dispersed", "bubble"}:
         if dispersed_fraction <= _DILUTE_FRACTION or stokes < _TRACER_STOKES:
             return (
                 "lagrangian",
                 "incompressibleDenseParticleFluid",
-                (f"A {regime} regime at {100.0 * dispersed_fraction:.2f} % dispersed "
-                "volume is dilute; parcels on a carrier solve are cheaper and more "
-                "accurate than resolving every interface."),
+                (
+                    f"A {regime} regime at {100.0 * dispersed_fraction:.2f} % dispersed "
+                    "volume is dilute; parcels on a carrier solve are cheaper and more "
+                    "accurate than resolving every interface."
+                ),
             )
         return (
             "euler_euler",
             "multiphaseEuler",
-            (f"A {regime} regime at {100.0 * dispersed_fraction:.1f} % dispersed volume "
-            "is too dense for parcels and has no resolvable interface."),
+            (
+                f"A {regime} regime at {100.0 * dispersed_fraction:.1f} % dispersed volume "
+                "is too dense for parcels and has no resolvable interface."
+            ),
         )
     if regime == "annular":
         return (
@@ -314,21 +326,27 @@ def _recommend_model(
         return (
             "vof",
             "incompressibleVoF",
-            (f"Dispersed volume fraction {100.0 * dispersed_fraction:.1f} % is large "
-            "enough that the interface is a resolvable feature."),
+            (
+                f"Dispersed volume fraction {100.0 * dispersed_fraction:.1f} % is large "
+                "enough that the interface is a resolvable feature."
+            ),
         )
     if dispersed_fraction <= _DILUTE_FRACTION or stokes < _TRACER_STOKES:
         return (
             "lagrangian",
             "incompressibleDenseParticleFluid",
-            (f"Dispersed volume fraction {100.0 * dispersed_fraction:.2f} % with Stokes "
-            f"number {stokes:.3g} is dilute and largely follows the carrier flow."),
+            (
+                f"Dispersed volume fraction {100.0 * dispersed_fraction:.2f} % with Stokes "
+                f"number {stokes:.3g} is dilute and largely follows the carrier flow."
+            ),
         )
     return (
         "euler_euler",
         "multiphaseEuler",
-        (f"Dispersed volume fraction {100.0 * dispersed_fraction:.1f} % sits between the "
-        "dilute and interface-resolving limits."),
+        (
+            f"Dispersed volume fraction {100.0 * dispersed_fraction:.1f} % sits between the "
+            "dilute and interface-resolving limits."
+        ),
     )
 
 

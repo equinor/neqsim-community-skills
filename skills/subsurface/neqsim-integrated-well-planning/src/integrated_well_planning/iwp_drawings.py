@@ -923,7 +923,11 @@ def barrier_schematic_sheet(
                 ),
                 fontweight="bold",
                 arrowprops={
-                    "arrowstyle": "-", "lw": 0.5, "color": PALETTE["muted"], "shrinkA": 0, "shrinkB": 4
+                    "arrowstyle": "-",
+                    "lw": 0.5,
+                    "color": PALETTE["muted"],
+                    "shrinkA": 0,
+                    "shrinkB": 4,
                 },
                 zorder=7,
             )

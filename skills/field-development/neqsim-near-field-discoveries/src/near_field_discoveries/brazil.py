@@ -394,12 +394,14 @@ def discovery_candidates(
             if running:
                 stage, note = (
                     "in_clarification",
-                    "Inside discovery-evaluation plan {} running to {}.".format(pp.get("NOME_PAD"), end.isoformat()),
+                    "Inside discovery-evaluation plan {} running to {}.".format(
+                        pp.get("NOME_PAD"), end.isoformat()
+                    ),
                 )
             else:
                 stage = "unknown"
-                note = (
-                    "Inside evaluation plan {} that ended {}; the outcome is not in the public layers.".format(pp.get("NOME_PAD"), end.isoformat() if end else "(no end date)")
+                note = "Inside evaluation plan {} that ended {}; the outcome is not in the public layers.".format(
+                    pp.get("NOME_PAD"), end.isoformat() if end else "(no end date)"
                 )
         blk = next(
             ((f, r) for f, r in block_feats if point_in_rings(lon, lat, r)), None

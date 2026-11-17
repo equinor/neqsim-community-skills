@@ -304,9 +304,7 @@ def update_correlation(
         f_ref = new.f_max
         a, b = previous.predict(f_ref), new.predict(f_ref)
         if previous.model != new.model:
-            new.warnings.append(
-                f"model changed from {previous.model} to {new.model}"
-            )
+            new.warnings.append(f"model changed from {previous.model} to {new.model}")
         if a > 0 and abs(b - a) / a > 0.25:
             new.warnings.append(
                 f"prediction at f_sw={f_ref:.2f} moved {100 * (b - a) / a:.0f} percent"

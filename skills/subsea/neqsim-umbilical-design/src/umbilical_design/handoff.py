@@ -245,7 +245,9 @@ def findings(result: DesignResult) -> list[str]:
     for l in slow:
         out.append(
             "Hydraulic line '{}' needs {:.0f} min for 90 % of a pressure step at the subsea end (valve response time "
-            "requirement must be checked against the control-system specification).".format(l["name"], l["time90PercentS"] / 60.0)
+            "requirement must be checked against the control-system specification).".format(
+                l["name"], l["time90PercentS"] / 60.0
+            )
         )
     heavy = [
         l
@@ -269,16 +271,22 @@ def findings(result: DesignResult) -> list[str]:
     for l in slow_change:
         out.append(
             "Line '{}' needs {:.0f} h to displace its {:.0f} L volume at the design flow; check the fluid changeout and "
-            "start-up time against the operating requirement.".format(l["name"], l["displacementTimeHours"], l["fillVolumeLitres"])
+            "start-up time against the operating requirement.".format(
+                l["name"], l["displacementTimeHours"], l["fillVolumeLitres"]
+            )
         )
     if result.data["calculatedResults"].get("weightRatio", 99.0) < 1.2:
         out.append(
-            "Weight ratio {:.2f} is low; check on-bottom stability and handling.".format(result.data["calculatedResults"]["weightRatio"])
+            "Weight ratio {:.2f} is low; check on-bottom stability and handling.".format(
+                result.data["calculatedResults"]["weightRatio"]
+            )
         )
     pt = result.data.get("powerTransmission")
     if pt and abs(pt["voltageDropPercent"]) > 10.0:
         out.append(
-            "Power cable voltage drop {:.1f} % is large; check conductor size and transmission voltage.".format(pt["voltageDropPercent"])
+            "Power cable voltage drop {:.1f} % is large; check conductor size and transmission voltage.".format(
+                pt["voltageDropPercent"]
+            )
         )
     return out
 
@@ -318,7 +326,9 @@ def write_handoff(
     lines.append("|---|---|")
     for key, ok in result.checks.items():
         lines.append(
-            "| {} | {} |".format(CHECK_LABELS.get(key, key), "PASS" if ok else "**FAIL**")
+            "| {} | {} |".format(
+                CHECK_LABELS.get(key, key), "PASS" if ok else "**FAIL**"
+            )
         )
     lines.append("")
     lines.append("## 2. Figures and captions")
@@ -347,7 +357,9 @@ def write_handoff(
             "| Length | {:.0f} m | {} |".format(spec.length_m, spec.status("length"))
         )
         lines.append(
-            "| Water depth | {:.0f} m | {} |".format(spec.water_depth_m, spec.status("water_depth"))
+            "| Water depth | {:.0f} m | {} |".format(
+                spec.water_depth_m, spec.status("water_depth")
+            )
         )
         for l in spec.lines:
             lines.append(

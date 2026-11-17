@@ -488,7 +488,9 @@ def normalize(
     missing = [k for k in _REQUIRED[family] if k not in idx]
     if missing:
         raise KeyError(
-            "ANP {} file lacks required column(s): {}".format(family, ", ".join(missing))
+            "ANP {} file lacks required column(s): {}".format(
+                family, ", ".join(missing)
+            )
         )
     comp_idx = _composition_index(headers) if family == "well_monthly_rates" else {}
     out: list[dict[str, Any]] = []

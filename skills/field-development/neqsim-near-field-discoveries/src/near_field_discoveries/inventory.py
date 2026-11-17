@@ -424,7 +424,9 @@ def to_markdown(inv: Inventory, max_rows: int = 40) -> str:
     lines = [
         "# Near-field discoveries around {}".format(inv.target.get("name")),
         "",
-        "Target {:.4f} N, {:.4f} E; radius {:.0f} km; analysis date {}.".format(inv.target["lat"], inv.target["lon"], inv.radius_km, inv.as_of),
+        "Target {:.4f} N, {:.4f} E; radius {:.0f} km; analysis date {}.".format(
+            inv.target["lat"], inv.target["lon"], inv.radius_km, inv.as_of
+        ),
         "",
         "| Stage | Count | Sum oe (MSm3) | Without volume | Nearest |",
         "|---|---|---|---|---|",
@@ -448,20 +450,22 @@ def to_markdown(inv: Inventory, max_rows: int = 40) -> str:
     ]
     for row in inv.table()[:max_rows]:
         lines.append(
-            "| {} | {} | {} | {} | {} | {} | {} | {} | {} |".format(*tuple(
-                "" if row[k] is None else row[k]
-                for k in (
-                    "name",
-                    "kind",
-                    "stage_label",
-                    "hc_type",
-                    "operator",
-                    "distance_km",
-                    "bearing",
-                    "oe_msm3",
-                    "nearest_host",
+            "| {} | {} | {} | {} | {} | {} | {} | {} | {} |".format(
+                *tuple(
+                    "" if row[k] is None else row[k]
+                    for k in (
+                        "name",
+                        "kind",
+                        "stage_label",
+                        "hc_type",
+                        "operator",
+                        "distance_km",
+                        "bearing",
+                        "oe_msm3",
+                        "nearest_host",
+                    )
                 )
-            ))
+            )
         )
     clusters = [c for c in area_clusters(inv.records) if len(c["members"]) > 1]
     if clusters:

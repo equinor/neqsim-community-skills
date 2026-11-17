@@ -479,9 +479,7 @@ def lifecycle_tubing_matrix(
     rows: list[dict[str, Any]] = []
     for st in states:
         rho = float(st.get("fluid_density_kg_m3", 300.0))
-        (
-            math.pi / 4.0 * ((dims["od_in"] * IN) ** 2 - (dims["id_in"] * IN) ** 2)
-        )
+        (math.pi / 4.0 * ((dims["od_in"] * IN) ** 2 - (dims["id_in"] * IN) ** 2))
         a_in = math.pi / 4.0 * (dims["id_in"] * IN) ** 2
         buoyant_n = max(0.0, (w_kg_m - rho * a_in - 0.0) * G * pack_tvd)
         for loc, key, z in (("tree", "top", 0.0), ("packer", "packer", pack_tvd)):

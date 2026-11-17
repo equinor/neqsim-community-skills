@@ -240,7 +240,12 @@ def risk_matrix(
                     "",
                     xy=(x, y),
                     xytext=(x0, y0),
-                    arrowprops={"arrowstyle": "->", "color": "0.25", "lw": 0.6, "alpha": 0.7},
+                    arrowprops={
+                        "arrowstyle": "->",
+                        "color": "0.25",
+                        "lw": 0.6,
+                        "alpha": 0.7,
+                    },
                     zorder=3,
                 )
             ax.add_patch(

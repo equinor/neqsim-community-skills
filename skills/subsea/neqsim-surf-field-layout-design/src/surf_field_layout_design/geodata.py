@@ -150,7 +150,9 @@ class DataRequest:
 def _source(key: str) -> OpenDataSource:
     if key not in OPEN_DATA_SOURCES:
         raise ValueError(
-            "unknown source {!r}; known sources are {}".format(key, ", ".join(sorted(OPEN_DATA_SOURCES)))
+            "unknown source {!r}; known sources are {}".format(
+                key, ", ".join(sorted(OPEN_DATA_SOURCES))
+            )
         )
     return OPEN_DATA_SOURCES[key]
 

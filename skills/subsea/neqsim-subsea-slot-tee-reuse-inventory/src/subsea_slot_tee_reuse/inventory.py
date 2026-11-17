@@ -165,10 +165,16 @@ def validate_inventory(inv, as_of_year=None):
                 add(
                     "warning",
                     iid,
-                    "free slots are {}, not documented: do not present them as free".format(it["verification"]),
+                    "free slots are {}, not documented: do not present them as free".format(
+                        it["verification"]
+                    ),
                 )
         if it["status"] in ("spare", "abandoned") and it["verification"] == "unknown":
-            add("warning", iid, "{} claimed without any documentation".format(it["status"]))
+            add(
+                "warning",
+                iid,
+                "{} claimed without any documentation".format(it["status"]),
+            )
         if it["kind"] in LINE_KINDS and it["status"] != "planned":
             if it["size_in"] is None:
                 add(

@@ -513,9 +513,7 @@ def design_surf_layout(
                 production_centres if leg == 0 else list(reversed(production_centres))
             )
             for centre in ordered:
-                plem = next(
-                    item for item in nodes if item.tag == f"{centre.tag}-PLEM"
-                )
+                plem = next(item for item in nodes if item.tag == f"{centre.tag}-PLEM")
                 add_line(
                     f"FL-PROD-{label}-{centre.tag}",
                     "production",
@@ -706,10 +704,14 @@ def design_surf_layout(
     assumptions = [
         "Screening layout only: straight-line routes, no obstacle avoidance, no crossing design.",
         "Drill centres are spaced evenly over 70 % of the reservoir length on the field axis.",
-        ("Water injectors are offset down one flank and gas injectors up the other by the "
-        "supplied offset; no sweep or voidage study lies behind that choice."),
-        ("Line sizes are the smallest standard size that meets the velocity target and the "
-        "API RP 14E erosional limit at the supplied design rate and density."),
+        (
+            "Water injectors are offset down one flank and gas injectors up the other by the "
+            "supplied offset; no sweep or voidage study lies behind that choice."
+        ),
+        (
+            "Line sizes are the smallest standard size that meets the velocity target and the "
+            "API RP 14E erosional limit at the supplied design rate and density."
+        ),
         "Wall thickness follows a fixed diameter-to-thickness ratio and is not a pressure design.",
         "Riser length is the straight riser-base-to-host distance with a lazy-wave allowance.",
         "No on-bottom stability, free-span, expansion, mooring or installation analysis.",

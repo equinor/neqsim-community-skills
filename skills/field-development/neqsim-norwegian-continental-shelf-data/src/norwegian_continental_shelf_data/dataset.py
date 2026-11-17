@@ -156,7 +156,9 @@ class NcsDataset:
         for row in self.raw.get("fields", []):
             name = str(row["name"])
             reserves = {
-                "recoverable_oe_mill_sm3": _opt_float(row.get("recoverable_oe_mill_sm3")),
+                "recoverable_oe_mill_sm3": _opt_float(
+                    row.get("recoverable_oe_mill_sm3")
+                ),
                 "remaining_oe_mill_sm3": _opt_float(row.get("remaining_oe_mill_sm3")),
                 "cumulative_produced_oe_mill_sm3": _opt_float(
                     row.get("cumulative_produced_oe_mill_sm3")

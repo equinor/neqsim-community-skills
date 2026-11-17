@@ -95,7 +95,13 @@ truth = (
         wells,
         rates,
         pd.DataFrame(
-            {"date": [idx[0]], "tank": ["A"], "kind": ["p_res"], "value": [0.0], "sigma": [1.0]}
+            {
+                "date": [idx[0]],
+                "tank": ["A"],
+                "kind": ["p_res"],
+                "value": [0.0],
+                "sigma": [1.0],
+            }
         ),
         [],
     )

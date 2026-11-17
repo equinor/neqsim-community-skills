@@ -951,7 +951,12 @@ def barrier_schematic(spec: dict[str, object], path: Path) -> Path:
             fontsize=7.0,
             va="center",
             ha="left",
-            bbox={"fc": "white", "ec": cols.get(p["role"], "#999"), "lw": 1.0, "pad": 1.5},
+            bbox={
+                "fc": "white",
+                "ec": cols.get(p["role"], "#999"),
+                "lw": 1.0,
+                "pad": 1.5,
+            },
         )
         ax.plot(
             [w, wmax + 17.5],

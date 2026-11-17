@@ -117,11 +117,11 @@ def armor_wire_count(
     layer_diameter_mm: float, wire_diameter_mm: float, lay_angle_deg: float
 ) -> int:
     return math.floor(
-            math.pi
-            * layer_diameter_mm
-            * math.cos(math.radians(lay_angle_deg))
-            / wire_diameter_mm
-        )
+        math.pi
+        * layer_diameter_mm
+        * math.cos(math.radians(lay_angle_deg))
+        / wire_diameter_mm
+    )
 
 
 def cross_section_layout(result: DesignResult) -> dict[str, Any]:

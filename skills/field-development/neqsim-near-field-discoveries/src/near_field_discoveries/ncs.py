@@ -279,7 +279,9 @@ def discovery_records(
             "discovery_well": r.get("wlbName"),
             "field": r.get("fldName"),
             "included_in_discovery": r.get("dscResInclInDiscoveryName"),
-            "owner": "{} {}".format(r.get("dscOwnerKind") or "", r.get("dscOwnerName") or ""),
+            "owner": "{} {}".format(
+                r.get("dscOwnerKind") or "", r.get("dscOwnerName") or ""
+            ),
             "area": r.get("nmaName"),
             "main_area": r.get("ngpName"),
         }

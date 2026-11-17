@@ -129,8 +129,10 @@ class FemCouplingModel:
 
         time_step = None
         assumptions = [
-            (f"At least {minimum} element(s) across the layer, because order "
-            f"{element_order} elements cannot represent curvature with fewer."),
+            (
+                f"At least {minimum} element(s) across the layer, because order "
+                f"{element_order} elements cannot represent curvature with fewer."
+            ),
         ]
         if thermal_diffusivity_m2_per_s is not None:
             _require_positive(
@@ -311,12 +313,18 @@ class FemCouplingModel:
             boundary_placement_ok=boundary_placement_ok,
             time_resolution_ok=time_resolution_ok,
             assumptions=(
-                ("Screening quality gate for reusing a finite-element study, not a "
-                "verification and validation review."),
-                ("A 'usable_with_caution' verdict means derived factors must carry an "
-                "explicit uncertainty band in the receiving engineering model."),
-                ("The gate checks numerics, not physics: a converged solve of the wrong "
-                "boundary condition passes every one of these checks."),
+                (
+                    "Screening quality gate for reusing a finite-element study, not a "
+                    "verification and validation review."
+                ),
+                (
+                    "A 'usable_with_caution' verdict means derived factors must carry an "
+                    "explicit uncertainty band in the receiving engineering model."
+                ),
+                (
+                    "The gate checks numerics, not physics: a converged solve of the wrong "
+                    "boundary condition passes every one of these checks."
+                ),
             ),
         )
 
@@ -372,10 +380,14 @@ class FemCouplingModel:
                 hot_spot = peak_local_flux_w_per_m2 / mean_flux
 
         assumptions = [
-            ("The U-value is referred to the area supplied; a U-value quoted on the "
-            "outside diameter is not the same number as one quoted on the inside."),
-            ("The finite-element heat flow is for the modelled length only; extending "
-            "it along a line assumes the geometry and the boundary conditions repeat."),
+            (
+                "The U-value is referred to the area supplied; a U-value quoted on the "
+                "outside diameter is not the same number as one quoted on the inside."
+            ),
+            (
+                "The finite-element heat flow is for the modelled length only; extending "
+                "it along a line assumes the geometry and the boundary conditions repeat."
+            ),
         ]
         if multiplier is not None:
             assumptions.append(

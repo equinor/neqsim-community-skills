@@ -53,16 +53,20 @@ _SEED = [
         "STD-001",
         "Well barrier philosophy, barrier elements, acceptance criteria and verification (drilling, completion, production, abandonment)",
         "NORSOK D-010 (or the jurisdiction's equivalent well-integrity standard)",
-        ("Barrier schematics per well state; verification evidence per element; "
-        "independent review of element acceptance tables"),
+        (
+            "Barrier schematics per well state; verification evidence per element; "
+            "independent review of element acceptance tables"
+        ),
         "well_integrity",
     ),
     (
         "STD-002",
         "Well integrity management in the operational phase",
         "ISO 16530-1 (or successor)",
-        ("Operating-envelope table, monitoring plan, "
-        "annulus pressure limits supplied by the operator"),
+        (
+            "Operating-envelope table, monitoring plan, "
+            "annulus pressure limits supplied by the operator"
+        ),
         "well_integrity",
     ),
     (
@@ -111,7 +115,10 @@ _SEED = [
         "STD-009",
         "Regulatory and operator well requirements for the jurisdiction (permits, DPR/well programme, abandonment)",
         "Jurisdiction regulations and company requirements (to be identified at study start)",
-        ("Requirements lookup by the study lead; record the " "document and the edition"),
+        (
+            "Requirements lookup by the study lead; record the "
+            "document and the edition"
+        ),
         "operations",
     ),
     (

@@ -429,8 +429,10 @@ class FmirrRegister:
             "assumptions": [
                 "Consequence is rated for the system as specified, without safeguards not yet adopted.",
                 "Probability classes are qualitative until test or experience evidence is available.",
-                ("Medium and High risk failure modes are critical and must be covered by the "
-                "qualification plan; Low risk modes stay in the register."),
+                (
+                    "Medium and High risk failure modes are critical and must be covered by the "
+                    "qualification plan; Low risk modes stay in the register."
+                ),
                 "Scales and matrix are illustrative defaults; adapt them to the case.",
                 "The FMIRR is repeated as qualification evidence arrives.",
             ],

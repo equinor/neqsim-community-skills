@@ -437,7 +437,9 @@ def test_lifecycle_tubing_matrix_reports_burst_collapse_and_triaxial(java, gc_mo
     ]
     rows = lifecycle_tubing_matrix(b, states)
     assert len(rows) == 4 and {r["location"] for r in rows} == {"tree", "packer"}
-    evac = next(r for r in rows if r["state"] == "evacuated" and r["location"] == "packer")
+    evac = next(
+        r for r in rows if r["state"] == "evacuated" and r["location"] == "packer"
+    )
     prod = next(
         r for r in rows if r["state"] == "production" and r["location"] == "packer"
     )

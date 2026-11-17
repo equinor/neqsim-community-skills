@@ -207,7 +207,12 @@ def plot_near_field(
                 textcoords="offset points",
                 fontsize=7,
                 zorder=9,
-                bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.75},
+                bbox={
+                    "boxstyle": "round,pad=0.15",
+                    "fc": "white",
+                    "ec": "none",
+                    "alpha": 0.75,
+                },
             )
             labelled += 1
 
@@ -327,7 +332,9 @@ def plot_near_field(
     ax.grid(True, lw=0.3, alpha=0.4)
     ax.set_title(
         title
-        or "Near-field discoveries around {} ({:.0f} km)".format(inv.target.get("name"), radius),
+        or "Near-field discoveries around {} ({:.0f} km)".format(
+            inv.target.get("name"), radius
+        ),
         fontsize=12,
     )
     note = (

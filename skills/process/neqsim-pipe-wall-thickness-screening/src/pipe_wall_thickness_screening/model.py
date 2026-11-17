@@ -70,8 +70,10 @@ class PipeWallThicknessModel:
             neqsim_available=find_spec("neqsim") is not None,
             assumptions=(
                 "Educational screening placeholder only.",
-                ("Pressure-design thickness uses the public ASME B31.3 form "
-                "t = P D / (2 (S E W + P Y)) with W = 1.0."),
+                (
+                    "Pressure-design thickness uses the public ASME B31.3 form "
+                    "t = P D / (2 (S E W + P Y)) with W = 1.0."
+                ),
                 "Required thickness adds a configurable corrosion and mechanical allowance.",
                 "No mill tolerance, bend thinning, external pressure, or combined stresses are included.",
                 "Move to validated NeqSim mechanical design (PipelineMechanicalDesign) and qualified review.",

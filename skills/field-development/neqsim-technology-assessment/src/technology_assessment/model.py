@@ -599,12 +599,16 @@ class TechnologyAssessment:
             "flags": flags,
             "data_gaps": data_gaps,
             "assumptions": [
-                ("Novelty categories and TRLs are expert judgement; only documented, traceable and "
-                "accessible evidence may reduce novelty."),
+                (
+                    "Novelty categories and TRLs are expert judgement; only documented, traceable and "
+                    "accessible evidence may reduce novelty."
+                ),
                 "Novelty categorisation ignores consequence of failure; use the FMIRR to rank risk.",
                 "Proven (category 1) elements still need verification to the applicable standard.",
-                ("Educational screening; human review by a qualified technology-qualification panel "
-                "is required."),
+                (
+                    "Educational screening; human review by a qualified technology-qualification panel "
+                    "is required."
+                ),
             ],
         }
 

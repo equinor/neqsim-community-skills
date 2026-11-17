@@ -130,9 +130,7 @@ def activity_basis(
                 "design_questions": list(DESIGN_QUESTIONS.get(topic, [])),
             }
             if not rows:
-                gap = (
-                    f"No {TOPICS[topic].lower()} instrument is registered for {key} ({activity}): research the authority source before design."
-                )
+                gap = f"No {TOPICS[topic].lower()} instrument is registered for {key} ({activity}): research the authority source before design."
                 block["coverage_gaps"].append(gap)
         block["activities"][activity] = topics
     unverified = sum(

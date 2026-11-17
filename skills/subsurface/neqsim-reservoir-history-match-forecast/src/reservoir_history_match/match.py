@@ -267,5 +267,11 @@ def fit_deliverability(
                 if len(gg)
                 else float("nan")
             )
-        out[w] = {"a": float(a), "c": float(c), "wgr": wgr, "n": len(g), "r2": float(r2)}
+        out[w] = {
+            "a": float(a),
+            "c": float(c),
+            "wgr": wgr,
+            "n": len(g),
+            "r2": float(r2),
+        }
     return out

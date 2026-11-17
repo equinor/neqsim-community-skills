@@ -44,7 +44,9 @@ def main() -> None:
     )
     history = well_history(records, "7-PPT-50HP-RJS")
     basis = fluid_basis(history[0])
-    print("methane mole fraction {:.3f}".format(basis["gas"]["mole_fraction"]["methane"]))
+    print(
+        "methane mole fraction {:.3f}".format(basis["gas"]["mole_fraction"]["methane"])
+    )
     for warning in basis["warnings"][:2]:
         print("warning:", warning)
 

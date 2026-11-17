@@ -70,12 +70,18 @@ class DryGasSealModel:
                 "Educational screening placeholder only.",
                 "Seal gas supply demand is leakage x seal count x a supply margin.",
                 "Separation (secondary) gas supply scales with the seal count.",
-                ("Condensation margin is seal cavity temperature minus the "
-                "hydrocarbon dew point at the seal/vent reference condition."),
-                ("A small or negative condensation margin flags retrograde "
-                "condensation risk per API 692 seal-gas conditioning intent."),
-                ("Move to validated NeqSim dry gas seal analysis and qualified "
-                "rotating-equipment review for real seal system design."),
+                (
+                    "Condensation margin is seal cavity temperature minus the "
+                    "hydrocarbon dew point at the seal/vent reference condition."
+                ),
+                (
+                    "A small or negative condensation margin flags retrograde "
+                    "condensation risk per API 692 seal-gas conditioning intent."
+                ),
+                (
+                    "Move to validated NeqSim dry gas seal analysis and qualified "
+                    "rotating-equipment review for real seal system design."
+                ),
             ),
         )
 

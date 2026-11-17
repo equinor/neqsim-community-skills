@@ -497,6 +497,7 @@ class FemCase:
         try:
             completed = subprocess.run(
                 [sys.executable, "case.py"],
+                check=False,
                 cwd=str(target),
                 capture_output=True,
                 text=True,

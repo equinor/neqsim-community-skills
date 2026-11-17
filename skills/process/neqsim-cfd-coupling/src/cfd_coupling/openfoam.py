@@ -1727,6 +1727,7 @@ def _run_foam_command(
     try:
         completed = subprocess.run(
             argv,
+            check=False,
             cwd=str(case_dir),
             capture_output=True,
             text=True,

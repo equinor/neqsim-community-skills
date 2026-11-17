@@ -562,6 +562,7 @@ class FemMeshSpec:
                         "-o",
                         msh_path.name,
                     ],
+                    check=False,
                     cwd=str(target),
                     capture_output=True,
                     text=True,

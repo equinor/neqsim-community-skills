@@ -13,11 +13,14 @@ model on stratified flow answers the wrong question.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from math import isfinite, pi, sqrt
 from typing import Any
 
 from .boundary import C_MU, FluidState
+
+_LOGGER = logging.getLogger(__name__)
 
 GRAVITY_M_PER_S2 = 9.80665
 
@@ -97,7 +100,10 @@ def multiphase_state_from_neqsim(
     try:
         system.initProperties()
     except Exception:  # pragma: no cover - depends on the NeqSim build in use
-        pass
+        _LOGGER.warning(
+            "NeqSim property initialization failed; reading existing multiphase properties",
+            exc_info=True,
+        )
 
     phase_count = int(system.getNumberOfPhases())
     if phase_count < 2:

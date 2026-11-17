@@ -1151,7 +1151,7 @@ skills:
 
   - name: neqsim-opm-open-reservoir-decks
     version: "0.1.0"
-    description: "Open, login-free reservoir benchmark decks from the OPM opm-data repository (Norne full field, SPE1/3/5/9/10 comparative solution projects, Sleipner CO2) with per-case licence, size guard, deck summary (grid, wells, units, PVT keywords) and PVTO/PVTG/PVDG/SWOF table extraction. USE WHEN: a NeqSim reservoir, PVT, material-balance or reservoir-to-facility task needs a real published reference case, a black-oil table to compare against a NeqSim fluid, or a realistic well/schedule example that is not company data."
+    description: "Open, login-free reservoir benchmark decks from the OPM opm-data repository (Norne full field, SPE1/3/5/9/10 comparative solution projects, Sleipner CO2) with per-case licence, size guard, deck summary and PVTO/PVTG/PVDG/SWOF table extraction. USE WHEN: a NeqSim reservoir, PVT, material-balance or reservoir-to-facility task needs a real published reference case, a black-oil table to compare against a NeqSim fluid, or a realistic well/schedule example that is not company data."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/subsurface/neqsim-opm-open-reservoir-decks/SKILL.md"

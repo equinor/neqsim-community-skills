@@ -14,7 +14,7 @@ dependencies = []
 
 [project.optional-dependencies]
 test = [
-  "pytest>=7.4",
+  "pytest>=8.0",
   "PyYAML>=6.0",
   "jsonschema>=4.0",
   "setuptools>=68",
@@ -31,9 +31,11 @@ test = [
   "pyproj>=3.6",
   "pythonnet>=3.0.3",
 ]
+[dependency-groups]
 dev = [
-  "pytest>=7.4",
-  "ruff>=0.5",
+  "pytest>=8.0",
+  "black>=25.1",
+  "pre-commit>=4.0",
   "PyYAML>=6.0",
   "jsonschema>=4.0",
   "setuptools>=68",
@@ -49,18 +51,15 @@ dev = [
   "completor>=1.6",
   "pyproj>=3.6",
   "pythonnet>=3.0.3",
+  "ruff>=0.5",
 ]
 
 # Packages are discovered by setup.py from every skills/<category>/<skill>/src
 # so `pip install -e .` makes all skill modules importable in one step.
 
 [tool.pytest.ini_options]
-minversion = "7.0"
-addopts = "-ra"
+minversion = "8.0"
+addopts = "-q --import-mode=importlib"
 testpaths = ["skills"]
 # Per-skill src directories are added to sys.path by the root conftest.py,
 # which auto-discovers every skills/<category>/<skill>/src folder.
-
-[tool.ruff]
-line-length = 100
-target-version = "py310"

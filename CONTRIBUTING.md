@@ -50,19 +50,40 @@ skill-name/
 
 ## Testing Requirements
 
-Run the full repository tests before opening a pull request:
+Use Python 3.11 or newer and uv for repository development. From the
+repository root, install the locked environment and enable the local Git hook:
 
 ```bash
-python -m pip install -e ".[test]"
-python -m pytest
+uv sync --locked
+uv run pre-commit install
 ```
 
-For a single skill, run its example and tests:
+Run the checks before opening a pull request:
 
 ```bash
-python -m pip install -e skills/<domain>/<skill-name>
-python skills/<domain>/<skill-name>/examples/<example>.py
-python -m pytest skills/<domain>/<skill-name>/tests
+uv run pre-commit run
+uv run pytest
+```
+
+Pre-commit runs Ruff lint checks and Black formatting on staged Python files,
+alongside the skill metadata checks. Fix Ruff findings before committing; do not
+disable rules or add blanket suppressions to make checks pass. Black remains the
+formatter; Ruff is used for linting, not formatting.
+
+Pre-commit checks staged files locally; CI checks files changed in the pull
+request or push. Avoid `--all-files` until the existing Python formatting
+baseline has been normalized.
+
+Add or update root development dependencies with
+`uv add --group dev <package>` and commit the resulting `uv.lock` changes.
+Skill users can still install individual packages with pip.
+
+After `uv sync --locked`, the repository's skill modules are available in the
+development environment. For a single skill, run its example and tests:
+
+```bash
+uv run python skills/<domain>/<skill-name>/examples/<example>.py
+uv run pytest skills/<domain>/<skill-name>/tests
 ```
 
 Tests should verify normal behavior, boundary conditions, invalid inputs, and documented warnings or flags.
@@ -113,7 +134,7 @@ Before requesting review, confirm that:
 - [ ] The skill appears in `community-skills.yaml` with the canonical `neqsim-*` ID.
 - [ ] `SKILL.md` has valid YAML frontmatter and all required sections.
 - [ ] Examples run with public data.
-- [ ] Tests pass with Python 3.10 or newer.
+- [ ] Tests pass with Python 3.11 or newer.
 - [ ] Optional NeqSim integration has a fallback when NeqSim is not installed.
 - [ ] The contribution contains no confidential or company-specific information.
 - [ ] Limitations are explicit enough to prevent production misuse.

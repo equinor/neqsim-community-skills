@@ -7,14 +7,19 @@ Validation for community skills should be lightweight, public, and reproducible.
 Run repository tests:
 
 ```bash
-python -m pip install -e ".[test]"
-python -m pytest
+uv sync --locked
+uv run pre-commit run
+uv run pytest
 ```
+
+Pre-commit checks staged files locally; CI checks files changed in the pull
+request or push. Avoid `--all-files` until the existing Python formatting
+baseline has been normalized.
 
 Run each changed skill example:
 
 ```bash
-python skills/<domain>/<skill-name>/examples/<example>.py
+uv run python skills/<domain>/<skill-name>/examples/<example>.py
 ```
 
 ## What to Validate

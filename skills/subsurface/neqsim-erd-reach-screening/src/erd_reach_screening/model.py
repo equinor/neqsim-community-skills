@@ -6,8 +6,8 @@ Educational, public-method screening only. Units: metres, kilonewtons, kilonewto
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import List, Optional, Sequence, Tuple
 
 G = 9.81
 
@@ -62,7 +62,7 @@ class ReachResult:
 
 def build_hold_profile(
     tvd: float, departure: float, env: WellEnvironment = WellEnvironment()
-) -> Optional[Tuple[float, float, float]]:
+) -> tuple[float, float, float] | None:
     """Return (hold inclination deg, measured depth m, build radius m) for a build-and-hold path, or None if unreachable."""
     if tvd <= env.kop_m or departure < 0.0:
         raise ValueError(
@@ -100,7 +100,7 @@ def survey(
     departure: float,
     env: WellEnvironment = WellEnvironment(),
     step: float = 10.0,
-) -> Optional[Tuple[List[float], List[float], float]]:
+) -> tuple[list[float], list[float], float] | None:
     """Stations (md list, inclination list in degrees) and the total measured depth."""
     profile = build_hold_profile(tvd, departure, env)
     if profile is None:
@@ -115,7 +115,7 @@ def survey(
     return mds, incs, md_total
 
 
-def _weights(mds: Sequence[float], string: DrillString) -> List[float]:
+def _weights(mds: Sequence[float], string: DrillString) -> list[float]:
     total = mds[-1]
     out = []
     for k in range(1, len(mds)):
@@ -136,9 +136,9 @@ def torque_and_drag(
     string: DrillString,
     env: WellEnvironment,
     mode: str,
-    weights: Optional[Sequence[float]] = None,
+    weights: Sequence[float] | None = None,
     preload_kn: float = 0.0,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """Soft-string load (kN) and surface torque (kNm), integrated from the bit up.
 
     mode: ``pickup``, ``slackoff`` or ``rotate``. ``preload_kn`` is a tension applied at the bit (use it for capstan checks).
@@ -172,7 +172,7 @@ def screen_reach(
     departure: float,
     string: DrillString = DrillString(),
     env: WellEnvironment = WellEnvironment(),
-) -> Optional[ReachResult]:
+) -> ReachResult | None:
     """Torque-and-drag screening of one target. Returns None when the build-and-hold path cannot reach it."""
     s = survey(tvd, departure, env)
     if s is None:
@@ -230,7 +230,7 @@ def reach_limit(
 class Assumptions:
     """Human-readable record of the screening basis."""
 
-    items: List[str] = field(
+    items: list[str] = field(
         default_factory=lambda: [
             "Build-and-hold path, constant build rate from the kick-off point; no azimuth change or drop section.",
             "Johancsik soft-string model with Coulomb friction; tool-joint radius for torque; 10 percent added on bottom.",

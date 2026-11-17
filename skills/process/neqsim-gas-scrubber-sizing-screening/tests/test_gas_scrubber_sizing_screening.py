@@ -1,5 +1,4 @@
 import pytest
-
 from gas_scrubber_sizing_screening import GasScrubberSizingModel
 
 

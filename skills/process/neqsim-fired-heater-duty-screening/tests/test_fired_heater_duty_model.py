@@ -1,5 +1,4 @@
 import pytest
-
 from fired_heater_duty_screening import FiredHeaterDutyModel
 
 

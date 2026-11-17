@@ -14,7 +14,7 @@ The ``warn_utilisation`` threshold is a presentation convention (default 0.9 of 
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .registers import get_path
 
@@ -30,15 +30,15 @@ class EnvelopeRow:
     parameter: str
     condition: str
     unit: str
-    min_limit: Optional[float]
-    max_limit: Optional[float]
+    min_limit: float | None
+    max_limit: float | None
     limit_source: str
     limit_basis: str
     design_margin: str
-    predicted: Optional[float]
+    predicted: float | None
     predicted_source: str
-    margin_to_limit: Optional[float]
-    utilisation: Optional[float]
+    margin_to_limit: float | None
+    utilisation: float | None
     indicative_status: str
     status: str
     action: str
@@ -49,13 +49,13 @@ def evaluate_row(
     parameter: str,
     condition: str,
     unit: str,
-    predicted: Optional[float],
+    predicted: float | None,
     predicted_source: str,
-    min_limit: Optional[float] = None,
-    max_limit: Optional[float] = None,
+    min_limit: float | None = None,
+    max_limit: float | None = None,
     limit_source: str = "",
     limit_basis: str = "NONE",
-    margin_factor: Optional[float] = None,
+    margin_factor: float | None = None,
     margin_source: str = "",
     warn_utilisation: float = 0.9,
 ) -> EnvelopeRow:
@@ -66,7 +66,7 @@ def evaluate_row(
             ``min_limit * margin_factor`` (only applied when a ``margin_source`` is given).
     """
     if limit_basis not in LIMIT_BASES:
-        raise ValueError("limit_basis must be one of {}".format(LIMIT_BASES))
+        raise ValueError(f"limit_basis must be one of {LIMIT_BASES}")
     applied = bool(margin_factor and margin_source)
     eff_max = (
         max_limit / margin_factor if (max_limit is not None and applied) else max_limit
@@ -75,16 +75,16 @@ def evaluate_row(
         min_limit * margin_factor if (min_limit is not None and applied) else min_limit
     )
     margin_txt = (
-        "factor {} ({})".format(margin_factor, margin_source)
+        f"factor {margin_factor} ({margin_source})"
         if applied
         else (
-            "factor {} given without source - IGNORED".format(margin_factor)
+            f"factor {margin_factor} given without source - IGNORED"
             if margin_factor
             else "none supplied"
         )
     )
-    margin: Optional[float] = None
-    util: Optional[float] = None
+    margin: float | None = None
+    util: float | None = None
     ind = "NOT_ASSESSED"
     if predicted is not None and predicted == predicted:
         margins = []
@@ -119,9 +119,7 @@ def evaluate_row(
     elif limit_basis != "APPROVED":
         status, action = (
             "NEEDS_REVIEW",
-            "replace the {} limit by an approved limit; indicative result is {}".format(
-                limit_basis, ind
-            ),
+            f"replace the {limit_basis} limit by an approved limit; indicative result is {ind}",
         )
     else:
         status = ind
@@ -151,7 +149,7 @@ def evaluate_row(
     )
 
 
-def _limits(basis: Dict[str, Any], parameter: str) -> Dict[str, Any]:
+def _limits(basis: dict[str, Any], parameter: str) -> dict[str, Any]:
     for lim in get_path(basis, "limits") or []:
         if lim.get("parameter") == parameter:
             return lim
@@ -159,22 +157,22 @@ def _limits(basis: Dict[str, Any], parameter: str) -> Dict[str, Any]:
 
 
 def build_envelope(
-    basis: Dict[str, Any], results: Dict[str, Any], warn_utilisation: float = 0.9
-) -> List[EnvelopeRow]:
+    basis: dict[str, Any], results: dict[str, Any], warn_utilisation: float = 0.9
+) -> list[EnvelopeRow]:
     """Assemble the envelope rows from the model results using limits supplied in ``basis.limits``."""
-    rows: List[EnvelopeRow] = []
+    rows: list[EnvelopeRow] = []
 
     def add(
         parameter: str,
         condition: str,
         unit: str,
-        predicted: Optional[float],
+        predicted: float | None,
         source: str,
     ) -> None:
         lim = _limits(basis, parameter)
         rows.append(
             evaluate_row(
-                "E{:02d}".format(len(rows) + 1),
+                f"E{len(rows) + 1:02d}",
                 parameter,
                 condition,
                 unit,
@@ -360,7 +358,7 @@ def build_envelope(
     return rows
 
 
-def summarise(rows: List[EnvelopeRow]) -> Dict[str, int]:
+def summarise(rows: list[EnvelopeRow]) -> dict[str, int]:
     """Count rows per status."""
     out = {s: 0 for s in STATUSES}
     for r in rows:
@@ -368,20 +366,18 @@ def summarise(rows: List[EnvelopeRow]) -> Dict[str, int]:
     return out
 
 
-def to_rows(rows: List[EnvelopeRow]) -> List[Dict[str, Any]]:
+def to_rows(rows: list[EnvelopeRow]) -> list[dict[str, Any]]:
     """Rows as dictionaries."""
     return [asdict(r) for r in rows]
 
 
-def to_markdown(rows: List[EnvelopeRow]) -> str:
+def to_markdown(rows: list[EnvelopeRow]) -> str:
     """Render the envelope table as Markdown."""
     head = "| ID | Parameter | Condition | Min | Max | Limit source (basis) | Predicted | Margin | Status | Action |\n|---|---|---|---|---|---|---|---|---|---|\n"
     lines = []
     f = lambda v: (
-        "-"
-        if v is None
-        else ("{:.3g}".format(v) if isinstance(v, (int, float)) else str(v))
-    )  # noqa: E731
+        "-" if v is None else (f"{v:.3g}" if isinstance(v, (int, float)) else str(v))
+    )
     for r in rows:
         lines.append(
             "| {} | {} | {} | {} | {} | {} ({}) | {} | {} | {} | {} |".format(
@@ -395,11 +391,7 @@ def to_markdown(rows: List[EnvelopeRow]) -> str:
                 f(r.predicted),
                 f(r.margin_to_limit),
                 r.status
-                + (
-                    " [{}]".format(r.indicative_status)
-                    if r.status == "NEEDS_REVIEW"
-                    else ""
-                ),
+                + (f" [{r.indicative_status}]" if r.status == "NEEDS_REVIEW" else ""),
                 r.action,
             )
         )

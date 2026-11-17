@@ -8,7 +8,7 @@ import pytest
 
 pytest.importorskip("matplotlib")
 
-from concept_longlist_shortlist import (  # noqa: E402
+from concept_longlist_shortlist import (
     funnel_counts,
     plot_concept_schematic,
     render_screening_figures,

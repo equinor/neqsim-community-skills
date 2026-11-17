@@ -2,7 +2,6 @@ import math
 
 import numpy as np
 import pytest
-
 from well_design_study import (
     CostBasis,
     DesignFactors,
@@ -17,11 +16,11 @@ from well_design_study import (
     StringBasis,
     StringComponent,
     build_and_hold,
+    burst_rating_psi,
     calibration_points,
     check_string,
     circulation,
     collapse_rating_psi,
-    burst_rating_psi,
     envelope,
     erosional_velocity_ms,
     evaluate_plan,

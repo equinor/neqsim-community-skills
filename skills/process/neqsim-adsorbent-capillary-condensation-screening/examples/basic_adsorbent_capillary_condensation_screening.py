@@ -37,7 +37,7 @@ def main():
         )
         print(
             f"{name:32s} {radius:7.2f} {result.onset_relative_saturation:7.3f} "
-            f"{result.max_ppmv:13.0f} {str(result.kelvin_valid):>10}"
+            f"{result.max_ppmv:13.0f} {result.kelvin_valid!s:>10}"
         )
 
     print("\nMicropore volume filling (Dubinin-Radushkevich), beta*E0 = 8 kJ/mol:")

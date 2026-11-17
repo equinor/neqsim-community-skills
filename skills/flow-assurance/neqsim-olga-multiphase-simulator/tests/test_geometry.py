@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from olga_multiphase_simulator.geometry import (
     DiscretizationError,
     discretize_route,

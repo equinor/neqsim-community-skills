@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from reservoir_model_builder import (
     STRATIGRAPHY,
     STRUCTURAL_STYLE,

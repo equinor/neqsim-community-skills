@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import Dict, Iterable, List, Optional
+from collections.abc import Iterable
 
 ACTIVE = {
     "producing",
@@ -18,13 +18,13 @@ ACTIVE = {
 PLANNED = {"planning", "planned", "reserved"}
 
 
-def group_by_surface(wellbores: Iterable[Dict], tol_m: float = 1.0) -> List[Dict]:
+def group_by_surface(wellbores: Iterable[dict], tol_m: float = 1.0) -> list[dict]:
     """Cluster wellbores whose surface (E, N) lie within ``tol_m`` into slots.
 
     Each input dict needs ``name``, ``easting``, ``northing``; optional ``status``, ``parent`` and ``slot``.
     Returns one record per slot with its wellbores and an ``occupied`` flag (any active bore).
     """
-    slots: List[Dict] = []
+    slots: list[dict] = []
     for w in wellbores:
         e, n = float(w["easting"]), float(w["northing"])
         hit = next(
@@ -50,12 +50,12 @@ def group_by_surface(wellbores: Iterable[Dict], tol_m: float = 1.0) -> List[Dict
 
 
 def check_slot(
-    slots: List[Dict],
-    slot: Optional[str] = None,
-    easting: Optional[float] = None,
-    northing: Optional[float] = None,
+    slots: list[dict],
+    slot: str | None = None,
+    easting: float | None = None,
+    northing: float | None = None,
     tol_m: float = 1.0,
-) -> Dict:
+) -> dict:
     """Is the chosen slot free, or does a plan from it have to be a slot-recovery sidetrack?"""
     match = None
     for s in slots:

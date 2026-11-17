@@ -1,5 +1,4 @@
 import pytest
-
 from fluid_quality_check import FluidQualityChecker
 
 

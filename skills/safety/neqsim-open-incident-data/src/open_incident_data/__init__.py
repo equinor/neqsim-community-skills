@@ -22,8 +22,8 @@ from .parse import (
 )
 
 __all__ = [
-    "BseeClient",
     "CAVEATS",
+    "BseeClient",
     "Investigation",
     "RateEstimate",
     "SourceError",

@@ -1,13 +1,16 @@
 import pytest
-
 from integrated_well_planning import (
     barriers,
-    drilling_interfaces as di,
     envelope,
-    examples_data as ed,
     handoff,
     ledger,
     standards,
+)
+from integrated_well_planning import (
+    drilling_interfaces as di,
+)
+from integrated_well_planning import (
+    examples_data as ed,
 )
 from integrated_well_planning.nodal import composite_oil_ipr, solve_nodal
 
@@ -58,7 +61,7 @@ def test_envelope_approved_limits_traffic_lights():
         max_limit=1.0,
         limit_source="datasheet",
         limit_basis="APPROVED",
-    )  # noqa: E731
+    )
     assert (
         mk(0.5).status == "PASS"
         and mk(0.95).status == "WARN"
@@ -309,7 +312,7 @@ def test_composite_ipr_inverse_and_aof():
 
 
 def test_nodal_stable_and_unstable_intersections():
-    ipr = lambda q: 250.0 - q / 20.0  # noqa: E731
+    ipr = lambda q: 250.0 - q / 20.0
     u_vlp = lambda q: 120.0 + 0.00008 * (q - 1500.0) ** 2  # U-shaped outflow
     res = solve_nodal(ipr, u_vlp, 50.0, 5000.0, n_scan=60)
     assert res.status == "STABLE"

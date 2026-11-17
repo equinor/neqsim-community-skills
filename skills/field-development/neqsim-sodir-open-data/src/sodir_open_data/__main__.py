@@ -11,14 +11,13 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from typing import List
 
 from . import catalog
 from .client import SodirOpenData
 from .guides import USE_CASES, use_case
 
 
-def main(argv: List[str]) -> int:
+def main(argv: list[str]) -> int:
     """Run the CLI and return the process exit code."""
     parser = argparse.ArgumentParser(prog="sodir_open_data")
     sub = parser.add_subparsers(dest="cmd", required=True)

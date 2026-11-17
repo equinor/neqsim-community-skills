@@ -13,7 +13,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from reservoir_model_builder import (  # noqa: E402
+from reservoir_model_builder import (
     REQUIRED_KEYWORDS,
     GridDimensions,
     StaticModelArrays,

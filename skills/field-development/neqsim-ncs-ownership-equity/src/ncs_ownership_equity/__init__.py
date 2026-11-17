@@ -7,14 +7,14 @@ from .sodir import LAYERS, SodirClient
 __version__ = "0.1.0"
 
 __all__ = [
+    "LAYERS",
+    "OwnershipError",
     "OwnershipReader",
     "OwnershipRecord",
-    "Stake",
     "PortfolioItem",
-    "OwnershipError",
+    "SodirClient",
+    "Stake",
+    "__version__",
     "portfolio_net",
     "scale",
-    "SodirClient",
-    "LAYERS",
-    "__version__",
 ]

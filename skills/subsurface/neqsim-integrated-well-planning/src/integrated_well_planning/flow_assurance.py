@@ -8,8 +8,7 @@ engineer. NOT performed: scale, MIC, asphaltene, sand (see ``ledger``).
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
-
+from typing import Any
 
 from .model_chain import (
     build_fluid,
@@ -23,7 +22,7 @@ from .registers import get_path
 from .runtime import jclass
 
 
-def _wet_fluid(basis: Dict[str, Any], p_bara: float, t_c: float):
+def _wet_fluid(basis: dict[str, Any], p_bara: float, t_c: float):
     water = float(
         get_path(basis, "fluid.free_water_for_hydrate.water_mole_fraction") or 0.02
     )
@@ -42,8 +41,8 @@ def _wet_fluid(basis: Dict[str, Any], p_bara: float, t_c: float):
 
 
 def hydrate_assessment(
-    basis: Dict[str, Any], producer: Dict[str, Any]
-) -> Dict[str, Any]:
+    basis: dict[str, Any], producer: dict[str, Any]
+) -> dict[str, Any]:
     """Hydrate temperature along the flowing profile, wellhead margin, shut-in cooldown and MEG/methanol dose."""
     require("WellChemicalTreatment", "WellboreThermalModel")
     prof = producer.get("profile")
@@ -140,7 +139,7 @@ def hydrate_assessment(
     }
 
 
-def wax_assessment(basis: Dict[str, Any], producer: Dict[str, Any]) -> Dict[str, Any]:
+def wax_assessment(basis: dict[str, Any], producer: dict[str, Any]) -> dict[str, Any]:
     """Wax margin from a supplied laboratory wax appearance temperature; otherwise NOT_PERFORMED with the consequence."""
     wat = get_path(basis, "fluid.wax_appearance_temperature_C")
     prof = producer.get("profile")
@@ -159,7 +158,7 @@ def wax_assessment(basis: Dict[str, Any], producer: Dict[str, Any]) -> Dict[str,
     }
 
 
-def loading_and_erosion(producer: Dict[str, Any], gas_well: bool) -> Dict[str, Any]:
+def loading_and_erosion(producer: dict[str, Any], gas_well: bool) -> dict[str, Any]:
     """Liquid-loading (Turner) and erosional ratios from the drift-flux tubing result."""
     tub = producer.get("tubing", {})
     out = {
@@ -182,7 +181,7 @@ def loading_and_erosion(producer: Dict[str, Any], gas_well: bool) -> Dict[str, A
     return out
 
 
-def unloading_curve(model, case: str, n: int = 8) -> Optional[Dict[str, Any]]:
+def unloading_curve(model, case: str, n: int = 8) -> dict[str, Any] | None:
     """Minimum stable rate from the VLP minimum: below ``q_min_stable`` the outflow curve slopes down (loading branch)."""
     try:
         r = model.operating_point(case, detail=False)
@@ -195,12 +194,12 @@ def unloading_curve(model, case: str, n: int = 8) -> Optional[Dict[str, Any]]:
 
 
 def contaminants_screening(
-    basis: Dict[str, Any], whp: Optional[float], bhp: Optional[float]
-) -> Dict[str, Any]:
+    basis: dict[str, Any], whp: float | None, bhp: float | None
+) -> dict[str, Any]:
     """CO2/H2S partial pressures at the wellhead and bottom hole for the materials engineer (no acceptance limits applied)."""
     co2 = float(get_path(basis, "fluid.contaminants.co2_mol_frac") or 0.0)
     h2s_ppm = float(get_path(basis, "fluid.contaminants.h2s_ppm") or 0.0)
-    out: Dict[str, Any] = {"co2_mol_frac": co2, "h2s_ppm": h2s_ppm}
+    out: dict[str, Any] = {"co2_mol_frac": co2, "h2s_ppm": h2s_ppm}
     if whp and bhp:
         out.update(
             {
@@ -221,7 +220,7 @@ def contaminants_screening(
     return out
 
 
-def scale_assessment(basis: Dict[str, Any]) -> Dict[str, Any]:
+def scale_assessment(basis: dict[str, Any]) -> dict[str, Any]:
     """Scale/compatibility: NOT_PERFORMED unless a water analysis is supplied (then route to the scale-screening skill)."""
     if get_path(basis, "fluid.water_chemistry"):
         return {
@@ -236,20 +235,20 @@ def scale_assessment(basis: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def assess_flow_assurance(
-    basis: Dict[str, Any],
-    producer: Optional[Dict[str, Any]],
-    injector: Optional[Dict[str, Any]],
+    basis: dict[str, Any],
+    producer: dict[str, Any] | None,
+    injector: dict[str, Any] | None,
     gas_well: bool,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Run every flow-assurance assessment that applies and collect the labelled results."""
-    out: Dict[str, Any] = {}
+    out: dict[str, Any] = {}
     if producer:
         try:
             out["hydrate"] = hydrate_assessment(basis, producer)
         except Exception as exc:  # noqa: BLE001
             out["hydrate"] = {
                 "status": "NOT_PERFORMED",
-                "reason": "{}: {}".format(type(exc).__name__, str(exc)[:140]),
+                "reason": f"{type(exc).__name__}: {str(exc)[:140]}",
             }
         out["wax"] = wax_assessment(basis, producer)
         out["loading_erosion"] = loading_and_erosion(producer, gas_well)

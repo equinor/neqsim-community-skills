@@ -1,14 +1,13 @@
 import pytest
-
 from norwegian_continental_shelf_data import (
+    NORSKPETROLEUM_QUICK_DOWNLOADS,
+    SODIR_FACTPAGES,
     NcsDataset,
     load_dataset,
     rank_fields_by_remaining,
+    refresh_instructions,
     remaining_reserves_by_area,
     sodir_download_plan,
-    refresh_instructions,
-    NORSKPETROLEUM_QUICK_DOWNLOADS,
-    SODIR_FACTPAGES,
 )
 
 

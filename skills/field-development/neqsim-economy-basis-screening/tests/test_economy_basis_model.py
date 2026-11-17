@@ -1,5 +1,4 @@
 import pytest
-
 from economy_basis_screening import EconomyBasisModel, EconomyBasisResult
 
 

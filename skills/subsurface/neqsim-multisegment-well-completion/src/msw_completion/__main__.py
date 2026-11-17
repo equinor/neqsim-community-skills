@@ -6,13 +6,12 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 from .runner import read_device_layer
 from .workflow import run_completion_workflow
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="msw_completion", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run", help="run the configured completion workflow")

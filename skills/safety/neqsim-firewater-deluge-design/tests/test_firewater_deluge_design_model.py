@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from firewater_deluge_design import FireWaterCoverageModel
 
 

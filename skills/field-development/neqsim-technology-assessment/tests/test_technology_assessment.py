@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from technology_assessment import (
     StepOutItem,
     TechnologyAssessment,

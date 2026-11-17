@@ -32,7 +32,7 @@ import numpy as np
 from scipy.optimize import least_squares
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import run_forward_separator as rfs  # noqa: E402
+import run_forward_separator as rfs
 
 P_FLOOR = 1.1  # lowest allowed last-stage pressure, bara
 PENALTY_RESIDUAL = 5.0  # ln-error assigned to a case that cannot be evaluated

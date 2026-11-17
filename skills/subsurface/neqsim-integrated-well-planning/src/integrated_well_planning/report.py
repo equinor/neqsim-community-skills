@@ -9,13 +9,14 @@ from __future__ import annotations
 import datetime as _dt
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from . import __version__
 from .basis import basis_to_registers, load_basis, validate_basis
 from .ledger import JAVA_FOLLOW_UPS, ledger_rows
 from .registers import Registers, get_path
-from .standards import seed_register, summarise as std_summary
+from .standards import seed_register
+from .standards import summarise as std_summary
 from .study import load_json, study_paths
 
 SECTIONS = [
@@ -34,7 +35,7 @@ SECTIONS = [
 ]
 
 
-def readiness(basis: Dict[str, Any], regs: Registers) -> str:
+def readiness(basis: dict[str, Any], regs: Registers) -> str:
     """Return the readiness label (never an approval)."""
     rep = validate_basis(basis)
     if rep.errors or regs.blocking_gaps():
@@ -57,8 +58,8 @@ def _fmt(v: Any, nd: int = 3) -> str:
 
 
 def executive_summary(
-    basis: Dict[str, Any], res: Dict[str, Any], alt: Optional[Dict[str, Any]]
-) -> List[str]:
+    basis: dict[str, Any], res: dict[str, Any], alt: dict[str, Any] | None
+) -> list[str]:
     """Answer-first paragraphs built from the numbers."""
     wtype = get_path(basis, "well.type")
     lines = [
@@ -111,13 +112,13 @@ def executive_summary(
     s = res["envelope"]["summary"]
     lines.append(
         "Operating envelope: {} rows - {}. Rows are NEEDS_REVIEW until approved limits with sources are supplied.".format(
-            sum(s.values()), ", ".join("{} {}".format(v, k) for k, v in s.items() if v)
+            sum(s.values()), ", ".join(f"{v} {k}" for k, v in s.items() if v)
         )
     )
     return lines
 
 
-def build_report(root: Path) -> Dict[str, str]:
+def build_report(root: Path) -> dict[str, str]:
     """Write report/well_planning_report.docx and .md; returns the paths."""
     from docx import Document
     from docx.shared import Cm, Pt, RGBColor
@@ -156,7 +157,7 @@ def build_report(root: Path) -> Dict[str, str]:
     st.font.size = Pt(10)
     sec = doc.sections[0]
     sec.left_margin = sec.right_margin = Cm(2.0)
-    md: List[str] = []
+    md: list[str] = []
 
     def h(text: str, level: int = 1) -> None:
         doc.add_heading(text, level)
@@ -169,7 +170,7 @@ def build_report(root: Path) -> Dict[str, str]:
         md.append(("**{}**" if bold else "{}").format(text) + "\n")
 
     def table(
-        headers: List[str], rows: List[List[Any]], widths: Optional[List[float]] = None
+        headers: list[str], rows: list[list[Any]], widths: list[float] | None = None
     ) -> None:
         t = doc.add_table(rows=1, cols=len(headers))
         t.style = "Light Grid Accent 1"
@@ -202,9 +203,7 @@ def build_report(root: Path) -> Dict[str, str]:
             doc.add_picture(str(f), width=Cm(width_cm))
             cp = doc.add_paragraph(caption)
             cp.runs[0].italic = True
-            md.append(
-                "![{}](../drawings/{}.png)\n\n*{}*\n".format(caption, stem, caption)
-            )
+            md.append(f"![{caption}](../drawings/{stem}.png)\n\n*{caption}*\n")
 
     # cover
     t = doc.add_heading("Well planning report", 0)
@@ -255,7 +254,7 @@ def build_report(root: Path) -> Dict[str, str]:
     counts = regs.provenance_counts()
     p(
         "Provenance counts: "
-        + ", ".join("{} {}".format(v, k) for k, v in counts.items())
+        + ", ".join(f"{v} {k}" for k, v in counts.items())
         + ". Full register: registers/source_register.csv."
     )
     table(
@@ -268,9 +267,7 @@ def build_report(root: Path) -> Dict[str, str]:
     h("2.2 Standards and acceptance basis", 2)
     std = seed_register(get_path(basis, "standards.jurisdiction") or "TO_BE_IDENTIFIED")
     p(
-        "Standards register status: {}. Editions, amendments, applicability and exclusions are NOT verified by this tool; design factors, ratings and acceptance limits are never defaulted.".format(
-            std_summary(std)
-        )
+        f"Standards register status: {std_summary(std)}. Editions, amendments, applicability and exclusions are NOT verified by this tool; design factors, ratings and acceptance limits are never defaulted."
     )
     table(
         ["ID", "Topic", "Source document", "Assessment area", "Status"],
@@ -475,7 +472,7 @@ def build_report(root: Path) -> Dict[str, str]:
     )
     fig(
         "well_schematic",
-        "Figure: well schematic (see drawing {}-DWG-001)".format(sid),
+        f"Figure: well schematic (see drawing {sid}-DWG-001)",
         16.0,
     )
     fig("trajectory_views", "Figure: trajectory plan and section")
@@ -552,7 +549,7 @@ def build_report(root: Path) -> Dict[str, str]:
     )
     fig(
         "barrier_schematics",
-        "Figure: barrier schematics (see drawing {}-DWG-002)".format(sid),
+        f"Figure: barrier schematics (see drawing {sid}-DWG-002)",
         16.0,
     )
     h("6.2 Interface specifications (UNRESOLVED assessments)", 2)
@@ -604,8 +601,7 @@ def build_report(root: Path) -> Dict[str, str]:
     fig("risk_register", "Figure: risk register")
     p(
         "Open actions: {}".format(
-            "; ".join("{} {}".format(a.id, a.description) for a in regs.open_actions())
-            or "none"
+            "; ".join(f"{a.id} {a.description}" for a in regs.open_actions()) or "none"
         )
     )
     # 9

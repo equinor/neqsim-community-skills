@@ -13,7 +13,7 @@ import datetime as _dt
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -105,7 +105,7 @@ def schema_dir() -> Path:
     )
 
 
-def load_schema(message_schema: str) -> Dict[str, Any]:
+def load_schema(message_schema: str) -> dict[str, Any]:
     """Load one schema by id (``iwp_vfp_request.v1``)."""
     p = schema_dir() / (message_schema + ".json")
     if not p.exists():
@@ -113,14 +113,14 @@ def load_schema(message_schema: str) -> Dict[str, Any]:
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-def validate_payload(message_schema: str, payload: Dict[str, Any]) -> List[str]:
+def validate_payload(message_schema: str, payload: dict[str, Any]) -> list[str]:
     """Return validation errors for a payload against its schema (empty = valid)."""
     schema = load_schema(message_schema)
     try:
         import jsonschema
     except ImportError:  # minimal fallback: required keys only
         return [
-            "missing required key: {}".format(k)
+            f"missing required key: {k}"
             for k in schema.get("required", [])
             if k not in payload
         ]
@@ -133,16 +133,16 @@ def validate_payload(message_schema: str, payload: Dict[str, Any]) -> List[str]:
 
 def make_envelope(
     message_schema: str,
-    payload: Dict[str, Any],
+    payload: dict[str, Any],
     to_agent: str,
     study_id: str,
     revision: str = "A",
     from_agent: str = AGENT_NAME,
     status: str = "DRAFT",
     synthetic: bool = False,
-    open_items: Optional[List[str]] = None,
-    provenance: Optional[List[Dict[str, Any]]] = None,
-) -> Dict[str, Any]:
+    open_items: list[str] | None = None,
+    provenance: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """Wrap a payload in the envelope, validating both. Raises ValueError listing every problem."""
     problems = validate_payload(message_schema, payload)
     env = {
@@ -152,7 +152,7 @@ def make_envelope(
         "revision": revision,
         "from_agent": from_agent,
         "to_agent": to_agent,
-        "created": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+        "created": _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"),
         "status": status,
         "synthetic": synthetic,
         "open_items": list(open_items or []),
@@ -169,7 +169,7 @@ def make_envelope(
     return env
 
 
-def _study(basis: Dict[str, Any]) -> Dict[str, Any]:
+def _study(basis: dict[str, Any]) -> dict[str, Any]:
     return {
         "study_id": get_path(basis, "study.id"),
         "revision": get_path(basis, "study.revision") or "A",
@@ -177,7 +177,7 @@ def _study(basis: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def vfp_request(basis: Dict[str, Any], results: Dict[str, Any]) -> Dict[str, Any]:
+def vfp_request(basis: dict[str, Any], results: dict[str, Any]) -> dict[str, Any]:
     """Build the VFPPROD/VFPINJ request for the vfp-lift-curve-agent (grids around the base-case operating region)."""
     from .model_chain import effective_tubing_depths
 
@@ -234,7 +234,7 @@ def vfp_request(basis: Dict[str, Any], results: Dict[str, Any]) -> Dict[str, Any
     )
 
 
-def trajectory_message(basis: Dict[str, Any], survey: Dict[str, Any]) -> Dict[str, Any]:
+def trajectory_message(basis: dict[str, Any], survey: dict[str, Any]) -> dict[str, Any]:
     """Outbound trajectory for the anti-collision agent."""
     st = [
         {"md_m": m, "inc_deg": i, "azi_deg": a, "tvd_m": t, "north_m": n, "east_m": e}
@@ -268,10 +268,10 @@ def trajectory_message(basis: Dict[str, Any], survey: Dict[str, Any]) -> Dict[st
 
 
 def cost_profile_message(
-    basis: Dict[str, Any],
-    profile: Dict[str, Any],
+    basis: dict[str, Any],
+    profile: dict[str, Any],
     to_agent: str = "asset-economics-agent",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Outbound deliverability profile and supplied cost basis (no recovery and no value)."""
     cost = get_path(basis, "cost") or {}
     payload = {
@@ -304,8 +304,8 @@ def cost_profile_message(
 
 
 def flow_assurance_requirements(
-    basis: Dict[str, Any], results: Dict[str, Any]
-) -> Dict[str, Any]:
+    basis: dict[str, Any], results: dict[str, Any]
+) -> dict[str, Any]:
     """Outbound conditions the flow-assurance study must cover, with the open threats."""
     prod = (results.get("producer") or {}).get("base") or {}
     inj = (results.get("injector") or {}).get("base") or {}
@@ -363,11 +363,11 @@ def flow_assurance_requirements(
 
 
 def integrity_inputs_message(
-    basis: Dict[str, Any],
-    integrity: Dict[str, Any],
-    barrier_states: List[Dict[str, Any]],
-    open_items: List[str],
-) -> Dict[str, Any]:
+    basis: dict[str, Any],
+    integrity: dict[str, Any],
+    barrier_states: list[dict[str, Any]],
+    open_items: list[str],
+) -> dict[str, Any]:
     """Outbound load cases and barrier proposal for the well-integrity review."""
     payload = {
         "well_id": get_path(basis, "well.id"),
@@ -385,11 +385,11 @@ def integrity_inputs_message(
 
 
 def well_model_message(
-    basis: Dict[str, Any],
-    results: Dict[str, Any],
-    model_files: List[str],
+    basis: dict[str, Any],
+    results: dict[str, Any],
+    model_files: list[str],
     to_agent: str = "field-development",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Outbound well model summary."""
     cases = {}
     for kind in ("producer", "injector"):
@@ -427,11 +427,11 @@ def well_model_message(
 
 
 def envelope_message(
-    basis: Dict[str, Any],
-    rows: List[Dict[str, Any]],
-    summary: Dict[str, int],
+    basis: dict[str, Any],
+    rows: list[dict[str, Any]],
+    summary: dict[str, int],
     to_agent: str = "production-optimization-agent",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Outbound operating-envelope table."""
     return make_envelope(
         "iwp_operating_envelope.v1",
@@ -442,7 +442,7 @@ def envelope_message(
 
 
 # --------------------------------------------------------------------------- inbound
-def _record(basis: Dict[str, Any], path: str, source: str, unit: str = "") -> None:
+def _record(basis: dict[str, Any], path: str, source: str, unit: str = "") -> None:
     basis.setdefault("provenance", {})[path] = {
         "class": "SUPPLIED",
         "source": source,
@@ -452,8 +452,8 @@ def _record(basis: Dict[str, Any], path: str, source: str, unit: str = "") -> No
 
 
 def apply_host_constraints(
-    basis: Dict[str, Any], message: Dict[str, Any]
-) -> Dict[str, Any]:
+    basis: dict[str, Any], message: dict[str, Any]
+) -> dict[str, Any]:
     """Merge an inbound ``iwp_host_constraints.v1`` envelope into a copy of the basis (provenance SUPPLIED with the message source)."""
     problems = validate_payload("iwp_handoff_envelope.v1", message)
     if message.get("message_schema") != "iwp_host_constraints.v1":
@@ -481,7 +481,7 @@ def apply_host_constraints(
     return out
 
 
-def apply_fluid_basis(basis: Dict[str, Any], message: Dict[str, Any]) -> Dict[str, Any]:
+def apply_fluid_basis(basis: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
     """Merge an inbound ``iwp_fluid_basis.v1`` envelope (composition, EOS, PVT evidence, WAT, water chemistry)."""
     p = message.get("payload", {})
     problems = validate_payload("iwp_fluid_basis.v1", p)
@@ -510,7 +510,7 @@ def apply_fluid_basis(basis: Dict[str, Any], message: Dict[str, Any]) -> Dict[st
     return out
 
 
-def apply_trajectory(basis: Dict[str, Any], message: Dict[str, Any]) -> Dict[str, Any]:
+def apply_trajectory(basis: dict[str, Any], message: dict[str, Any]) -> dict[str, Any]:
     """Merge an inbound ``iwp_trajectory.v1`` envelope: stations, MD and TVD at TD (provenance SUPPLIED)."""
     p = message.get("payload", {})
     problems = validate_payload("iwp_trajectory.v1", p)

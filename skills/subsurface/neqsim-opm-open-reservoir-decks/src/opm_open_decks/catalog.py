@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 REPO = "OPM/opm-data"
 RAW_HOST = "https://raw.githubusercontent.com"
@@ -18,7 +18,7 @@ LICENCE_SLEIPNER = (
     "Not ODbL. See sleipner/COPYING and sleipner/license.pdf."
 )
 
-CASES: Dict[str, Dict[str, Any]] = {
+CASES: dict[str, dict[str, Any]] = {
     "spe1": {
         "title": "SPE1 - black-oil gas injection, 10x10x3",
         "reference": "Odeh A.S., J. Pet. Technol. 33(1), 1981 (First SPE CSP)",
@@ -124,7 +124,7 @@ CASES: Dict[str, Dict[str, Any]] = {
 }
 
 # Informational pointer, not fetched by the client: the page states no licence.
-EXTERNAL: List[Dict[str, str]] = [
+EXTERNAL: list[dict[str, str]] = [
     {
         "name": "SPE10 model 2 original archive (SPE CSP)",
         "url": "https://www.spe.org/web/csp/datasets/set02.htm",
@@ -133,12 +133,12 @@ EXTERNAL: List[Dict[str, str]] = [
 ]
 
 
-def case_names() -> List[str]:
+def case_names() -> list[str]:
     """Return the catalog case names."""
     return sorted(CASES)
 
 
-def get_case(name: str) -> Dict[str, Any]:
+def get_case(name: str) -> dict[str, Any]:
     """Return one catalog entry; raises ``KeyError`` with the valid names for an unknown case."""
     try:
         return CASES[name]

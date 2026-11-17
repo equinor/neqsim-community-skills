@@ -11,7 +11,7 @@ import copy
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from .registers import PROVENANCE_CLASSES, Registers, get_path, registers_from_basis
 
@@ -98,9 +98,9 @@ IMPORTANT_OPTIONAL = {
 class ValidationReport:
     """Result of :func:`validate_basis`."""
 
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    gaps: List[Dict[str, str]] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    gaps: list[dict[str, str]] = field(default_factory=list)
 
     @property
     def status(self) -> str:
@@ -109,7 +109,7 @@ class ValidationReport:
             return "FAIL"
         return "WARN" if (self.warnings or self.gaps) else "PASS"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a JSON-friendly dictionary."""
         return {
             "status": self.status,
@@ -119,7 +119,7 @@ class ValidationReport:
         }
 
 
-def load_basis(path: Path) -> Dict[str, Any]:
+def load_basis(path: Path) -> dict[str, Any]:
     """Load a planning basis from YAML or JSON."""
     path = Path(path)
     text = path.read_text(encoding="utf-8")
@@ -130,7 +130,7 @@ def load_basis(path: Path) -> Dict[str, Any]:
     return json.loads(text)
 
 
-def save_basis(basis: Dict[str, Any], path: Path) -> None:
+def save_basis(basis: dict[str, Any], path: Path) -> None:
     """Write a planning basis as YAML or JSON (by suffix)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -145,8 +145,8 @@ def save_basis(basis: Dict[str, Any], path: Path) -> None:
 
 
 def rng(
-    value: Any, key_order: Tuple[str, str, str] = CASES
-) -> Tuple[float, float, float]:
+    value: Any, key_order: tuple[str, str, str] = CASES
+) -> tuple[float, float, float]:
     """Return (low, base, high) from a scalar or a {low, base, high} mapping.
 
     Raises:
@@ -165,9 +165,7 @@ def rng(
     low, base, high = float(low), float(base), float(high)
     if not (low <= base <= high):
         raise ValueError(
-            "range must satisfy low <= base <= high, got {} {} {}".format(
-                low, base, high
-            )
+            f"range must satisfy low <= base <= high, got {low} {base} {high}"
         )
     return low, base, high
 
@@ -178,13 +176,13 @@ def case_value(value: Any, case: str) -> float:
     return {"low": low, "base": base, "high": high}[case]
 
 
-def _is_missing(basis: Dict[str, Any], path: str) -> bool:
+def _is_missing(basis: dict[str, Any], path: str) -> bool:
     v = get_path(basis, path)
     return v is None or v == [] or v == {}
 
 
 def validate_basis(
-    basis: Dict[str, Any], strict_provenance: bool = False
+    basis: dict[str, Any], strict_provenance: bool = False
 ) -> ValidationReport:
     """Fail-closed validation of a planning basis.
 
@@ -196,11 +194,11 @@ def validate_basis(
     wtype = get_path(basis, "well.type")
     env = get_path(basis, "well.environment")
     if wtype not in WELL_TYPES:
-        rep.errors.append("well.type must be one of {}".format(WELL_TYPES))
+        rep.errors.append(f"well.type must be one of {WELL_TYPES}")
     if env not in ENVIRONMENTS:
-        rep.errors.append("well.environment must be one of {}".format(ENVIRONMENTS))
+        rep.errors.append(f"well.environment must be one of {ENVIRONMENTS}")
     if get_path(basis, "study.maturity") not in MATURITIES:
-        rep.errors.append("study.maturity must be one of {}".format(MATURITIES))
+        rep.errors.append(f"study.maturity must be one of {MATURITIES}")
 
     required = list(COMMON_REQUIRED)
     if wtype in PRODUCER_TYPES:
@@ -227,16 +225,14 @@ def validate_basis(
                     else (v.get("values", v) if isinstance(v, dict) else v)
                 )
                 if low <= 0:
-                    rep.errors.append("{} must be positive".format(path))
+                    rep.errors.append(f"{path} must be positive")
             except (ValueError, TypeError, AttributeError) as exc:
-                rep.errors.append("{}: {}".format(path, exc))
+                rep.errors.append(f"{path}: {exc}")
 
     t_res = get_path(basis, "reservoir.temperature_C")
     if isinstance(t_res, (int, float)) and not (-20.0 <= t_res <= 260.0):
         rep.errors.append(
-            "reservoir.temperature_C {} outside -20..260 C (check units: Celsius expected)".format(
-                t_res
-            )
+            f"reservoir.temperature_C {t_res} outside -20..260 C (check units: Celsius expected)"
         )
 
     comps = get_path(basis, "fluid.components") or []
@@ -245,9 +241,7 @@ def validate_basis(
             total = sum(float(c["mole_fraction"]) for c in comps)
             if abs(total - 1.0) > 0.01:
                 rep.errors.append(
-                    "fluid composition sums to {:.4f}, expected 1.0 (+-0.01)".format(
-                        total
-                    )
+                    f"fluid composition sums to {total:.4f}, expected 1.0 (+-0.01)"
                 )
         except (KeyError, TypeError, ValueError):
             rep.errors.append(
@@ -264,7 +258,7 @@ def validate_basis(
     for key in ("standard_conditions",):
         if get_path(basis, "datums." + key) is None:
             rep.warnings.append(
-                "datums.{} not stated; defaulting to 15 C / 1.01325 bara".format(key)
+                f"datums.{key} not stated; defaulting to 15 C / 1.01325 bara"
             )
     if get_path(basis, "datums.pressure_reference") is None:
         rep.warnings.append(
@@ -287,17 +281,17 @@ def validate_basis(
     for path, meta in prov.items():
         cls = meta.get("class")
         if cls not in PROVENANCE_CLASSES:
-            rep.errors.append("provenance[{}]: class '{}' invalid".format(path, cls))
+            rep.errors.append(f"provenance[{path}]: class '{cls}' invalid")
             continue
         if cls == "MEASURED" and synthetic:
             rep.errors.append(
-                "provenance[{}]: MEASURED not allowed in a synthetic study".format(path)
+                f"provenance[{path}]: MEASURED not allowed in a synthetic study"
             )
         if cls in ("SUPPLIED", "MEASURED", "FITTED") and not meta.get("source"):
-            rep.errors.append("provenance[{}]: {} requires a source".format(path, cls))
+            rep.errors.append(f"provenance[{path}]: {cls} requires a source")
         if get_path(basis, path) is None:
             rep.warnings.append(
-                "provenance[{}] points at a path that does not exist".format(path)
+                f"provenance[{path}] points at a path that does not exist"
             )
     for path in required:
         if (
@@ -305,7 +299,7 @@ def validate_basis(
             and not _is_missing(basis, path)
             and path not in PROVENANCE_EXEMPT
         ):
-            msg = "no provenance recorded for {}".format(path)
+            msg = f"no provenance recorded for {path}"
             (rep.errors if strict_provenance else rep.warnings).append(msg)
     assumed = [p for p, m in prov.items() if m.get("class") == "ASSUMED"]
     if assumed and not synthetic:
@@ -321,7 +315,7 @@ def validate_basis(
     return rep
 
 
-def basis_to_registers(basis: Dict[str, Any]) -> Registers:
+def basis_to_registers(basis: dict[str, Any]) -> Registers:
     """Create the source register and gap entries from a planning basis."""
     reg = registers_from_basis(basis)
     rep = validate_basis(basis)
@@ -339,7 +333,7 @@ def basis_to_registers(basis: Dict[str, Any]) -> Registers:
 
 def template_basis(
     well_type: str = "oil_producer", environment: str = "platform"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Return a synthetic, internally consistent starting basis for ``well_type``/``environment``."""
     if well_type not in WELL_TYPES:
         raise ValueError("unknown well type " + well_type)

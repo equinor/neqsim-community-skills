@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import ast
 import operator
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Mapping, Sequence, Tuple
 
 import pandas as pd
 
@@ -25,7 +25,7 @@ def reconcile_tables(
     value_b: str,
     tol_abs: float = 1.0,
     tol_rel: float = 0.0005,
-    names: Tuple[str, str] = ("a", "b"),
+    names: tuple[str, str] = ("a", "b"),
 ) -> pd.DataFrame:
     """Reconcile two sources on a shared key.
 
@@ -150,7 +150,7 @@ def _evaluate(node: ast.AST, values: Mapping[str, float]) -> float:
 
 def check_identities(
     values: Mapping[str, float],
-    identities: Sequence[Tuple[str, str, str]],
+    identities: Sequence[tuple[str, str, str]],
     tol_abs: float = 2.0,
 ) -> list:
     """Verify arithmetic identities such as ``RC14 = RC10 + RC12 + RC13``.

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from uncertainty_quantification.sampling import (
     SamplingError,
     available_samplers,

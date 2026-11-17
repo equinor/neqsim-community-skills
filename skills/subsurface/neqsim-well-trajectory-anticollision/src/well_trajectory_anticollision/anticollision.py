@@ -8,8 +8,8 @@ Operator rules (k, thresholds, hole/casing radii, minimum separation) override t
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, asdict
-from typing import Callable, Dict, Iterable, List, Optional, Sequence
+from collections.abc import Callable, Iterable, Sequence
+from dataclasses import asdict, dataclass
 
 import numpy as np
 
@@ -48,9 +48,9 @@ def separation_factor(d: float, sigma_s2: float, rule: SFRule = SFRule()) -> flo
 def _segments(
     offsets: Iterable[Wellpath],
     parents: Sequence[str],
-    tie_md: Optional[float],
+    tie_md: float | None,
     model: ErrorModel,
-    warnings: List[str],
+    warnings: list[str],
 ):
     names, A, B, CA, CB, MA, MB = [], [], [], [], [], [], []
     for w in offsets:
@@ -88,10 +88,10 @@ def scan(
     reference: Wellpath,
     offsets: Iterable[Wellpath],
     rule: SFRule = SFRule(),
-    parents: Optional[Sequence[str]] = None,
-    from_md: Optional[float] = None,
-    model: Optional[ErrorModel] = None,
-) -> Dict:
+    parents: Sequence[str] | None = None,
+    from_md: float | None = None,
+    model: ErrorModel | None = None,
+) -> dict:
     """Closest-approach scan: every reference station from ``from_md`` against every offset segment.
 
     ``parents`` names the bores the reference shares hole with (sidetrack parent and its other
@@ -109,7 +109,7 @@ def scan(
         if from_md is not None
         else (tie if tie is not None else float(reference.md[0]))
     )
-    warnings: List[str] = []
+    warnings: list[str] = []
     names, A, B, CA, CB, MA, MB = _segments(offsets, parents, tie, model, warnings)
     result = {"offsets": [], "profile": [], "warnings": warnings, "rule": asdict(rule)}
     if len(names) == 0:
@@ -119,7 +119,7 @@ def scan(
     L2 = np.maximum((AB**2).sum(1), 1e-12)
     uniq, inv = np.unique(names, return_inverse=True)
     best = {str(u): {"sf": math.inf} for u in uniq}
-    track: Dict[str, list] = {}
+    track: dict[str, list] = {}
     r_sum = rule.ref_radius_m + rule.offset_radius_m + rule.surface_margin_m
     for i in np.where(reference.md > start_md + 1e-6)[0]:
         p, cr = reference.xyz[i], reference.cov[i]
@@ -175,7 +175,7 @@ def scan(
     return result
 
 
-def parent_exit(track: Sequence, rule: SFRule = SFRule()) -> Dict:
+def parent_exit(track: Sequence, rule: SFRule = SFRule()) -> dict:
     """Exit depths from a parent bore: last MD with SF below STOP and CAUTION, and min SF after exit."""
     below_stop = [m for m, s in track if s < rule.stop_below]
     below_caution = [m for m, s in track if s < rule.caution_below]
@@ -188,7 +188,7 @@ def parent_exit(track: Sequence, rule: SFRule = SFRule()) -> Dict:
     }
 
 
-def governing(result: Dict, include_parents: bool = False) -> Optional[Dict]:
+def governing(result: dict, include_parents: bool = False) -> dict | None:
     """Lowest-SF offset (non-parent by default)."""
     rows = [r for r in result["offsets"] if include_parents or not r["parent_bore"]]
     return rows[0] if rows else None
@@ -201,9 +201,9 @@ def pull_back_search(
     offsets: Iterable[Wellpath],
     rule: SFRule = SFRule(),
     distances: Sequence[float] = (0, 25, 50, 75, 100, 125, 150, 200, 250),
-    required_sf: Optional[float] = None,
+    required_sf: float | None = None,
     **scan_kwargs,
-) -> Dict:
+) -> dict:
     """Move the target back towards ``origin_en`` along the approach azimuth until the governing
     non-parent SF reaches ``required_sf`` (default the CAUTION threshold).
 

@@ -1,5 +1,4 @@
 import pytest
-
 from artificial_lift_screening import ArtificialLiftModel
 
 

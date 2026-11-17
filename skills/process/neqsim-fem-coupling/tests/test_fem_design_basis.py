@@ -1,5 +1,4 @@
 import pytest
-
 from fem_coupling import (
     SOURCE_PRECEDENCE,
     build_design_basis,

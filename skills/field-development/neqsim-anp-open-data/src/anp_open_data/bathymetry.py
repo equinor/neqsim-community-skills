@@ -17,8 +17,8 @@ import datetime as _dt
 import hashlib
 import json
 import math
+from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import Callable, Sequence
 
 from .tools import haversine_km
 
@@ -47,9 +47,7 @@ def _default_get(url: str, timeout: float) -> bytes:
     import urllib.request
 
     req = urllib.request.Request(url, headers={"User-Agent": "neqsim-anp-open-data"})
-    with urllib.request.urlopen(
-        req, timeout=timeout
-    ) as r:  # noqa: S310 - fixed public host
+    with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read()
 
 
@@ -101,7 +99,7 @@ def fetch_etopo_grid(
             )
         raw = json.loads((getter or _default_get)(url, timeout).decode("utf-8"))
         fname.write_text(json.dumps(raw), encoding="utf-8")
-        retrieved = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+        retrieved = _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds")
         status = "downloaded"
     grid = grid_from_erddap(raw)
     grid.update(

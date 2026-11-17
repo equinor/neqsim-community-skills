@@ -8,9 +8,7 @@ never authenticates to them.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
-
-SOURCE_REGISTRY: List[Dict[str, object]] = [
+SOURCE_REGISTRY: list[dict[str, object]] = [
     # ------------------------------------------------------------------ open, API
     {
         "id": "sodir-dataservice",
@@ -168,7 +166,7 @@ SOURCE_REGISTRY: List[Dict[str, object]] = [
 ]
 
 
-def register_private_source(source: Dict[str, object]) -> None:
+def register_private_source(source: dict[str, object]) -> None:
     """Add a company-specific source to the registry (tier is forced to 'enterprise').
 
     :param source: mapping with at least ``id``, ``provides`` and ``owner_skill``.
@@ -179,8 +177,8 @@ def register_private_source(source: Dict[str, object]) -> None:
 
 
 def sources_for(
-    what: Optional[str] = None, tier: Optional[str] = None
-) -> List[Dict[str, object]]:
+    what: str | None = None, tier: str | None = None
+) -> list[dict[str, object]]:
     """Filter the registry by a keyword in ``provides`` and/or tier ('open'/'enterprise')."""
     out = []
     for src in SOURCE_REGISTRY:

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .basis import case_value
 from .registers import get_path
@@ -44,10 +44,10 @@ def pick(value: Any, case: str, parameter: str) -> float:
     return case_value(value, use)
 
 
-def case_params(basis: Dict[str, Any], case: str) -> Dict[str, Any]:
+def case_params(basis: dict[str, Any], case: str) -> dict[str, Any]:
     """Resolve the scalar parameters of one outcome case from the basis."""
-    g = lambda p: get_path(basis, p)  # noqa: E731
-    out: Dict[str, Any] = {"case": case}
+    g = lambda p: get_path(basis, p)
+    out: dict[str, Any] = {"case": case}
     out["pressure_bara"] = pick(g("reservoir.pressure_bara"), case, "pressure_bara")
     out["temperature_C"] = float(g("reservoir.temperature_C"))
     out["k_md"] = pick(g("reservoir.permeability_md"), case, "k")
@@ -79,7 +79,7 @@ def case_params(basis: Dict[str, Any], case: str) -> Dict[str, Any]:
     return out
 
 
-def effective_tubing_depths(basis: Dict[str, Any]) -> Dict[str, float]:
+def effective_tubing_depths(basis: dict[str, Any]) -> dict[str, float]:
     """Return tubing MD/TVD below the tree (seabed for subsea wells) and the inclination equivalent."""
     md = float(get_path(basis, "trajectory.md_m"))
     tvd = float(get_path(basis, "trajectory.tvd_m"))
@@ -103,7 +103,7 @@ def effective_tubing_depths(basis: Dict[str, Any]) -> Dict[str, float]:
     }
 
 
-def surface_temperature_C(basis: Dict[str, Any]) -> float:
+def surface_temperature_C(basis: dict[str, Any]) -> float:
     """Tree temperature reference: seabed temperature (subsea) or ambient surface temperature."""
     env = get_path(basis, "well.environment")
     if env == "subsea":
@@ -128,7 +128,7 @@ CPA_LIBRARY_NAMES = (
 )
 
 
-def e300_path(basis: Dict[str, Any]) -> Optional[str]:
+def e300_path(basis: dict[str, Any]) -> str | None:
     """Resolve ``fluid.e300_file`` (absolute, or relative to ``fluid.e300_base_dir``); ``None`` when the basis uses ``fluid.components`` only."""
     f = get_path(basis, "fluid.e300_file")
     if not f:
@@ -197,13 +197,13 @@ def lump_to_cpa_fluid(
 
 
 def build_fluid(
-    basis: Dict[str, Any],
+    basis: dict[str, Any],
     temperature_C: float,
     pressure_bara: float,
     water_moles_per_mole: float = 0.0,
-    extra: Optional[Dict[str, float]] = None,
-    eos: Optional[str] = None,
-    e300_file: Optional[str] = None,
+    extra: dict[str, float] | None = None,
+    eos: str | None = None,
+    e300_file: str | None = None,
 ):
     """Create a NeqSim fluid from ``fluid.components`` or an E300 file (clone-safe, mixing rule always set).
 
@@ -253,7 +253,7 @@ def _flash(fluid) -> None:
     fluid.initProperties()
 
 
-def standard_factors(basis: Dict[str, Any]) -> Dict[str, float]:
+def standard_factors(basis: dict[str, Any]) -> dict[str, float]:
     """Stock-tank/standard-condition factors of the dry (water-free) reservoir fluid.
 
     Uses a single TP flash at 15 C and 1.01325 bara (no separator train) and an ideal-gas standard molar
@@ -296,8 +296,8 @@ def standard_factors(basis: Dict[str, Any]) -> Dict[str, float]:
 
 
 def reservoir_properties(
-    basis: Dict[str, Any], pressure_bara: float, temperature_C: float
-) -> Dict[str, float]:
+    basis: dict[str, Any], pressure_bara: float, temperature_C: float
+) -> dict[str, float]:
     """Density, viscosity (cP) and bubble point (bara) of the dry reservoir fluid."""
     require("SystemSrkEos", "ThermodynamicOperations")
     f = build_fluid(basis, temperature_C, pressure_bara)
@@ -317,7 +317,7 @@ def reservoir_properties(
     return out
 
 
-def water_moles_for_cut(basis: Dict[str, Any], water_cut: float) -> float:
+def water_moles_for_cut(basis: dict[str, Any], water_cut: float) -> float:
     """Moles of water per mole of hydrocarbon feed for a stock-tank water cut."""
     if water_cut <= 0:
         return 0.0
@@ -330,11 +330,11 @@ def water_moles_for_cut(basis: Dict[str, Any], water_cut: float) -> float:
 
 
 def thermal_model(
-    basis: Dict[str, Any],
+    basis: dict[str, Any],
     mass_kg_s: float,
     bottom_temperature_C: float,
     direction: str = "PRODUCTION",
-    inlet_temperature_C: Optional[float] = None,
+    inlet_temperature_C: float | None = None,
     flowing_days: float = 30.0,
 ):
     """Create a WellboreThermalModel for the effective tubing depth."""
@@ -362,12 +362,12 @@ def thermal_model(
 
 
 def flowline_back_pressure(
-    basis: Dict[str, Any],
+    basis: dict[str, Any],
     fluid_template,
     mass_kg_s: float,
     host_pressure_bara: float,
     wellhead_temperature_C: float,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Wellhead pressure needed to deliver ``mass_kg_s`` to the host boundary.
 
     Uses the NeqSim Beggs and Brill pipe on the supplied flowline description plus a supplied choke/valve
@@ -408,16 +408,12 @@ def flowline_back_pressure(
         )
         try:
             pipe.run()
-        except (
-            Exception
-        ) as exc:  # noqa: BLE001 - hydraulic domain errors mean the line cannot pass this rate
+        except Exception as exc:
             return {
                 "wellhead_pressure_bara": 4.0 * host_pressure_bara + choke,
                 "flowline_dp_bar": 3.0 * host_pressure_bara,
                 "choke_dp_bar": choke,
-                "method": "FLOWLINE_CANNOT_PASS_RATE (penalty applied): {}".format(
-                    str(exc)[:80]
-                ),
+                "method": f"FLOWLINE_CANNOT_PASS_RATE (penalty applied): {str(exc)[:80]}",
             }
         p_out = float(pipe.getOutletStream().getPressure("bara"))
         dp = p_in - p_out

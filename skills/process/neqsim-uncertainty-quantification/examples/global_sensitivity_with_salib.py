@@ -20,8 +20,8 @@ from uncertainty_quantification.backends import (
     SALIB_INSTALL_HINT,
     chaospy_available,
     fit_polynomial_chaos,
-    saltelli_samples,
     salib_available,
+    saltelli_samples,
     sobol_indices,
 )
 
@@ -43,14 +43,14 @@ def main() -> None:
         design = saltelli_samples(PARAMETERS, 1024, seed=42)
         outputs = [ishigami(point) for point in design]
         indices = sobol_indices(PARAMETERS, outputs)
-        print("Sobol' indices from {} evaluations:".format(len(outputs)))
+        print(f"Sobol' indices from {len(outputs)} evaluations:")
         print(json.dumps(indices, indent=2))
         print(
             "\nNote: x3 has S1 near zero but a large ST — a pure interaction "
             "effect that a one-at-a-time tornado cannot see.\n"
         )
     else:
-        print("SALib is not installed — {}".format(SALIB_INSTALL_HINT))
+        print(f"SALib is not installed — {SALIB_INSTALL_HINT}")
 
     if chaospy_available():
         fit = fit_polynomial_chaos(PARAMETERS, ishigami, order=6, seed=42)
@@ -62,7 +62,7 @@ def main() -> None:
         print("First-order indices: {}".format([round(v, 4) for v in fit["S1"]]))
         print("Analytical Ishigami mean is 3.5.")
     else:
-        print("chaospy is not installed — {}".format(CHAOSPY_INSTALL_HINT))
+        print(f"chaospy is not installed — {CHAOSPY_INSTALL_HINT}")
 
 
 if __name__ == "__main__":

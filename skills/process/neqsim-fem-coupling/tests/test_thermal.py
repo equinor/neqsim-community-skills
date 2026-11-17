@@ -1,5 +1,4 @@
 import pytest
-
 from fem_coupling import (
     FemFluidState,
     derive_thermal_conditions,

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -25,19 +25,19 @@ class WellStream:
     gas_sm3d: float
     water_m3d: float
     mol_s: float  # hydrocarbon wellstream
-    whp_bara: Optional[float] = None
-    wht_c: Optional[float] = None
+    whp_bara: float | None = None
+    wht_c: float | None = None
     cond_sm3d: float = 0.0
 
 
 def well_streams_at(
     sim: SimResult,
     date,
-    well_rates_sm3d: Dict[str, float],
-    wgr: Optional[Dict[str, float]] = None,
-    whp: Optional[Dict[str, float]] = None,
-    wht: Optional[Dict[str, float]] = None,
-) -> List[WellStream]:
+    well_rates_sm3d: dict[str, float],
+    wgr: dict[str, float] | None = None,
+    whp: dict[str, float] | None = None,
+    wht: dict[str, float] | None = None,
+) -> list[WellStream]:
     """Wellstream of each well at ``date``: tank compositions mixed by the well shares, molar rate from the surface gas rate."""
     out = []
     for w, q in well_rates_sm3d.items():
@@ -91,9 +91,9 @@ def stream_table(streams: Sequence[WellStream], names: Sequence[str]) -> pd.Data
 def run_process_series(
     sim: SimResult,
     dates: Sequence,
-    rates_at: Callable[[pd.Timestamp], Dict[str, float]],
-    run_case: Callable[[pd.Timestamp, List[WellStream]], dict],
-    whp_at: Optional[Callable] = None,
+    rates_at: Callable[[pd.Timestamp], dict[str, float]],
+    run_case: Callable[[pd.Timestamp, list[WellStream]], dict],
+    whp_at: Callable | None = None,
 ) -> pd.DataFrame:
     """Run a process model for each date with reservoir-driven wellstreams and collect its KPIs.
 
@@ -109,9 +109,7 @@ def run_process_series(
         try:
             kpi = run_case(d, streams)
             kpi["status"] = "ok"
-        except (
-            Exception
-        ) as exc:  # noqa: BLE001 - a failed date must not stop the series
+        except Exception as exc:
             kpi = dict(status=f"failed: {exc!r}")
         rows.append(dict(date=d, **kpi))
     return pd.DataFrame(rows)

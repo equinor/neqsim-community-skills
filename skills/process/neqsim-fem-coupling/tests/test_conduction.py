@@ -1,7 +1,6 @@
 from math import pi
 
 import pytest
-
 from fem_coupling import (
     ConductionLayer,
     RadialConductionModel,

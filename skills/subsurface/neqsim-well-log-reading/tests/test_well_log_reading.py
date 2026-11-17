@@ -6,7 +6,6 @@ import json
 
 import numpy as np
 import pytest
-
 from well_log_reading import (
     canonical_mnemonic,
     depth_factor_to_m,

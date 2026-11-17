@@ -13,13 +13,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
 
-from neqsim import jneqsim  # noqa: E402
-
+from neqsim import jneqsim
 from thermoml_experimental_data import (
     ThermomlClient,
     compare_points,
     parse_thermoml,
-)  # noqa: E402
+)
 
 NAME_MAP = {"octan-1-ol": "1-octanol"}
 

@@ -4,7 +4,6 @@ import zipfile
 from datetime import date
 
 import pytest
-
 from open_incident_data import (
     BseeClient,
     SourceError,

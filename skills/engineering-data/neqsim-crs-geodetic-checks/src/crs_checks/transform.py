@@ -8,10 +8,10 @@ transformations are refused, a missing grid is reported, and the PROJ pipeline t
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
 
-Point = Tuple[float, float]
+Point = tuple[float, float]
 AMBIGUITY_TOLERANCE_M = 0.01
 
 
@@ -25,15 +25,15 @@ class AmbiguousOperationError(CrsError):
 
 @dataclass
 class TransformResult:
-    coordinates: List[Point]
+    coordinates: list[Point]
     operation: str
-    accuracy_m: Optional[float]
+    accuracy_m: float | None
     pipeline: str
     engine: str
-    candidates: List[Dict[str, object]] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    candidates: list[dict[str, object]] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
-    def provenance(self) -> Dict[str, object]:
+    def provenance(self) -> dict[str, object]:
         return {
             "operation": self.operation,
             "accuracy_m": self.accuracy_m,
@@ -61,7 +61,7 @@ def _crs(code: str):
     return CRS.from_user_input(code)
 
 
-def operation_codes(transformer) -> List[str]:
+def operation_codes(transformer) -> list[str]:
     """Authority codes of the operation and of every step (for matching a named operation)."""
     text = json.dumps(transformer.to_json_dict())
     import re
@@ -84,7 +84,7 @@ def _metres_apart(dst_crs, a: Point, b: Point) -> float:
     return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
 
 
-def _check_operation_area(operation: str, points: List[Point], src: str) -> None:
+def _check_operation_area(operation: str, points: list[Point], src: str) -> None:
     """Refuse a named operation whose area of use does not contain the points (both engines)."""
     from pyproj.crs import CoordinateOperation
 
@@ -115,7 +115,7 @@ def _check_operation_area(operation: str, points: List[Point], src: str) -> None
 
 
 def transform(
-    points: Sequence[Point], src: str, dst: str, operation: Optional[str] = None
+    points: Sequence[Point], src: str, dst: str, operation: str | None = None
 ) -> TransformResult:
     """Transform x/y (lon/lat for geographic CRSs, always in that order) from ``src`` to ``dst``.
 
@@ -142,9 +142,7 @@ def transform(
         lons, lats = [p[0] for p in lonlat], [p[1] for p in lonlat]
         if all(-180 <= v <= 180 for v in lons) and all(-90 <= v <= 90 for v in lats):
             aoi = AreaOfInterest(min(lons), min(lats), max(lons), max(lats))
-    except (
-        Exception
-    ):  # noqa: BLE001 - an unusable source CRS fails below with a clearer message
+    except Exception:
         aoi = None
     group = TransformerGroup(
         src, dst, always_xy=True, allow_ballpark=False, area_of_interest=aoi
@@ -223,7 +221,7 @@ def transform(
 
 
 def _transform_geodetic_engine(
-    points: List[Point], src: str, dst: str, operation: Optional[str]
+    points: list[Point], src: str, dst: str, operation: str | None
 ) -> TransformResult:
     from geodetic_engine import geodesy  # type: ignore[import-not-found]
 
@@ -233,7 +231,7 @@ def _transform_geodetic_engine(
             if operation
             else geodesy.transform(src, dst, points)
         )
-    except Exception as exc:  # noqa: BLE001 - map the engine's refusals onto ours
+    except Exception as exc:
         if type(exc).__name__ == "AmbiguousOperationError":
             raise AmbiguousOperationError(str(exc)) from exc
         raise CrsError(str(exc)) from exc

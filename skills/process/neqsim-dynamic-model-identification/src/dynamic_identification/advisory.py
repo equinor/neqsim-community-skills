@@ -16,13 +16,13 @@ Only numpy and pandas are needed; ``plan_moves`` uses SciPy (``pip install scipy
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Mapping, Optional, Tuple
+from collections.abc import Iterable, Mapping
 
 import numpy as np
 import pandas as pd
 
 
-def response_time(model: Mapping[str, object]) -> Dict[str, float]:
+def response_time(model: Mapping[str, object]) -> dict[str, float]:
     """63 % and 95 % response times (s) of an identified first-order-plus-delay model (``identify_unit`` output)."""
     tau = float(model.get("time_constant_s") or 0.0)
     delay = float(model.get("time_delay_s") or 0.0)
@@ -38,14 +38,14 @@ def gain_update(
     identified: float,
     physics: float,
     n_moves: int,
-    fit_pct: Optional[float],
-    uncertainty: Optional[float] = None,
+    fit_pct: float | None,
+    uncertainty: float | None = None,
     min_moves: int = 2,
     min_fit_pct: float = 50.0,
     max_rel_uncertainty: float = 0.3,
-    band: Tuple[float, float] = (0.5, 2.0),
+    band: tuple[float, float] = (0.5, 2.0),
     tolerance: float = 0.10,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Decide whether an identified gain should replace the physics (planning) gain.
 
     Returns ``accept``, the gain to use and the reason. The physics gain is kept unless the evidence is strong:
@@ -106,7 +106,7 @@ def physics_gate(
     d_input: float,
     max_ratio: float = 1.5,
     require_same_sign: bool = True,
-) -> Tuple[bool, str]:
+) -> tuple[bool, str]:
     """Reject a model response that is not physically possible.
 
     ``d_input`` is what was added at the source (for example oil added at the wells) and ``d_output`` the model's
@@ -124,9 +124,9 @@ def physics_gate(
 
 def sensitivity_matrix(
     base: Mapping[str, float],
-    cases: Mapping[str, Tuple[float, Mapping[str, float]]],
-    keys: Optional[Iterable[str]] = None,
-) -> Dict[str, Dict[str, float]]:
+    cases: Mapping[str, tuple[float, Mapping[str, float]]],
+    keys: Iterable[str] | None = None,
+) -> dict[str, dict[str, float]]:
     """Per-unit sensitivities from one-at-a-time flowsheet cases.
 
     ``cases`` maps lever -> (step, result) where result holds the same keys as ``base``. Keys missing from a case are
@@ -144,8 +144,8 @@ def plan_moves(
     state: Mapping[str, float],
     objective: Mapping[str, float],
     limits: Mapping[str, float],
-    bounds: Mapping[str, Tuple[float, float]],
-) -> Dict[str, object]:
+    bounds: Mapping[str, tuple[float, float]],
+) -> dict[str, object]:
     """Best lever moves within limits (linear programme on the sensitivity matrix).
 
     ``objective`` weights keys of the gains (for example ``{"oil": 1, "gas": 0.001}``); ``limits`` gives upper limits
@@ -192,7 +192,7 @@ def schedule_moves(
     max_step: float,
     settle_s: float,
     start_s: float = 0.0,
-) -> List[Dict[str, float]]:
+) -> list[dict[str, float]]:
     """Split planned moves into steps of at most ``max_step``, largest value first, one every ``settle_s`` seconds."""
     steps = []
     for lv in sorted(moves, key=lambda q: -abs(value_per_unit.get(q, 0.0))):

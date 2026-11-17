@@ -7,8 +7,8 @@ design factors and a verified standard-conform load basis, so every result is la
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -17,8 +17,8 @@ from .units import (
     BAR_PER_SG_M,
     KN_PER_KLBF,
     M_PER_IN,
-    STEEL_E_GPA,
     STEEL_ALPHA,
+    STEEL_E_GPA,
     psi_to_bar,
 )
 
@@ -34,7 +34,7 @@ class Grade:
     cra: bool = False
 
 
-GRADES: Dict[str, Grade] = {
+GRADES: dict[str, Grade] = {
     g.name: g
     for g in (
         Grade("X56", 56.0, 71.0),
@@ -54,7 +54,7 @@ GRADES: Dict[str, Grade] = {
 
 # Nominal OD (in) -> wall thicknesses (in). Screening catalogue of common API 5CT sizes; confirm against the vendor
 # pipe list before use. Plain-end weight is computed as 10.69 (OD - t) t lb/ft.
-CATALOG: Dict[float, List[float]] = {
+CATALOG: dict[float, list[float]] = {
     36.0: [1.0, 1.25, 1.5],
     30.0: [1.0, 1.25],
     20.0: [0.438, 0.5, 0.635],
@@ -87,7 +87,7 @@ def yield_psi(grade: Grade, temp_c: float = 20.0) -> float:
     return grade.smys_ksi * 1000.0 * f
 
 
-def _api_collapse_coefficients(yp: float) -> Tuple[float, float, float, float, float]:
+def _api_collapse_coefficients(yp: float) -> tuple[float, float, float, float, float]:
     a = 2.8762 + 0.10679e-5 * yp + 0.21301e-10 * yp**2 - 0.53132e-16 * yp**3
     b = 0.026233 + 0.50609e-6 * yp
     c = -465.93 + 0.030867 * yp - 0.10483e-7 * yp**2 + 0.36989e-13 * yp**3
@@ -149,7 +149,7 @@ class Pipe:
     def label(self) -> str:
         return f'{self.od_in:g}" {self.weight_lbft:.1f} ppf {self.grade} (t={self.wall_in:.3f} in)'
 
-    def ratings(self, temp_c: float = 20.0) -> Dict[str, float]:
+    def ratings(self, temp_c: float = 20.0) -> dict[str, float]:
         """Rated collapse, burst (bar) and body yield (kN), derated to ``temp_c``."""
         yp = yield_psi(GRADES[self.grade], temp_c)
         return {
@@ -162,7 +162,7 @@ class Pipe:
         }
 
 
-def candidates(od_in: float, grades: Sequence[str]) -> List[Pipe]:
+def candidates(od_in: float, grades: Sequence[str]) -> list[Pipe]:
     """All catalogue pipes of an OD for the listed grades, lightest first."""
     walls = CATALOG.get(od_in)
     if walls is None:
@@ -200,12 +200,12 @@ class StringBasis:
     next_mud_sg: float
     next_pore_sg: float
     frac_shoe_sg: float
-    pore_sg_at: Optional[callable] = None
+    pore_sg_at: callable | None = None
     gas_sg: float = 0.25
     kick_intensity_sg: float = 0.06
     packer_fluid_sg: float = 1.20
-    shut_in_wellhead_bar: Optional[float] = None
-    test_pressure_bar: Optional[float] = None
+    shut_in_wellhead_bar: float | None = None
+    test_pressure_bar: float | None = None
     evacuation_fraction: float = 0.5
     evacuation_basis: str = (
         "fraction"  # "fraction" (fixed share of the string evacuated) or "pore_balance" (loss of returns to pore balance)
@@ -219,15 +219,15 @@ class StringBasis:
     sea_sg: float = 1.03
     max_temp_c: float = 20.0
     overpull_kn: float = 400.0
-    ext_pore_case_sg: Optional[float] = None
+    ext_pore_case_sg: float | None = None
     cap_gas_at_frac: bool = True
-    evacuation_level_tvd_m: Optional[float] = (
+    evacuation_level_tvd_m: float | None = (
         None  # fixed fluid level (TVD) in the evacuation case; overrides ``evacuation_basis``
     )
-    displacement_sg: Optional[float] = (
+    displacement_sg: float | None = (
         None  # density of the fluid inside during cementing; adds the ``cementing`` load case (unset slurry outside) when given
     )
-    kick_mud_sg: Optional[float] = (
+    kick_mud_sg: float | None = (
         None  # mud-equivalent density that sets the formation pressure in the gas-kick case (pore basis); None = ``next_mud_sg`` (mud basis)
     )
 
@@ -247,7 +247,7 @@ def _external_bar(basis: StringBasis, z: float) -> float:
     return pore * BAR_PER_SG_M * z
 
 
-def load_cases(basis: StringBasis, n: int = 41) -> Dict[str, Dict[str, np.ndarray]]:
+def load_cases(basis: StringBasis, n: int = 41) -> dict[str, dict[str, np.ndarray]]:
     """Internal and external pressure (bar) at ``n`` nodes for each load case, plus node depths.
 
     Cases: ``gas_kick`` (gas to surface after a kick, capped at the shoe fracture pressure), ``tubing_leak``
@@ -260,7 +260,7 @@ def load_cases(basis: StringBasis, n: int = 41) -> Dict[str, Dict[str, np.ndarra
     g = BAR_PER_SG_M
     pext = np.array([_external_bar(basis, float(zz)) for zz in z])
     p_wh_sea = basis.sea_sg * g * basis.water_depth_m
-    cases: Dict[str, Dict[str, np.ndarray]] = {}
+    cases: dict[str, dict[str, np.ndarray]] = {}
 
     p_form = (
         (
@@ -360,11 +360,11 @@ def vme_stress_ratio(
 
 def check_string(
     pipe: Pipe, basis: StringBasis, df: DesignFactors = DesignFactors(), n: int = 41
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Design factors of one pipe for a string basis. Returns the minimum factor of each check and the governing case."""
     r = pipe.ratings(basis.max_temp_c)
     cases = load_cases(basis, n)
-    out: Dict[str, object] = {"pipe": pipe.label(), "ratings": r}
+    out: dict[str, object] = {"pipe": pipe.label(), "ratings": r}
     burst_min, collapse_min = (float("inf"), ""), (float("inf"), "")
     tri_min = (float("inf"), "")
     w_buoy = (
@@ -442,13 +442,13 @@ def select_string(
     grades: Sequence[str],
     df: DesignFactors = DesignFactors(),
     n: int = 41,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Lightest catalogue pipe of ``basis.od_in`` and the listed grades that passes all design factors.
 
     Returns the selection and the full ranked candidate table for traceability.
     """
-    table: List[Dict[str, object]] = []
-    chosen: Optional[Dict[str, object]] = None
+    table: list[dict[str, object]] = []
+    chosen: dict[str, object] | None = None
     for pipe in candidates(basis.od_in, grades):
         res = check_string(pipe, basis, df, n)
         table.append(res)
@@ -477,7 +477,7 @@ def check_tubing(
     df: DesignFactors = DesignFactors(),
     sea_sg: float = 1.03,
     n: int = 41,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Design factors of a production tubing string with annulus fluid outside (hanger at the mudline, packer at ``packer_tvd_m``).
 
     Load cases: ``shut_in`` (gas to the tree, annulus fluid and applied annulus head outside) and ``evacuated`` (empty tubing, annulus
@@ -550,7 +550,7 @@ def wellhead_rating_class(
     max_pressure_bar: float,
     classes_psi: Sequence[float] = (5000.0, 10000.0, 15000.0, 20000.0),
     margin: float = 1.0,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Smallest API 6A pressure class (psi, bar) covering ``max_pressure_bar * margin``."""
     need = max_pressure_bar * margin
     for c in classes_psi:
@@ -578,7 +578,7 @@ def collapse_basis_comparison(
     bases: Sequence[str] = ("mud_or_pore", "set_cement", "cement_slurry"),
     df: DesignFactors = DesignFactors(),
     n: int = 41,
-) -> List[Dict[str, object]]:
+) -> list[dict[str, object]]:
     """Collapse design factor of one pipe under several external-load bases of the evacuation (loss of returns) case.
 
     Bases: ``mud_or_pore`` (no credit for cement, the original mud column outside; conservative), ``set_cement`` (pore pressure outside, cement set) and
@@ -612,7 +612,7 @@ def collapse_basis_comparison(
 
 def max_evacuation_level_for_collapse(
     pipe: Pipe, basis: StringBasis, df: DesignFactors = DesignFactors(), n: int = 41
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Deepest well fluid level (TVD below RKB, m) at which the collapse design factor is still at least the minimum, with the basis as given.
 
     The fluid level is the operational mitigation of a thin-wall string: keeping the level above the returned depth (fill-up, loss control) keeps the
@@ -677,13 +677,13 @@ def alternative_pipes(
     basis: StringBasis,
     grades: Sequence[str],
     df: DesignFactors = DesignFactors(),
-    bit_od_in: Optional[float] = None,
+    bit_od_in: float | None = None,
     drift_allowance_in: float = 0.125,
-    grade_cost_factor: Optional[Dict[str, float]] = None,
+    grade_cost_factor: dict[str, float] | None = None,
     conservative_basis: str = "mud_or_pore",
     realistic_basis: str = "set_cement",
     n: int = 41,
-) -> List[Dict[str, object]]:
+) -> list[dict[str, object]]:
     """Trade-off table of all catalogue pipes of ``basis.od_in``: collapse factors under a conservative and a realistic external-load basis, weight, drift and bit clearance.
 
     A heavier wall raises the collapse rating of a thin-wall string but reduces the inside diameter, so the next bit may no longer pass. In the elastic

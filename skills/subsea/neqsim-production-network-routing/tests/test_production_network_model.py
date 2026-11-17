@@ -1,5 +1,4 @@
 import pytest
-
 from production_network_routing import ProductionNetworkModel
 
 

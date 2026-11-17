@@ -13,9 +13,9 @@ mechanical-design workflows and to a qualified subsea engineering review.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from math import ceil, cos, hypot, pi, radians, sin
-from typing import Sequence
 
 from .geo import (
     LocalFrame,

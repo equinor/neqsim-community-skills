@@ -6,8 +6,8 @@ enter only when the basis supplies them (with currency and source) and are carri
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence
-
+from collections.abc import Sequence
+from typing import Any
 
 from .basis import CASES, PRODUCER_TYPES, rng
 from .registers import get_path
@@ -23,7 +23,7 @@ DEFAULT_CRITERIA = [
 ]
 
 
-def default_alternatives(basis: Dict[str, Any]) -> List[Dict[str, Any]]:
+def default_alternatives(basis: dict[str, Any]) -> list[dict[str, Any]]:
     """Alternatives to compare when the basis supplies none: tubing size x lift strategy (producers) or tubing size (injectors)."""
     wtype = get_path(basis, "well.type")
     d0 = float(get_path(basis, "completion.tubing.id_m"))
@@ -32,16 +32,16 @@ def default_alternatives(basis: Dict[str, Any]) -> List[Dict[str, Any]]:
     for d in sizes:
         alts.append(
             {
-                "id": "T{:.0f}".format(d * 1000),
-                "label": "tubing ID {:.0f} mm".format(d * 1000),
+                "id": f"T{d * 1000:.0f}",
+                "label": f"tubing ID {d * 1000:.0f} mm",
                 "overrides": {"tubing_id_m": d},
             }
         )
     if wtype in PRODUCER_TYPES:
         alts.append(
             {
-                "id": "T{:.0f}-GL".format(d0 * 1000),
-                "label": "tubing ID {:.0f} mm + gas lift 100 kSm3/d".format(d0 * 1000),
+                "id": f"T{d0 * 1000:.0f}-GL",
+                "label": f"tubing ID {d0 * 1000:.0f} mm + gas lift 100 kSm3/d",
                 "overrides": {"tubing_id_m": d0, "lift_gas_sm3d": 1.0e5},
                 "lift": "gas_lift",
             }
@@ -51,11 +51,11 @@ def default_alternatives(basis: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def evaluate_alternatives(
     model: Any,
-    basis: Dict[str, Any],
-    alternatives: Optional[List[Dict[str, Any]]] = None,
+    basis: dict[str, Any],
+    alternatives: list[dict[str, Any]] | None = None,
     cases: Sequence[str] = CASES,
     producer: bool = True,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Run each alternative through the chain for each outcome case and collect comparable metrics."""
     alts = (
         alternatives or get_path(basis, "alternatives") or default_alternatives(basis)
@@ -71,7 +71,7 @@ def evaluate_alternatives(
             )
             per_case[c] = r
         base = per_case["base"]
-        row: Dict[str, Any] = {
+        row: dict[str, Any] = {
             "id": alt["id"],
             "label": alt.get("label", alt["id"]),
             "overrides": alt.get("overrides", {}),
@@ -134,10 +134,10 @@ def evaluate_alternatives(
 
 
 def scorecard(
-    rows: List[Dict[str, Any]],
-    weights: Optional[Dict[str, float]] = None,
+    rows: list[dict[str, Any]],
+    weights: dict[str, float] | None = None,
     producer: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Normalised 0-1 criterion scores (1 = best) and a weighted total; weights default to equal and are labelled ASSUMED."""
     crit = (
         list(DEFAULT_CRITERIA)
@@ -154,7 +154,7 @@ def scorecard(
     )
     weights_used = dict(weights or {c: 1.0 for c in crit})
     weights_source = "supplied" if weights else "ASSUMED equal weights"
-    raw: Dict[str, Dict[str, Optional[float]]] = {c: {} for c in crit}
+    raw: dict[str, dict[str, float | None]] = {c: {} for c in crit}
     for r in rows:
         i = r["id"]
         if producer:
@@ -190,15 +190,15 @@ def scorecard(
 def score_raw(
     ids: Sequence[str],
     crit: Sequence[str],
-    raw: Dict[str, Dict[str, Optional[float]]],
-    weights_used: Dict[str, float],
+    raw: dict[str, dict[str, float | None]],
+    weights_used: dict[str, float],
     weights_source: str = "ASSUMED equal weights",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Normalise raw criterion values (higher = better, ``None`` = no data) to 0-1 per criterion and compute the weighted total per alternative.
 
     Criteria without data for any alternative are excluded from the total (not scored zero). Use this directly for study-specific criteria.
     """
-    scores: Dict[str, Dict[str, Optional[float]]] = {}
+    scores: dict[str, dict[str, float | None]] = {}
     for c in crit:
         vals = [v for v in raw[c].values() if v is not None]
         scores[c] = {}
@@ -234,8 +234,8 @@ def score_raw(
 
 
 def pareto_front(
-    points: Dict[str, Sequence[float]], maximise: Sequence[bool]
-) -> List[str]:
+    points: dict[str, Sequence[float]], maximise: Sequence[bool]
+) -> list[str]:
     """Non-dominated ids for points given as {id: (x, y, ...)} with a per-axis maximise flag."""
     ids = list(points)
     front = []
@@ -262,10 +262,10 @@ def pareto_front(
 
 def tornado(
     model: Any,
-    basis: Dict[str, Any],
+    basis: dict[str, Any],
     producer: bool = True,
-    parameters: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+    parameters: list[str] | None = None,
+) -> dict[str, Any]:
     """One-at-a-time sensitivity: swing of the base-case metric when each parameter moves to its low/high value.
 
     Metric: stock-tank/standard rate at the stable operating point (producers) or required wellhead pressure (injectors).
@@ -326,10 +326,10 @@ def sensitivity_grid(
     model: Any,
     case: str,
     x_param: str,
-    x_vals: List[float],
+    x_vals: list[float],
     y_param: str,
-    y_vals: List[float],
-) -> Dict[str, Any]:
+    y_vals: list[float],
+) -> dict[str, Any]:
     """Two-parameter grid of operating rate (producer) for a heat map."""
     z = []
     for y in y_vals:
@@ -346,13 +346,13 @@ def sensitivity_grid(
 
 def deliverability_profile(
     model: Any,
-    basis: Dict[str, Any],
+    basis: dict[str, Any],
     years: Sequence[float],
     cases: Sequence[str] = CASES,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Deliverability (plateau capacity) versus time with linear depletion. NOT a production forecast and not a recovery estimate."""
     dep = float(get_path(basis, "reservoir.depletion_bar_per_year") or 0.0)
-    out: Dict[str, Any] = {
+    out: dict[str, Any] = {
         "years": list(years),
         "cases": {},
         "target": None,

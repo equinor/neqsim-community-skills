@@ -14,15 +14,15 @@ from .sources import ALLOWED_HOSTS, SOURCES, THEMES, keys_for_theme
 
 __all__ = [
     "ALLOWED_HOSTS",
-    "BBox",
     "CAVEATS",
+    "SOURCES",
+    "THEMES",
+    "BBox",
     "FeatureSet",
     "LocalProjection",
     "MarineClient",
     "ReadRecord",
-    "SOURCES",
     "SourceError",
-    "THEMES",
     "default_fetch",
     "densify",
     "haversine_m",

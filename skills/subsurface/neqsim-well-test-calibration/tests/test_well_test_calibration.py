@@ -7,13 +7,12 @@ import importlib.util
 import numpy as np
 import pandas as pd
 import pytest
-
 from well_test_calibration import (
     accept_calibration,
     calibrate_well,
     fit_with_priors,
-    rate_from_gauge,
     quality_flags,
+    rate_from_gauge,
     window_mean,
 )
 

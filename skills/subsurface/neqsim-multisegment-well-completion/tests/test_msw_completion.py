@@ -6,7 +6,6 @@ import json
 import math
 
 import pytest
-
 from msw_completion import (
     Aicd,
     DensityValve,

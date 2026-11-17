@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import asdict, dataclass, field
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 H2S_PER_SULFATE = 34.081 / 96.06  # mg H2S per mg SO4
 H2S_PER_ACETATE = (
@@ -32,8 +32,8 @@ def seawater_fraction_from_tracer(
 
 
 def seawater_fraction_multi_tracer(
-    measured: Dict[str, float], formation: Dict[str, float], seawater: Dict[str, float]
-) -> Tuple[float, float]:
+    measured: dict[str, float], formation: dict[str, float], seawater: dict[str, float]
+) -> tuple[float, float]:
     """Least-squares seawater fraction from several tracers, scaled by end-member contrast.
 
     Returns (fraction, rms residual in fraction units); a large residual flags a tracer that
@@ -66,7 +66,7 @@ class Correlation:
 
     well: str
     model: str
-    params: Dict[str, float]
+    params: dict[str, float]
     n: int
     rmse: float
     r2: float
@@ -74,7 +74,7 @@ class Correlation:
     f_max: float
     aicc: float
     units: str = "ppmv"
-    warnings: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     def predict(self, f: float) -> float:
         """Evaluate the correlation; negative values are clipped to zero."""
@@ -85,23 +85,23 @@ class Correlation:
         return asdict(self)
 
 
-def _linear(f: float, p: Dict[str, float]) -> float:
+def _linear(f: float, p: dict[str, float]) -> float:
     return p["a"] * f + p.get("b", 0.0)
 
 
-def _power(f: float, p: Dict[str, float]) -> float:
+def _power(f: float, p: dict[str, float]) -> float:
     return p["a"] * max(f, 0.0) ** p["n"]
 
 
-def _saturating(f: float, p: Dict[str, float]) -> float:
+def _saturating(f: float, p: dict[str, float]) -> float:
     return p["a"] * f / (1.0 + p["k"] * f)
 
 
-def _threshold(f: float, p: Dict[str, float]) -> float:
+def _threshold(f: float, p: dict[str, float]) -> float:
     return p["a"] * max(f - p["f0"], 0.0)
 
 
-def _mixing_zone(f: float, p: Dict[str, float]) -> float:
+def _mixing_zone(f: float, p: dict[str, float]) -> float:
     # substrate limited: sulfate rises with f, donor falls with f; peak where they balance
     return (
         p["a"] * min(f / p["f_star"], (1.0 - f) / (1.0 - p["f_star"]))
@@ -110,7 +110,7 @@ def _mixing_zone(f: float, p: Dict[str, float]) -> float:
     )
 
 
-_MODELS: Dict[str, Tuple[Callable[[float, Dict[str, float]], float], int]] = {
+_MODELS: dict[str, tuple[Callable[[float, dict[str, float]], float], int]] = {
     "linear": (_linear, 2),
     "power": (_power, 2),
     "saturating": (_saturating, 2),
@@ -121,7 +121,7 @@ _MODELS: Dict[str, Tuple[Callable[[float, Dict[str, float]], float], int]] = {
 
 def _lstsq_1d(
     x: Sequence[float], y: Sequence[float], w: Sequence[float], intercept: bool
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     sw = sum(w)
     if intercept:
         mx = sum(wi * xi for wi, xi in zip(w, x)) / sw
@@ -141,7 +141,7 @@ def _lstsq_1d(
 
 def _sse(
     model: str,
-    params: Dict[str, float],
+    params: dict[str, float],
     f: Sequence[float],
     y: Sequence[float],
     w: Sequence[float],
@@ -152,13 +152,13 @@ def _sse(
 
 def _fit_model(
     model: str, f: Sequence[float], y: Sequence[float], w: Sequence[float]
-) -> Tuple[Dict[str, float], float]:
+) -> tuple[dict[str, float], float]:
     if model == "linear":
         a, b = _lstsq_1d(f, y, w, True)
         params = {"a": a, "b": b}
     elif model == "power":
         best = None
-        for i in range(0, 61):
+        for i in range(61):
             n = 0.4 + i * 0.05
             xs = [max(fi, 0.0) ** n for fi in f]
             a, _ = _lstsq_1d(xs, y, w, False)
@@ -169,7 +169,7 @@ def _fit_model(
         params = best[0]
     elif model == "saturating":
         best = None
-        for i in range(0, 121):
+        for i in range(121):
             k = i * 0.1
             xs = [fi / (1.0 + k * fi) for fi in f]
             a, _ = _lstsq_1d(xs, y, w, False)
@@ -181,7 +181,7 @@ def _fit_model(
     elif model == "threshold":
         best = None
         fmax = max(f)
-        for i in range(0, 60):
+        for i in range(60):
             f0 = i * 0.01 * max(fmax, 1e-9)
             xs = [max(fi - f0, 0.0) for fi in f]
             a, _ = _lstsq_1d(xs, y, w, False)
@@ -213,8 +213,8 @@ def fit_well_correlation(
     well: str,
     f_sw: Sequence[float],
     h2s: Sequence[float],
-    models: Optional[Iterable[str]] = None,
-    weights: Optional[Sequence[float]] = None,
+    models: Iterable[str] | None = None,
+    weights: Sequence[float] | None = None,
     units: str = "ppmv",
 ) -> Correlation:
     """Fit the candidate models to paired (seawater fraction, H2S) data and keep the best by AICc.
@@ -242,7 +242,7 @@ def fit_well_correlation(
     sw = sum(w)
     ybar = sum(wi * yi for wi, yi in zip(w, y)) / sw
     sst = sum(wi * (yi - ybar) ** 2 for wi, yi in zip(w, y))
-    best: Optional[Correlation] = None
+    best: Correlation | None = None
     for m in names:
         try:
             params, sse = _fit_model(m, f, y, w)
@@ -284,11 +284,11 @@ def fit_well_correlation(
 
 
 def update_correlation(
-    previous: Optional[Correlation],
+    previous: Correlation | None,
     well: str,
     f_sw: Sequence[float],
     h2s: Sequence[float],
-    half_life_points: Optional[float] = None,
+    half_life_points: float | None = None,
     **kwargs,
 ) -> Correlation:
     """Refit with the new data; optionally forget old points exponentially (half-life in points).
@@ -323,7 +323,7 @@ def save_registry(correlations: Iterable[Correlation], path: str) -> None:
         json.dump(data, fh, indent=2, sort_keys=True)
 
 
-def load_registry(path: str) -> Dict[str, Correlation]:
+def load_registry(path: str) -> dict[str, Correlation]:
     """Read a registry written by save_registry."""
     with open(path, "r", encoding="utf-8") as fh:
         raw = json.load(fh)
@@ -337,7 +337,7 @@ def mixing_zone_h2s_mg_l(
     efficiency: float = 1.0,
     sink_fraction: float = 0.0,
     mitigation_factor: float = 1.0,
-    temperature_c: Optional[float] = None,
+    temperature_c: float | None = None,
     t_cutoff_c: float = 80.0,
     t_width_c: float = 10.0,
 ) -> float:

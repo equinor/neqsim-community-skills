@@ -1,7 +1,6 @@
-
 import pytest
-
-from integrated_well_planning import datums, examples_data as ed
+from integrated_well_planning import datums
+from integrated_well_planning import examples_data as ed
 from integrated_well_planning.basis import (
     basis_to_registers,
     case_value,
@@ -12,8 +11,8 @@ from integrated_well_planning.basis import (
     validate_basis,
 )
 from integrated_well_planning.registers import (
-    Registers,
     RegisterItem,
+    Registers,
     get_path,
 )
 

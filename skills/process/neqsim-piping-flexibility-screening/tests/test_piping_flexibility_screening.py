@@ -1,5 +1,4 @@
 import pytest
-
 from piping_flexibility_screening import PipingFlexibilityModel
 
 

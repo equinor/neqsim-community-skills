@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import math
-from typing import List, Optional, Sequence, Tuple
+from collections.abc import Sequence
 
-Point = Tuple[float, float]
+Point = tuple[float, float]
 EARTH_RADIUS_M = 6371008.8
 
 
@@ -34,7 +34,7 @@ def dist(a: Point, b: Point) -> float:
     return math.hypot(a[0] - b[0], a[1] - b[1])
 
 
-def point_segment_distance(p: Point, a: Point, b: Point) -> Tuple[float, float]:
+def point_segment_distance(p: Point, a: Point, b: Point) -> tuple[float, float]:
     """Return (distance, parameter t in [0, 1] of the closest point) from p to segment a-b."""
     dx, dy = b[0] - a[0], b[1] - a[1]
     l2 = dx * dx + dy * dy
@@ -80,7 +80,7 @@ def point_polygon_distance(p: Point, ring: Sequence[Point]) -> float:
 
 def segment_intersection(
     p: Point, p2: Point, q: Point, q2: Point
-) -> Optional[Tuple[float, float, float]]:
+) -> tuple[float, float, float] | None:
     """Intersection of segments p-p2 and q-q2: (t along p, u along q, crossing angle in degrees 0..90) or None."""
     r = (p2[0] - p[0], p2[1] - p[1])
     s = (q2[0] - q[0], q2[1] - q[1])
@@ -97,7 +97,7 @@ def segment_intersection(
 
 def polyline_crossings(
     route: Sequence[Point], line: Sequence[Point]
-) -> List[Tuple[float, float]]:
+) -> list[tuple[float, float]]:
     """All crossings of a route with a polyline as (chainage along route in m, crossing angle deg)."""
     out = []
     ch = 0.0
@@ -111,7 +111,7 @@ def polyline_crossings(
     return sorted(out)
 
 
-def densify(route: Sequence[Point], step_m: float) -> List[Tuple[float, Point]]:
+def densify(route: Sequence[Point], step_m: float) -> list[tuple[float, Point]]:
     """Points along a polyline every step_m as (chainage, point)."""
     out, ch = [], 0.0
     for a, b in zip(route, route[1:]):

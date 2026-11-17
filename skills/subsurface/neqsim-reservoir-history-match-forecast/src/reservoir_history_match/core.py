@@ -7,8 +7,8 @@ pressure, it is computed once per fluid and reused by the material-balance tank 
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, Optional, Sequence
 
 import numpy as np
 
@@ -37,7 +37,7 @@ class FluidModel:
         self,
         base_fluid,
         names: Sequence[str],
-        heavy_idx: Optional[Sequence[int]] = None,
+        heavy_idx: Sequence[int] | None = None,
     ):
         self.base = base_fluid
         self.names = list(names)
@@ -45,7 +45,7 @@ class FluidModel:
 
     @classmethod
     def from_components(
-        cls, light: Dict[str, float], tbp: Sequence[tuple] = (), eos: str = "PR"
+        cls, light: dict[str, float], tbp: Sequence[tuple] = (), eos: str = "PR"
     ):
         """Build a PR/SRK fluid from database components and TBP pseudo components.
 
@@ -225,7 +225,7 @@ class DepletionPath:
             float(np.interp(p, pp, self.cond_sm3_per_mol[order])),
         )
 
-    def composition_table(self, names: Optional[Sequence[str]] = None):
+    def composition_table(self, names: Sequence[str] | None = None):
         import pandas as pd
 
         df = pd.DataFrame(self.y, columns=names or self.fluid.names)

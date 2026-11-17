@@ -11,13 +11,13 @@ from .plant import (
 )
 
 __all__ = [
-    "GAS_COMPONENTS",
     "DEFAULT_FEED",
-    "NMVOC",
+    "GAS_COMPONENTS",
     "GHG_CH4",
+    "NMVOC",
     "build_teg_plant",
+    "classify_emissions",
     "comp_mass_flows_kg_hr",
     "glycol_purity_wt",
     "teg_mass_fraction",
-    "classify_emissions",
 ]

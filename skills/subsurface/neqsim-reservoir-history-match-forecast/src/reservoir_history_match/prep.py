@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import numpy as np
 import pandas as pd
 
@@ -54,7 +52,7 @@ def shut_in_pressure_observations(
     dh_col: str = "dh_press",
     min_age_days: int = 540,
     p_range=(30.0, 830.0),
-    exclude: Optional[dict] = None,
+    exclude: dict | None = None,
     quantile: float = 0.25,
     sigma: float = 20.0,
     min_days: int = 2,
@@ -102,7 +100,7 @@ def deliverability_history(
     gas_col: str = "gas_sm3",
     hours_col: str = "on_stream_hrs",
     whp_col: str = "whp_barg",
-    water_col: Optional[str] = None,
+    water_col: str | None = None,
     min_hours: float = 12.0,
 ) -> pd.DataFrame:
     """Daily on-stream rate (kSm3/d) and tubing-head pressure (bara) per well for ``fit_deliverability``."""

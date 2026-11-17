@@ -26,11 +26,12 @@ import json
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 BACKENDS: tuple[str, ...] = (
     "scikit-fem",
@@ -220,7 +221,7 @@ class ConductionProblem:
         materials: Sequence[MaterialAssignment],
         boundaries: Sequence[BoundaryCondition],
         transient: TransientSettings | None = None,
-    ) -> "ConductionProblem":
+    ) -> ConductionProblem:
         """Build a problem from a :class:`fem_coupling.mesh.FemMeshSpec`.
 
         The physical-group tags are taken straight from the mesh specification, so
@@ -494,7 +495,7 @@ class FemCase:
             )
 
         try:
-            completed = subprocess.run(  # noqa: S603 - fixed command shape
+            completed = subprocess.run(
                 [sys.executable, "case.py"],
                 cwd=str(target),
                 capture_output=True,

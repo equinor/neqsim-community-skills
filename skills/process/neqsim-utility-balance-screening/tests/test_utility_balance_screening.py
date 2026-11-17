@@ -1,5 +1,4 @@
 import pytest
-
 from utility_balance_screening import UtilityBalanceModel
 
 

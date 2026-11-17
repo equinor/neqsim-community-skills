@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from control_valve_cv_screening.capacity import (
     cv_from_gas_flow,
     gas_flow_sm3h,

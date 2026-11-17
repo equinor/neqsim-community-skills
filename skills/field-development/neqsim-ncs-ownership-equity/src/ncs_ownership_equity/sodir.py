@@ -5,11 +5,12 @@ from __future__ import annotations
 import json
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Optional
+from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
-_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+_EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 USER_AGENT = "neqsim-ncs-ownership-equity/0.1 (+https://github.com/equinor/neqsim-community-skills)"
 SODIR_DATASERVICE = (
     "https://factmaps.sodir.no/api/rest/services/DataService/Data/MapServer"
@@ -20,7 +21,7 @@ SODIR_FACTMAPS = (
 LICENCE_TASK_LAYER = 652  # FactMapsWGS84 layer with the work obligations of a licence
 
 # Layer ids probed against the live service; they are not all listed in the MapServer index.
-LAYERS: Dict[str, int] = {
+LAYERS: dict[str, int] = {
     "licence_licensee_hst": 3007,
     "licence_transfer_hst": 3003,
     "licence_status": 3009,
@@ -42,9 +43,7 @@ def default_fetch(url: str, timeout: float = 90.0) -> bytes:
     request = urllib.request.Request(
         url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"}
     )
-    with urllib.request.urlopen(
-        request, timeout=timeout
-    ) as response:  # noqa: S310 - fixed https host
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         return response.read()
 
 
@@ -53,7 +52,7 @@ def sql_quote(value: str) -> str:
     return "'" + str(value).replace("'", "''") + "'"
 
 
-def to_local_date(epoch_ms: Optional[float], tz: str = "Europe/Oslo") -> Optional[date]:
+def to_local_date(epoch_ms: float | None, tz: str = "Europe/Oslo") -> date | None:
     """Convert a Sodir epoch-millisecond timestamp to the local calendar date.
 
     Sodir stores deadlines as the instant of local midnight, which is the previous
@@ -66,7 +65,7 @@ def to_local_date(epoch_ms: Optional[float], tz: str = "Europe/Oslo") -> Optiona
     return datetime.fromtimestamp(float(epoch_ms) / 1000.0, ZoneInfo(tz)).date()
 
 
-def to_date(epoch_ms: Optional[float]) -> Optional[date]:
+def to_date(epoch_ms: float | None) -> date | None:
     """Convert a Sodir epoch-millisecond timestamp to a UTC date (``None`` stays ``None``)."""
     if epoch_ms is None:
         return None
@@ -82,11 +81,11 @@ class ReadRecord:
     rows: int
     url: str
     retrieved_utc: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
     )
     licence: str = "NLOD 2.0 (Sodir); reuse with attribution"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
 
 
@@ -105,15 +104,15 @@ class SodirClient:
         self.timeout = timeout
         self.page_size = page_size
         self.max_pages = max_pages
-        self.records: List[ReadRecord] = []
+        self.records: list[ReadRecord] = []
 
     def query(
         self, layer: str | int, where: str = "1=1", service: str = SODIR_DATASERVICE
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Return the attribute dicts of every matching row (``service`` selects the REST service)."""
         layer_id = LAYERS[layer] if isinstance(layer, str) else int(layer)
         base = f"{service}/{layer_id}/query"
-        rows: List[Dict[str, Any]] = []
+        rows: list[dict[str, Any]] = []
         offset = 0
         url = base
         for _ in range(self.max_pages):

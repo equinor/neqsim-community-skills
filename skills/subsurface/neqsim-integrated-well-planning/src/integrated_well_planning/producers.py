@@ -7,25 +7,25 @@ traverse with a Ramey thermal profile. Every number carries the label of the led
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
 from .basis import PRODUCER_TYPES
 from .model_chain import (
+    SC_MOLAR_VOLUME_SM3_PER_KMOL,
+    WATER_MW_KG_PER_MOL,
+    WATER_SC_DENSITY,
     build_fluid,
     case_params,
+    darcy_oil_pi_sm3d_per_bar,
     effective_tubing_depths,
     flowline_back_pressure,
-    darcy_oil_pi_sm3d_per_bar,
     require,
     reservoir_properties,
     standard_factors,
     thermal_model,
     water_moles_for_cut,
-    SC_MOLAR_VOLUME_SM3_PER_KMOL,
-    WATER_SC_DENSITY,
-    WATER_MW_KG_PER_MOL,
 )
 from .nodal import composite_oil_ipr, solve_nodal
 from .registers import get_path
@@ -38,13 +38,11 @@ class ProducerModel:
     """Reservoir-well-facility model of one producer."""
 
     def __init__(
-        self, basis: Dict[str, Any], segments: int = 10, n_scan: int = 12
+        self, basis: dict[str, Any], segments: int = 10, n_scan: int = 12
     ) -> None:
         wtype = get_path(basis, "well.type")
         if wtype not in PRODUCER_TYPES:
-            raise ValueError(
-                "ProducerModel needs a producer well.type, got {}".format(wtype)
-            )
+            raise ValueError(f"ProducerModel needs a producer well.type, got {wtype}")
         require(
             "DriftFluxWellboreHydraulics",
             "WellboreThermalModel",
@@ -57,9 +55,9 @@ class ProducerModel:
         self.depths = effective_tubing_depths(basis)
         self.std = standard_factors(basis)
         self.gas_well = wtype in ("gas_producer", "gas_condensate_producer")
-        self._ipr_cache: Dict[str, Any] = {}
-        self._fl_cache: Dict[str, Any] = {}
-        self._vlp_cache: Dict[str, Tuple[float, Any]] = {}
+        self._ipr_cache: dict[str, Any] = {}
+        self._fl_cache: dict[str, Any] = {}
+        self._vlp_cache: dict[str, tuple[float, Any]] = {}
         self.tubing_id_m = float(get_path(basis, "completion.tubing.id_m"))
         self.roughness_m = float(
             get_path(basis, "completion.tubing.roughness_m") or 4.5e-5
@@ -70,8 +68,8 @@ class ProducerModel:
 
     # ------------------------------------------------------------------ parameters
     def params(
-        self, case: str, overrides: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, case: str, overrides: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Case parameters with optional overrides (tubing_id_m, host_pressure_bara, water_cut, pressure_bara, skin, k_md, lift_gas_sm3d)."""
         p = case_params(self.basis, case)
         p.update({k: v for k, v in (overrides or {}).items() if v is not None})
@@ -80,10 +78,10 @@ class ProducerModel:
         return p
 
     @staticmethod
-    def _key(p: Dict[str, Any], *names: str) -> str:
-        return "|".join("{}={:.6g}".format(n, float(p.get(n, 0.0))) for n in names)
+    def _key(p: dict[str, Any], *names: str) -> str:
+        return "|".join(f"{n}={float(p.get(n, 0.0)):.6g}" for n in names)
 
-    def mass_flow(self, p: Dict[str, Any], q: float) -> Dict[str, float]:
+    def mass_flow(self, p: dict[str, Any], q: float) -> dict[str, float]:
         """Mass rates (kg/s) for a stock-tank oil or wellstream-gas-equivalent rate ``q`` (Sm3/d)."""
         if self.gas_well:
             hc = q * self.std["kg_per_sm3_gas_equivalent"] / 86400.0
@@ -109,9 +107,7 @@ class ProducerModel:
         }
 
     # ------------------------------------------------------------------ inflow
-    def ipr(
-        self, case: str, overrides: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    def ipr(self, case: str, overrides: dict[str, Any] | None = None) -> dict[str, Any]:
         """Return inflow callables for the case: ``pwf(q)``, ``rate(pwf)``, ``aof`` and metadata."""
         p = self.params(case, overrides)
         key = case + self._key(p, "pressure_bara", "skin", "k_md", "h_m", "water_cut")
@@ -215,7 +211,7 @@ class ProducerModel:
         return out
 
     # ------------------------------------------------------------------ outflow
-    def _thermal(self, p: Dict[str, Any], mass: float):
+    def _thermal(self, p: dict[str, Any], mass: float):
         return thermal_model(self.basis, mass, p["temperature_C"])
 
     def traverse(
@@ -223,7 +219,7 @@ class ProducerModel:
         case: str,
         q: float,
         whp_bara: float,
-        overrides: Optional[Dict[str, Any]] = None,
+        overrides: dict[str, Any] | None = None,
         from_bottomhole: bool = False,
     ):
         """Run the drift-flux traverse at rate ``q``; returns the Java Result and extras.
@@ -274,8 +270,8 @@ class ProducerModel:
         }
 
     def available_whp(
-        self, case: str, q: float, overrides: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, case: str, q: float, overrides: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Wellhead pressure the well can deliver at rate ``q``: IPR gives the flowing bottom-hole pressure, the tubing traverse gives the wellhead pressure.
 
         The difference to the required wellhead pressure (host boundary + minimum choke drop) is the choke drop the subsea choke has to absorb at that rate.
@@ -286,14 +282,12 @@ class ProducerModel:
         pwf = float(ipr["pwf"](q))
         try:
             res, extra = self.traverse(case, q, pwf, overrides, from_bottomhole=True)
-        except (
-            Exception
-        ) as exc:  # noqa: BLE001 - the Java traverse throws when the column cannot lift the fluid to the surface
+        except Exception as exc:
             return {
                 "q": q,
                 "feasible": False,
                 "pwf_bara": pwf,
-                "reason": "tubing traverse failed: {}".format(str(exc)[:140]),
+                "reason": f"tubing traverse failed: {str(exc)[:140]}",
             }
         req = self.back_pressure(case, q, overrides)
         whp = float(res.getWellheadPressureBara())
@@ -316,8 +310,8 @@ class ProducerModel:
         }
 
     def back_pressure(
-        self, case: str, q: float, overrides: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, float]:
+        self, case: str, q: float, overrides: dict[str, Any] | None = None
+    ) -> dict[str, float]:
         """Wellhead pressure needed to deliver ``q`` to the host (flowline dP interpolated from a 5-point table)."""
         p = self.params(case, overrides)
         fl = get_path(self.basis, "facility.flowline") or {}
@@ -379,7 +373,7 @@ class ProducerModel:
         }
 
     def vlp_bhp(
-        self, case: str, q: float, overrides: Optional[Dict[str, Any]] = None
+        self, case: str, q: float, overrides: dict[str, Any] | None = None
     ) -> float:
         """Bottom-hole pressure required to deliver ``q`` against the host back pressure."""
         p = self.params(case, overrides)
@@ -393,7 +387,7 @@ class ProducerModel:
                 "lift_gas_sm3d",
                 "wgr_sm3_per_msm3",
             )
-            + "|q={:.5g}".format(q)
+            + f"|q={q:.5g}"
         )
         if key in self._vlp_cache:
             return self._vlp_cache[key][0]
@@ -405,8 +399,8 @@ class ProducerModel:
 
     # ------------------------------------------------------------------ nodal
     def operating_point(
-        self, case: str, overrides: Optional[Dict[str, Any]] = None, detail: bool = True
-    ) -> Dict[str, Any]:
+        self, case: str, overrides: dict[str, Any] | None = None, detail: bool = True
+    ) -> dict[str, Any]:
         """Solve the nodal intersection and report the operating point, target check and tubing diagnostics."""
         p = self.params(case, overrides)
         ipr = self.ipr(case, overrides)
@@ -420,7 +414,7 @@ class ProducerModel:
             n_scan=self.n_scan,
         )
         target = p["rate"]
-        out: Dict[str, Any] = {
+        out: dict[str, Any] = {
             "case": case,
             "params": {k: v for k, v in p.items() if isinstance(v, (int, float, str))},
             "ipr_kind": ipr["kind"],
@@ -517,8 +511,8 @@ class ProducerModel:
 
     # ------------------------------------------------------------------ sweeps
     def sweep(
-        self, case: str, parameter: str, values: List[float]
-    ) -> List[Dict[str, Any]]:
+        self, case: str, parameter: str, values: list[float]
+    ) -> list[dict[str, Any]]:
         """Operating point for a list of values of one override parameter (tubing_id_m, host_pressure_bara, water_cut, pressure_bara, skin, lift_gas_sm3d)."""
         rows = []
         for v in values:
@@ -536,8 +530,8 @@ class ProducerModel:
         return rows
 
     def nodal_family(
-        self, case: str, parameter: str, values: List[float], n_points: int = 14
-    ) -> Dict[str, Any]:
+        self, case: str, parameter: str, values: list[float], n_points: int = 14
+    ) -> dict[str, Any]:
         """IPR plus a family of VLP curves for one override parameter (for the nodal chart)."""
         ipr = self.ipr(case)
         p = self.params(case)
@@ -554,7 +548,7 @@ class ProducerModel:
         }
 
 
-def _f(x: Any) -> Optional[float]:
+def _f(x: Any) -> float | None:
     try:
         v = float(x)
         return v if v == v else None
@@ -563,8 +557,8 @@ def _f(x: Any) -> Optional[float]:
 
 
 def profile_from_result(
-    res: Any, extra: Dict[str, Any], depths: Dict[str, float], n: int
-) -> Dict[str, Any]:
+    res: Any, extra: dict[str, Any], depths: dict[str, float], n: int
+) -> dict[str, Any]:
     """Convert a drift-flux Result into depth-aligned arrays (index 0 = wellhead)."""
     tvd = depths["tvd_m"]
     node_z = np.linspace(0.0, tvd, n + 1)

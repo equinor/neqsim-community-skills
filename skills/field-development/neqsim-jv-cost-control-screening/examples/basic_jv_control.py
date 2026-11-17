@@ -3,7 +3,6 @@
 import logging
 
 import pandas as pd
-
 from jv_cost_control import (
     check_subtotals,
     interest_share_check,

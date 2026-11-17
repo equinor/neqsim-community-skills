@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import csv
 import re
+from collections.abc import Iterable, Sequence
 from datetime import date, datetime
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence
 
 from .offsets import TABLES
 
-COLUMNS: Dict[str, List[str]] = {
+COLUMNS: dict[str, list[str]] = {
     "casing_lot": [
         "well",
         "string",
@@ -85,7 +85,7 @@ COLUMNS: Dict[str, List[str]] = {
 _FRAC = re.compile(r"^\s*(\d+)?\s*(?:(\d+)\s*/\s*(\d+))?\s*(?:\"|in|inch)?\s*$")
 
 
-def parse_inches(text: object) -> Optional[float]:
+def parse_inches(text: object) -> float | None:
     """Parse a size such as ``13 3/8``, ``9 7/8"``, ``36``, ``17.5`` or ``3/4`` to decimal inches (None if empty or unparsable)."""
     if text is None:
         return None
@@ -108,7 +108,7 @@ def parse_inches(text: object) -> Optional[float]:
     return whole
 
 
-def _f(x: object) -> Optional[float]:
+def _f(x: object) -> float | None:
     try:
         if x is None or str(x).strip() == "":
             return None
@@ -117,7 +117,7 @@ def _f(x: object) -> Optional[float]:
         return None
 
 
-def parse_date(text: object) -> Optional[date]:
+def parse_date(text: object) -> date | None:
     """Parse an ISO-style date or timestamp (``2014-04-08`` or ``2014-04-08T00:00:00``); None if empty or invalid."""
     if text is None or str(text).strip() == "":
         return None
@@ -129,10 +129,10 @@ def parse_date(text: object) -> Optional[date]:
 
 def approx_tvd(
     md_m: float,
-    td_md_m: Optional[float],
-    td_tvd_m: Optional[float],
-    kickoff_md_m: Optional[float] = None,
-) -> Dict[str, object]:
+    td_md_m: float | None,
+    td_tvd_m: float | None,
+    kickoff_md_m: float | None = None,
+) -> dict[str, object]:
     """Approximate TVD for a measured depth when no survey is available.
 
     Above ``kickoff_md_m`` (or for a TD whose TVD is within 0.5 percent of its MD) the well is treated as vertical. Below
@@ -153,12 +153,12 @@ def approx_tvd(
 
 
 def normalise_casing_rows(
-    rows: Sequence[Dict[str, str]],
-    well_info: Optional[Dict[str, Dict[str, object]]] = None,
+    rows: Sequence[dict[str, str]],
+    well_info: dict[str, dict[str, object]] | None = None,
     source: str = "",
     status: str = "VERIFIED",
     date_text: str = "",
-) -> List[Dict[str, object]]:
+) -> list[dict[str, object]]:
     """Convert regulator-style casing and leak-off rows to ``offset_casing_lot.csv`` rows.
 
     Args:
@@ -174,7 +174,7 @@ def normalise_casing_rows(
         the well info (``tvd_basis`` says how) and the pilot-hole and open-hole rows kept with ``string`` set accordingly.
     """
     info = well_info or {}
-    out: List[Dict[str, object]] = []
+    out: list[dict[str, object]] = []
     for r in rows:
         well = (r.get("wlbName") or "").strip()
         md = _f(r.get("wlbCasingDepth"))
@@ -217,15 +217,15 @@ def normalise_casing_rows(
 
 
 def normalise_mud_rows(
-    rows: Sequence[Dict[str, str]],
-    well_info: Optional[Dict[str, Dict[str, object]]] = None,
+    rows: Sequence[dict[str, str]],
+    well_info: dict[str, dict[str, object]] | None = None,
     source: str = "",
     status: str = "VERIFIED",
     date_text: str = "",
-) -> List[Dict[str, object]]:
+) -> list[dict[str, object]]:
     """Convert regulator-style mud rows (``wlbName``, ``wlbMD``, ``wlbMudWeightAtMD``, ``wlbMudType``) to ``offset_mud_weight.csv`` rows."""
     info = well_info or {}
-    out: List[Dict[str, object]] = []
+    out: list[dict[str, object]] = []
     for r in rows:
         well = (r.get("wlbName") or "").strip()
         md, mw = _f(r.get("wlbMD")), _f(r.get("wlbMudWeightAtMD"))
@@ -255,11 +255,11 @@ def normalise_mud_rows(
 
 
 def normalise_wellbore_rows(
-    rows: Sequence[Dict[str, str]],
-    wells: Optional[Iterable[str]] = None,
+    rows: Sequence[dict[str, str]],
+    wells: Iterable[str] | None = None,
     source: str = "",
     status: str = "VERIFIED",
-) -> List[Dict[str, object]]:
+) -> list[dict[str, object]]:
     """Convert regulator-style wellbore attribute rows to ``offset_time_depth.csv`` rows.
 
     ``days_total`` is completion date minus entry date (days from spud to rig release or abandonment, including every sidetrack
@@ -267,7 +267,7 @@ def normalise_wellbore_rows(
     kick-off, so it is flagged in ``max_inc_deg`` and should not be mixed with a parent well without care.
     """
     keep = set(wells) if wells else None
-    out: List[Dict[str, object]] = []
+    out: list[dict[str, object]] = []
     for r in rows:
         well = (r.get("wlbWellboreName") or r.get("wlbName") or "").strip()
         if not well or (keep is not None and well not in keep):
@@ -300,45 +300,60 @@ def normalise_wellbore_rows(
 
 
 EVENT_PATTERNS = [
-    ("shallow_gas", re.compile(r"shallow gas", re.I)),
-    ("kick", re.compile(r"\bkick(?!ed off)|well control|influx|water kick", re.I)),
-    ("loss", re.compile(r"\bloss(?:es)?\b|lost circulation|mud losses|losses", re.I)),
+    ("shallow_gas", re.compile(r"shallow gas", re.IGNORECASE)),
+    (
+        "kick",
+        re.compile(r"\bkick(?!ed off)|well control|influx|water kick", re.IGNORECASE),
+    ),
+    (
+        "loss",
+        re.compile(
+            r"\bloss(?:es)?\b|lost circulation|mud losses|losses", re.IGNORECASE
+        ),
+    ),
     (
         "stuck",
-        re.compile(r"\bstuck\b|got stuck|pack[- ]?off|tight hole|overpull", re.I),
+        re.compile(
+            r"\bstuck\b|got stuck|pack[- ]?off|tight hole|overpull", re.IGNORECASE
+        ),
     ),
     (
         "instability",
-        re.compile(r"instabil|collaps|cavings|washout|wellbore stability", re.I),
+        re.compile(
+            r"instabil|collaps|cavings|washout|wellbore stability", re.IGNORECASE
+        ),
     ),
     (
         "HPHT",
         re.compile(
-            r"high pore pressure|overpress|high pressure|HPHT|high temperature", re.I
+            r"high pore pressure|overpress|high pressure|HPHT|high temperature",
+            re.IGNORECASE,
         ),
     ),
     (
         "sidetrack",
-        re.compile(r"technical side-?track|side-?track(?:ed)? due|junked", re.I),
+        re.compile(
+            r"technical side-?track|side-?track(?:ed)? due|junked", re.IGNORECASE
+        ),
     ),
     (
         "other",
         re.compile(
             r"lost time|delayed|weather|logging problem|equipment failure|tool failure",
-            re.I,
+            re.IGNORECASE,
         ),
     ),
 ]
 
 
-def tag_problem_sentences(well: str, text: str) -> List[Dict[str, str]]:
+def tag_problem_sentences(well: str, text: str) -> list[dict[str, str]]:
     """Split a wellbore-history text into sentences and tag the ones that describe operational problems.
 
     Negative statements ("no shallow gas was observed", "without significant problems") are returned with ``negated`` set to
     ``True`` so that a reviewer can drop them. Tags are keyword based and need human review.
     """
     clean = re.sub(r"<[^>]+>", " ", text or "")
-    out: List[Dict[str, str]] = []
+    out: list[dict[str, str]] = []
     for sent in re.split(r"(?<=[.!?])\s+", clean):
         s = sent.strip()
         if not s:
@@ -347,7 +362,7 @@ def tag_problem_sentences(well: str, text: str) -> List[Dict[str, str]]:
             re.search(
                 r"\bno (?:significant |major |shallow )?(?:gas|problem|loss|kick|hole problems?)|without significant|not (?:observed|encountered|recorded)",
                 s,
-                re.I,
+                re.IGNORECASE,
             )
         )
         for name, pat in EVENT_PATTERNS:
@@ -364,7 +379,7 @@ def tag_problem_sentences(well: str, text: str) -> List[Dict[str, str]]:
     return out
 
 
-def write_table(rows: Sequence[Dict[str, object]], table: str, folder: Path) -> Path:
+def write_table(rows: Sequence[dict[str, object]], table: str, folder: Path) -> Path:
     """Write rows to the standard CSV for ``table`` (a key of :data:`COLUMNS`) in ``folder``; missing columns are blank."""
     cols = COLUMNS[table]
     path = Path(folder) / TABLES[table]

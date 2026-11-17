@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 _DEPTH_UNITS_TO_M = {
     "m": 1.0,
@@ -28,7 +27,7 @@ _DEPTH_UNITS_TO_M = {
 _SCALED_UNIT = re.compile(r"^\s*([0-9]*\.?[0-9]+)\s*\*?\s*([a-zA-Z]+)\s*$")
 
 
-def depth_factor_to_m(unit: str) -> Optional[float]:
+def depth_factor_to_m(unit: str) -> float | None:
     """Return the factor that converts a depth in ``unit`` to metres.
 
     Scaled units such as ``"0.1 in"`` are understood. Returns ``None`` for
@@ -156,7 +155,7 @@ _DESCRIPTION_RULES = (
 )
 
 
-def canonical_mnemonic(name: str, unit: str = "", long_name: str = "") -> Optional[str]:
+def canonical_mnemonic(name: str, unit: str = "", long_name: str = "") -> str | None:
     """Return a canonical mnemonic for a curve, or ``None`` when it cannot be classified.
 
     Matching order: exact alias, alias with a trailing run/pass suffix stripped

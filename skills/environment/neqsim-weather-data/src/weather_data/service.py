@@ -4,10 +4,10 @@ screening-level site-condition summaries into one call for consuming agents.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from datetime import timezone as _timezone
-from typing import Any, Dict, List, Optional, Sequence
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from .metno import MetNorwayClient
 from .ncs_facilities import SodirFacilityLocator
@@ -22,11 +22,11 @@ class Location:
     name: str
     latitude: float
     longitude: float
-    elevation_m: Optional[float] = None
+    elevation_m: float | None = None
     source: str = "explicit-coordinates"
-    country: Optional[str] = None
+    country: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
 
 
@@ -39,9 +39,9 @@ class WeatherDataService:
 
     def __init__(
         self,
-        open_meteo: Optional[OpenMeteoClient] = None,
-        metno: Optional[MetNorwayClient] = None,
-        ncs_locator: Optional[SodirFacilityLocator] = None,
+        open_meteo: OpenMeteoClient | None = None,
+        metno: MetNorwayClient | None = None,
+        ncs_locator: SodirFacilityLocator | None = None,
     ) -> None:
         self.open_meteo = open_meteo or OpenMeteoClient()
         self.metno = metno or MetNorwayClient()
@@ -49,11 +49,11 @@ class WeatherDataService:
 
     def resolve_location(
         self,
-        name: Optional[str] = None,
+        name: str | None = None,
         *,
-        latitude: Optional[float] = None,
-        longitude: Optional[float] = None,
-        elevation_m: Optional[float] = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
+        elevation_m: float | None = None,
         try_ncs: bool = True,
         try_geocoding: bool = True,
     ) -> Location:
@@ -118,7 +118,7 @@ class WeatherDataService:
         self,
         location: Location,
         *,
-        hourly: Optional[Sequence[str]] = None,
+        hourly: Sequence[str] | None = None,
         days: int = 7,
         past_days: int = 0,
     ) -> WeatherSeries:
@@ -146,7 +146,7 @@ class WeatherDataService:
         start_date: str,
         end_date: str,
         *,
-        hourly: Optional[Sequence[str]] = None,
+        hourly: Sequence[str] | None = None,
     ) -> WeatherSeries:
         """Worldwide reanalysis history (Open-Meteo archive), back to 1940."""
         return self.open_meteo.historical(
@@ -158,7 +158,7 @@ class WeatherDataService:
         location: Location,
         *,
         days: int = 7,
-        hourly: Optional[Sequence[str]] = None,
+        hourly: Sequence[str] | None = None,
     ) -> WeatherSeries:
         """Wave height/period and sea-surface temperature, current plus forecast."""
         return self.open_meteo.marine(
@@ -170,8 +170,8 @@ class WeatherDataService:
         location: Location,
         *,
         years_back: int = 10,
-        end_date: Optional[str] = None,
-        hourly: Optional[Sequence[str]] = None,
+        end_date: str | None = None,
+        hourly: Sequence[str] | None = None,
     ) -> SiteConditionsSummary:
         """Screening-level ambient design statistics from ``years_back`` years
         of historical reanalysis (min/mean/max temperature, max wind/gust, a
@@ -181,7 +181,7 @@ class WeatherDataService:
             end = datetime.strptime(end_date, "%Y-%m-%d").date()
         else:
             # Open-Meteo's archive lags live data by a few days; stay clear of the edge.
-            end = datetime.now(_timezone.utc).date() - timedelta(days=6)
+            end = datetime.now(UTC).date() - timedelta(days=6)
         start = end.replace(year=end.year - years_back)
         series = self.get_historical(
             location, start.isoformat(), end.isoformat(), hourly=hourly
@@ -190,7 +190,7 @@ class WeatherDataService:
 
     def compare_forecast_sources(
         self, location: Location, *, days: int = 3
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Cross-check Open-Meteo against MET Norway for the same point and
         window (temperature and wind), most useful on the Norwegian
         Continental Shelf where MET Norway runs the higher-resolution Nordic
@@ -233,7 +233,7 @@ class WeatherDataService:
 
 def _paired_deltas(
     a: WeatherSeries, b: WeatherSeries, variable: str, *, limit_hours: int
-) -> List[float]:
+) -> list[float]:
     """Pair up two hourly series by matching ISO timestamps and return a - b for shared, non-null hours."""
     a_by_time = dict(zip(a.hourly_time, a.hourly.get(variable, [])))
     b_by_time = dict(zip(b.hourly_time, b.hourly.get(variable, [])))

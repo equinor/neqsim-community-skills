@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from subsea_equipment_placement import (
     LIMIT_CATALOG,
     PlacementBasis,

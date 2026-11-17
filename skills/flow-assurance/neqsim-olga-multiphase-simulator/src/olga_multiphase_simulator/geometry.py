@@ -22,9 +22,9 @@ from __future__ import annotations
 import math
 
 __all__ = [
+    "Discretization",
     "DiscretizationError",
     "PipeSegment",
-    "Discretization",
     "discretize_route",
 ]
 
@@ -33,7 +33,7 @@ class DiscretizationError(ValueError):
     """Raised when a route cannot be discretised as requested."""
 
 
-class PipeSegment(object):
+class PipeSegment:
     """One OLGA `PIPE` statement.
 
     :param label: pipe label
@@ -103,22 +103,16 @@ class PipeSegment(object):
         :param indent: leading whitespace for the statement
         :return: genkey text for this pipe
         """
-        lengths = ", ".join("{0:.4f}".format(v) for v in self.section_lengths)
+        lengths = ", ".join(f"{v:.4f}" for v in self.section_lengths)
         lines = [
-            "{0}PIPE LABEL={1}, ROUGHNESS={2:.6e} m, DIAMETER={3:.4f} m, \\".format(
-                indent, self.label, roughness_m, diameter_m
-            ),
-            '{0}     WALL="{1}", NSEGMENT={2:d}, LSEGMENT=({3}) m, \\'.format(
-                indent, wall_label, self.nsegments, lengths
-            ),
-            "{0}     XEND={1:.3f} m, YEND={2:.3f} m, ZEND=0 m".format(
-                indent, self.x_end, self.y_end
-            ),
+            f"{indent}PIPE LABEL={self.label}, ROUGHNESS={roughness_m:.6e} m, DIAMETER={diameter_m:.4f} m, \\",
+            f'{indent}     WALL="{wall_label}", NSEGMENT={self.nsegments:d}, LSEGMENT=({lengths}) m, \\',
+            f"{indent}     XEND={self.x_end:.3f} m, YEND={self.y_end:.3f} m, ZEND=0 m",
         ]
         return "\n".join(lines)
 
 
-class Discretization(object):
+class Discretization:
     """Result of discretising a route.
 
     :param pipes: list of :class:`PipeSegment`

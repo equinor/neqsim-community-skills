@@ -18,8 +18,9 @@ from __future__ import annotations
 
 import csv
 import json
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 from .tools import haversine_km
 from .wfs import repair_name

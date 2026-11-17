@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from reservoir_facility_value_chain import (
     Gas,
     GasTank,

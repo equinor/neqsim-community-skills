@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from benchmark_reference_data.reference_data import (
     ANCHOR_POINTS,
     AnchorNotFoundError,

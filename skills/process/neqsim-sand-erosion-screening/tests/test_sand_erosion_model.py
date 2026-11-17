@@ -1,5 +1,4 @@
 import pytest
-
 from sand_erosion_screening import SandErosionModel
 
 

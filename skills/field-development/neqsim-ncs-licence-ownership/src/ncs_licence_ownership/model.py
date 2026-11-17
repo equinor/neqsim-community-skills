@@ -6,7 +6,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 _EPOCH = datetime(1970, 1, 1)
 
@@ -14,7 +14,7 @@ _EPOCH = datetime(1970, 1, 1)
 SUM_TOLERANCE_PCT = 0.05
 
 
-def ms_to_date(value: Any) -> Optional[date]:
+def ms_to_date(value: Any) -> date | None:
     """Convert a Sodir epoch-millisecond timestamp to a date (None stays None)."""
     if value is None or value == "":
         return None
@@ -32,15 +32,15 @@ class Interest:
 
     company: str
     share_pct: float
-    company_id: Optional[int] = None
-    group: Optional[str] = None
-    sdfi_pct: Optional[float] = None
-    valid_from: Optional[date] = None
-    valid_to: Optional[date] = None
+    company_id: int | None = None
+    group: str | None = None
+    sdfi_pct: float | None = None
+    valid_from: date | None = None
+    valid_to: date | None = None
     basis: str = ""
     owner: str = ""
     note: str = ""
-    source_url: Optional[str] = None
+    source_url: str | None = None
 
     def active_on(self, on: date) -> bool:
         """True when the interest is valid on the date (both ends inclusive)."""
@@ -48,7 +48,7 @@ class Interest:
             return False
         return self.valid_to is None or on <= self.valid_to
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         out = dict(self.__dict__)
         out["valid_from"] = self.valid_from.isoformat() if self.valid_from else None
         out["valid_to"] = self.valid_to.isoformat() if self.valid_to else None
@@ -62,25 +62,25 @@ class EquityTable:
     entity_type: str
     name: str
     as_of: date
-    interests: List[Interest] = field(default_factory=list)
-    entity_id: Optional[int] = None
-    operator: Optional[str] = None
+    interests: list[Interest] = field(default_factory=list)
+    entity_id: int | None = None
+    operator: str | None = None
     status: str = "sodir_public"
-    history: List[Interest] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    gaps: List[str] = field(default_factory=list)
-    provenance: List[Dict[str, Any]] = field(default_factory=list)
-    included_in_field: Optional[str] = None
+    history: list[Interest] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    gaps: list[str] = field(default_factory=list)
+    provenance: list[dict[str, Any]] = field(default_factory=list)
+    included_in_field: str | None = None
 
-    def owners(self) -> List[str]:
+    def owners(self) -> list[str]:
         """Distinct owner labels (licence or business arrangement area), in order."""
-        seen: List[str] = []
+        seen: list[str] = []
         for item in self.interests:
             if item.owner not in seen:
                 seen.append(item.owner)
         return seen
 
-    def _select(self, owner: Optional[str]) -> List[Interest]:
+    def _select(self, owner: str | None) -> list[Interest]:
         owners = self.owners()
         if owner is None:
             if len(owners) > 1:
@@ -91,32 +91,32 @@ class EquityTable:
             return list(self.interests)
         return [i for i in self.interests if norm(i.owner) == norm(owner)]
 
-    def total_pct(self, owner: Optional[str] = None) -> float:
+    def total_pct(self, owner: str | None = None) -> float:
         return sum(i.share_pct for i in self._select(owner))
 
-    def is_complete(self, owner: Optional[str] = None) -> bool:
+    def is_complete(self, owner: str | None = None) -> bool:
         """True when active shares sum to 100 pct within rounding."""
         return (
             bool(self.interests)
             and abs(self.total_pct(owner) - 100.0) <= SUM_TOLERANCE_PCT
         )
 
-    def by_company(self, owner: Optional[str] = None) -> Dict[str, float]:
+    def by_company(self, owner: str | None = None) -> dict[str, float]:
         """Active share per company in pct, merging repeated rows of one company."""
-        out: Dict[str, float] = {}
+        out: dict[str, float] = {}
         for item in self._select(owner):
             out[item.company] = out.get(item.company, 0.0) + item.share_pct
         return out
 
-    def by_group(self, owner: Optional[str] = None) -> Dict[str, float]:
+    def by_group(self, owner: str | None = None) -> dict[str, float]:
         """Active share per parent group in pct; companies without a group keep their own name."""
-        out: Dict[str, float] = {}
+        out: dict[str, float] = {}
         for item in self._select(owner):
             key = item.group or item.company
             out[key] = out.get(key, 0.0) + item.share_pct
         return out
 
-    def find_company(self, query: Any, owner: Optional[str] = None) -> List[Interest]:
+    def find_company(self, query: Any, owner: str | None = None) -> list[Interest]:
         """Resolve a company by id, exact name or unique substring; raise when ambiguous."""
         items = self._select(owner)
         q = norm(query)
@@ -134,7 +134,7 @@ class EquityTable:
         return part
 
     def share_of(
-        self, company: Any, owner: Optional[str] = None, group: bool = False
+        self, company: Any, owner: str | None = None, group: bool = False
     ) -> float:
         """Share in pct of a company (or parent group). Unknown names raise instead of returning 0."""
         items = self._select(owner)
@@ -149,7 +149,7 @@ class EquityTable:
             )
         return sum(i.share_pct for i in matched)
 
-    def share_on(self, company: Any, on: date, owner: Optional[str] = None) -> float:
+    def share_on(self, company: Any, on: date, owner: str | None = None) -> float:
         """Share in pct on a past or future date from the loaded history (0.0 when not a partner)."""
         if not self.history:
             raise ValueError("no history loaded; call the reader with history=True")
@@ -174,7 +174,7 @@ class EquityTable:
     def is_complete_all(self) -> bool:
         return bool(self.interests) and all(self.is_complete(o) for o in self.owners())
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "entity_type": self.entity_type,
             "name": self.name,

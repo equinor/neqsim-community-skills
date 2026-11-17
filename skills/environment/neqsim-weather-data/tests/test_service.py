@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import pytest
+from weather_data.ncs_facilities import FacilityLocation
 from weather_data.open_meteo import GeocodeResult, WeatherSeries
 from weather_data.service import LocationNotResolvedError, WeatherDataService
-from weather_data.ncs_facilities import FacilityLocation
 
 
 class FakeOpenMeteo:

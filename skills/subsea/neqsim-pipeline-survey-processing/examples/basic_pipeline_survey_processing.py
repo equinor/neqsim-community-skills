@@ -5,7 +5,7 @@ from pipeline_survey_processing import PipelineSurveyProcessor
 
 def synthetic_survey(offset_m: float = 0.0):
     records = []
-    for index in range(0, 400):
+    for index in range(400):
         kp = index * 5.0
         depth = -298.0 + 0.004 * kp + offset_m
         seabed = depth + 0.2  # negative-up: seabed above the pipe top means 0.2 m cover

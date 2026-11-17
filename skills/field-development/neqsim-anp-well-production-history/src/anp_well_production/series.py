@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import datetime as _dt
 import statistics
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any
 
 from .parse import RATE_FIELDS
 
@@ -17,7 +18,7 @@ _PRESALT_LABELS = {"presal", "pre sal", "pre-sal", "pre_sal", "presalt", "pre-sa
 _OFFSHORE_LABELS = {"mar", "offshore", "sea"}
 
 
-def expected_latest_period(today: Optional[_dt.date] = None) -> Tuple[int, int]:
+def expected_latest_period(today: _dt.date | None = None) -> tuple[int, int]:
     """Return the newest production month ANP can have published.
 
     ANP publishes a month's well data in the second month after it: January in
@@ -35,7 +36,7 @@ def expected_latest_period(today: Optional[_dt.date] = None) -> Tuple[int, int]:
     return index // 12, index % 12 + 1
 
 
-def _row_key(rec: Mapping[str, Any]) -> Tuple:
+def _row_key(rec: Mapping[str, Any]) -> tuple:
     """Identity of one production row: a well can be split over several fields."""
     return (
         rec.get("well"),
@@ -47,8 +48,8 @@ def _row_key(rec: Mapping[str, Any]) -> Tuple:
 
 
 def merge_environments(
-    by_environment: Mapping[str, Sequence[Dict[str, Any]]],
-) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    by_environment: Mapping[str, Sequence[dict[str, Any]]],
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Combine onshore, offshore and pre-salt files without double counting.
 
     The ANP pre-salt file is a subset of the offshore file. Rows of the pre-salt
@@ -66,8 +67,8 @@ def merge_environments(
         ``n_overlap``, ``presalt_only`` (well and month of rows found only in
         the pre-salt file), ``presalt_is_subset`` and ``warnings``.
     """
-    presalt: List[Dict[str, Any]] = []
-    rest: List[Dict[str, Any]] = []
+    presalt: list[dict[str, Any]] = []
+    rest: list[dict[str, Any]] = []
     offshore_keys = set()
     n_offshore = 0
     for label, recs in by_environment.items():
@@ -83,10 +84,10 @@ def merge_environments(
         if norm in _OFFSHORE_LABELS:
             n_offshore += len(recs)
             offshore_keys.update(_row_key(r) for r in recs)
-    warnings: List[str] = []
+    warnings: list[str] = []
     merged = list(rest)
     overlap = 0
-    only: List[Tuple[str, str]] = []
+    only: list[tuple[str, str]] = []
     presalt_keys = set()
     for rec in presalt:
         key = _row_key(rec)
@@ -119,12 +120,12 @@ def merge_environments(
     return merged, report
 
 
-def _sum(values: Iterable[Optional[float]]) -> Optional[float]:
+def _sum(values: Iterable[float | None]) -> float | None:
     vals = [v for v in values if v is not None]
     return sum(vals) if vals else None
 
 
-def ratios(rec: Mapping[str, Any]) -> Dict[str, Optional[float]]:
+def ratios(rec: Mapping[str, Any]) -> dict[str, float | None]:
     """Return gas-liquid ratio and water cut of one record or aggregate.
 
     Args:
@@ -157,7 +158,7 @@ def aggregate(
     records: Iterable[Mapping[str, Any]],
     by: Sequence[str] = ("field",),
     allow_duplicates: bool = False,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Sum rates per period and group (field, installation, basin, well, ...).
 
     Args:
@@ -177,7 +178,7 @@ def aggregate(
         ValueError: Duplicate keys while ``allow_duplicates`` is False.
     """
     seen = set()
-    groups: Dict[Tuple, Dict[str, Any]] = {}
+    groups: dict[tuple, dict[str, Any]] = {}
     for r in records:
         if not allow_duplicates:
             dup = _row_key(r)
@@ -205,7 +206,7 @@ def aggregate(
             g["_vals"][f].append(r.get(f))
         if (r.get("liquid_m3d") or 0) > 0 or (r.get("gas_total_km3d") or 0) > 0:
             g["_wells"].add(r.get("well"))
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for key in sorted(
         groups, key=lambda k: tuple("" if v is None else str(v) for v in k)
     ):
@@ -221,7 +222,7 @@ def aggregate(
 
 def well_history(
     records: Iterable[Mapping[str, Any]], well: str
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return one well's monthly series sorted by period.
 
     ANP allocates a well that drains several fields as one row per field. Rows of
@@ -237,11 +238,11 @@ def well_history(
         available ``api``, ``gas_composition_pct`` and ``gcv_kj_m3``, and
         ``n_rows``; oldest first.
     """
-    by_period: Dict[str, List[Mapping[str, Any]]] = {}
+    by_period: dict[str, list[Mapping[str, Any]]] = {}
     for r in records:
         if (r.get("well") or "").strip() == well.strip():
             by_period.setdefault(r["period"], []).append(r)
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for period in sorted(by_period):
         rows = by_period[period]
         first = rows[0]
@@ -270,7 +271,7 @@ def well_history(
     return out
 
 
-def producing_rate(rec: Mapping[str, Any], key: str = "liquid_m3d") -> Optional[float]:
+def producing_rate(rec: Mapping[str, Any], key: str = "liquid_m3d") -> float | None:
     """Rate over the hours the well was on stream.
 
     ANP rates are monthly volume divided by calendar days, so a well on stream
@@ -294,7 +295,7 @@ def producing_rate(rec: Mapping[str, Any], key: str = "liquid_m3d") -> Optional[
 
 def cumulative(
     history: Iterable[Mapping[str, Any]], key: str = "liquid_m3d"
-) -> List[Tuple[str, float]]:
+) -> list[tuple[str, float]]:
     """Cumulative production from a monthly rate series.
 
     Args:
@@ -316,8 +317,8 @@ def cumulative(
 
 def completeness(
     records: Iterable[Mapping[str, Any]],
-    today: Optional[_dt.date] = None,
-) -> Dict[str, Any]:
+    today: _dt.date | None = None,
+) -> dict[str, Any]:
     """Check which months a record set covers.
 
     Args:
@@ -361,7 +362,7 @@ def completeness(
     }
 
 
-def well_flags(history: Sequence[Mapping[str, Any]]) -> Dict[str, Any]:
+def well_flags(history: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     """Flag data features that bias a well analysis.
 
     Args:
@@ -404,7 +405,7 @@ def decline_series(
     history: Iterable[Mapping[str, Any]],
     key: str = "liquid_m3d",
     on_stream: bool = False,
-) -> List[Tuple[float, float]]:
+) -> list[tuple[float, float]]:
     """Build the ``(year, rate)`` input of an Arps decline fit.
 
     Months with a zero or missing rate are dropped, because a shut-in month is an
@@ -433,7 +434,7 @@ def reconcile(
     rate_records: Iterable[Mapping[str, Any]],
     volume_records: Iterable[Mapping[str, Any]],
     rel_tol: float = 0.005,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Compare by-well rate files with by-well volume files for the same months.
 
     Both families describe the same wells; the rate is the volume over calendar
@@ -453,8 +454,8 @@ def reconcile(
 
     def totals(
         records: Iterable[Mapping[str, Any]],
-    ) -> Dict[Tuple[str, str], Dict[str, Optional[float]]]:
-        acc: Dict[Tuple[str, str], Dict[str, Optional[float]]] = {}
+    ) -> dict[tuple[str, str], dict[str, float | None]]:
+        acc: dict[tuple[str, str], dict[str, float | None]] = {}
         for r in records:
             slot = acc.setdefault((r["well"], r["period"]), {f: None for f in fields})
             for f in fields:

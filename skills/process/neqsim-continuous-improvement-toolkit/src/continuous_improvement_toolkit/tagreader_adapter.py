@@ -12,7 +12,7 @@ import os
 from .results import SourceResult
 
 
-class TagreaderAdapter(object):
+class TagreaderAdapter:
     """Pull ``tags`` (logical name -> historian tag) from one tagreader source."""
 
     def __init__(

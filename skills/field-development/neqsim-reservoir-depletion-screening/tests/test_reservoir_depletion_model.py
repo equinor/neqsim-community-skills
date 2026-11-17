@@ -1,5 +1,4 @@
 import pytest
-
 from reservoir_depletion_screening import ReservoirDepletionModel
 
 

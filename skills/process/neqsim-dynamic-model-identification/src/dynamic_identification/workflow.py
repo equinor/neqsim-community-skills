@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 
@@ -32,7 +32,7 @@ SCHEMA = "dynamic_identification_evidence.v1"
 
 
 def _plot(
-    times, measured: Dict[str, np.ndarray], simulated: Dict[str, np.ndarray], path: Path
+    times, measured: dict[str, np.ndarray], simulated: dict[str, np.ndarray], path: Path
 ) -> str:
     import matplotlib
 
@@ -57,7 +57,7 @@ def _plot(
 
 
 def _judge(
-    name: str, result: Dict[str, Any], dt: float, evidence: Dict[str, Any]
+    name: str, result: dict[str, Any], dt: float, evidence: dict[str, Any]
 ) -> None:
     """Mark a result usable or not, with the reasons, so that agents cannot pass on a meaningless fit."""
     fitting = result.get("fitting") or {}
@@ -88,10 +88,10 @@ def _judge(
         evidence["warnings"].append(f"{name}: not usable - " + "; ".join(reasons))
 
 
-def run_identification(config: Dict[str, Any]) -> Dict[str, Any]:
+def run_identification(config: dict[str, Any]) -> dict[str, Any]:
     """Run the configured analyses; returns a ``dynamic_identification_evidence.v1`` record."""
     out_dir = Path(config["out_dir"]) if config.get("out_dir") else None
-    evidence: Dict[str, Any] = {
+    evidence: dict[str, Any] = {
         "schema": SCHEMA,
         "status": "ok",
         "verification": "unverified",
@@ -155,12 +155,12 @@ def run_identification(config: Dict[str, Any]) -> Dict[str, Any]:
         "name": "equinor/TimeSeriesAnalysis",
         "assemblies": str(tsa_folder) if tsa_folder else None,
     }
-    simulated: Dict[str, np.ndarray] = {}
+    simulated: dict[str, np.ndarray] = {}
     try:
         if "loop" in analyses:
             loop = analyses["loop"]
             pv, sp, out = values[loop["pv"]], values[loop["sp"]], values[loop["out"]]
-            result: Dict[str, Any] = {}
+            result: dict[str, Any] = {}
             u_range = loop.get("out_range")
             if u_range:
                 result["saturation"] = saturation(
@@ -245,9 +245,7 @@ def run_identification(config: Dict[str, Any]) -> Dict[str, Any]:
                 evidence["warnings"].append("unit identification did not converge")
     except TsaUnavailable as exc:
         evidence["missing"].append(str(exc))
-    except (
-        Exception
-    ) as exc:  # noqa: BLE001 - an engine failure is a finding, not a crash
+    except Exception as exc:
         first = (
             str(exc).strip().splitlines()[0] if str(exc).strip() else type(exc).__name__
         )
@@ -271,7 +269,7 @@ def run_identification(config: Dict[str, Any]) -> Dict[str, Any]:
     return _finish(evidence, out_dir)
 
 
-def _finish(evidence: Dict[str, Any], out_dir) -> Dict[str, Any]:
+def _finish(evidence: dict[str, Any], out_dir) -> dict[str, Any]:
     if out_dir is not None:
         out_dir.mkdir(parents=True, exist_ok=True)
         path = out_dir / "identification_evidence.json"

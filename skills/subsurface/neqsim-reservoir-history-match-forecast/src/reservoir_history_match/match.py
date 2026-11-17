@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
-from typing import Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -37,8 +37,8 @@ class Param:
     name: str
     lo: float
     hi: float
-    x0: Optional[float] = None  # defaults to the spec value
-    prior_sigma: Optional[float] = None  # relative (log) prior width; None = no prior
+    x0: float | None = None  # defaults to the spec value
+    prior_sigma: float | None = None  # relative (log) prior width; None = no prior
 
 
 class Matcher:
@@ -51,17 +51,17 @@ class Matcher:
     def __init__(
         self,
         specs: Sequence[TankSpec],
-        wells: Dict[str, Well],
+        wells: dict[str, Well],
         rates: pd.DataFrame,
         obs: pd.DataFrame,
         params: Sequence[Param],
-        connections: Sequence[Tuple[str, str, float]] = (),
+        connections: Sequence[tuple[str, str, float]] = (),
     ):
         self.specs = {s.name: s for s in specs}
         self.wells, self.rates, self.obs = wells, rates, obs.copy()
         self.obs["date"] = pd.to_datetime(self.obs["date"])
         self.params, self.connections = list(params), list(connections)
-        self._paths: Dict[tuple, DepletionPath] = {}
+        self._paths: dict[tuple, DepletionPath] = {}
         for p in self.params:
             if p.name not in PARAM_NAMES:
                 raise ValueError(f"unknown parameter {p.name}")
@@ -77,7 +77,7 @@ class Matcher:
             )
         return self._paths[key]
 
-    def build(self, x: Optional[Sequence[float]] = None) -> Field:
+    def build(self, x: Sequence[float] | None = None) -> Field:
         specs = {k: replace(v) for k, v in self.specs.items()}
         if x is not None:
             for p, v in zip(self.params, x):
@@ -121,7 +121,7 @@ class Matcher:
         ]
         return np.concatenate([np.nan_to_num(r, nan=0.0), np.array(pri, float)])
 
-    def run(self, max_nfev: int = 40) -> "MatchResult":
+    def run(self, max_nfev: int = 40) -> MatchResult:
         from scipy.optimize import least_squares
 
         lo = [p.lo for p in self.params]
@@ -177,7 +177,7 @@ class MatchResult:
     obs: pd.DataFrame
     cost: float
     nfev: int
-    cov: Optional[np.ndarray] = None
+    cov: np.ndarray | None = None
 
     def quality(self) -> pd.DataFrame:
         """RMSE, bias and mean relative error per observation kind and tank."""
@@ -212,7 +212,7 @@ class MatchResult:
 
 def fit_deliverability(
     sim: SimResult, wells_hist: pd.DataFrame, trim: float = 0.1
-) -> Dict[str, dict]:
+) -> dict[str, dict]:
     """Fit P_res^2 - WHP^2 = a*q + c*q^2 per well from daily history and the matched tank pressure.
 
     ``wells_hist`` columns: date, well, q_ksm3d, whp (bara) and optionally water_sm3d for the water-gas ratio.
@@ -220,7 +220,7 @@ def fit_deliverability(
     """
     field = sim.field
     tab = sim.tanks()
-    out: Dict[str, dict] = {}
+    out: dict[str, dict] = {}
     for w, g in wells_hist.groupby("well"):
         if w not in field.wells:
             continue
@@ -267,5 +267,5 @@ def fit_deliverability(
                 if len(gg)
                 else float("nan")
             )
-        out[w] = dict(a=float(a), c=float(c), wgr=wgr, n=int(len(g)), r2=float(r2))
+        out[w] = dict(a=float(a), c=float(c), wgr=wgr, n=len(g), r2=float(r2))
     return out

@@ -22,9 +22,10 @@ import io
 import json
 import urllib.parse
 import urllib.request
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 Fetch = Callable[[str, float], bytes]
 
@@ -42,7 +43,7 @@ ENTSOG_API = "https://transparency.entsog.eu/api/v1"
 NORSKPETROLEUM = "https://www.norskpetroleum.no"
 
 # Layer ids of the Sodir DataService (see the MapServer description).
-SODIR_LAYERS: Dict[str, int] = {
+SODIR_LAYERS: dict[str, int] = {
     "facility": 6000,
     "facility_function": 6001,
     "facility_belongs_to": 6003,
@@ -65,7 +66,7 @@ SODIR_LAYERS: Dict[str, int] = {
 }
 
 # ENTSOG interconnection points where Norwegian gas enters the downstream grid.
-ENTSOG_NORWEGIAN_ENTRY_POINTS: Dict[str, Dict[str, str]] = {
+ENTSOG_NORWEGIAN_ENTRY_POINTS: dict[str, dict[str, str]] = {
     "ITP-00022": {"terminal": "ST.FERGUS", "country": "UK"},
     "ITP-00091": {"terminal": "EASINGTON", "country": "UK"},
     "ITP-00106": {"terminal": "ZEEBRUGGE", "country": "BE"},
@@ -82,7 +83,7 @@ DEFAULT_GCV_KWH_PER_SM3 = 11.0
 
 # The figure tables behind norskpetroleum.no's pipeline pages (xlsx uploads).
 # The file names carry a revision date; update them when norskpetroleum reissues.
-NORSKPETROLEUM_TABLES: Dict[str, str] = {
+NORSKPETROLEUM_TABLES: dict[str, str] = {
     "gas_pipelines": NORSKPETROLEUM
     + "/wp-content/uploads/72_Gassrorledninger_tabell_250220.xlsx",
     "oil_pipelines": NORSKPETROLEUM
@@ -95,9 +96,7 @@ def default_fetch(url: str, timeout: float = 90.0) -> bytes:
     request = urllib.request.Request(
         url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"}
     )
-    with urllib.request.urlopen(
-        request, timeout=timeout
-    ) as response:  # noqa: S310 - fixed https hosts
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         return response.read()
 
 
@@ -109,13 +108,13 @@ class ReadRecord:
     url: str
     rows: int
     retrieved_utc: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
     )
     licence: str = "NLOD 2.0 (Sodir) / source terms; reuse with attribution"
     ok: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
 
 
@@ -134,7 +133,7 @@ class SodirDataService:
         self.timeout = timeout
         self.page_size = page_size
         self.max_pages = max_pages
-        self.records: List[ReadRecord] = []
+        self.records: list[ReadRecord] = []
 
     def layer_url(self, layer: str | int) -> str:
         layer_id = SODIR_LAYERS[layer] if isinstance(layer, str) else int(layer)
@@ -146,12 +145,12 @@ class SodirDataService:
         where: str = "1=1",
         out_fields: str = "*",
         return_geometry: bool = False,
-        out_sr: Optional[int] = None,
-        max_offset: Optional[float] = None,
-    ) -> List[Dict[str, Any]]:
+        out_sr: int | None = None,
+        max_offset: float | None = None,
+    ) -> list[dict[str, Any]]:
         """Return all features of a layer as dicts (``attributes`` plus optional ``geometry``)."""
         base = self.layer_url(layer)
-        rows: List[Dict[str, Any]] = []
+        rows: list[dict[str, Any]] = []
         offset = 0
         url = base
         for _ in range(self.max_pages):
@@ -203,9 +202,9 @@ class SodirFactPages:
     def __init__(self, fetch: Fetch = default_fetch, *, timeout: float = 120.0) -> None:
         self.fetch = fetch
         self.timeout = timeout
-        self.records: List[ReadRecord] = []
+        self.records: list[ReadRecord] = []
 
-    def table(self, table: str) -> List[Dict[str, str]]:
+    def table(self, table: str) -> list[dict[str, str]]:
         url = SODIR_FACTPAGES_CSV.format(table=table)
         text = self.fetch(url, self.timeout).decode("utf-8-sig")
         rows = list(csv.DictReader(io.StringIO(text)))
@@ -226,7 +225,7 @@ class EntsogTransparency:
         self.fetch = fetch
         self.timeout = timeout
         self.gcv = gcv_kwh_per_sm3
-        self.records: List[ReadRecord] = []
+        self.records: list[ReadRecord] = []
 
     def operational_data(
         self,
@@ -235,7 +234,7 @@ class EntsogTransparency:
         date_to: str,
         indicator: str = "Physical Flow",
         limit: int = 1000,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         params = {
             "pointKey": point_key,
             "indicator": indicator,
@@ -275,9 +274,9 @@ class EntsogTransparency:
 
     def norwegian_entry_flows(
         self, date_from: str, date_to: str, indicator: str = "Physical Flow"
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Daily entry flow per Norwegian terminal, in kWh/d and screening MSm3/d."""
-        out: List[Dict[str, Any]] = []
+        out: list[dict[str, Any]] = []
         for point_key, meta in ENTSOG_NORWEGIAN_ENTRY_POINTS.items():
             try:
                 rows = self.operational_data(point_key, date_from, date_to, indicator)
@@ -309,14 +308,14 @@ class EntsogTransparency:
 
 
 def summarise_entry_flows(
-    rows: Iterable[Dict[str, Any]],
-) -> Dict[str, Dict[str, float]]:
+    rows: Iterable[dict[str, Any]],
+) -> dict[str, dict[str, float]]:
     """Average MSm3/d per terminal, summing the operators of a shared point per day."""
-    per_day: Dict[tuple, float] = {}
+    per_day: dict[tuple, float] = {}
     for row in rows:
         key = (row["terminal"], row["day"])
         per_day[key] = per_day.get(key, 0.0) + row["value_msm3_per_d"]
-    out: Dict[str, Dict[str, float]] = {}
+    out: dict[str, dict[str, float]] = {}
     for (terminal, _day), value in per_day.items():
         stats = out.setdefault(terminal, {"days": 0, "sum": 0.0, "max": 0.0})
         stats["days"] += 1
@@ -333,7 +332,7 @@ def summarise_entry_flows(
     }
 
 
-def read_norskpetroleum_capacity_xlsx(content: bytes) -> List[Dict[str, Any]]:
+def read_norskpetroleum_capacity_xlsx(content: bytes) -> list[dict[str, Any]]:
     """Parse a norskpetroleum pipeline table (served as xlsx even when labelled csv)."""
     try:
         import openpyxl  # optional dependency
@@ -344,8 +343,8 @@ def read_norskpetroleum_capacity_xlsx(content: bytes) -> List[Dict[str, Any]]:
     sheet = openpyxl.load_workbook(
         io.BytesIO(content), read_only=True, data_only=True
     ).active
-    header: Optional[List[Any]] = None
-    rows: List[Dict[str, Any]] = []
+    header: list[Any] | None = None
+    rows: list[dict[str, Any]] = []
     for values in sheet.iter_rows(values_only=True):
         cells = list(values)
         if header is None:

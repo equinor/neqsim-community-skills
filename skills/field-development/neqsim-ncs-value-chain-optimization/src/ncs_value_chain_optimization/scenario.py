@@ -10,11 +10,11 @@ Every default below is a stated public screening assumption, overridable.
 from __future__ import annotations
 
 import copy
-from typing import Any, Dict, List
+from typing import Any
 
 SCHEMA = "ncs_value_chain_scenario.v1"
 
-DEFAULT_SCENARIO: Dict[str, Any] = {
+DEFAULT_SCENARIO: dict[str, Any] = {
     "schema": SCHEMA,
     "name": "public screening base case",
     "years": [2026, 2040],
@@ -59,14 +59,14 @@ DEFAULT_SCENARIO: Dict[str, Any] = {
 }
 
 
-def make_scenario(**overrides: Any) -> Dict[str, Any]:
+def make_scenario(**overrides: Any) -> dict[str, Any]:
     """Deep-merge overrides into the default scenario."""
     scenario = copy.deepcopy(DEFAULT_SCENARIO)
     _merge(scenario, overrides)
     return scenario
 
 
-def _merge(base: Dict[str, Any], extra: Dict[str, Any]) -> None:
+def _merge(base: dict[str, Any], extra: dict[str, Any]) -> None:
     for key, value in extra.items():
         if isinstance(value, dict) and isinstance(base.get(key), dict):
             _merge(base[key], value)
@@ -74,7 +74,7 @@ def _merge(base: Dict[str, Any], extra: Dict[str, Any]) -> None:
             base[key] = value
 
 
-def validate_scenario(scenario: Dict[str, Any]) -> List[str]:
+def validate_scenario(scenario: dict[str, Any]) -> list[str]:
     """Return a list of problems; empty means usable."""
     problems = []
     if scenario.get("schema") != SCHEMA:

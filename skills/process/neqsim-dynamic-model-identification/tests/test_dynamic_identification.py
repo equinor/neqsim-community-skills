@@ -8,7 +8,6 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
-
 from dynamic_identification import (
     align,
     find_assemblies,
@@ -173,8 +172,6 @@ def test_missing_file_blocks(tmp_path):
 @needs_tsa
 def test_neqsim_physics_checks_identified_dynamics_and_separates_faults():
     pytest.importorskip("neqsim")
-    from neqsim import jneqsim
-
     from dynamic_identification import identify_unit
     from dynamic_identification.neqsim_bridge import (
         automation_evaluator,
@@ -184,6 +181,7 @@ def test_neqsim_physics_checks_identified_dynamics_and_separates_faults():
         steady_gains,
         two_residual_diagnosis,
     )
+    from neqsim import jneqsim
 
     gas = jneqsim.thermo.system.SystemSrkEos(298.15, 30.0)
     for name, x in (("methane", 0.9), ("ethane", 0.07), ("propane", 0.03)):

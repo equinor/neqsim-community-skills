@@ -20,9 +20,10 @@ but the required fields differ: CFD needs a flow area, FEM needs a layer build-u
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from math import isfinite
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 # Highest authority first. A value from an earlier source wins a conflict.
 SOURCE_PRECEDENCE: tuple[str, ...] = (

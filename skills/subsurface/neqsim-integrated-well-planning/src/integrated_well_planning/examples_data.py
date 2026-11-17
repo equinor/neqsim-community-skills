@@ -8,7 +8,7 @@ provenance map marks it ASSUMED. The four cases cover an oil producer (platform)
 from __future__ import annotations
 
 import copy
-from typing import Any, Dict, List
+from typing import Any
 
 OIL = [
     ("methane", 0.35),
@@ -34,12 +34,12 @@ _SYN = "synthetic demonstration assumption (no field data)"
 
 
 def _prov(
-    paths: List[str], cls: str = "ASSUMED", source: str = _SYN
-) -> Dict[str, Dict[str, Any]]:
+    paths: list[str], cls: str = "ASSUMED", source: str = _SYN
+) -> dict[str, dict[str, Any]]:
     return {p: {"class": cls, "source": source, "synthetic": True} for p in paths}
 
 
-def _casing(env: str) -> List[Dict[str, Any]]:
+def _casing(env: str) -> list[dict[str, Any]]:
     base = [
         {
             "name": "Conductor",
@@ -77,7 +77,7 @@ def _casing(env: str) -> List[Dict[str, Any]]:
     return base
 
 
-def _formations(tvd: float, contact: bool = True) -> List[Dict[str, Any]]:
+def _formations(tvd: float, contact: bool = True) -> list[dict[str, Any]]:
     f = [
         {"name": "Overburden shale", "top_tvd_m": 0.0},
         {"name": "Caprock", "top_tvd_m": round(tvd * 0.88)},
@@ -98,7 +98,7 @@ def _formations(tvd: float, contact: bool = True) -> List[Dict[str, Any]]:
     return f
 
 
-def _pressure_window(tvd: float, pres: float) -> List[Dict[str, float]]:
+def _pressure_window(tvd: float, pres: float) -> list[dict[str, float]]:
     pts = []
     for frac in (0.1, 0.3, 0.5, 0.7, 0.9, 1.0):
         z = tvd * frac
@@ -119,7 +119,7 @@ def _pressure_window(tvd: float, pres: float) -> List[Dict[str, float]]:
 
 def _survey(
     md: float, tvd: float, kop: float = 600.0, inc: float = 0.0
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return {
         "kop_md_m": kop,
         "build_rate_deg_per_30m": 2.0,
@@ -128,7 +128,7 @@ def _survey(
     }
 
 
-def oil_producer_platform() -> Dict[str, Any]:
+def oil_producer_platform() -> dict[str, Any]:
     md = tvd = 2500.0
     b = {
         "schema": "iwp_planning_basis.v1",
@@ -284,7 +284,7 @@ def oil_producer_platform() -> Dict[str, Any]:
     return b
 
 
-def gas_condensate_producer_subsea() -> Dict[str, Any]:
+def gas_condensate_producer_subsea() -> dict[str, Any]:
     md, tvd = 3500.0, 3252.0
     b = oil_producer_platform()
     b["study"].update(
@@ -464,7 +464,7 @@ def gas_condensate_producer_subsea() -> Dict[str, Any]:
     return b
 
 
-def water_injector_onshore() -> Dict[str, Any]:
+def water_injector_onshore() -> dict[str, Any]:
     md = tvd = 2000.0
     b = oil_producer_platform()
     b["study"].update(
@@ -610,7 +610,7 @@ def water_injector_onshore() -> Dict[str, Any]:
     return b
 
 
-def gas_injector_platform() -> Dict[str, Any]:
+def gas_injector_platform() -> dict[str, Any]:
     md = tvd = 3000.0
     b = water_injector_onshore()
     b["study"].update(
@@ -748,7 +748,7 @@ def gas_injector_platform() -> Dict[str, Any]:
     return b
 
 
-CASES: Dict[str, Dict[str, Any]] = {}
+CASES: dict[str, dict[str, Any]] = {}
 BUILDERS = {
     "oil_producer:platform": oil_producer_platform,
     "gas_condensate_producer:subsea": gas_condensate_producer_subsea,
@@ -763,7 +763,7 @@ CASE_NAMES = {
 }
 
 
-def generic(well_type: str, environment: str) -> Dict[str, Any]:
+def generic(well_type: str, environment: str) -> dict[str, Any]:
     """Return the closest synthetic template with the requested well type and environment applied."""
     key = {
         "oil_producer": "oil_producer:platform",
@@ -784,7 +784,7 @@ def generic(well_type: str, environment: str) -> Dict[str, Any]:
     return b
 
 
-def all_cases() -> Dict[str, Dict[str, Any]]:
+def all_cases() -> dict[str, dict[str, Any]]:
     """Return the four worked cases keyed by file stem."""
     return {
         CASE_NAMES[k.split(":")[0]]: copy.deepcopy(f()) for k, f in BUILDERS.items()

@@ -1,5 +1,4 @@
 import pytest
-
 from well_design_study import (
     EmwCurve,
     Pipe,

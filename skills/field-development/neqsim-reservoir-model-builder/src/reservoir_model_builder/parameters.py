@@ -8,9 +8,9 @@ substitute for field-specific data.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from math import isfinite
-from typing import Iterable, Mapping
 
 #: Provenance labels ordered from weakest to strongest evidence.
 PROVENANCE_RANK: Mapping[str, int] = {

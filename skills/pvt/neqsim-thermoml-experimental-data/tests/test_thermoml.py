@@ -1,7 +1,6 @@
 import os
 
 import pytest
-
 from thermoml_experimental_data import (
     ThermomlClient,
     ThermomlUnavailable,

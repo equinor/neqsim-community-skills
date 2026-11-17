@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import re
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence
 
 import numpy as np
 
@@ -74,7 +74,7 @@ def _clean(values: np.ndarray, null_values: Sequence[float]) -> np.ndarray:
 
 def read_well_log(
     path,
-    fmt: Optional[str] = None,
+    fmt: str | None = None,
     null_values: Sequence[float] = DEFAULT_NULL_VALUES,
     tolerant: bool = True,
 ) -> WellLog:
@@ -133,8 +133,8 @@ def _text(value) -> str:
 
 def _read_dlis(path: Path, log: WellLog, null_values, tolerant: bool) -> None:
     try:
-        from dlisio import dlis  # noqa: PLC0415
-        from dlisio.common import Actions, ErrorHandler  # noqa: PLC0415
+        from dlisio import dlis
+        from dlisio.common import Actions, ErrorHandler
     except ImportError as exc:  # pragma: no cover - depends on environment
         raise ImportError(_DLISIO_MISSING.format(fmt="DLIS")) from exc
 
@@ -258,7 +258,7 @@ def _lis_wellsite(logical_file, log: WellLog) -> None:
 
 def _read_lis(path: Path, log: WellLog, null_values) -> None:
     try:
-        from dlisio import lis  # noqa: PLC0415
+        from dlisio import lis
     except ImportError as exc:  # pragma: no cover - depends on environment
         raise ImportError(_DLISIO_MISSING.format(fmt="LIS")) from exc
 
@@ -313,7 +313,7 @@ def _read_lis(path: Path, log: WellLog, null_values) -> None:
 _LAS_LINE = re.compile(r"^\s*([^.\s]+)\s*\.(\S*)\s*(.*?)\s*:\s*(.*)$")
 
 
-def _parse_las_header(lines: Iterable[str]) -> List[tuple]:
+def _parse_las_header(lines: Iterable[str]) -> list[tuple]:
     """Parse ``MNEM.UNIT  VALUE : DESCRIPTION`` lines into tuples."""
     rows = []
     for line in lines:

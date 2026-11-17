@@ -6,8 +6,6 @@ Brazil, so the net-back uses the MME share of the delivered price, not a tariff.
 
 from __future__ import annotations
 
-from typing import Dict, Optional
-
 BBL_TO_SM3 = 0.158987
 DEFAULT_HEATING_VALUE_MMBTU_PER_SM3 = 0.036
 ANP_CO2_SPEC_MOL_PCT = 3.0
@@ -47,8 +45,8 @@ def gas_export_upside(
     export_fraction: float,
     netback: float,
     heating_value_mmbtu_per_sm3: float = DEFAULT_HEATING_VALUE_MMBTU_PER_SM3,
-    oil_net_price_usd_bbl: Optional[float] = None,
-) -> Dict[str, float]:
+    oil_net_price_usd_bbl: float | None = None,
+) -> dict[str, float]:
     """Undiscounted gas export revenue from the recoverable oil volume and a GOR.
 
     ``export_fraction`` is the share of produced gas that can be exported after
@@ -80,9 +78,9 @@ def gas_export_upside(
 def host_capacity_check(
     host_nameplate_kbd: float,
     host_demand_kbd: float,
-    compression_limit_kbd: Optional[float] = None,
+    compression_limit_kbd: float | None = None,
     additional_demand_kbd: float = 0.0,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Host oil ullage when gas handling or compression can bind before oil nameplate.
 
     ``compression_limit_kbd`` is the oil rate at which the host gas train limits
@@ -95,7 +93,7 @@ def host_capacity_check(
         ("additional", additional_demand_kbd),
     ):
         if val < 0.0:
-            raise ValueError("{} must be >= 0".format(label))
+            raise ValueError(f"{label} must be >= 0")
     if compression_limit_kbd is not None and compression_limit_kbd < 0.0:
         raise ValueError("compression_limit_kbd must be >= 0")
     limit = host_nameplate_kbd

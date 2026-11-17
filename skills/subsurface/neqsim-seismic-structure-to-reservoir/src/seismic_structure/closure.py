@@ -16,8 +16,8 @@ makes the trap fault-bounded, which is an interpretation decision.
 from __future__ import annotations
 
 import heapq
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -31,25 +31,25 @@ class Closure:
     """Result of a closure analysis on one depth surface."""
 
     crest_m: float
-    crest_index: Tuple[int, int]
-    crest_xy: Tuple[float, float]
+    crest_index: tuple[int, int]
+    crest_xy: tuple[float, float]
     spill_m: float
-    spill_index: Optional[Tuple[int, int]]
-    spill_xy: Optional[Tuple[float, float]]
+    spill_index: tuple[int, int] | None
+    spill_xy: tuple[float, float] | None
     spill_reason: str
     closed: bool
     order: np.ndarray  # flat node indices in fill order
     levels: np.ndarray  # fill level when each node was reached
     cell_area_m2: float
     undefined_nodes: str
-    warnings: List[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     @property
     def relief_m(self) -> float:
         """Maximum column: spill depth minus crest depth."""
         return float(self.spill_m - self.crest_m)
 
-    def region(self, contact_m: float, shape: Tuple[int, int]) -> np.ndarray:
+    def region(self, contact_m: float, shape: tuple[int, int]) -> np.ndarray:
         """Boolean ``(ncol, nrow)`` mask of the closure above ``contact_m``."""
         mask = np.zeros(int(np.prod(shape)), dtype=bool)
         mask[self.order[self.levels < contact_m]] = True
@@ -58,9 +58,9 @@ class Closure:
 
 def find_crest(
     surface: Surface,
-    near_xy: Optional[Tuple[float, float]] = None,
-    footprint: Optional[np.ndarray] = None,
-) -> Tuple[int, int]:
+    near_xy: tuple[float, float] | None = None,
+    footprint: np.ndarray | None = None,
+) -> tuple[int, int]:
     """Return the crest node: the shallowest node, or the local high reached by climbing from ``near_xy``.
 
     Raises:
@@ -99,9 +99,9 @@ def find_crest(
 
 def analyse_closure(
     surface: Surface,
-    crest: Optional[Tuple[int, int]] = None,
-    near_xy: Optional[Tuple[float, float]] = None,
-    footprint: Optional[np.ndarray] = None,
+    crest: tuple[int, int] | None = None,
+    near_xy: tuple[float, float] | None = None,
+    footprint: np.ndarray | None = None,
     undefined_nodes: str = "leak",
     min_neighbour_relief_m: float = 1.0,
 ) -> Closure:
@@ -130,9 +130,9 @@ def analyse_closure(
     defined = np.isfinite(z)
     inside = defined if footprint is None else (defined & footprint)
     ci, cj = crest if crest is not None else find_crest(surface, near_xy, footprint)
-    warnings: List[str] = []
+    warnings: list[str] = []
 
-    def escapes(i: int, j: int) -> Optional[str]:
+    def escapes(i: int, j: int) -> str | None:
         if i in (0, ncol - 1) or j in (0, nrow - 1):
             return "grid edge"
         for di, dj in _NEIGHBOURS:
@@ -146,8 +146,8 @@ def analyse_closure(
     heap = [(float(z[ci, cj]), ci, cj)]
     seen = np.zeros(z.shape, dtype=bool)
     seen[ci, cj] = True
-    order: List[int] = []
-    levels: List[float] = []
+    order: list[int] = []
+    levels: list[float] = []
     level = float(z[ci, cj])
     spill_index, reason = None, "flood exhausted the connected surface"
     while heap:
@@ -201,7 +201,7 @@ def analyse_closure(
 
 
 def _base_values(
-    top: Surface, base: Optional[Surface], thickness_m: Optional[float]
+    top: Surface, base: Surface | None, thickness_m: float | None
 ) -> np.ndarray:
     if base is not None:
         if base.domain != "depth":
@@ -219,9 +219,9 @@ def volumes_at_contact(
     top: Surface,
     closure: Closure,
     contact_m: float,
-    base: Optional[Surface] = None,
-    thickness_m: Optional[float] = None,
-) -> Dict[str, float]:
+    base: Surface | None = None,
+    thickness_m: float | None = None,
+) -> dict[str, float]:
     """Area, gross rock volume and mean column depth above one contact.
 
     Gross rock volume is ``sum(max(0, min(base, contact) - top)) x cell area`` over the closure.
@@ -256,9 +256,9 @@ def contact_sweep(
     top: Surface,
     closure: Closure,
     step_m: float = 5.0,
-    base: Optional[Surface] = None,
-    thickness_m: Optional[float] = None,
-) -> List[Dict[str, float]]:
+    base: Surface | None = None,
+    thickness_m: float | None = None,
+) -> list[dict[str, float]]:
     """Area and gross rock volume for contacts from the crest down to the spill."""
     if step_m <= 0:
         raise ValueError("step_m must be positive")
@@ -284,8 +284,8 @@ def contact_sweep(
 
 
 def contact_for_volume(
-    rows: Sequence[Dict[str, float]], target_grv_mm3: float
-) -> Optional[Dict[str, float]]:
+    rows: Sequence[dict[str, float]], target_grv_mm3: float
+) -> dict[str, float] | None:
     """Interpolate the contact and area that give a target gross rock volume; None if it does not fit.
 
     ``rows`` come from :func:`contact_sweep` (first row is the crest with zero volume).

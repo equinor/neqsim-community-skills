@@ -11,8 +11,8 @@ silently flips them.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, List, Sequence
 
 #: Monte Carlo runs that call a full simulation per sample.
 MINIMUM_SAMPLES_SIMULATION = 200
@@ -33,7 +33,7 @@ def percentile(values: Sequence[float], fraction: float) -> float:
     if not values:
         raise StatisticsError("percentile of an empty sample is undefined")
     if not 0.0 <= fraction <= 1.0:
-        raise StatisticsError("fraction must be in [0, 1], got {!r}".format(fraction))
+        raise StatisticsError(f"fraction must be in [0, 1], got {fraction!r}")
     ordered = sorted(values)
     if len(ordered) == 1:
         return ordered[0]
@@ -96,7 +96,7 @@ class SampleSummary:
     drift_pct: float
     prob_negative_pct: float
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """Flat dictionary merged into the ``uncertainty`` report block."""
         return {
             "n_simulations": self.count,
@@ -115,7 +115,7 @@ class SampleSummary:
 
 def summarise(values: Sequence[float], threshold: float = 0.0) -> SampleSummary:
     """Summarise an output sample."""
-    data: List[float] = [float(v) for v in values]
+    data: list[float] = [float(v) for v in values]
     if not data:
         raise StatisticsError("cannot summarise an empty sample")
     count = len(data)

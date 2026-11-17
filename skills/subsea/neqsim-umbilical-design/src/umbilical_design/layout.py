@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any
 
 from .runner import DesignResult
 
@@ -21,7 +22,7 @@ class PlacedCircle:
 
 def _tangent_positions(
     a: PlacedCircle, b: PlacedCircle, r: float
-) -> List[Tuple[float, float]]:
+) -> list[tuple[float, float]]:
     """Centres of a circle of radius r that touches both a and b externally."""
     da = a.radius + r
     db = b.radius + r
@@ -46,7 +47,7 @@ def _free(
 
 def pack_circles(
     diameters: Sequence[float],
-) -> Tuple[List[PlacedCircle], Tuple[float, float, float]]:
+) -> tuple[list[PlacedCircle], tuple[float, float, float]]:
     """Greedy tangent packing, largest first, minimising the farthest extent from the centroid.
 
     Returns the placed circles (in input order) and the enclosing circle ``(cx, cy, R)``.
@@ -55,12 +56,12 @@ def pack_circles(
     if n == 0:
         return [], (0.0, 0.0, 0.0)
     order = sorted(range(n), key=lambda i: -diameters[i])
-    placed: List[PlacedCircle] = [
+    placed: list[PlacedCircle] = [
         PlacedCircle(order[0], 0.0, 0.0, diameters[order[0]] / 2.0)
     ]
     for idx in order[1:]:
         r = diameters[idx] / 2.0
-        candidates: List[Tuple[float, float]] = []
+        candidates: list[tuple[float, float]] = []
         if len(placed) == 1:
             candidates = [(placed[0].radius + r, 0.0)]
         else:
@@ -92,7 +93,7 @@ def pack_circles(
     return placed, (0.0, 0.0, centre[2])
 
 
-def _enclosing_centre(placed: Sequence[PlacedCircle]) -> Tuple[float, float, float]:
+def _enclosing_centre(placed: Sequence[PlacedCircle]) -> tuple[float, float, float]:
     """Badoiu-Clarkson iteration for the centre of a small enclosing circle."""
     cx = sum(p.x for p in placed) / len(placed)
     cy = sum(p.y for p in placed) / len(placed)
@@ -125,7 +126,7 @@ def armor_wire_count(
     )
 
 
-def cross_section_layout(result: DesignResult) -> Dict[str, Any]:
+def cross_section_layout(result: DesignResult) -> dict[str, Any]:
     """Geometry for drawing: element circles, bundle, sheaths and armour wire positions (mm).
 
     The element placement is an independent circle packing. ``packing_ratio`` is the packed

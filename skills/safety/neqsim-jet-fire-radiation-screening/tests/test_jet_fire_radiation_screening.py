@@ -1,5 +1,4 @@
 import pytest
-
 from jet_fire_radiation_screening import JetFireRadiationModel
 
 

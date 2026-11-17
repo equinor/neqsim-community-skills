@@ -16,9 +16,9 @@ the slide can always be traced back to the calculation that made it.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from math import cos, radians, sin
-from typing import Sequence
 
 from .layout import SurfLayout
 from .wells import WellPath

@@ -24,8 +24,9 @@ import io
 import re
 import unicodedata
 import zipfile
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any
 
 BBL_TO_M3 = 0.158987294928
 """Cubic metres per barrel (exact)."""
@@ -80,7 +81,7 @@ def fold(text: Any) -> str:
     return s.strip()
 
 
-def parse_number(text: Any) -> Optional[float]:
+def parse_number(text: Any) -> float | None:
     """Parse a Brazilian-formatted number.
 
     Accepts ``"4841,6358"``, ``",878"`` (no leading zero), ``"3.127,441"`` (dot
@@ -111,7 +112,7 @@ def parse_number(text: Any) -> Optional[float]:
         return None
 
 
-def parse_period(text: Any) -> Tuple[int, int]:
+def parse_period(text: Any) -> tuple[int, int]:
     """Parse a reporting period into ``(year, month)``.
 
     Accepts ``"2023/12"`` and ``"2023-12"`` (by-well rate files), ``"01/2026"``
@@ -153,7 +154,7 @@ def days_in_month(year: int, month: int) -> int:
     return calendar.monthrange(year, month)[1]
 
 
-def decode_bytes(raw: bytes) -> Tuple[str, str]:
+def decode_bytes(raw: bytes) -> tuple[str, str]:
     """Decode ANP file bytes line by line, UTF-8 first and Windows-1252 otherwise.
 
     Some ANP files mix encodings: a Windows-1252 header above UTF-8 data rows,
@@ -183,7 +184,7 @@ def decode_bytes(raw: bytes) -> Tuple[str, str]:
     return "\n".join(lines).lstrip("\ufeff"), encoding
 
 
-def read_table_bytes(raw: bytes) -> Tuple[List[str], List[List[str]], Dict[str, Any]]:
+def read_table_bytes(raw: bytes) -> tuple[list[str], list[list[str]], dict[str, Any]]:
     """Read delimited ANP bytes into a header, rows and a meta record.
 
     The delimiter (semicolon or comma) is taken from the header line.
@@ -210,7 +211,7 @@ def read_table_bytes(raw: bytes) -> Tuple[List[str], List[List[str]], Dict[str, 
     return headers, rows, meta
 
 
-def read_table(path: str | Path) -> Tuple[List[str], List[List[str]], Dict[str, Any]]:
+def read_table(path: str | Path) -> tuple[list[str], list[list[str]], dict[str, Any]]:
     """Read a delimited ANP file from disk.
 
     Args:
@@ -222,7 +223,7 @@ def read_table(path: str | Path) -> Tuple[List[str], List[List[str]], Dict[str, 
     return read_table_bytes(Path(path).read_bytes())
 
 
-def read_zip(path: str | Path) -> Dict[str, bytes]:
+def read_zip(path: str | Path) -> dict[str, bytes]:
     """Return the CSV members of an ANP zip as ``{member name: bytes}``.
 
     Args:
@@ -231,7 +232,7 @@ def read_zip(path: str | Path) -> Dict[str, bytes]:
     Returns:
         Mapping of member name to content for every ``.csv`` member.
     """
-    out: Dict[str, bytes] = {}
+    out: dict[str, bytes] = {}
     with zipfile.ZipFile(path) as zf:
         for name in zf.namelist():
             if name.lower().endswith(".csv"):
@@ -239,7 +240,7 @@ def read_zip(path: str | Path) -> Dict[str, bytes]:
     return out
 
 
-def _aliases(*names: str) -> Tuple[str, ...]:
+def _aliases(*names: str) -> tuple[str, ...]:
     return tuple(fold(n) for n in names)
 
 
@@ -257,7 +258,7 @@ _COMMON = {
     ),
 }
 
-SCHEMAS: Dict[str, Dict[str, Tuple[str, ...]]] = {
+SCHEMAS: dict[str, dict[str, tuple[str, ...]]] = {
     "well_monthly_rates": dict(
         _COMMON,
         period=_aliases("Período", "Perodo"),
@@ -409,10 +410,10 @@ def detect_schema(headers: Sequence[str]) -> str:
 
 
 def _column_index(
-    headers: Sequence[str], spec: Mapping[str, Tuple[str, ...]]
-) -> Dict[str, int]:
+    headers: Sequence[str], spec: Mapping[str, tuple[str, ...]]
+) -> dict[str, int]:
     folded = [fold(h) for h in headers]
-    idx: Dict[str, int] = {}
+    idx: dict[str, int] = {}
     for key, names in spec.items():
         for i, h in enumerate(folded):
             if h in names:
@@ -421,8 +422,8 @@ def _column_index(
     return idx
 
 
-def _composition_index(headers: Sequence[str]) -> Dict[str, int]:
-    idx: Dict[str, int] = {}
+def _composition_index(headers: Sequence[str]) -> dict[str, int]:
+    idx: dict[str, int] = {}
     for i, h in enumerate(headers):
         f = fold(h)
         if not f.startswith("em volumes"):
@@ -434,7 +435,7 @@ def _composition_index(headers: Sequence[str]) -> Dict[str, int]:
     return idx
 
 
-def _cell(row: Sequence[str], idx: Mapping[str, int], key: str) -> Optional[str]:
+def _cell(row: Sequence[str], idx: Mapping[str, int], key: str) -> str | None:
     i = idx.get(key)
     if i is None or i >= len(row):
         return None
@@ -442,20 +443,20 @@ def _cell(row: Sequence[str], idx: Mapping[str, int], key: str) -> Optional[str]
     return v if v != "" else None
 
 
-def _num(row: Sequence[str], idx: Mapping[str, int], key: str) -> Optional[float]:
+def _num(row: Sequence[str], idx: Mapping[str, int], key: str) -> float | None:
     return parse_number(_cell(row, idx, key))
 
 
-def _scale(value: Optional[float], factor: float) -> Optional[float]:
+def _scale(value: float | None, factor: float) -> float | None:
     return None if value is None else value * factor
 
 
 def normalize(
     headers: Sequence[str],
     rows: Iterable[Sequence[str]],
-    family: Optional[str] = None,
-    source: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+    family: str | None = None,
+    source: str | None = None,
+) -> list[dict[str, Any]]:
     """Convert raw rows of one ANP family to the common record layout.
 
     Production records carry ``well``, ``field``, ``basin``, ``state``,
@@ -490,9 +491,9 @@ def normalize(
             "ANP %s file lacks required column(s): %s" % (family, ", ".join(missing))
         )
     comp_idx = _composition_index(headers) if family == "well_monthly_rates" else {}
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for row in rows:
-        rec: Dict[str, Any] = {"family": family}
+        rec: dict[str, Any] = {"family": family}
         if source:
             rec["source"] = source
         for key in (
@@ -607,9 +608,9 @@ def normalize(
 
 def load_records(
     path: str | Path,
-    family: Optional[str] = None,
-    environment: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+    family: str | None = None,
+    environment: str | None = None,
+) -> list[dict[str, Any]]:
     """Read one ANP CSV and return normalised records.
 
     Args:

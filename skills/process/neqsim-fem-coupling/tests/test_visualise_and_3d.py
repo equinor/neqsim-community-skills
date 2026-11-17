@@ -1,5 +1,4 @@
 import pytest
-
 from fem_coupling import (
     FemMeshSpec,
     MeshLayer,

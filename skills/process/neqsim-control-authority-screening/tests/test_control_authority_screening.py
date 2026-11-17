@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from control_authority_screening import ControlAuthorityModel, PeriodObservation
 
 

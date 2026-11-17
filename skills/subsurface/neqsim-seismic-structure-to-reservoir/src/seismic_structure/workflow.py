@@ -29,8 +29,9 @@ from __future__ import annotations
 import csv
 import json
 import re
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -56,7 +57,7 @@ SCHEMA = "structure_evidence.v1"
 MAX_NODES = 2_000_000
 
 
-def surface_roughness(surface: Surface) -> Optional[float]:
+def surface_roughness(surface: Surface) -> float | None:
     """Median absolute second difference along both axes (m): noise that dip does not explain."""
     z = surface.values
     parts = [
@@ -67,7 +68,7 @@ def surface_roughness(surface: Surface) -> Optional[float]:
     return float(np.median(finite)) if finite.size else None
 
 
-def read_ties(path) -> List[Tuple[float, float]]:
+def read_ties(path) -> list[tuple[float, float]]:
     """Read ``(twt_ms, depth_m)`` pairs from CSV (columns with 'twt'/'time' and 'depth') or JSON ``{"ties": [...]}``."""
     file_path = Path(path)
     if file_path.suffix.lower() == ".json":
@@ -79,8 +80,8 @@ def read_ties(path) -> List[Tuple[float, float]]:
         rows = list(csv.DictReader(handle))
     if not rows:
         return []
-    time_key = next(k for k in rows[0] if re.search(r"twt|time", k, re.I))
-    depth_key = next(k for k in rows[0] if re.search(r"depth", k, re.I))
+    time_key = next(k for k in rows[0] if re.search(r"twt|time", k, re.IGNORECASE))
+    depth_key = next(k for k in rows[0] if re.search(r"depth", k, re.IGNORECASE))
     return [
         (float(r[time_key]), float(r[depth_key]))
         for r in rows
@@ -89,8 +90,8 @@ def read_ties(path) -> List[Tuple[float, float]]:
 
 
 def _velocity(
-    config: Mapping[str, Any], inventory: Dict[str, List[dict]]
-) -> Optional[VelocityModel]:
+    config: Mapping[str, Any], inventory: dict[str, list[dict]]
+) -> VelocityModel | None:
     spec = config.get("velocity") or {}
     datum = float(spec.get("datum_m", 0.0))
     ties = list(spec.get("ties") or [])
@@ -110,14 +111,14 @@ def _velocity(
     return None
 
 
-def _top_pick(tops: List[dict]) -> Optional[dict]:
+def _top_pick(tops: list[dict]) -> dict | None:
     """The reservoir-top pick to seed from: a formation name containing 'top', first well."""
-    candidates = [t for t in tops if re.search(r"top", t["formation"], re.I)]
+    candidates = [t for t in tops if re.search(r"top", t["formation"], re.IGNORECASE)]
     return candidates[0] if candidates else None
 
 
-def _track_from_seismic(config, inventory, velocity, evidence) -> Optional[Surface]:
-    from .tracking import load_cube, seed_from_well, track_horizon  # noqa: PLC0415
+def _track_from_seismic(config, inventory, velocity, evidence) -> Surface | None:
+    from .tracking import load_cube, seed_from_well, track_horizon
 
     spec = dict(config.get("seismic") or {})
     path = spec.get("path") or (
@@ -188,12 +189,12 @@ def _track_from_seismic(config, inventory, velocity, evidence) -> Optional[Surfa
     return surface
 
 
-def _plot(top: Surface, closure, contact: float, path: Path) -> Optional[str]:
+def _plot(top: Surface, closure, contact: float, path: Path) -> str | None:
     try:
-        import matplotlib  # noqa: PLC0415
+        import matplotlib
 
         matplotlib.use("Agg")
-        import matplotlib.pyplot as plt  # noqa: PLC0415
+        import matplotlib.pyplot as plt
     except ImportError:
         return None
     x, y = top.node_xy()
@@ -223,12 +224,12 @@ def _plot(top: Surface, closure, contact: float, path: Path) -> Optional[str]:
 
 
 def _well_tie_check(
-    top: Surface, tops: List[dict], tolerance_m: float, evidence
-) -> List[dict]:
+    top: Surface, tops: list[dict], tolerance_m: float, evidence
+) -> list[dict]:
     """Depth of the mapped top at each well 'top' pick against the pick (surface minus pick, m)."""
     rows = []
     for pick in tops:
-        if not re.search(r"top", pick["formation"], re.I):
+        if not re.search(r"top", pick["formation"], re.IGNORECASE):
             continue
         mapped = float(top.sample(pick["x"], pick["y"])[0])
         misfit = mapped - pick["depth_m"] if np.isfinite(mapped) else None
@@ -253,14 +254,14 @@ def _well_tie_check(
     return rows
 
 
-def run_structure_workflow(config: Mapping[str, Any]) -> Dict[str, Any]:
+def run_structure_workflow(config: Mapping[str, Any]) -> dict[str, Any]:
     """Run discovery, depth conversion, closure, volumes, builder hand-off and optional grid.
 
     Returns:
         A ``structure_evidence.v1`` record (also written to ``out_dir`` when given).
     """
     out_dir = Path(config["out_dir"]) if config.get("out_dir") else None
-    evidence: Dict[str, Any] = {
+    evidence: dict[str, Any] = {
         "schema": SCHEMA,
         "status": "ok",
         "verification": "unverified",
@@ -291,7 +292,7 @@ def run_structure_workflow(config: Mapping[str, Any]) -> Dict[str, Any]:
     )
     evidence["inventory"] = {k: [r["path"] for r in v] for k, v in inventory.items()}
     evidence["geometry_candidates"] = geometry_candidates(inventory)
-    tops: List[dict] = []
+    tops: list[dict] = []
     for record in inventory["well_tops"]:
         try:
             tops += read_well_tops(record["path"])
@@ -300,7 +301,7 @@ def run_structure_workflow(config: Mapping[str, Any]) -> Dict[str, Any]:
     evidence["well_tops"] = tops
     velocity = _velocity(config, inventory)
 
-    top: Optional[Surface] = None
+    top: Surface | None = None
     tracked = False
     rung, rung_detail = "structure_map", ""
     if config.get("top_surface"):
@@ -526,7 +527,7 @@ def run_structure_workflow(config: Mapping[str, Any]) -> Dict[str, Any]:
     return _finish(evidence, out_dir)
 
 
-def _finish(evidence: Dict[str, Any], out_dir: Optional[Path]) -> Dict[str, Any]:
+def _finish(evidence: dict[str, Any], out_dir: Path | None) -> dict[str, Any]:
     evidence["checks_required"] = [
         "confirm the horizon is the reservoir top (tie to well tops in the same datum)",
         "confirm depth datum and sign, CRS and the velocity model with the data owner",

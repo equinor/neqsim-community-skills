@@ -17,7 +17,7 @@ Spec functions need no JVM; ``run_*`` functions import ``neqsim`` lazily.
 from __future__ import annotations
 
 import copy
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 def _jneqsim():
@@ -30,7 +30,7 @@ def _jneqsim():
     return jneqsim
 
 
-def economic_parameters(scenario: Dict[str, Any]):
+def economic_parameters(scenario: dict[str, Any]):
     """NeqSim EconomicParameters from a scenario (NOK/Sm3 gas, NOK/Sm3 liquid, discount rate)."""
     vc = _jneqsim().process.optimization.valuechain
     return (
@@ -43,8 +43,8 @@ def economic_parameters(scenario: Dict[str, Any]):
 
 
 def value_objective_check(
-    result: Dict[str, Any], scenario: Dict[str, Any], year: int
-) -> Dict[str, Any]:
+    result: dict[str, Any], scenario: dict[str, Any], year: int
+) -> dict[str, Any]:
     """Cross-check one optimised year with NeqSim ValueChainObjective (gross revenue, no tariffs)."""
     yr = next(y for y in result["years"] if y["year"] == year)
     gas = sum(p["gas_msm3d"] for p in yr["produced"].values()) * 1.0e6
@@ -73,8 +73,8 @@ def value_objective_check(
 
 
 def debottleneck_specs(
-    optimizer: Any, result: Dict[str, Any], candidates: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+    optimizer: Any, result: dict[str, Any], candidates: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     """Incremental annual value of each capacity change, by re-solving the LP.
 
     ``candidates`` = ``[{"element": id, "added_capacity": 10.0, "capex_mnok": 2500, "name": "..."}]``.
@@ -129,8 +129,8 @@ def debottleneck_specs(
 
 
 def run_debottlenecking(
-    specs: List[Dict[str, Any]], scenario: Dict[str, Any]
-) -> List[Dict[str, Any]]:
+    specs: list[dict[str, Any]], scenario: dict[str, Any]
+) -> list[dict[str, Any]]:
     """Rank capacity investments with NeqSim DebottleneckingAdvisor (NPV, B/C, payback)."""
     vc = _jneqsim().process.optimization.valuechain
     advisor = vc.DebottleneckingAdvisor(economic_parameters(scenario))
@@ -165,11 +165,11 @@ def run_debottlenecking(
 
 
 def process_model_targets(
-    result: Dict[str, Any],
+    result: dict[str, Any],
     network: Any,
     host_field: str,
-    years: Optional[List[int]] = None,
-) -> Dict[str, Any]:
+    years: list[int] | None = None,
+) -> dict[str, Any]:
     """Rates a host's NeqSim ProcessModel must handle, and its export-route headroom, per year.
 
     Output is the input contract for the ``optimize-processmodel`` agent: feed

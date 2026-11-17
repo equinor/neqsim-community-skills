@@ -17,7 +17,7 @@ import copy
 import csv
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import numpy as np
 
@@ -49,8 +49,14 @@ from .drilling_interfaces import (
 )
 from .envelope import (
     build_envelope,
+)
+from .envelope import (
     summarise as envelope_summary,
+)
+from .envelope import (
     to_markdown as envelope_md,
+)
+from .envelope import (
     to_rows as envelope_rows,
 )
 from .flow_assurance import assess_flow_assurance
@@ -67,12 +73,13 @@ from .integrity import evaluate_integrity, shut_in_wellhead_pressure
 from .ledger import JAVA_FOLLOW_UPS, ledger_rows
 from .registers import Registers, get_path
 from .runtime import ensure_runtime
-from .standards import seed_register, to_rows as standards_rows
+from .standards import seed_register
+from .standards import to_rows as standards_rows
 
 SUBDIRS = ("basis", "registers", "models", "results", "drawings", "report", "decisions")
 
 
-def study_paths(root: Path) -> Dict[str, Path]:
+def study_paths(root: Path) -> dict[str, Path]:
     """Return the study sub-folder paths."""
     root = Path(root)
     return {name: root / name for name in SUBDIRS}
@@ -100,16 +107,16 @@ def init_study(
     root: Path,
     well_type: str = "oil_producer",
     environment: str = "platform",
-    basis: Optional[Dict[str, Any]] = None,
+    basis: dict[str, Any] | None = None,
     overwrite: bool = False,
-) -> Dict[str, Path]:
+) -> dict[str, Path]:
     """Create the study folder layout, the starting basis (synthetic template unless supplied) and the initial registers."""
     paths = study_paths(root)
     for p in paths.values():
         p.mkdir(parents=True, exist_ok=True)
     bfile = paths["basis"] / "planning_basis.yaml"
     if bfile.exists() and not overwrite:
-        raise FileExistsError("{} exists (use overwrite=True)".format(bfile))
+        raise FileExistsError(f"{bfile} exists (use overwrite=True)")
     b = copy.deepcopy(basis) if basis else template_basis(well_type, environment)
     save_basis(b, bfile)
     reg = basis_to_registers(b)
@@ -140,7 +147,7 @@ def init_study(
     return paths
 
 
-def validate(root: Path) -> Dict[str, Any]:
+def validate(root: Path) -> dict[str, Any]:
     """Validate the basis; write results/validation.json and refresh the registers."""
     paths = study_paths(root)
     basis = load_basis(paths["basis"] / "planning_basis.yaml")
@@ -155,7 +162,7 @@ def validate(root: Path) -> Dict[str, Any]:
     return out
 
 
-def _model_for(basis: Dict[str, Any], segments: int):
+def _model_for(basis: dict[str, Any], segments: int):
     from .injectors import InjectorModel
     from .producers import ProducerModel
 
@@ -166,7 +173,7 @@ def _model_for(basis: Dict[str, Any], segments: int):
     )
 
 
-def run_model(root: Path, segments: int = 10) -> Dict[str, Any]:
+def run_model(root: Path, segments: int = 10) -> dict[str, Any]:
     """Run the chain for low/base/high, then flow assurance, integrity, barriers, interfaces and hand-offs; write results/model_results.json."""
     paths = study_paths(root)
     basis = load_basis(paths["basis"] / "planning_basis.yaml")
@@ -181,7 +188,7 @@ def run_model(root: Path, segments: int = 10) -> Dict[str, Any]:
     wtype = get_path(basis, "well.type")
     producer = wtype in PRODUCER_TYPES
     model = _model_for(basis, segments)
-    res: Dict[str, Any] = {
+    res: dict[str, Any] = {
         "schema": "iwp_model_results.v1",
         "tool_version": __version__,
         "meta": {
@@ -261,7 +268,7 @@ def run_model(root: Path, segments: int = 10) -> Dict[str, Any]:
     return res
 
 
-def _write_envelope_files(paths: Dict[str, Path], rows: List[Dict[str, Any]]) -> None:
+def _write_envelope_files(paths: dict[str, Path], rows: list[dict[str, Any]]) -> None:
     _dump(paths["results"] / "operating_envelope.json", rows)
     with (paths["results"] / "operating_envelope.csv").open(
         "w", newline="", encoding="utf-8"
@@ -277,7 +284,7 @@ def _write_envelope_files(paths: Dict[str, Path], rows: List[Dict[str, Any]]) ->
     )
 
 
-def envelope(root: Path, warn_utilisation: float = 0.9) -> List[Dict[str, Any]]:
+def envelope(root: Path, warn_utilisation: float = 0.9) -> list[dict[str, Any]]:
     """Rebuild the operating-envelope table from saved results and the (possibly updated) limits in the basis."""
     paths = study_paths(root)
     basis = load_basis(paths["basis"] / "planning_basis.yaml")
@@ -292,9 +299,9 @@ def envelope(root: Path, warn_utilisation: float = 0.9) -> List[Dict[str, Any]]:
 def alternatives(
     root: Path,
     with_tornado: bool = True,
-    profile_years: Optional[List[float]] = None,
+    profile_years: list[float] | None = None,
     segments: int = 10,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Compare alternatives (tubing/lift), tornado, optional deliverability profile; writes results/alternatives.json and hand-offs."""
     paths = study_paths(root)
     basis = load_basis(paths["basis"] / "planning_basis.yaml")
@@ -305,7 +312,7 @@ def alternatives(
     rows = evaluate_alternatives(model, basis, alts, CASES, producer)
     sc = scorecard(rows, get_path(basis, "alternatives_weights"), producer)
     labels = {r["id"]: r["label"] for r in rows}
-    out: Dict[str, Any] = {
+    out: dict[str, Any] = {
         "alternatives": rows,
         "scorecard": sc,
         "labels": labels,
@@ -392,8 +399,8 @@ def alternatives(
 
 
 def write_handoffs(
-    paths: Dict[str, Path], basis: Dict[str, Any], res: Dict[str, Any]
-) -> List[str]:
+    paths: dict[str, Path], basis: dict[str, Any], res: dict[str, Any]
+) -> list[str]:
     """Write the outbound hand-off messages that can be built from the model results."""
     d = paths["results"] / "handoffs"
     d.mkdir(parents=True, exist_ok=True)
@@ -440,7 +447,7 @@ print("operating envelope summary:", results["envelope"]["summary"])
 '''
 
 
-def write_rerun_script(paths: Dict[str, Path]) -> Path:
+def write_rerun_script(paths: dict[str, Path]) -> Path:
     """Write models/rerun_model.py so a reviewer can reproduce the results."""
     p = paths["models"] / "rerun_model.py"
     p.write_text(RERUN.format(version=__version__), encoding="utf-8")

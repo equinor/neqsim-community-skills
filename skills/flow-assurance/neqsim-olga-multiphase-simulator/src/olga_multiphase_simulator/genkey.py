@@ -20,19 +20,19 @@ from __future__ import annotations
 
 import os
 import re
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterator, List, Mapping, Optional, Tuple
 
 __all__ = [
     "GenkeyStatement",
-    "iter_statements",
-    "list_keywords",
-    "get_parameter",
-    "set_parameter",
     "apply_parameters",
     "ensure_statement",
+    "get_parameter",
+    "iter_statements",
+    "list_keywords",
     "parameter_overview",
+    "set_parameter",
     "write_variant",
 ]
 
@@ -90,9 +90,9 @@ def _continues(segment: str) -> bool:
     return stripped.endswith("\\")
 
 
-def list_keywords(text: str) -> List[str]:
+def list_keywords(text: str) -> list[str]:
     """Return the distinct keywords used in a genkey file, in first-seen order."""
-    seen: List[str] = []
+    seen: list[str] = []
     for statement in iter_statements(text):
         if statement.keyword not in seen:
             seen.append(statement.keyword)
@@ -112,7 +112,7 @@ def _find_statement(text: str, keyword: str, occurrence: int) -> GenkeyStatement
         ) from exc
 
 
-def _value_span(statement_text: str, parameter: str) -> Tuple[int, int]:
+def _value_span(statement_text: str, parameter: str) -> tuple[int, int]:
     """Return ``(start, end)`` of a parameter's value within a statement."""
     pattern = re.compile(
         r"(?<![A-Za-z0-9_])" + re.escape(parameter.upper()) + r"\s*=\s*", re.IGNORECASE
@@ -122,7 +122,7 @@ def _value_span(statement_text: str, parameter: str) -> Tuple[int, int]:
         raise KeyError(f"Parameter {parameter!r} not found in statement")
     index = match.end()
     depth = 0
-    quote: Optional[str] = None
+    quote: str | None = None
     while index < len(statement_text):
         char = statement_text[index]
         if quote is not None:
@@ -134,9 +134,7 @@ def _value_span(statement_text: str, parameter: str) -> Tuple[int, int]:
             depth += 1
         elif char in ")]":
             depth -= 1
-        elif char == "," and depth <= 0:
-            break
-        elif char == "!" and depth <= 0:
+        elif char == "," and depth <= 0 or char == "!" and depth <= 0:
             break
         index += 1
     return match.end(), index
@@ -212,7 +210,7 @@ def apply_parameters(text: str, updates: Mapping[str, Mapping[str, str]]) -> str
 def ensure_statement(
     text: str,
     statement: str,
-    after_keyword: Optional[str] = None,
+    after_keyword: str | None = None,
 ) -> str:
     """Add a global statement if its keyword is not already in the case.
 
@@ -267,10 +265,10 @@ def write_variant(
     return destination_path
 
 
-def parameter_overview(text: str, keyword: str, occurrence: int = 0) -> Dict[str, str]:
+def parameter_overview(text: str, keyword: str, occurrence: int = 0) -> dict[str, str]:
     """Return every ``NAME=value`` pair of one statement as a dictionary."""
     statement = _find_statement(text, keyword, occurrence)
-    overview: Dict[str, str] = {}
+    overview: dict[str, str] = {}
     for match in re.finditer(
         r"(?<![A-Za-z0-9_])([A-Za-z][A-Za-z0-9_]*)\s*=", statement.text
     ):

@@ -7,10 +7,11 @@ import json
 import re
 import urllib.error
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from . import catalog
 from .deck import include_paths, resolve_include, schedule_facts, summarize_deck
@@ -33,9 +34,7 @@ def default_fetch(
     request = urllib.request.Request(
         url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"}
     )
-    with urllib.request.urlopen(
-        request, timeout=timeout
-    ) as response:  # noqa: S310 - fixed https hosts
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         body = response.read(max_bytes + 1)
     if len(body) > max_bytes:
         raise TooLargeError(f"{url} is larger than {max_bytes} bytes")
@@ -55,10 +54,10 @@ class ReadRecord:
     licence: str
     cached: bool = False
     retrieved_utc: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
     )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return the record as a plain dict."""
         return dict(self.__dict__)
 
@@ -69,7 +68,7 @@ class OpmDataClient:
     def __init__(
         self,
         fetch: Fetch = default_fetch,
-        cache_dir: Optional[Path] = None,
+        cache_dir: Path | None = None,
         *,
         ref: str = "master",
         timeout: float = 60.0,
@@ -82,7 +81,7 @@ class OpmDataClient:
         self.ref = ref
         self.timeout = timeout
         self.max_bytes = max_bytes
-        self.records: List[ReadRecord] = []
+        self.records: list[ReadRecord] = []
 
     def resolve_ref(self) -> str:
         """Pin the client to the current head commit SHA of ``master`` (anonymous API call, 60 per hour per IP).
@@ -148,8 +147,8 @@ class OpmDataClient:
         return body.decode("utf-8", errors="replace")
 
     def summary(
-        self, case: str, deck: Optional[str] = None, *, follow_schedule: bool = True
-    ) -> Dict[str, Any]:
+        self, case: str, deck: str | None = None, *, follow_schedule: bool = True
+    ) -> dict[str, Any]:
         """Fetch a deck (default: the case's first) and return :func:`summarize_deck` plus catalog facts.
 
         With ``follow_schedule`` the includes after the ``SCHEDULE`` keyword are read too (Norne keeps all wells in
@@ -159,7 +158,7 @@ class OpmDataClient:
         entry = catalog.get_case(case)
         name = deck or entry["decks"][0]
         result = summarize_deck(self.get_text(case, name))
-        skipped: List[str] = []
+        skipped: list[str] = []
         if follow_schedule:
             for include in result["schedule_includes"]:
                 path = resolve_include(name, include)
@@ -192,13 +191,13 @@ class OpmDataClient:
             case, resolve_include(deck, include), allow_large=allow_large
         )
 
-    def includes(self, case: str, deck: Optional[str] = None) -> List[str]:
+    def includes(self, case: str, deck: str | None = None) -> list[str]:
         """Return the INCLUDE paths of a deck, resolved to case-relative paths."""
         name = deck or catalog.get_case(case)["decks"][0]
         return [
             resolve_include(name, p) for p in include_paths(self.get_text(case, name))
         ]
 
-    def provenance(self) -> List[Dict[str, Any]]:
+    def provenance(self) -> list[dict[str, Any]]:
         """All read records as dicts."""
         return [r.to_dict() for r in self.records]

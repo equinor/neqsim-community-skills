@@ -1,5 +1,4 @@
 import pytest
-
 from noise_screening import ValveNoiseModel
 
 

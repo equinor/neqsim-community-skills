@@ -1,7 +1,6 @@
 import os
 
 import pytest
-
 from surf_field_layout_design import (
     MAX_SCREENING_DOGLEG_DEG_PER_30M,
     build_well_paths,

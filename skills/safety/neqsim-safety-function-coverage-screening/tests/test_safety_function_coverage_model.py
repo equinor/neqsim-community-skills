@@ -1,5 +1,4 @@
 import pytest
-
 from safety_function_coverage_screening import SafetyFunctionCoverageModel
 
 

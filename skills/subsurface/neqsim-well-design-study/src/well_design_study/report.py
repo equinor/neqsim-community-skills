@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
 
 from docx import Document
-from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.section import WD_ORIENT, WD_SECTION
+from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_TAB_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -24,9 +24,7 @@ STATUS_COLOURS = {
 }
 
 
-def _field(
-    par, code: str, placeholder: str = "1", size: Optional[float] = None
-) -> None:
+def _field(par, code: str, placeholder: str = "1", size: float | None = None) -> None:
     r = par.add_run()
     if size:
         r.font.size = Pt(size)
@@ -72,7 +70,7 @@ class WellReport:
         self.usable_cm = 17.2
         self.fig_n = 0
         self.tab_n = 0
-        self.figures: List[Dict[str, str]] = []
+        self.figures: list[dict[str, str]] = []
         for _ in range(5):
             self.doc.add_paragraph()
         t = self.doc.add_paragraph()
@@ -100,7 +98,7 @@ class WellReport:
         )
         self.doc.add_page_break()
 
-    def _runs(self, par, text: str, size: Optional[float] = None) -> None:
+    def _runs(self, par, text: str, size: float | None = None) -> None:
         for part in re.split(
             r"(\*\*[^*]+\*\*|`[^`]+`|\[(?:VERIFIED|UNVERIFIED-SOURCE|DERIVED|ASSUMED|PLACEHOLDER|NEEDS_REVIEW)\])",
             text,
@@ -177,12 +175,12 @@ class WellReport:
             self._runs(q, ln, size)
         self.doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
-    def para(self, text: str, size: Optional[float] = None) -> None:
+    def para(self, text: str, size: float | None = None) -> None:
         p = self.doc.add_paragraph()
         p.paragraph_format.space_after = Pt(4)
         self._runs(p, text, size)
 
-    def bullets(self, items: Sequence[str], size: Optional[float] = None) -> None:
+    def bullets(self, items: Sequence[str], size: float | None = None) -> None:
         for it in items:
             p = self.doc.add_paragraph(style="List Bullet")
             p.paragraph_format.space_after = Pt(2)
@@ -199,9 +197,9 @@ class WellReport:
     def table(
         self,
         rows: Sequence[Sequence[object]],
-        caption: Optional[str] = None,
+        caption: str | None = None,
         font: float = 8.0,
-        widths: Optional[Sequence[float]] = None,
+        widths: Sequence[float] | None = None,
     ) -> None:
         rows = [[("" if c is None else str(c)) for c in r] for r in rows]
         ncol = max(len(r) for r in rows)
@@ -327,8 +325,8 @@ class WellPlanReport(WellReport):
         status: str,
         classification: str,
         organisation: str = "",
-        revisions: Optional[Sequence[Sequence[str]]] = None,
-        distribution: Optional[Sequence[Sequence[str]]] = None,
+        revisions: Sequence[Sequence[str]] | None = None,
+        distribution: Sequence[Sequence[str]] | None = None,
         notice: str = "",
     ) -> None:
         self.doc = Document()
@@ -378,8 +376,8 @@ class WellPlanReport(WellReport):
         self.ch = self.h2 = self.app_n = 0
         self.usable_cm = 17.2
         self.fig_n = self.tab_n = 0
-        self.figures: List[Dict[str, str]] = []
-        self.tables_list: List[Dict[str, str]] = []
+        self.figures: list[dict[str, str]] = []
+        self.tables_list: list[dict[str, str]] = []
         self._cover(
             title,
             subtitle,
@@ -438,7 +436,7 @@ class WellPlanReport(WellReport):
         self,
         rows: Sequence[Sequence[str]],
         widths: Sequence[float],
-        header: Optional[Sequence[str]] = None,
+        header: Sequence[str] | None = None,
         font: float = 9.0,
         label_cols: Sequence[int] = (0,),
     ):
@@ -615,7 +613,7 @@ class WellPlanReport(WellReport):
     def h1(self, text: str, page_break: bool = True) -> None:
         super().h1(text, page_break)
 
-    def landscape(self, a3: bool = False, margin_cm: Optional[float] = None) -> None:
+    def landscape(self, a3: bool = False, margin_cm: float | None = None) -> None:
         """Start a landscape section (A4, or A3 for drawing sheets) with its own header and footer."""
         sec = self.doc.add_section(WD_SECTION.NEW_PAGE)
         sec.orientation = WD_ORIENT.LANDSCAPE
@@ -650,7 +648,7 @@ class WellPlanReport(WellReport):
         rows = []
         for i in range(0, len(items), columns):
             chunk = list(items[i : i + columns])
-            row: List[str] = []
+            row: list[str] = []
             for lab, val in chunk:
                 row += [lab, val]
             row += [""] * (2 * columns - len(row))
@@ -709,12 +707,12 @@ class WellPlanReport(WellReport):
     def table(
         self,
         rows: Sequence[Sequence[object]],
-        caption: Optional[str] = None,
+        caption: str | None = None,
         font: float = 8.0,
-        widths: Optional[Sequence[float]] = None,
-        note: Optional[str] = None,
+        widths: Sequence[float] | None = None,
+        note: str | None = None,
         align_numbers: bool = True,
-        keep_together: Optional[bool] = None,
+        keep_together: bool | None = None,
     ) -> None:
         """Captioned table: shaded repeated header row, zebra rows, numeric columns right-aligned, rows kept whole, optional note line below.
 
@@ -800,7 +798,7 @@ class WellPlanReport(WellReport):
         caption: str,
         provenance: str = "",
         width_cm: float = 15.5,
-        max_height_cm: Optional[float] = None,
+        max_height_cm: float | None = None,
     ) -> None:
         """Figure with a caption below (SEQ field) and a provenance line; the picture is scaled to fit the width and ``max_height_cm``."""
         from PIL import Image

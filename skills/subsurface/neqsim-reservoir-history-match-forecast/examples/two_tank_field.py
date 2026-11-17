@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-
 from reservoir_history_match import (
     FluidModel,
     Matcher,

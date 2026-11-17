@@ -1,5 +1,4 @@
 import pytest
-
 from relief_load_screening import ReliefLoadModel
 
 

@@ -2,22 +2,22 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Callable, List, Sequence
 
 import numpy as np
 
 
 @dataclass
 class FitResult:
-    theta: List[float]
-    objective: List[
+    theta: list[float]
+    objective: list[
         float
     ]  # sum of squared weighted residuals per iteration (incl. prior terms)
-    singular_values: List[float]  # of the data Jacobian (prior rows excluded)
+    singular_values: list[float]  # of the data Jacobian (prior rows excluded)
     identifiable: bool
     n_data: int
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
 
 def fit_with_priors(

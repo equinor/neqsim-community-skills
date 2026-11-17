@@ -8,20 +8,20 @@ survey first.
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 
 import numpy as np
 
 from .model import LogCurve, LogFrame
 
 
-def _scalar_curves(frame: LogFrame, curves: Optional[Iterable[str]]):
+def _scalar_curves(frame: LogFrame, curves: Iterable[str] | None):
     if curves is None:
         return [c for c in frame.curves.values() if not c.is_array]
     return [frame.curve(name) for name in curves]
 
 
-def _stats(values: np.ndarray) -> Dict[str, Optional[float]]:
+def _stats(values: np.ndarray) -> dict[str, float | None]:
     valid = values[np.isfinite(values)]
     if valid.size == 0:
         return {"n": 0, "mean": None, "p10": None, "p50": None, "p90": None}
@@ -38,8 +38,8 @@ def _stats(values: np.ndarray) -> Dict[str, Optional[float]]:
 def zone_statistics(
     frame: LogFrame,
     zones: Sequence[Mapping],
-    curves: Optional[Iterable[str]] = None,
-) -> List[dict]:
+    curves: Iterable[str] | None = None,
+) -> list[dict]:
     """Summarise curves inside depth zones (formations, reservoir zones, intervals).
 
     Args:
@@ -93,8 +93,8 @@ def depth_window_contrast(
     depth_m: float,
     half_width_m: float = 5.0,
     background_m: float = 20.0,
-    curves: Optional[Iterable[str]] = None,
-) -> List[dict]:
+    curves: Iterable[str] | None = None,
+) -> list[dict]:
     """Compare curves in a window around an event depth with the rock above and below.
 
     Use it for loss events, fault or fracture picks and influx depths: a log
@@ -149,7 +149,7 @@ def depth_window_contrast(
 
 
 def resample(
-    frame: LogFrame, step_m: float, curves: Optional[Iterable[str]] = None
+    frame: LogFrame, step_m: float, curves: Iterable[str] | None = None
 ) -> LogFrame:
     """Return a new frame on a regular depth grid in metres (linear interpolation).
 

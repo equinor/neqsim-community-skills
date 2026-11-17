@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Dict, Optional
-
 import pandas as pd
 
 
 def window_mean(
     series: pd.Series, start, end, drop_first: float = 0.10, min_points: int = 5
-) -> Optional[Dict[str, float]]:
+) -> dict[str, float] | None:
     """Mean, standard deviation and point count of ``series`` over a test window.
 
     The first ``drop_first`` share of the window is dropped: the separator level and the line are still settling after
@@ -29,19 +27,19 @@ def window_mean(
     return {
         "mean": float(s.mean()),
         "std": float(s.std(ddof=1)) if len(s) > 1 else 0.0,
-        "n": int(len(s)),
+        "n": len(s),
     }
 
 
 def quality_flags(
     duration_h: float,
-    water_raw_m3d: Optional[float],
-    water_reported_m3d: Optional[float],
-    oil_cv: Optional[float] = None,
+    water_raw_m3d: float | None,
+    water_reported_m3d: float | None,
+    oil_cv: float | None = None,
     min_duration_h: float = 0.5,
     water_tolerance: float = 0.15,
     max_oil_cv: float = 0.30,
-) -> Dict[str, bool]:
+) -> dict[str, bool]:
     """Flags that make a test unusable for calibration.
 
     ``water_mismatch``: raw water differs from the reported test water by more than ``water_tolerance`` - usually a

@@ -5,7 +5,6 @@ import json
 import zipfile
 
 import pytest
-
 from anp_well_production import (
     BBL_TO_M3,
     aggregate,
@@ -436,7 +435,7 @@ def test_mixed_encoding_file_keeps_valid_lines():
     cut = (
         PAPA.replace("PAPA-TERRA", "BALEIA ANÃ")
         .encode("utf-8")
-        .replace("BALEIA ANÃ".encode("utf-8"), b"BALEIA AN\xc3")
+        .replace("BALEIA ANÃ".encode(), b"BALEIA AN\xc3")
     )
     h, r, meta = read_table_bytes(header + b"\n" + good + b"\n" + cut + b"\n")
     recs = normalize(h, r)

@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from psc_bid_economics_screening import (
     ProfitOilTable,
     adjustment_pp,

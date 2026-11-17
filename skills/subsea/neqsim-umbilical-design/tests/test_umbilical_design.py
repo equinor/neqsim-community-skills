@@ -5,7 +5,6 @@ import math
 from pathlib import Path
 
 import pytest
-
 from umbilical_design import (
     FigureMeta,
     UmbilicalSpec,

@@ -4,10 +4,10 @@ import pytest
 
 pytest.importorskip("jneqsim")
 
-from reservoir_history_match import (  # noqa: E402
+from reservoir_history_match import (
     DepletionPath,
-    FluidModel,
     Field,
+    FluidModel,
     Matcher,
     Param,
     Scenario,
@@ -16,10 +16,10 @@ from reservoir_history_match import (  # noqa: E402
     Well,
     fit_deliverability,
     forecast,
+    history_forecast_table,
+    stream_table,
     well_series,
     well_streams_at,
-    stream_table,
-    history_forecast_table,
 )
 
 LIGHT = {

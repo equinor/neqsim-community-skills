@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from ageing_life_extension_screening import AgeingLifeExtensionModel, days_to_years
 
 

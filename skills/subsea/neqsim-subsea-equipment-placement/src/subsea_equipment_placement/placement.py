@@ -7,8 +7,8 @@ number cannot be read as compliance.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from . import geo
 
@@ -19,7 +19,7 @@ APPROVED_BASES = ("APPROVED", "SUPPLIED")
 class Limit:
     """A limit with provenance. ``basis``: APPROVED or SUPPLIED (with a source), ASSUMED or NONE (screening only)."""
 
-    value: Optional[float] = None
+    value: float | None = None
     unit: str = ""
     source: str = ""
     basis: str = "NONE"
@@ -49,7 +49,7 @@ class Line:
     """An existing line, cable or umbilical as a polyline in local metres."""
 
     id: str
-    points: List[geo.Point]
+    points: list[geo.Point]
     kind: str = "pipeline"
     status: str = "existing"
     service: str = ""
@@ -65,7 +65,7 @@ class Zone:
     """
 
     id: str
-    ring: List[geo.Point]
+    ring: list[geo.Point]
     type: str = "zone"
     active: bool = True
     hard: bool = True
@@ -84,27 +84,27 @@ class Target:
 class PlacementBasis:
     """Everything a screening needs. Coordinates are local metres (see :func:`geo.to_local`)."""
 
-    host: Optional[Structure] = None
-    structures: List[Structure] = field(default_factory=list)
-    lines: List[Line] = field(default_factory=list)
-    zones: List[Zone] = field(default_factory=list)
-    targets: List[Target] = field(default_factory=list)
-    depth_fn: Optional[Callable[[float, float], float]] = (
+    host: Structure | None = None
+    structures: list[Structure] = field(default_factory=list)
+    lines: list[Line] = field(default_factory=list)
+    zones: list[Zone] = field(default_factory=list)
+    targets: list[Target] = field(default_factory=list)
+    depth_fn: Callable[[float, float], float] | None = (
         None  # positive-down water depth, m
     )
-    fishing_fn: Optional[Callable[[float, float], float]] = (
+    fishing_fn: Callable[[float, float], float] | None = (
         None  # user-defined fishing intensity
     )
-    limits: Dict[str, Limit] = field(default_factory=dict)
+    limits: dict[str, Limit] = field(default_factory=dict)
     slope_radius_m: float = 100.0
 
 
 def _check(
     cid: str,
     desc: str,
-    value: Optional[float],
+    value: float | None,
     unit: str,
-    limit: Optional[Limit],
+    limit: Limit | None,
     op: str,
     note: str = "",
 ) -> dict:
@@ -136,7 +136,7 @@ def _check(
 def screen_site(site: geo.Point, basis: PlacementBasis, kind: str = "template") -> dict:
     """Screen one site against exclusion zones, structures, lines, seabed and well reach. Returns checks and a verdict."""
     L = basis.limits
-    checks: List[dict] = []
+    checks: list[dict] = []
     if basis.zones:
         near = min(
             (
@@ -462,8 +462,8 @@ def candidate_grid(
     center: geo.Point,
     half_width_m: float,
     step_m: float,
-    region: Optional[Sequence[geo.Point]] = None,
-) -> List[geo.Point]:
+    region: Sequence[geo.Point] | None = None,
+) -> list[geo.Point]:
     """Square grid of candidate sites around ``center``; optionally keep only those inside ``region``."""
     n = int(half_width_m // step_m)
     pts = [
@@ -477,9 +477,9 @@ def candidate_grid(
 def rank_sites(
     candidates: Sequence[geo.Point],
     basis: PlacementBasis,
-    weights: Optional[Dict[str, float]] = None,
-    route_fn: Optional[Callable[[geo.Point], Sequence[geo.Point]]] = None,
-) -> List[dict]:
+    weights: dict[str, float] | None = None,
+    route_fn: Callable[[geo.Point], Sequence[geo.Point]] | None = None,
+) -> list[dict]:
     """Screen and rank sites. Sites with a hard FAIL are listed last. Score (lower is better) is a weighted sum of
     mean target reach, host step-out and crossings; weights default to 1 (reach), 1 (step-out) and 1000 m per crossing and are
     declared assumptions, not design values."""
@@ -529,7 +529,7 @@ def rank_sites(
     return out
 
 
-def to_geojson(items: Sequence[dict], origin: Tuple[float, float]) -> dict:
+def to_geojson(items: Sequence[dict], origin: tuple[float, float]) -> dict:
     """GeoJSON FeatureCollection (WGS84) of screened sites (points) with verdicts."""
     feats = []
     for r in items:

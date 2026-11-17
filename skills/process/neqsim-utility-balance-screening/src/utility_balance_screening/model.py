@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite, sqrt
-from typing import Optional, Tuple
 
 # Constant cooling-water properties used by the screening relation.
 _WATER_DENSITY_KG_M3 = 1000.0
@@ -15,14 +14,14 @@ _AIR_DESIGN_MARGIN = 1.3
 class UtilityBalanceResult:
     instrument_air_demand_nm3_h: float
     cooling_water_flow_m3_h: float
-    wobbe_index_mj_sm3: Optional[float]
-    wobbe_in_band: Optional[bool]
-    air_utilisation: Optional[float]
-    cooling_utilisation: Optional[float]
+    wobbe_index_mj_sm3: float | None
+    wobbe_in_band: bool | None
+    air_utilisation: float | None
+    cooling_utilisation: float | None
     utility_warning: str
     wobbe_warning: str
     neqsim_available: bool
-    assumptions: Tuple[str, ...]
+    assumptions: tuple[str, ...]
 
 
 class UtilityBalanceModel:
@@ -50,12 +49,12 @@ class UtilityBalanceModel:
         air_per_consumer_nm3_h: float = 0.3,
         cooling_duty_kw: float = 0.0,
         cooling_water_delta_t_c: float = 10.0,
-        fuel_gas_lhv_mj_sm3: Optional[float] = None,
-        fuel_gas_relative_density: Optional[float] = None,
+        fuel_gas_lhv_mj_sm3: float | None = None,
+        fuel_gas_relative_density: float | None = None,
         wobbe_min: float = 47.2,
         wobbe_max: float = 51.41,
-        instrument_air_capacity_nm3_h: Optional[float] = None,
-        cooling_water_capacity_m3_h: Optional[float] = None,
+        instrument_air_capacity_nm3_h: float | None = None,
+        cooling_water_capacity_m3_h: float | None = None,
     ) -> UtilityBalanceResult:
         self._require_non_negative_int(
             "instrument_air_consumers", instrument_air_consumers
@@ -92,8 +91,8 @@ class UtilityBalanceModel:
         )
 
         # Fuel gas Wobbe index and band check.
-        wobbe_index: Optional[float] = None
-        wobbe_in_band: Optional[bool] = None
+        wobbe_index: float | None = None
+        wobbe_in_band: bool | None = None
         if fuel_gas_lhv_mj_sm3 is not None and fuel_gas_relative_density is not None:
             self._require_positive("fuel_gas_lhv_mj_sm3", fuel_gas_lhv_mj_sm3)
             self._require_positive(
@@ -103,10 +102,10 @@ class UtilityBalanceModel:
             wobbe_in_band = wobbe_min <= wobbe_index <= wobbe_max
 
         # Capacity utilisation ratios.
-        air_utilisation: Optional[float] = None
+        air_utilisation: float | None = None
         if instrument_air_capacity_nm3_h is not None:
             air_utilisation = air_demand / instrument_air_capacity_nm3_h
-        cooling_utilisation: Optional[float] = None
+        cooling_utilisation: float | None = None
         if cooling_water_capacity_m3_h is not None:
             cooling_utilisation = cooling_flow / cooling_water_capacity_m3_h
 
@@ -139,8 +138,8 @@ class UtilityBalanceModel:
 
     def _utility_warning(
         self,
-        air_utilisation: Optional[float],
-        cooling_utilisation: Optional[float],
+        air_utilisation: float | None,
+        cooling_utilisation: float | None,
     ) -> str:
         if air_utilisation is not None and air_utilisation > 1.0:
             return "air-undersized"
@@ -154,7 +153,7 @@ class UtilityBalanceModel:
         return "ok"
 
     @staticmethod
-    def _wobbe_warning(wobbe_in_band: Optional[bool]) -> str:
+    def _wobbe_warning(wobbe_in_band: bool | None) -> str:
         if wobbe_in_band is None:
             return "no-fuel-data"
         if not wobbe_in_band:

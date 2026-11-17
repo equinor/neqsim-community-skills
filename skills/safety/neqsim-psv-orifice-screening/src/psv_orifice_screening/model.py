@@ -100,8 +100,10 @@ class PsvOrificeModel:
             assumptions=(
                 "Educational screening placeholder only.",
                 "Assumes critical (choked) gas flow; the choked criterion is not verified.",
-                "Required area uses the public API 520 Part I form "
-                "A = (W / (C Kd P1 Kb Kc)) * sqrt(T Z / M).",
+                (
+                    "Required area uses the public API 520 Part I form "
+                    "A = (W / (C Kd P1 Kb Kc)) * sqrt(T Z / M)."
+                ),
                 "Orifice letters use published API 526 effective areas.",
                 "Move to validated NeqSim relief sizing (ReliefValveSizing) and qualified review.",
             ),

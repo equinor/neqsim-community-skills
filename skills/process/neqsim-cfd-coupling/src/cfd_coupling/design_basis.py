@@ -214,10 +214,14 @@ def build_design_basis(
     records = tuple(sorted(accepted.values(), key=lambda record: record.field))
 
     assumptions = [
-        "Values are merged by source precedence; a lower-ranked source never "
-        "overwrites a higher-ranked one, it only raises a conflict.",
-        "A photograph or sketch is not dimensional authority unless it carries a "
-        "calibrated scale reference and has been corrected for perspective.",
+        (
+            "Values are merged by source precedence; a lower-ranked source never "
+            "overwrites a higher-ranked one, it only raises a conflict."
+        ),
+        (
+            "A photograph or sketch is not dimensional authority unless it carries a "
+            "calibrated scale reference and has been corrected for perspective."
+        ),
     ]
     if conflicts:
         assumptions.append(

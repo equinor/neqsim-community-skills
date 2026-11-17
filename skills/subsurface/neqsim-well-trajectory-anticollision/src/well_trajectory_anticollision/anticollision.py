@@ -38,8 +38,10 @@ class SFRule:
         return "OK"
 
 
-def separation_factor(d: float, sigma_s2: float, rule: SFRule = SFRule()) -> float:
+def separation_factor(d: float, sigma_s2: float, rule: SFRule | None = None) -> float:
     """ISCWSA SF for a centre-to-centre distance ``d`` (m) and combined variance along n (m^2)."""
+    if rule is None:
+        rule = SFRule()
     return (d - rule.ref_radius_m - rule.offset_radius_m - rule.surface_margin_m) / (
         rule.k_sigma * math.sqrt(max(sigma_s2, 0.0) + rule.sigma_pa_m**2)
     )
@@ -87,7 +89,7 @@ def _segments(
 def scan(
     reference: Wellpath,
     offsets: Iterable[Wellpath],
-    rule: SFRule = SFRule(),
+    rule: SFRule | None = None,
     parents: Sequence[str] | None = None,
     from_md: float | None = None,
     model: ErrorModel | None = None,
@@ -99,6 +101,8 @@ def scan(
     Default ``from_md`` is the tie-in for sidetracks, else the first station.
     Returns ``{"offsets": [...], "profile": [...], "warnings": [...], "rule": {...}}`` with offsets sorted by SF.
     """
+    if rule is None:
+        rule = SFRule()
     if reference.cov is None:
         raise ValueError("reference has no covariance: call add_model_covariance first")
     model = model or ErrorModel()
@@ -175,8 +179,10 @@ def scan(
     return result
 
 
-def parent_exit(track: Sequence, rule: SFRule = SFRule()) -> dict:
+def parent_exit(track: Sequence, rule: SFRule | None = None) -> dict:
     """Exit depths from a parent bore: last MD with SF below STOP and CAUTION, and min SF after exit."""
+    if rule is None:
+        rule = SFRule()
     below_stop = [m for m, s in track if s < rule.stop_below]
     below_caution = [m for m, s in track if s < rule.caution_below]
     exit_md = max(below_caution) if below_caution else None
@@ -199,7 +205,7 @@ def pull_back_search(
     target,
     origin_en,
     offsets: Iterable[Wellpath],
-    rule: SFRule = SFRule(),
+    rule: SFRule | None = None,
     distances: Sequence[float] = (0, 25, 50, 75, 100, 125, 150, 200, 250),
     required_sf: float | None = None,
     **scan_kwargs,
@@ -210,6 +216,8 @@ def pull_back_search(
     ``plan_fn(target_xyz) -> Wellpath`` must return a planned path *with covariance*.
     Returns the sweep table and the first acceptable pull-back (or None).
     """
+    if rule is None:
+        rule = SFRule()
     offsets = list(offsets)
     target = np.asarray(target, float)
     required = rule.caution_below if required_sf is None else required_sf

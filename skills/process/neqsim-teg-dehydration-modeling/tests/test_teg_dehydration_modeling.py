@@ -124,11 +124,11 @@ def test_glycol_purity_excludes_hydrocarbon_solvent() -> None:
             return self._mw
 
     class _Fluid:
-        comps = [
+        comps = (
             _Comp("TEG", 0.20, 0.15017),
             _Comp("water", 0.001, 0.018015),
             _Comp("m-Xylene", 0.05, 0.10617),
-        ]
+        )
 
         def getNumberOfComponents(self):
             return len(self.comps)

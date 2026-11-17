@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite
+from typing import ClassVar
 
 
 @dataclass(frozen=True)
@@ -20,7 +21,7 @@ class ControlLoopSetup:
 class DynamicInstrumentControllerModel:
     """Readiness checks for NeqSim dynamic instruments and controllers."""
 
-    TRANSMITTERS = {
+    TRANSMITTERS: ClassVar[dict[str, str]] = {
         "level": "LevelTransmitter",
         "pressure": "PressureTransmitter",
         "temperature": "TemperatureTransmitter",

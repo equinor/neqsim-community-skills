@@ -25,8 +25,10 @@ capacity = PressureCapacityCurve(
 for year in range(2027, 2036):
     pr = tank.pressure()
 
-    def supply(ps):
-        return wells * flow_balance(lambda whp: law.rate(pr, whp), ps, 4.4, 1.5)
+    def supply(ps, reservoir_pressure=pr):
+        return wells * flow_balance(
+            lambda whp: law.rate(reservoir_pressure, whp), ps, 4.4, 1.5
+        )
 
     ps, q, binding = maximise_rate(supply, capacity, 31.0, 36.0)
     tank.produce(q * 365.0 / 1e3)

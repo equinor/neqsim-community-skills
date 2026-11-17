@@ -204,7 +204,12 @@ def rank_tie_in_hosts(
         s_dist = max(0.0, 1.0 - d / max_step_out_km)
 
         def ullage(
-            cap_key: str, cur_key: str, req: float | None, label: str
+            cap_key: str,
+            cur_key: str,
+            req: float | None,
+            label: str,
+            h=h,
+            notes=notes,
         ) -> float | None:
             cap, cur = h.get(cap_key), h.get(cur_key)
             if req is None:

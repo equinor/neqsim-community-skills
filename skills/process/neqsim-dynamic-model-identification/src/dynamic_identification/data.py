@@ -43,7 +43,7 @@ def frozen_mask(values: np.ndarray, min_run: int) -> np.ndarray:
         return mask
     start = 0
     for i in range(1, len(values) + 1):
-        if i == len(values) or not (values[i] == values[start]) or np.isnan(values[i]):
+        if i == len(values) or values[i] != values[start] or np.isnan(values[i]):
             if i - start >= min_run and not np.isnan(values[start]):
                 mask[start:i] = True
             start = i

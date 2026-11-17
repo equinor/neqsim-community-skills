@@ -295,21 +295,21 @@ def test_pore_based_kick_basis_gives_larger_tolerance_when_mud_is_overbalanced()
 
 
 def test_liner_hang_load_uses_hanger_depth_not_mudline():
-    common = dict(
-        name="liner",
-        od_in=9.875,
-        shoe_tvd_m=3500.0,
-        shoe_md_m=3500.0,
-        toc_tvd_m=2800.0,
-        mud_sg=1.5,
-        next_td_tvd_m=3500.0,
-        next_mud_sg=1.5,
-        next_pore_sg=1.3,
-        frac_shoe_sg=1.9,
-        water_depth_m=370.0,
-        air_gap_m=30.0,
-        max_temp_c=100.0,
-    )
+    common = {
+        "name": "liner",
+        "od_in": 9.875,
+        "shoe_tvd_m": 3500.0,
+        "shoe_md_m": 3500.0,
+        "toc_tvd_m": 2800.0,
+        "mud_sg": 1.5,
+        "next_td_tvd_m": 3500.0,
+        "next_mud_sg": 1.5,
+        "next_pore_sg": 1.3,
+        "frac_shoe_sg": 1.9,
+        "water_depth_m": 370.0,
+        "air_gap_m": 30.0,
+        "max_temp_c": 100.0,
+    }
     pipe = Pipe(9.875, 0.625, "P110")
     full = check_string(pipe, StringBasis(top_tvd_m=400.0, **common))
     liner = check_string(pipe, StringBasis(top_tvd_m=2600.0, **common))
@@ -461,22 +461,22 @@ def test_common_sigma_widens_the_total_time_spread_and_keeps_median():
 
 
 def test_pore_kick_basis_lowers_gas_kick_load_on_casing_when_mud_is_heavy():
-    base = dict(
-        name="x",
-        od_in=9.625,
-        top_tvd_m=400.0,
-        shoe_tvd_m=2500.0,
-        shoe_md_m=2500.0,
-        toc_tvd_m=1800.0,
-        mud_sg=1.4,
-        next_td_tvd_m=3800.0,
-        next_pore_sg=1.3,
-        frac_shoe_sg=1.9,
-        water_depth_m=370.0,
-        air_gap_m=30.0,
-        max_temp_c=100.0,
-        cap_gas_at_frac=False,
-    )
+    base = {
+        "name": "x",
+        "od_in": 9.625,
+        "top_tvd_m": 400.0,
+        "shoe_tvd_m": 2500.0,
+        "shoe_md_m": 2500.0,
+        "toc_tvd_m": 1800.0,
+        "mud_sg": 1.4,
+        "next_td_tvd_m": 3800.0,
+        "next_pore_sg": 1.3,
+        "frac_shoe_sg": 1.9,
+        "water_depth_m": 370.0,
+        "air_gap_m": 30.0,
+        "max_temp_c": 100.0,
+        "cap_gas_at_frac": False,
+    }
     from well_design_study import load_cases
 
     heavy = load_cases(StringBasis(next_mud_sg=1.70, **base))["gas_kick"]["pi"].max()
@@ -545,23 +545,23 @@ def test_riserless_window_uses_seawater_head_and_vertical_well_gets_drag_from_to
 def test_evacuation_pore_balance_is_milder_than_half_string_for_a_liner():
     from well_design_study import load_cases
 
-    base = dict(
-        name="liner",
-        od_in=17.0,
-        top_tvd_m=1325.0,
-        shoe_tvd_m=1690.0,
-        shoe_md_m=1690.0,
-        toc_tvd_m=1325.0,
-        mud_sg=1.40,
-        next_td_tvd_m=2690.0,
-        next_mud_sg=1.50,
-        next_pore_sg=1.1,
-        frac_shoe_sg=1.7,
-        water_depth_m=370.0,
-        air_gap_m=30.0,
-        max_temp_c=60.0,
-        pore_sg_at=lambda z: 1.04,
-    )
+    base = {
+        "name": "liner",
+        "od_in": 17.0,
+        "top_tvd_m": 1325.0,
+        "shoe_tvd_m": 1690.0,
+        "shoe_md_m": 1690.0,
+        "toc_tvd_m": 1325.0,
+        "mud_sg": 1.40,
+        "next_td_tvd_m": 2690.0,
+        "next_mud_sg": 1.50,
+        "next_pore_sg": 1.1,
+        "frac_shoe_sg": 1.7,
+        "water_depth_m": 370.0,
+        "air_gap_m": 30.0,
+        "max_temp_c": 60.0,
+        "pore_sg_at": lambda z: 1.04,
+    }
     half = load_cases(StringBasis(**base))["evacuation"]
     bal = load_cases(StringBasis(evacuation_basis="pore_balance", **base))["evacuation"]
     assert (half["po"] - half["pi"]).max() > (bal["po"] - bal["pi"]).max()
@@ -585,23 +585,23 @@ def test_hydrostatic_pressure_excludes_air_gap_and_pressure_points_give_emw():
 def test_set_cement_evacuation_external_is_not_heavier_than_mud_column():
     from well_design_study import load_cases
 
-    base = dict(
-        name="liner",
-        od_in=17.0,
-        top_tvd_m=1325.0,
-        shoe_tvd_m=1690.0,
-        shoe_md_m=1690.0,
-        toc_tvd_m=1325.0,
-        mud_sg=1.40,
-        next_td_tvd_m=2690.0,
-        next_mud_sg=1.50,
-        next_pore_sg=1.1,
-        frac_shoe_sg=1.7,
-        water_depth_m=370.0,
-        air_gap_m=30.0,
-        max_temp_c=60.0,
-        pore_sg_at=lambda z: 1.04,
-    )
+    base = {
+        "name": "liner",
+        "od_in": 17.0,
+        "top_tvd_m": 1325.0,
+        "shoe_tvd_m": 1690.0,
+        "shoe_md_m": 1690.0,
+        "toc_tvd_m": 1325.0,
+        "mud_sg": 1.40,
+        "next_td_tvd_m": 2690.0,
+        "next_mud_sg": 1.50,
+        "next_pore_sg": 1.1,
+        "frac_shoe_sg": 1.7,
+        "water_depth_m": 370.0,
+        "air_gap_m": 30.0,
+        "max_temp_c": 60.0,
+        "pore_sg_at": lambda z: 1.04,
+    }
     legacy = load_cases(StringBasis(**base))["evacuation"]
     cem = load_cases(StringBasis(evacuation_external="set_cement", **base))[
         "evacuation"

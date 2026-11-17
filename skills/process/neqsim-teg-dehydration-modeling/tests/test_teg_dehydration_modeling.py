@@ -23,22 +23,22 @@ def test_build_teg_plant_requires_neqsim_message() -> None:
 
 
 def _default_case(**overrides):
-    kwargs = dict(
-        feed_fractions=DEFAULT_FEED,
-        feed_flow_MSm3_day=4.65,
-        feed_temp_C=25.0,
-        feed_pressure_bara=70.0,
-        absorber_pressure_bara=85.0,
-        absorber_temp_C=35.0,
-        teg_flow_kg_hr=5500.0,
-        teg_feed_temp_C=48.5,
-        lean_teg_purity=0.97,
-        flash_drum_pressure_bara=4.8,
-        reboiler_temp_C=197.5,
-        stripping_gas_Sm3_hr=180.0,
-        n_absorber_stages=4,
-        stage_efficiency=0.7,
-    )
+    kwargs = {
+        "feed_fractions": DEFAULT_FEED,
+        "feed_flow_MSm3_day": 4.65,
+        "feed_temp_C": 25.0,
+        "feed_pressure_bara": 70.0,
+        "absorber_pressure_bara": 85.0,
+        "absorber_temp_C": 35.0,
+        "teg_flow_kg_hr": 5500.0,
+        "teg_feed_temp_C": 48.5,
+        "lean_teg_purity": 0.97,
+        "flash_drum_pressure_bara": 4.8,
+        "reboiler_temp_C": 197.5,
+        "stripping_gas_Sm3_hr": 180.0,
+        "n_absorber_stages": 4,
+        "stage_efficiency": 0.7,
+    }
     kwargs.update(overrides)
     return build_teg_plant(**kwargs)
 

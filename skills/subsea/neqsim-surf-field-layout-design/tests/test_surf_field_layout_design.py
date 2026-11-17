@@ -17,21 +17,21 @@ from surf_field_layout_design import (
 
 
 def _layout(**overrides):
-    kwargs = dict(
-        field_name="Test field",
-        centre_latitude_deg=73.375,
-        centre_longitude_deg=25.0,
-        water_depth_m=400.0,
-        producers=8,
-        water_injectors=6,
-        gas_injectors=2,
-        slots_per_template=4,
-        reservoir_length_km=6.0,
-        reservoir_width_km=3.0,
-        design_liquid_rate_m3_per_s=0.33,
-        design_water_injection_rate_m3_per_s=0.23,
-        design_gas_injection_rate_am3_per_s=0.09,
-    )
+    kwargs = {
+        "field_name": "Test field",
+        "centre_latitude_deg": 73.375,
+        "centre_longitude_deg": 25.0,
+        "water_depth_m": 400.0,
+        "producers": 8,
+        "water_injectors": 6,
+        "gas_injectors": 2,
+        "slots_per_template": 4,
+        "reservoir_length_km": 6.0,
+        "reservoir_width_km": 3.0,
+        "design_liquid_rate_m3_per_s": 0.33,
+        "design_water_injection_rate_m3_per_s": 0.23,
+        "design_gas_injection_rate_am3_per_s": 0.09,
+    }
     kwargs.update(overrides)
     return design_surf_layout(**kwargs)
 

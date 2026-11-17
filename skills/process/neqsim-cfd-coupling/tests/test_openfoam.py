@@ -23,13 +23,13 @@ def boundary():
 
 
 def build_case(boundary, **overrides) -> OpenFoamCase:
-    settings = dict(
-        boundary=boundary,
-        mesh=MeshSpec(
+    settings = {
+        "boundary": boundary,
+        "mesh": MeshSpec(
             kind="pipe", diameter_m=0.3048, length_m=3.0, first_cell_height_m=0.0005
         ),
-        name="test-case",
-    )
+        "name": "test-case",
+    }
     settings.update(overrides)
     return OpenFoamCase(**settings)
 
@@ -165,15 +165,15 @@ def test_a_well_proportioned_near_wall_mesh_produces_no_warning(boundary) -> Non
 
 
 def bend_mesh(**overrides) -> MeshSpec:
-    settings = dict(
-        kind="bend",
-        diameter_m=0.03504,
-        bend_radius_m=1.5 * 0.03504,
-        bend_angle_deg=90.0,
-        inlet_length_m=10 * 0.03504,
-        outlet_length_m=15 * 0.03504,
-        axial_cells=40,
-    )
+    settings = {
+        "kind": "bend",
+        "diameter_m": 0.03504,
+        "bend_radius_m": 1.5 * 0.03504,
+        "bend_angle_deg": 90.0,
+        "inlet_length_m": 10 * 0.03504,
+        "outlet_length_m": 15 * 0.03504,
+        "axial_cells": 40,
+    }
     settings.update(overrides)
     return MeshSpec(**settings)
 

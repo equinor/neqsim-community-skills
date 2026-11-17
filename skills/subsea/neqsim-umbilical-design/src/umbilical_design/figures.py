@@ -175,7 +175,7 @@ def draw_cross_section(ax, result: DesignResult) -> dict[str, Any]:
         "",
         xy=(-r_out, -r_out * 1.1),
         xytext=(r_out, -r_out * 1.1),
-        arrowprops=dict(arrowstyle="<->", lw=0.8),
+        arrowprops={"arrowstyle": "<->", "lw": 0.8},
     )
     ax.text(
         0, -r_out * 1.2, "OD %.1f mm" % (2 * r_out), ha="center", va="top", fontsize=8
@@ -313,7 +313,7 @@ def draw_mechanical(ax_cat, ax_util, result: DesignResult) -> None:
             xy=(x[-1], z[-1]),
             xytext=(0.35 * max(x), 0.9 * max(z)),
             fontsize=7,
-            arrowprops=dict(arrowstyle="->", lw=0.6),
+            arrowprops={"arrowstyle": "->", "lw": 0.6},
         )
         ax_cat.text(
             0.02 * max(x),
@@ -424,7 +424,7 @@ def draw_electrical(ax, result: DesignResult) -> bool:
             transform=ax.transAxes,
             fontsize=7,
             va="top",
-            bbox=dict(boxstyle="round", fc="white", ec="#aaaaaa"),
+            bbox={"boxstyle": "round", "fc": "white", "ec": "#aaaaaa"},
         )
     return True
 
@@ -475,11 +475,11 @@ def draw_checks(ax, result: DesignResult) -> None:
             color="white",
             va="center",
             ha="left",
-            bbox=dict(
-                boxstyle="round,pad=0.25",
-                fc=PASS_COLOUR if ok else FAIL_COLOUR,
-                ec="none",
-            ),
+            bbox={
+                "boxstyle": "round,pad=0.25",
+                "fc": PASS_COLOUR if ok else FAIL_COLOUR,
+                "ec": "none",
+            },
         )
         ax.text(
             0.17,

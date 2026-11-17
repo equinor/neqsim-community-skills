@@ -93,13 +93,13 @@ def test_calibrate_well_accepts_good_fit_and_rejects_noise():
     def predict(c, th):
         return _model(th, c["q"])
 
-    kw = dict(
-        prior=(np.log(8.0), 1.0),
-        prior_std=(1.0, 0.2),
-        bounds=((np.log(0.5), np.log(200.0)), (0.6, 1.5)),
-        sigma={"wht": 1.0, "dp": 2.0},
-        steps=(0.15, 0.05),
-    )
+    kw = {
+        "prior": (np.log(8.0), 1.0),
+        "prior_std": (1.0, 0.2),
+        "bounds": ((np.log(0.5), np.log(200.0)), (0.6, 1.5)),
+        "sigma": {"wht": 1.0, "dp": 2.0},
+        "steps": (0.15, 0.05),
+    }
     good = calibrate_well(cases, predict, **kw)
     assert good["accept"] and abs(good["theta"][1] - 1.1) < 0.03
 

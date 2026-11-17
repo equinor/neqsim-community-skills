@@ -155,13 +155,15 @@ class NcsDataset:
         result: list[NcsField] = []
         for row in self.raw.get("fields", []):
             name = str(row["name"])
-            reserves = dict(
-                recoverable_oe_mill_sm3=_opt_float(row.get("recoverable_oe_mill_sm3")),
-                remaining_oe_mill_sm3=_opt_float(row.get("remaining_oe_mill_sm3")),
-                cumulative_produced_oe_mill_sm3=_opt_float(
+            reserves = {
+                "recoverable_oe_mill_sm3": _opt_float(
+                    row.get("recoverable_oe_mill_sm3")
+                ),
+                "remaining_oe_mill_sm3": _opt_float(row.get("remaining_oe_mill_sm3")),
+                "cumulative_produced_oe_mill_sm3": _opt_float(
                     row.get("cumulative_produced_oe_mill_sm3")
                 ),
-            )
+            }
             override = self._field_reserves.get(name.strip().lower())
             if override is not None:
                 reserves.update(override)

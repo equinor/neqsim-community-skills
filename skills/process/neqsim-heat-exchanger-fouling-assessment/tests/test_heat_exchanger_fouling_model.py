@@ -1,22 +1,22 @@
 import pytest
 from heat_exchanger_fouling_assessment import HeatExchangerFoulingModel
 
-BASE_CASE = dict(
-    area=420.0,
-    design_overall_coefficient=1250.0,
-    hot_mass_flow=180.0,
-    hot_specific_heat=3.6,
-    hot_inlet_temperature=338.15,
-    hot_outlet_temperature=318.15,
-    cold_mass_flow=260.0,
-    cold_specific_heat=4.0,
-    cold_inlet_temperature=288.15,
-    cold_outlet_temperature=300.65,
-    design_hot_mass_flow=220.0,
-    design_cold_mass_flow=300.0,
-    design_fouling_allowance=2.0e-4,
-    installed_units=3,
-)
+BASE_CASE = {
+    "area": 420.0,
+    "design_overall_coefficient": 1250.0,
+    "hot_mass_flow": 180.0,
+    "hot_specific_heat": 3.6,
+    "hot_inlet_temperature": 338.15,
+    "hot_outlet_temperature": 318.15,
+    "cold_mass_flow": 260.0,
+    "cold_specific_heat": 4.0,
+    "cold_inlet_temperature": 288.15,
+    "cold_outlet_temperature": 300.65,
+    "design_hot_mass_flow": 220.0,
+    "design_cold_mass_flow": 300.0,
+    "design_fouling_allowance": 2.0e-4,
+    "installed_units": 3,
+}
 
 
 def test_duty_is_reconciled_from_both_sides() -> None:

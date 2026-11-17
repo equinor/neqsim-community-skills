@@ -153,16 +153,16 @@ class Matcher:
                 or abs(v - p.hi) < 1e-3 * (p.hi - p.lo)
             )
             rows.append(
-                dict(
-                    tank=p.tank,
-                    name=p.name,
-                    initial=p.x0,
-                    tuned=float(v),
-                    lower=p.lo,
-                    upper=p.hi,
-                    std=float(s),
-                    at_bound=at_bound,
-                )
+                {
+                    "tank": p.tank,
+                    "name": p.name,
+                    "initial": p.x0,
+                    "tuned": float(v),
+                    "lower": p.lo,
+                    "upper": p.hi,
+                    "std": float(s),
+                    "at_bound": at_bound,
+                }
             )
         return MatchResult(
             pd.DataFrame(rows), field_, sim, obs, sol.cost, sol.nfev, cov
@@ -186,13 +186,13 @@ class MatchResult:
             g[["value", "residual"]]
             .apply(
                 lambda d: pd.Series(
-                    dict(
-                        n=len(d),
-                        bias=d.residual.mean(),
-                        rmse=float(np.sqrt((d.residual**2).mean())),
-                        rel_err_pct=100
+                    {
+                        "n": len(d),
+                        "bias": d.residual.mean(),
+                        "rmse": float(np.sqrt((d.residual**2).mean())),
+                        "rel_err_pct": 100
                         * float((d.residual.abs() / d.value.abs()).mean()),
-                    )
+                    }
                 )
             )
             .reset_index()
@@ -267,5 +267,11 @@ def fit_deliverability(
                 if len(gg)
                 else float("nan")
             )
-        out[w] = dict(a=float(a), c=float(c), wgr=wgr, n=len(g), r2=float(r2))
+        out[w] = {
+            "a": float(a),
+            "c": float(c),
+            "wgr": wgr,
+            "n": len(g),
+            "r2": float(r2),
+        }
     return out

@@ -520,13 +520,13 @@ def render_field_illustration(
             fontsize=9.5,
             fontweight="bold",
             zorder=70,
-            bbox=dict(
-                boxstyle="round,pad=0.28",
-                fc="white",
-                ec=THEME["callout_edge"],
-                alpha=0.88,
-                lw=0.7,
-            ),
+            bbox={
+                "boxstyle": "round,pad=0.28",
+                "fc": "white",
+                "ec": THEME["callout_edge"],
+                "alpha": 0.88,
+                "lw": 0.7,
+            },
         )
 
     # --- framing -----------------------------------------------------------

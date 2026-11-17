@@ -35,24 +35,24 @@ def _png_ok(path, min_w=1200):
 
 
 def _liner_basis(**kw):
-    base = dict(
-        name="liner",
-        od_in=17.0,
-        top_tvd_m=1300.0,
-        shoe_tvd_m=1700.0,
-        shoe_md_m=1700.0,
-        toc_tvd_m=1300.0,
-        mud_sg=1.40,
-        next_td_tvd_m=2700.0,
-        next_mud_sg=1.50,
-        next_pore_sg=1.25,
-        frac_shoe_sg=1.60,
-        pore_sg_at=lambda z: 1.03,
-        water_depth_m=350.0,
-        air_gap_m=25.0,
-        max_temp_c=50.0,
-        evacuation_basis="pore_balance",
-    )
+    base = {
+        "name": "liner",
+        "od_in": 17.0,
+        "top_tvd_m": 1300.0,
+        "shoe_tvd_m": 1700.0,
+        "shoe_md_m": 1700.0,
+        "toc_tvd_m": 1300.0,
+        "mud_sg": 1.40,
+        "next_td_tvd_m": 2700.0,
+        "next_mud_sg": 1.50,
+        "next_pore_sg": 1.25,
+        "frac_shoe_sg": 1.60,
+        "pore_sg_at": lambda z: 1.03,
+        "water_depth_m": 350.0,
+        "air_gap_m": 25.0,
+        "max_temp_c": 50.0,
+        "evacuation_basis": "pore_balance",
+    }
     base.update(kw)
     return StringBasis(**base)
 

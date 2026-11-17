@@ -55,7 +55,7 @@ def test_givens_fix_elements_and_reject_unknown_option():
 
 
 def test_capacity_variants_single_topology_warns():
-    topo = dict(host="fpso", wells="subsea", oil_export="shuttle_tanker")
+    topo = {"host": "fpso", "wells": "subsea", "oil_export": "shuttle_tanker"}
     concepts = [
         dict(_c(f"fpso_{q}", **topo), sizing={"plateau_kbopd": q})
         for q in (100, 150, 200)

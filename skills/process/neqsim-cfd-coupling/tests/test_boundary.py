@@ -10,13 +10,13 @@ from cfd_coupling import (
 
 
 def gas_state(**overrides) -> FluidState:
-    defaults = dict(
-        name="wet gas",
-        phase="gas",
-        density_kg_per_m3=52.4,
-        viscosity_pa_s=1.45e-5,
-        speed_of_sound_m_per_s=395.0,
-    )
+    defaults = {
+        "name": "wet gas",
+        "phase": "gas",
+        "density_kg_per_m3": 52.4,
+        "viscosity_pa_s": 1.45e-5,
+        "speed_of_sound_m_per_s": 395.0,
+    }
     defaults.update(overrides)
     return FluidState(**defaults)
 

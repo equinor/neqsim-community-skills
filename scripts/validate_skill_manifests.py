@@ -95,7 +95,9 @@ def validate_against_schema(manifest, schema):
         validator = jsonschema.Draft7Validator(schema)
         return [
             "{}: {}".format("/".join(str(p) for p in err.path) or "<root>", err.message)
-            for err in sorted(validator.iter_errors(manifest), key=lambda e: list(e.path))
+            for err in sorted(
+                validator.iter_errors(manifest), key=lambda e: list(e.path)
+            )
         ]
     return minimal_structural_check(manifest, schema)
 

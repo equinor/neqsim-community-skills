@@ -193,11 +193,16 @@ def check_datum_consistency(
             problems.append(
                 f"survey MD at TD differs from basis MD by more than {tol_m:.1f} m"
             )
-    if inc_at_td_deg is not None and md_m is not None and tvd_m is not None:
-        if inc_at_td_deg < 1.0 and abs(md_m - tvd_m) > tol_m:
-            problems.append(
-                f"near-vertical well but MD and TVD differ by {abs(md_m - tvd_m):.1f} m"
-            )
+    if (
+        inc_at_td_deg is not None
+        and md_m is not None
+        and tvd_m is not None
+        and inc_at_td_deg < 1.0
+        and abs(md_m - tvd_m) > tol_m
+    ):
+        problems.append(
+            f"near-vertical well but MD and TVD differ by {abs(md_m - tvd_m):.1f} m"
+        )
     return problems
 
 

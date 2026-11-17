@@ -138,9 +138,10 @@ class FemMeshSpec:
                 raise ValueError("revolve_deg must be greater than 0 and at most 360")
         if self.extrude_m is not None:
             _require_positive("extrude_m", self.extrude_m)
-        if self.revolve_deg is not None or self.extrude_m is not None:
-            if self.circumferential_cells < 1:
-                raise ValueError("circumferential_cells must be at least one")
+        if (
+            self.revolve_deg is not None or self.extrude_m is not None
+        ) and self.circumferential_cells < 1:
+            raise ValueError("circumferential_cells must be at least one")
         names = [layer.name for layer in self.layers]
         if len(set(names)) != len(names):
             raise ValueError("layer names must be unique")

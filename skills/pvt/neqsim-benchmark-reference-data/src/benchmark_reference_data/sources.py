@@ -48,9 +48,12 @@ class ApplicabilityRange:
         pressure_Pa: float | None = None,
     ) -> bool:
         """Return True when the requested state lies inside the validated range."""
-        if fluid is not None and self.fluids:
-            if fluid.strip().lower() not in {f.lower() for f in self.fluids}:
-                return False
+        if (
+            fluid is not None
+            and self.fluids
+            and fluid.strip().lower() not in {f.lower() for f in self.fluids}
+        ):
+            return False
         if temperature_K is not None and self.temperature_K is not None:
             low, high = self.temperature_K
             if not low <= temperature_K <= high:

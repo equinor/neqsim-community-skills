@@ -63,7 +63,7 @@ def rank_candidates(
     terminals = set(terminal_hosts or [])
     spare = spare_capacity_fraction or {}
     feeder_count: dict[str, int] = {}
-    for _feeder, targets in feeds_into.items():
+    for targets in feeds_into.values():
         for target in targets:
             feeder_count[target] = feeder_count.get(target, 0) + 1
     out: list[TieInCandidate] = []

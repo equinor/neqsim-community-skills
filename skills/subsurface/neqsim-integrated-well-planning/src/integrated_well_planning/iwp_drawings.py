@@ -186,7 +186,7 @@ def well_schematic_sheet(
             ha="center",
             va="center",
             color=PALETTE["muted"],
-            bbox=dict(fc="white", ec="none", pad=0.5),
+            bbox={"fc": "white", "ec": "none", "pad": 0.5},
         )
         ax_s.text(
             0.5,
@@ -196,7 +196,7 @@ def well_schematic_sheet(
             ha="center",
             va="center",
             fontweight="bold",
-            bbox=dict(fc="white", ec="none", pad=0.5),
+            bbox={"fc": "white", "ec": "none", "pad": 0.5},
         )
         ax_s.text(
             0.9,
@@ -206,7 +206,7 @@ def well_schematic_sheet(
             ha="center",
             va="center",
             color=PALETTE["muted"],
-            bbox=dict(fc="white", ec="none", pad=0.5),
+            bbox={"fc": "white", "ec": "none", "pad": 0.5},
         )
     # schematic track
     ax_w.set_xlim(-1.0, 1.6)
@@ -421,7 +421,7 @@ def well_schematic_sheet(
                 fontsize=6.5,
                 va="center",
                 ha="left",
-                arrowprops=dict(arrowstyle="-", lw=0.4, color=PALETTE["muted"]),
+                arrowprops={"arrowstyle": "-", "lw": 0.4, "color": PALETTE["muted"]},
                 zorder=8,
             )
         else:
@@ -474,7 +474,7 @@ def well_schematic_sheet(
         xytext=(th + 0.9, m2t(md_td * 0.42)),
         fontsize=6.6,
         va="center",
-        arrowprops=dict(arrowstyle="-", lw=0.4, color=PALETTE["muted"]),
+        arrowprops={"arrowstyle": "-", "lw": 0.4, "color": PALETTE["muted"]},
         color=PALETTE["pressure"],
     )
     if comp.get("packer_md_m"):
@@ -499,7 +499,7 @@ def well_schematic_sheet(
             fontsize=6.6,
             va="center",
             ha="right",
-            arrowprops=dict(arrowstyle="-", lw=0.4, color=PALETTE["muted"]),
+            arrowprops={"arrowstyle": "-", "lw": 0.4, "color": PALETTE["muted"]},
         )
     if comp.get("sssv_md_m"):
         sy = m2t(comp["sssv_md_m"])
@@ -519,7 +519,7 @@ def well_schematic_sheet(
             xytext=(th + 0.9, sy),
             fontsize=6.6,
             va="center",
-            arrowprops=dict(arrowstyle="-", lw=0.4, color=PALETTE["muted"]),
+            arrowprops={"arrowstyle": "-", "lw": 0.4, "color": PALETTE["muted"]},
         )
     for md_m in (comp.get("lift") or {}).get("mandrels_md_m", []) or []:
         my = m2t(md_m)
@@ -549,12 +549,12 @@ def well_schematic_sheet(
                     "",
                     xy=(x_to, yy),
                     xytext=(x_from, yy),
-                    arrowprops=dict(
-                        arrowstyle="-|>",
-                        lw=0.8,
-                        color=PALETTE["temperature"],
-                        mutation_scale=6,
-                    ),
+                    arrowprops={
+                        "arrowstyle": "-|>",
+                        "lw": 0.8,
+                        "color": PALETTE["temperature"],
+                        "mutation_scale": 6,
+                    },
                     zorder=7,
                 )
         ax_w.text(
@@ -922,9 +922,13 @@ def barrier_schematic_sheet(
                     PALETTE["primary_barrier"] if prim else PALETTE["secondary_barrier"]
                 ),
                 fontweight="bold",
-                arrowprops=dict(
-                    arrowstyle="-", lw=0.5, color=PALETTE["muted"], shrinkA=0, shrinkB=4
-                ),
+                arrowprops={
+                    "arrowstyle": "-",
+                    "lw": 0.5,
+                    "color": PALETTE["muted"],
+                    "shrinkA": 0,
+                    "shrinkB": 4,
+                },
                 zorder=7,
             )
         ax2 = sheet_axes(fig, box, (k * rw + 0.006, 0.02, rw - 0.012, 0.46))

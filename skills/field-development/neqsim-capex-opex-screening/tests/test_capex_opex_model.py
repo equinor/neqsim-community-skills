@@ -3,13 +3,13 @@ from capex_opex_screening import CapexOpexModel
 
 
 def _base(**overrides):
-    kwargs = dict(
-        bare_equipment_cost_musd=120.0,
-        installation_factor=3.5,
-        contingency_fraction=0.2,
-        opex_fraction_of_capex_per_year=0.04,
-        project_life_years=20,
-    )
+    kwargs = {
+        "bare_equipment_cost_musd": 120.0,
+        "installation_factor": 3.5,
+        "contingency_fraction": 0.2,
+        "opex_fraction_of_capex_per_year": 0.04,
+        "project_life_years": 20,
+    }
     kwargs.update(overrides)
     return CapexOpexModel().evaluate(**kwargs)
 

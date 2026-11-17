@@ -3,14 +3,14 @@ from reservoir_depletion_screening import ReservoirDepletionModel
 
 
 def _base(**overrides):
-    kwargs = dict(
-        fluid_type="gas",
-        initial_pressure_bara=300.0,
-        abandonment_pressure_bara=80.0,
-        recoverable_volume_sm3=20.0e9,
-        offtake_rate_sm3_per_day=8.0e6,
-        years=15,
-    )
+    kwargs = {
+        "fluid_type": "gas",
+        "initial_pressure_bara": 300.0,
+        "abandonment_pressure_bara": 80.0,
+        "recoverable_volume_sm3": 20.0e9,
+        "offtake_rate_sm3_per_day": 8.0e6,
+        "years": 15,
+    }
     kwargs.update(overrides)
     return ReservoirDepletionModel().evaluate(**kwargs)
 

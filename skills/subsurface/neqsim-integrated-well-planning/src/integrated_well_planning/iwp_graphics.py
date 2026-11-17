@@ -128,7 +128,13 @@ def nodal_chart(
             fontweight="bold",
             va="center",
             annotation_clip=False,
-            arrowprops=dict(arrowstyle="-", lw=0.5, color=col, shrinkA=0, shrinkB=2),
+            arrowprops={
+                "arrowstyle": "-",
+                "lw": 0.5,
+                "color": col,
+                "shrinkA": 0,
+                "shrinkB": 2,
+            },
         )
     i0 = int(0.18 * (len(q) - 1))
     direct_label(
@@ -457,7 +463,7 @@ def operating_envelope_chart(
         va="bottom",
         fontsize=7.5,
         color=PALETTE["limit"],
-        bbox=dict(fc="white", ec="none", pad=1),
+        bbox={"fc": "white", "ec": "none", "pad": 1},
     )
     ax.set_xlim(0, 1.4)
     ax.set_ylim(-0.7, n)
@@ -1090,7 +1096,7 @@ def decision_tree(
                     va="center",
                     color=PALETTE["muted"],
                     zorder=5,
-                    bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none"),
+                    bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none"},
                 )
     for n in nodes:
         x, y = depth[n["id"]], ypos[n["id"]]
@@ -1126,7 +1132,12 @@ def decision_tree(
                 ha="right",
                 zorder=4,
                 fontweight="bold",
-                bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.9),
+                bbox={
+                    "boxstyle": "round,pad=0.15",
+                    "fc": "white",
+                    "ec": "none",
+                    "alpha": 0.9,
+                },
             )
     ax.set_xlim(-2.4, max(depth.values()) + 2.6)
     ax.set_ylim(-0.8, counter[0])

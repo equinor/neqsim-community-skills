@@ -15,12 +15,12 @@ from psc_bid_economics_screening import (
 PRODUCTION = [10.0, 25.0, 30.0, 28.0, 24.0, 20.0, 16.0, 13.0, 10.0, 8.0]
 CAPEX = [900.0, 900.0, 400.0, 0, 0, 0, 0, 0, 0, 0]
 OPEX = [20.0, 60.0, 80.0, 80.0, 75.0, 70.0, 65.0, 60.0, 55.0, 50.0]
-KW = dict(
-    chance_of_discovery=0.30,
-    working_interest=0.70,
-    signature_bonus_musd=20.0,
-    exploration_program_musd=60.0,
-)
+KW = {
+    "chance_of_discovery": 0.30,
+    "working_interest": 0.70,
+    "signature_bonus_musd": 20.0,
+    "exploration_program_musd": 60.0,
+}
 
 
 def independent_waterfall(

@@ -89,9 +89,15 @@ class FluidModel:
     def phases(self, z: Sequence[float], T_K: float, P_bara: float) -> dict:
         """Per mole of feed: gas/liquid moles and volumes (m3), gas and liquid compositions. A single phase counts as gas."""
         f = self.flash(z, T_K, P_bara)
-        out = dict(
-            ng=0.0, nl=0.0, vg=0.0, vl=0.0, y=None, x=None, nph=f.getNumberOfPhases()
-        )
+        out = {
+            "ng": 0.0,
+            "nl": 0.0,
+            "vg": 0.0,
+            "vl": 0.0,
+            "y": None,
+            "x": None,
+            "nph": f.getNumberOfPhases(),
+        }
         ntot = f.getTotalNumberOfMoles()
         for i in range(f.getNumberOfPhases()):
             ph = f.getPhase(i)
@@ -112,7 +118,7 @@ class FluidModel:
     def surface_yield(self, z: Sequence[float]) -> dict:
         """Standard-condition split of one mole of wellstream ``z``: gas Sm3, condensate Sm3 and molar mass (kg/mol)."""
         s = self.phases(z, STD_T_K, STD_P_BARA)
-        return dict(gas_sm3=s["ng"] * SM3_PER_MOL, cond_sm3=s["vl"])
+        return {"gas_sm3": s["ng"] * SM3_PER_MOL, "cond_sm3": s["vl"]}
 
     def dew_point(
         self,

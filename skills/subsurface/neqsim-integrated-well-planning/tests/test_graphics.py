@@ -116,8 +116,8 @@ def _alt_sc():
 
 
 CHART_CASES = {
-    "nodal": lambda: dict(
-        family={
+    "nodal": lambda: {
+        "family": {
             "q": list(np.linspace(100, 3000, 10)),
             "ipr_pwf": list(250 - np.linspace(100, 3000, 10) / 40),
             "families": {
@@ -126,46 +126,46 @@ CHART_CASES = {
             },
             "parameter": "tubing_id_m",
         },
-        ops={
+        "ops": {
             "base": {"q_op": 1500.0, "bhp_op": 200.0},
             "low": {"q_op": 900.0, "bhp_op": 215.0},
             "high": {"q_op": 2100.0, "bhp_op": 190.0},
         },
-        target_rate=1500.0,
-        ipr_band={
+        "target_rate": 1500.0,
+        "ipr_band": {
             "low": list(240 - np.linspace(100, 3000, 10) / 40),
             "high": list(260 - np.linspace(100, 3000, 10) / 40),
         },
-        outflow_min_rate=400.0,
-    ),
-    "wellbore_profiles": lambda: dict(
-        profile=_profile(),
-        hydrate={"tvd_m": [100, 1000, 2000], "hydrate_T_C": [15, 17, 18]},
-    ),
-    "operating_envelope": lambda: dict(rows=_env_rows()),
-    "envelope_table": lambda: dict(rows=_env_rows()),
-    "alternatives_scorecard": lambda: dict(
-        sc=_alt_sc(),
-        labels={"A": "tubing 85 mm", "B": "tubing 100 mm", "C": "gas lift"},
-    ),
-    "alternatives_radar": lambda: dict(
-        sc=_alt_sc(),
-        labels={"A": "tubing 85 mm", "B": "tubing 100 mm", "C": "gas lift"},
-    ),
-    "pareto": lambda: dict(
-        points={"A": (0.0, 1500.0), "B": (0.0, 2000.0), "C": (1e5, 2100.0)},
-        front=["B", "C"],
-        labels={"A": "A", "B": "B", "C": "C"},
-        xlabel="Lift gas",
-        ylabel="Rate",
-    ),
-    "waterfall": lambda: dict(
-        reference_label="100 mm",
-        reference_value=2000.0,
-        steps=[("120 mm", 300.0), ("gas lift", -50.0)],
-    ),
-    "tornado": lambda: dict(
-        t={
+        "outflow_min_rate": 400.0,
+    },
+    "wellbore_profiles": lambda: {
+        "profile": _profile(),
+        "hydrate": {"tvd_m": [100, 1000, 2000], "hydrate_T_C": [15, 17, 18]},
+    },
+    "operating_envelope": lambda: {"rows": _env_rows()},
+    "envelope_table": lambda: {"rows": _env_rows()},
+    "alternatives_scorecard": lambda: {
+        "sc": _alt_sc(),
+        "labels": {"A": "tubing 85 mm", "B": "tubing 100 mm", "C": "gas lift"},
+    },
+    "alternatives_radar": lambda: {
+        "sc": _alt_sc(),
+        "labels": {"A": "tubing 85 mm", "B": "tubing 100 mm", "C": "gas lift"},
+    },
+    "pareto": lambda: {
+        "points": {"A": (0.0, 1500.0), "B": (0.0, 2000.0), "C": (1e5, 2100.0)},
+        "front": ["B", "C"],
+        "labels": {"A": "A", "B": "B", "C": "C"},
+        "xlabel": "Lift gas",
+        "ylabel": "Rate",
+    },
+    "waterfall": lambda: {
+        "reference_label": "100 mm",
+        "reference_value": 2000.0,
+        "steps": [("120 mm", 300.0), ("gas lift", -50.0)],
+    },
+    "tornado": lambda: {
+        "t": {
             "metric": "q_op",
             "reference": 2000.0,
             "rows": [
@@ -185,41 +185,41 @@ CHART_CASES = {
                 },
             ],
         }
-    ),
-    "sensitivity_heatmap": lambda: dict(
-        g={
+    },
+    "sensitivity_heatmap": lambda: {
+        "g": {
             "x_param": "tubing_id_m",
             "x": [0.085, 0.1, 0.12],
             "y_param": "host_pressure_bara",
             "y": [20, 25, 35],
             "q_op": [[1800, 2000, 2300], [1600, 1900, 2200], [1200, 1500, 1900]],
         },
-        target=1500.0,
-    ),
-    "profile_bands": lambda: dict(
-        years=[0, 3, 6, 9],
-        cases={
+        "target": 1500.0,
+    },
+    "profile_bands": lambda: {
+        "years": [0, 3, 6, 9],
+        "cases": {
             "low": [1500, 1200, 900, 600],
             "base": [2000, 1700, 1400, 1100],
             "high": [2400, 2100, 1800, 1500],
         },
-        target=1500.0,
-    ),
-    "gantt": lambda: dict(
-        tasks=[
+        "target": 1500.0,
+    },
+    "gantt": lambda: {
+        "tasks": [
             {"name": "Top hole", "start": 0, "low": 5, "base": 7, "high": 11},
             {"name": "Production hole", "start": 7, "low": 8, "base": 11, "high": 18},
         ]
-    ),
-    "risk_matrix": lambda: dict(
-        risks=[
+    },
+    "risk_matrix": lambda: {
+        "risks": [
             {"id": 1, "title": "x", "likelihood": 3, "consequence": 4},
             {"id": 2, "title": "y", "likelihood": 5, "consequence": 5},
             {"id": 3, "title": "z", "likelihood": 3, "consequence": 4},
         ]
-    ),
-    "risk_register": lambda: dict(
-        risks=[
+    },
+    "risk_register": lambda: {
+        "risks": [
             {
                 "id": 1,
                 "title": "Erosional ratio above limit",
@@ -229,9 +229,9 @@ CHART_CASES = {
                 "owner": "lead",
             }
         ]
-    ),
-    "decision_tree": lambda: dict(
-        nodes=[
+    },
+    "decision_tree": lambda: {
+        "nodes": [
             {
                 "id": "r",
                 "parent": None,
@@ -254,25 +254,25 @@ CHART_CASES = {
                 "edge": "base",
             },
         ]
-    ),
-    "time_depth": lambda: dict(
-        curves={
+    },
+    "time_depth": lambda: {
+        "curves": {
             "low": [(0, 0), (20, 1500), (35, 2500)],
             "base": [(0, 0), (28, 1500), (47, 2500)],
             "high": [(0, 0), (40, 1500), (66, 2500)],
         },
-        band_curves=("low", "high"),
-    ),
-    "trajectory_views": lambda: dict(
-        survey=build_and_hold(500, 2.0, 25, 2500, 70),
-        offsets={
+        "band_curves": ("low", "high"),
+    },
+    "trajectory_views": lambda: {
+        "survey": build_and_hold(500, 2.0, 25, 2500, 70),
+        "offsets": {
             "B-2": {"east": [0, 20, 40], "north": [0, 60, 120], "tvd": [0, 800, 1600]}
         },
-        separation={
+        "separation": {
             "curves": {"B-2": {"md": [500, 1500, 2500], "sf": [6.0, 2.5, 1.8]}},
             "threshold": 1.5,
         },
-    ),
+    },
 }
 
 

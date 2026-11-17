@@ -3,12 +3,12 @@ from energy_emissions_screening import EnergyEmissionsModel
 
 
 def _base(**overrides):
-    kwargs = dict(
-        annual_energy_use_mwh=[120000.0, 180000.0, 175000.0, 150000.0, 120000.0],
-        emission_factor_kg_co2e_per_mwh=450.0,
-        annual_production_boe=[3.0e6, 7.0e6, 6.5e6, 5.0e6, 3.5e6],
-        co2_tax_usd_per_tonne=0.0,
-    )
+    kwargs = {
+        "annual_energy_use_mwh": [120000.0, 180000.0, 175000.0, 150000.0, 120000.0],
+        "emission_factor_kg_co2e_per_mwh": 450.0,
+        "annual_production_boe": [3.0e6, 7.0e6, 6.5e6, 5.0e6, 3.5e6],
+        "co2_tax_usd_per_tonne": 0.0,
+    }
     kwargs.update(overrides)
     return EnergyEmissionsModel().evaluate(**kwargs)
 

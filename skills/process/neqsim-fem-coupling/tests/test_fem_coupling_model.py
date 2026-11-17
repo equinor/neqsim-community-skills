@@ -8,15 +8,15 @@ def model():
 
 
 def _good_gate(**overrides):
-    defaults = dict(
-        element_order=1,
-        elements_across_critical_layer=6,
-        mesh_levels=3,
-        convergence_percent=0.4,
-        max_aspect_ratio=8.0,
-        energy_balance_error_percent=0.01,
-        far_field_ratio=6.0,
-    )
+    defaults = {
+        "element_order": 1,
+        "elements_across_critical_layer": 6,
+        "mesh_levels": 3,
+        "convergence_percent": 0.4,
+        "max_aspect_ratio": 8.0,
+        "energy_balance_error_percent": 0.01,
+        "far_field_ratio": 6.0,
+    }
     defaults.update(overrides)
     return defaults
 

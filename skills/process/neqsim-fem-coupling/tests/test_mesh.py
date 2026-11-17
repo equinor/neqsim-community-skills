@@ -3,20 +3,20 @@ from fem_coupling import FemMeshSpec, MeshLayer, MeshSegment, detect_gmsh
 
 
 def _spec(**overrides):
-    defaults = dict(
-        kind="axisymmetric_section",
-        inner_radius_m=0.127,
-        layers=[
+    defaults = {
+        "kind": "axisymmetric_section",
+        "inner_radius_m": 0.127,
+        "layers": [
             MeshLayer("steel", "carbon-steel", 0.0127, 6),
             MeshLayer("insulation", "polyurethane-insulation", 0.05, 16),
         ],
-        segments=[
+        "segments": [
             MeshSegment("upstream", 0.8, 16),
             MeshSegment("defect", 0.4, 10, {"insulation": "seawater-flooded"}),
             MeshSegment("downstream", 0.8, 16),
         ],
-        name="20-P-001",
-    )
+        "name": "20-P-001",
+    }
     defaults.update(overrides)
     return FemMeshSpec(**defaults)
 

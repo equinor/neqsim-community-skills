@@ -110,7 +110,7 @@ def run_process_series(
             kpi = run_case(d, streams)
             kpi["status"] = "ok"
         except Exception as exc:
-            kpi = dict(status=f"failed: {exc!r}")
+            kpi = {"status": f"failed: {exc!r}"}
         rows.append(dict(date=d, **kpi))
     return pd.DataFrame(rows)
 

@@ -246,8 +246,7 @@ def run_train(
         )
         if oil_flow <= 1.0e-12 and idx < len(stages) - 1:
             warnings.append(
-                "no oil phase leaving %s; downstream stages not evaluated"
-                % results[-1].name
+                f"no oil phase leaving {results[-1].name}; downstream stages not evaluated"
             )
             break
         current = sep.getOilOutStream().getFluid().clone()
@@ -255,7 +254,7 @@ def run_train(
     if h2s_in > 0:
         closure = (gas_total + oil_total + water_total) / h2s_in
         if abs(closure - 1.0) > 0.02:
-            warnings.append("H2S balance closure %.3f outside 2 percent" % closure)
+            warnings.append(f"H2S balance closure {closure:.3f} outside 2 percent")
     denom = h2s_in if h2s_in > 0 else 1.0
     return TrainResult(
         wellstream_h2s_mol_fraction=h2s_in / flow_mol_s,
@@ -279,8 +278,7 @@ def _bisect_log(
     f_lo, f_hi = func(lo), func(hi)
     if not (f_lo <= target <= f_hi):
         raise ValueError(
-            "measured value %.4g is outside the bracket [%.4g, %.4g] reachable for z in [%.2g, %.2g]"
-            % (target, f_lo, f_hi, lo, hi)
+            f"measured value {target:.4g} is outside the bracket [{f_lo:.4g}, {f_hi:.4g}] reachable for z in [{lo:.2g}, {hi:.2g}]"
         )
     a, b = math.log(lo), math.log(hi)
     for _ in range(itmax):
@@ -408,7 +406,7 @@ def separator_gor_and_gas_h2s(fluid, stage: SeparatorStage) -> tuple[float, floa
     f = _flash_stage(fluid, stage)
     ph = _phase_by_type(f)
     if "gas" not in ph or "oil" not in ph:
-        raise ValueError("separator flash must give gas and oil; got %s" % sorted(ph))
+        raise ValueError(f"separator flash must give gas and oil; got {sorted(ph)}")
     t_k, p_pa = stage.temperature_c + 273.15, stage.pressure_bara * 1.0e5
     v_oil = float(ph["oil"].getBeta()) * float(ph["oil"].getZ()) * _R * t_k / p_pa
     v_gas_sc = float(ph["gas"].getBeta()) * _R * _T_SC_K / _P_SC_PA
@@ -435,7 +433,7 @@ def recombine_to_gor_and_h2s(
     """
     if gor_measured <= 0 or not 0 < y_h2s_measured < 0.5:
         raise ValueError("gor_measured must be positive and y_h2s_measured in (0, 0.5)")
-    jn = _jneqsim()
+    _jneqsim()
     cur = fluid.clone()
     cur.init(0)
     names = [str(n) for n in cur.getComponentNames()]
@@ -551,7 +549,7 @@ def parse_e300_names_and_zi(path: str) -> tuple[list[str], list[float]]:
             if line.endswith("/"):
                 section = None
     if not names:
-        raise ValueError("no CNAMES section in %s" % path)
+        raise ValueError(f"no CNAMES section in {path}")
     return names, zi
 
 
@@ -592,7 +590,7 @@ def apply_e300_composition(fluid, model_e300: str, composition) -> list[str]:
         unknown = sorted(set(composition) - set(names))
         if unknown:
             raise ValueError(
-                "composition has components not in the model file: %s" % unknown
+                f"composition has components not in the model file: {unknown}"
             )
         values = [float(composition.get(n, 0.0)) for n in names]
     else:

@@ -17,6 +17,7 @@ owner. Only the standard library is needed; ``plot_overview`` needs matplotlib.
 from __future__ import annotations
 
 import csv
+import itertools
 import json
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
@@ -192,7 +193,7 @@ def polyline_length_km(parts: Sequence[Sequence[tuple[float, float]]]) -> float:
     """Geodesic (haversine) length of a multi-part polyline in km."""
     total = 0.0
     for part in parts:
-        for a, b in zip(part[:-1], part[1:]):
+        for a, b in itertools.pairwise(part):
             total += haversine_km(a[0], a[1], b[0], b[1])
     return total
 
@@ -309,14 +310,14 @@ def node_register(layers: Mapping[str, list[dict]]) -> list[dict]:
                 continue
             p = f.get("properties", {})
             if kind == "platform":
-                cap = "oil %s m3/d; gas %s m3/d" % (
+                cap = "oil {} m3/d; gas {} m3/d".format(
                     _first(p, ("QTD_PROCESSAMENTO_PETROLEO",)),
                     _first(p, ("QTD_PROCESSAMENTO_GAS",)),
                 )
                 detail = _first(p, ("DESC_TIPO_UEP",))
                 fields = _first(p, ("DESC_ATENDIMENTOS",))
                 if fields:
-                    detail = "%s; serves %s" % (detail, fields)
+                    detail = f"{detail}; serves {fields}"
             else:
                 cap = _first(p, ("CAPACIDADE", "CAPAC_BPD"))
                 detail = _first(

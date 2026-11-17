@@ -227,8 +227,8 @@ def film_coefficient(
 
     warnings: list[str] = []
     assumptions: list[str] = [
-        "Fully developed internal flow with a smooth wall; an entrance region, a "
-        "bend or a fitting raises the local coefficient above this value.",
+        ("Fully developed internal flow with a smooth wall; an entrance region, a "
+        "bend or a fitting raises the local coefficient above this value."),
         "Properties are evaluated at the bulk condition, not at the film temperature.",
     ]
 
@@ -333,8 +333,8 @@ def derive_thermal_conditions(
 
     warnings: list[str] = []
     assumptions: list[str] = [
-        "Biot number uses the full conduction path length, so a composite wall is "
-        "judged on the whole build-up rather than on the metal alone.",
+        ("Biot number uses the full conduction path length, so a composite wall is "
+        "judged on the whole build-up rather than on the metal alone."),
     ]
 
     # The controlling surface coefficient is the smaller of the two: it is the one
@@ -434,12 +434,12 @@ def effective_diffusivity(
         raise ValueError("porosity is a fraction strictly between 0 and 1")
 
     assumptions = (
-        "Effective diffusivity uses the porosity-over-tortuosity model D_eff = "
-        "phi D / tau, which assumes single-phase saturation and no surface diffusion.",
-        f"Tortuosity {tortuosity:g} is a screening value; core-derived values for the "
-        "actual rock differ by a factor of two or more.",
-        "Molecular diffusivity comes from the NeqSim mixture model, so it already "
-        "reflects composition, temperature and pressure.",
+        ("Effective diffusivity uses the porosity-over-tortuosity model D_eff = "
+        "phi D / tau, which assumes single-phase saturation and no surface diffusion."),
+        (f"Tortuosity {tortuosity:g} is a screening value; core-derived values for the "
+        "actual rock differ by a factor of two or more."),
+        ("Molecular diffusivity comes from the NeqSim mixture model, so it already "
+        "reflects composition, temperature and pressure."),
     )
     return porosity * molecular_diffusivity_m2_per_s / tortuosity, assumptions
 

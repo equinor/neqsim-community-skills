@@ -95,7 +95,7 @@ truth = (
         wells,
         rates,
         pd.DataFrame(
-            dict(date=[idx[0]], tank=["A"], kind=["p_res"], value=[0.0], sigma=[1.0])
+            {"date": [idx[0]], "tank": ["A"], "kind": ["p_res"], "value": [0.0], "sigma": [1.0]}
         ),
         [],
     )
@@ -107,22 +107,22 @@ pick = tab[tab.date.isin(idx[::12])]
 obs = pd.concat(
     [
         pd.DataFrame(
-            dict(
-                date=pick.date,
-                tank=pick.tank,
-                kind="p_res",
-                value=pick.p_res,
-                sigma=3.0,
-            )
+            {
+                "date": pick.date,
+                "tank": pick.tank,
+                "kind": "p_res",
+                "value": pick.p_res,
+                "sigma": 3.0,
+            }
         ),
         pd.DataFrame(
-            dict(
-                date=truth.field_series().index,
-                tank="FIELD",
-                kind="cgr",
-                value=truth.field_series().cgr_sm3_per_msm3,
-                sigma=15.0,
-            )
+            {
+                "date": truth.field_series().index,
+                "tank": "FIELD",
+                "kind": "cgr",
+                "value": truth.field_series().cgr_sm3_per_msm3,
+                "sigma": 15.0,
+            }
         ),
     ]
 )

@@ -1,3 +1,4 @@
+import itertools
 import math
 
 import numpy as np
@@ -87,7 +88,7 @@ def test_parallel_vertical_wells_sf_decreases_with_depth():
     off = vertical("B", 15.0, 0.0)
     res = scan(ref, [off], RULE)
     sfs = [p["min_sf"] for p in res["profile"]]
-    assert all(b <= a + 1e-9 for a, b in zip(sfs[1:], sfs[2:]))
+    assert all(b <= a + 1e-9 for a, b in itertools.pairwise(sfs))
     row = res["offsets"][0]
     # vertical wells: along-hole (vertical) depth error dominates, so the governing SF may lie on a
     # diagonal separation vector rather than the 15 m horizontal one

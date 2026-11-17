@@ -175,11 +175,11 @@ def load_limits(source: str | os.PathLike | Mapping) -> dict[str, Limit]:
         if key == "schema":
             continue
         if key not in LIMIT_CATALOG:
-            problems.append("unknown limit key %r" % key)
+            problems.append(f"unknown limit key {key!r}")
             continue
         if not isinstance(rec, Mapping):
             problems.append(
-                "%s: entry must be a mapping with value, unit, source and basis" % key
+                f"{key}: entry must be a mapping with value, unit, source and basis"
             )
             continue
         value = rec.get("value")
@@ -189,21 +189,20 @@ def load_limits(source: str | os.PathLike | Mapping) -> dict[str, Limit]:
             or value != value
             or abs(value) == float("inf")
         ):
-            problems.append("%s: value must be a finite number or null" % key)
+            problems.append(f"{key}: value must be a finite number or null")
             continue
         unit = rec.get("unit", LIMIT_CATALOG[key]["unit"])
         if unit != LIMIT_CATALOG[key]["unit"]:
             problems.append(
-                "%s: unit %r does not match %r"
-                % (key, unit, LIMIT_CATALOG[key]["unit"])
+                "{}: unit {!r} does not match {!r}".format(key, unit, LIMIT_CATALOG[key]["unit"])
             )
         basis = rec.get("basis", "NONE" if value is None else "ASSUMED")
         if basis not in BASES:
-            problems.append("%s: basis must be one of %s" % (key, ", ".join(BASES)))
+            problems.append("{}: basis must be one of {}".format(key, ", ".join(BASES)))
             continue
         source_text = str(rec.get("source", "") or "")
         if basis in APPROVED_BASES and (value is None or not source_text):
-            problems.append("%s: an %s limit needs a value and a source" % (key, basis))
+            problems.append(f"{key}: an {basis} limit needs a value and a source")
             continue
         out[key] = Limit(
             None if value is None else float(value),

@@ -14,15 +14,15 @@ EXAMPLE = Path(__file__).resolve().parents[1] / "examples" / "example_fmirr.json
 
 
 def _entry(eid="1", **kw):
-    base = dict(
-        entry_id=eid,
-        item="Seal",
-        function="Contain gas",
-        failure_mode="External leakage",
-        failure_mechanism="Fatigue",
-        consequence_class=3,
-        probability_class=3,
-    )
+    base = {
+        "entry_id": eid,
+        "item": "Seal",
+        "function": "Contain gas",
+        "failure_mode": "External leakage",
+        "failure_mechanism": "Fatigue",
+        "consequence_class": 3,
+        "probability_class": 3,
+    }
     base.update(kw)
     return FailureModeEntry(**base)
 

@@ -9,12 +9,12 @@ OPEX = [20.0, 60.0, 80.0, 80.0, 75.0, 70.0, 65.0, 60.0, 55.0, 50.0]
 
 
 def evaluate(model=None, **kw):
-    args = dict(
-        profit_oil_share_offered=0.25,
-        chance_of_discovery=0.30,
-        signature_bonus_musd=20.0,
-        exploration_program_musd=60.0,
-    )
+    args = {
+        "profit_oil_share_offered": 0.25,
+        "chance_of_discovery": 0.30,
+        "signature_bonus_musd": 20.0,
+        "exploration_program_musd": 60.0,
+    }
     args.update(kw)
     return (model or PscBidModel()).evaluate(PRODUCTION, CAPEX, OPEX, **args)
 

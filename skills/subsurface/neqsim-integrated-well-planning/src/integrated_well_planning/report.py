@@ -61,7 +61,7 @@ def executive_summary(
     basis: dict[str, Any], res: dict[str, Any], alt: dict[str, Any] | None
 ) -> list[str]:
     """Answer-first paragraphs built from the numbers."""
-    wtype = get_path(basis, "well.type")
+    get_path(basis, "well.type")
     lines = [
         "Purpose: {}.".format(
             get_path(basis, "study.purpose") or get_path(basis, "study.title")
@@ -135,7 +135,7 @@ def build_report(root: Path) -> dict[str, str]:
     if not regs.items:
         regs = basis_to_registers(basis)
     gaps = regs.gaps
-    risks = (
+    (
         load_json(paths["results"] / "risk_register.json")
         if (paths["results"] / "risk_register.json").exists()
         else []
@@ -206,7 +206,7 @@ def build_report(root: Path) -> dict[str, str]:
             md.append(f"![{caption}](../drawings/{stem}.png)\n\n*{caption}*\n")
 
     # cover
-    t = doc.add_heading("Well planning report", 0)
+    doc.add_heading("Well planning report", 0)
     md.append("# Well planning report\n")
     p("{} - {}".format(well, get_path(basis, "study.title")), True)
     p(

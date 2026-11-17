@@ -47,7 +47,7 @@ def make_drawings(root: Path, formats_charts=("png",)) -> dict[str, Any]:
         else None
     )
     regs = Registers.load(paths["registers"])
-    well = get_path(basis, "well.id")
+    get_path(basis, "well.id")
     sid = get_path(basis, "study.id")
     synthetic = bool(get_path(basis, "study.synthetic"))
     register: list[dict[str, str]] = []

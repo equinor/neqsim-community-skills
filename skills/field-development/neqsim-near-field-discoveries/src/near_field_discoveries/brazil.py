@@ -245,8 +245,7 @@ def evaluation_area_records(plans: Any, as_of: _dt.date) -> list[Discovery]:
                 lat=pt[1],
                 position_basis="polygon-centroid",
                 rings=rings_from_geometry(f.get("geometry")),
-                plan_note="Discovery evaluation plan %s to %s (%s)"
-                % (
+                plan_note="Discovery evaluation plan {} to {} ({})".format(
                     start.isoformat() if start else "?",
                     end.isoformat() if end else "?",
                     "running" if active else "ended or no end date",
@@ -395,14 +394,12 @@ def discovery_candidates(
             if running:
                 stage, note = (
                     "in_clarification",
-                    "Inside discovery-evaluation plan %s running to %s."
-                    % (pp.get("NOME_PAD"), end.isoformat()),
+                    "Inside discovery-evaluation plan {} running to {}.".format(pp.get("NOME_PAD"), end.isoformat()),
                 )
             else:
                 stage = "unknown"
                 note = (
-                    "Inside evaluation plan %s that ended %s; the outcome is not in the public layers."
-                    % (pp.get("NOME_PAD"), end.isoformat() if end else "(no end date)")
+                    "Inside evaluation plan {} that ended {}; the outcome is not in the public layers.".format(pp.get("NOME_PAD"), end.isoformat() if end else "(no end date)")
                 )
         blk = next(
             ((f, r) for f, r in block_feats if point_in_rings(lon, lat, r)), None

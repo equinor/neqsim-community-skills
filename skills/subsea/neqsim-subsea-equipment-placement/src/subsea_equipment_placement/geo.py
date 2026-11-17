@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import math
 from collections.abc import Sequence
 
@@ -48,12 +49,12 @@ def point_polyline_distance(p: Point, line: Sequence[Point]) -> float:
     """Minimum distance from a point to a polyline."""
     if len(line) == 1:
         return dist(p, line[0])
-    return min(point_segment_distance(p, a, b)[0] for a, b in zip(line, line[1:]))
+    return min(point_segment_distance(p, a, b)[0] for a, b in itertools.pairwise(line))
 
 
 def polyline_length(line: Sequence[Point]) -> float:
     """Length of a polyline in metres."""
-    return sum(dist(a, b) for a, b in zip(line, line[1:]))
+    return sum(dist(a, b) for a, b in itertools.pairwise(line))
 
 
 def point_in_polygon(p: Point, ring: Sequence[Point]) -> bool:
@@ -101,9 +102,9 @@ def polyline_crossings(
     """All crossings of a route with a polyline as (chainage along route in m, crossing angle deg)."""
     out = []
     ch = 0.0
-    for a, b in zip(route, route[1:]):
+    for a, b in itertools.pairwise(route):
         seg = dist(a, b)
-        for q, q2 in zip(line, line[1:]):
+        for q, q2 in itertools.pairwise(line):
             hit = segment_intersection(a, b, q, q2)
             if hit:
                 out.append((ch + hit[0] * seg, hit[2]))
@@ -114,9 +115,9 @@ def polyline_crossings(
 def densify(route: Sequence[Point], step_m: float) -> list[tuple[float, Point]]:
     """Points along a polyline every step_m as (chainage, point)."""
     out, ch = [], 0.0
-    for a, b in zip(route, route[1:]):
+    for a, b in itertools.pairwise(route):
         seg = dist(a, b)
-        n = max(1, int(round(seg / step_m)))
+        n = max(1, round(seg / step_m))
         for i in range(n):
             t = i / n
             out.append(

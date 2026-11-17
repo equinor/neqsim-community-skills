@@ -174,10 +174,10 @@ def pressure_stress(
         thin_wall_hoop_pa=thin_wall,
         thick_wall_required=ratio < 20.0,
         assumptions=(
-            "Lame solution for a homogeneous, isotropic, elastic thick cylinder far "
-            "from an end, a nozzle or a discontinuity.",
-            "Closed-end axial stress is included by default; an expansion loop, a "
-            "bellows or a sliding joint removes it.",
+            ("Lame solution for a homogeneous, isotropic, elastic thick cylinder far "
+            "from an end, a nozzle or a discontinuity."),
+            ("Closed-end axial stress is included by default; an expansion loop, a "
+            "bellows or a sliding joint removes it."),
             "No allowance for corrosion, mill tolerance or weld strength reduction.",
         ),
     )
@@ -299,16 +299,16 @@ def evaluate_wall_stress(
         verdict=verdict,
         warnings=tuple(warnings),
         assumptions=(
-            "Linear elastic, temperature-independent modulus and expansion "
-            "coefficient; both fall with temperature in real steels.",
-            "The through-wall temperature profile is treated as linear when it is "
+            ("Linear elastic, temperature-independent modulus and expansion "
+            "coefficient; both fall with temperature in real steels."),
+            ("The through-wall temperature profile is treated as linear when it is "
             "converted to a bending stress. A steep near-surface gradient from a "
-            "thermal shock produces a higher peak than this.",
-            f"Thermal stress is secondary and self-limiting, so it is assessed "
+            "thermal shock produces a higher peak than this."),
+            (f"Thermal stress is secondary and self-limiting, so it is assessed "
             f"against {_SECONDARY_ALLOWABLE_FACTOR:g}S rather than S. A cyclic duty "
-            "additionally needs a fatigue assessment, which this does not perform.",
-            "Stress concentration at nozzles, welds, supports and geometry changes "
-            "is not included; a peak stress needs a local model.",
+            "additionally needs a fatigue assessment, which this does not perform."),
+            ("Stress concentration at nozzles, welds, supports and geometry changes "
+            "is not included; a peak stress needs a local model."),
         ),
     )
 

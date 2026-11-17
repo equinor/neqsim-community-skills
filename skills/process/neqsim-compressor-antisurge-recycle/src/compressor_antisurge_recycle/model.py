@@ -96,13 +96,13 @@ class AntiSurgeRecycleModel:
             assumptions=(
                 "Educational screening placeholder only.",
                 "Surge margin is (inlet_flow - surge_flow) / surge_flow.",
-                "Recommended recycle mirrors NeqSim's proportional anti-surge step "
-                "0.5 * (surge_flow - inlet_flow), capped per iteration.",
+                ("Recommended recycle mirrors NeqSim's proportional anti-surge step "
+                "0.5 * (surge_flow - inlet_flow), capped per iteration."),
                 "Surge flow must be taken at the operating head and speed.",
-                "If no vendor chart is given, generate a chart (with surge and "
-                "stonewall curves) in NeqSim before reading the surge flow.",
-                "Move to validated NeqSim compressor curves, the anti-surge "
-                "Calculator/Recycle loop, and API 617 review for real design.",
+                ("If no vendor chart is given, generate a chart (with surge and "
+                "stonewall curves) in NeqSim before reading the surge flow."),
+                ("Move to validated NeqSim compressor curves, the anti-surge "
+                "Calculator/Recycle loop, and API 617 review for real design."),
             ),
         )
 

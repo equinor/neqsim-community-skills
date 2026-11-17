@@ -184,9 +184,8 @@ def aggregate(
             dup = _row_key(r)
             if dup in seen:
                 raise ValueError(
-                    "Duplicate row for %s in %s (field %s, installation %s): do not add the pre-salt file "
+                    f"Duplicate row for {dup[0]} in {dup[1]} (field {dup[2]}, installation {dup[4]}): do not add the pre-salt file "
                     "to the offshore file; use merge_environments"
-                    % (dup[0], dup[1], dup[2], dup[4])
                 )
             seen.add(dup)
         key = tuple(r.get(k) for k in by) + (r["period"],)

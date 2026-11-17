@@ -201,7 +201,7 @@ def test_integrity_block_for_producer(oil_ops):
         and out["apb"]["delta_pressure_bar"] <= out["apb"]["rigid_limit_bar"] + 1e-6
     )
     assert {m["packer_mode"] for m in out["tubing_movement"]} == {"FREE", "FIXED"}
-    si = [c for c in out["load_cases"] if c["state"] == "shut_in"][0]
+    si = next(c for c in out["load_cases"] if c["state"] == "shut_in")
     assert si["pi_top_bara"] < 250.0
     assert all(
         "NEEDS_REVIEW" in t["burst_status"]

@@ -225,7 +225,7 @@ def plot_reservoir_3d(
     axis.set_zlabel("true vertical depth [m MSL]")
     axis.set_zlim(base + 120.0, -80.0)
     axis.view_init(elev=elevation_deg, azim=azimuth_deg)
-    axis.set_title(title or "%s reservoir, wells and SURF layout" % layout.field_name)
+    axis.set_title(title or f"{layout.field_name} reservoir, wells and SURF layout")
 
     legend = [
         Line2D([], [], color="#111111", marker="*", ls="", ms=14, label="host"),

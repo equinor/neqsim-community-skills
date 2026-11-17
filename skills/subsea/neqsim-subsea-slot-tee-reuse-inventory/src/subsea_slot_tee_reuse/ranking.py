@@ -134,7 +134,7 @@ def _mass_rate_kg_s(rate, density_hint=None):
         return value
     per_day = STD_DENSITY.get(unit)
     if per_day is None:
-        raise ValueError("unsupported rate unit %s" % unit)
+        raise ValueError(f"unsupported rate unit {unit}")
     return value * per_day / 86400.0
 
 
@@ -172,19 +172,17 @@ def _compat(need, item_service, item, target):
             flags.append("service of the reused item unknown")
         elif need != item_service:
             flags.append(
-                "service change %s -> %s not in the compatibility table: check materials, coating, inhibitors"
-                % (item_service, need)
+                f"service change {item_service} -> {need} not in the compatibility table: check materials, coating, inhibitors"
             )
     elif need != item_service and base < 1.0:
         flags.append(
-            "service conversion %s -> %s (compatibility %.1f): check materials, internal coating/cladding, flow regime, inhibition"
-            % (item_service, need, base)
+            f"service conversion {item_service} -> {need} (compatibility {base:.1f}): check materials, internal coating/cladding, flow regime, inhibition"
         )
     rating, design = item.get("pressure_rating_bar"), target.get("design_pressure_bar")
     if rating and design and rating < design:
         base *= 0.3
         flags.append(
-            "pressure rating %.0f bar below design pressure %.0f bar" % (rating, design)
+            f"pressure rating {rating:.0f} bar below design pressure {design:.0f} bar"
         )
     fluid = target.get("fluid") or {}
     if fluid.get("wax") and item.get("insulated") is False:
@@ -236,8 +234,7 @@ def _score_option(opt, baseline_km, baseline_cost, target, as_of_year):
                 s_hyd = 0.0 if margin < 0 else min(1.0, 0.5 + margin / 40.0)
                 if margin < 0:
                     flags.append(
-                        "arrival pressure %.1f bar below the %.1f bar needed"
-                        % (arrival, need_p)
+                        f"arrival pressure {arrival:.1f} bar below the {need_p:.1f} bar needed"
                     )
             else:
                 s_hyd = max(0.0, 1.0 - dp / 60.0)
@@ -254,8 +251,7 @@ def _score_option(opt, baseline_km, baseline_cost, target, as_of_year):
             s_cap = 0.0 if ratio < 1.0 else min(1.0, 0.6 + 0.2 * (ratio - 1.0))
             if not cap_ok:
                 flags.append(
-                    "line capacity (erosional limit) %.1f kg/s below the rate %.1f kg/s"
-                    % (cap_kg_s, m)
+                    f"line capacity (erosional limit) {cap_kg_s:.1f} kg/s below the rate {m:.1f} kg/s"
                 )
     elif opt["option_type"] in ("slot", "hub"):
         needs.append(
@@ -284,7 +280,7 @@ def _score_option(opt, baseline_km, baseline_cost, target, as_of_year):
     ver = opt.get("verification", "unknown")
     if ver in ("estimated", "unknown") and opt["option_type"] != "new_build":
         flags.append(
-            "availability is %s: confirm with the owner before presenting as free" % ver
+            f"availability is {ver}: confirm with the owner before presenting as free"
         )
         score -= 5.0
     return {
@@ -296,8 +292,7 @@ def _score_option(opt, baseline_km, baseline_cost, target, as_of_year):
         "new_km": None if new_km is None else round(new_km, 1),
         "reused_km": round(opt.get("reused_km", 0.0), 1),
         "cost_index": round(cost, 2),
-        "cost_class": "AACE class 5 (screening, relative to new-build = %.1f)"
-        % baseline_cost,
+        "cost_class": f"AACE class 5 (screening, relative to new-build = {baseline_cost:.1f})",
         "dp_bar": dp,
         "arrival_pressure_bar": arrival,
         "capacity_ok": cap_ok,
@@ -491,5 +486,5 @@ def handoff(ranking, target, consumer, n=3):
         ]
         out["new_build_cost_index"] = base["cost_index"] if base else None
     else:
-        raise ValueError("unknown consumer %s" % consumer)
+        raise ValueError(f"unknown consumer {consumer}")
     return out

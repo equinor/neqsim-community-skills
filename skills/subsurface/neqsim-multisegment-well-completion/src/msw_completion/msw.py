@@ -8,6 +8,7 @@ centres, so that completor can then add the device and annulus layers. It suppor
 
 from __future__ import annotations
 
+import itertools
 import math
 import re
 from collections.abc import Callable, Iterable, Sequence
@@ -189,13 +190,13 @@ def _msw_text(
 ) -> tuple[str, dict]:
     points = [centre(i, j, k) for i, j, k, _ in conns]
     md_centre = [0.0]
-    for a, b in zip(points, points[1:]):
+    for a, b in itertools.pairwise(points):
         md_centre.append(md_centre[-1] + math.dist(a, b))
     first_half = length(*conns[0]) / 2.0
     top_md = points[0][2] - first_half if conns[0][3].upper() == "Z" else points[0][2]
     md_centre = [top_md + first_half + m for m in md_centre]
     bounds = [md_centre[0] - first_half]
-    for a, b in zip(md_centre, md_centre[1:]):
+    for a, b in itertools.pairwise(md_centre):
         bounds.append((a + b) / 2.0)
     bounds.append(md_centre[-1] + length(*conns[-1]) / 2.0)
     welsegs = ["WELSEGS", f"  '{well}' {points[0][2]:.3f} {bounds[0]:.3f} 1* 'ABS' /"]

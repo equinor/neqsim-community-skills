@@ -3,15 +3,15 @@ from design_basis_screening import DesignBasisModel, DesignBasisResult
 
 
 def _ok_kwargs():
-    return dict(
-        operating_flow=100.0,
-        design_flow=120.0,
-        operating_pressure_bara=60.0,
-        design_pressure_bara=70.0,
-        operating_temperature_c=40.0,
-        design_temperature_c=60.0,
-        standards=("ASME VIII Div.1", "NORSOK P-001"),
-    )
+    return {
+        "operating_flow": 100.0,
+        "design_flow": 120.0,
+        "operating_pressure_bara": 60.0,
+        "design_pressure_bara": 70.0,
+        "operating_temperature_c": 40.0,
+        "design_temperature_c": 60.0,
+        "standards": ("ASME VIII Div.1", "NORSOK P-001"),
+    }
 
 
 def test_adequate_margins_ok():

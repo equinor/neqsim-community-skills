@@ -142,9 +142,7 @@ def resolve_include(deck_path: str, include: str) -> str:
     base = posixpath.dirname(deck_path)
     resolved = posixpath.normpath(posixpath.join(base, include.replace("\\", "/")))
     if (
-        resolved.startswith("..")
-        or resolved.startswith("/")
-        or not re.fullmatch(r"[A-Za-z0-9_./\-]+", resolved)
+        resolved.startswith(("..", "/")) or not re.fullmatch(r"[A-Za-z0-9_./\-]+", resolved)
     ):
         raise ValueError(
             f"INCLUDE path {include!r} leaves the case directory or has unsafe characters"

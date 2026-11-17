@@ -151,8 +151,7 @@ def screen_site(site: geo.Point, basis: PlacementBasis, kind: str = "template") 
             checks.append(
                 _check(
                     "ZONE",
-                    "Distance to the nearest active hard zone (0 = inside %s)"
-                    % near[1].id,
+                    f"Distance to the nearest active hard zone (0 = inside {near[1].id})",
                     near[0],
                     "m",
                     L.get("zone_clearance_m"),
@@ -165,7 +164,7 @@ def screen_site(site: geo.Point, basis: PlacementBasis, kind: str = "template") 
         checks.append(
             _check(
                 "STRUCT",
-                "Distance to the nearest structure (%s)" % s.id,
+                f"Distance to the nearest structure ({s.id})",
                 d,
                 "m",
                 (
@@ -184,7 +183,7 @@ def screen_site(site: geo.Point, basis: PlacementBasis, kind: str = "template") 
         checks.append(
             _check(
                 "LINE",
-                "Distance to the nearest existing line (%s)" % ln.id,
+                f"Distance to the nearest existing line ({ln.id})",
                 d,
                 "m",
                 (
@@ -199,7 +198,7 @@ def screen_site(site: geo.Point, basis: PlacementBasis, kind: str = "template") 
         checks.append(
             _check(
                 "SLOPE",
-                "Maximum seabed slope within %.0f m" % basis.slope_radius_m,
+                f"Maximum seabed slope within {basis.slope_radius_m:.0f} m",
                 geo.slope_deg(basis.depth_fn, site, basis.slope_radius_m),
                 "deg",
                 L.get("max_slope_deg"),
@@ -244,7 +243,7 @@ def screen_site(site: geo.Point, basis: PlacementBasis, kind: str = "template") 
         checks.append(
             _check(
                 "REACH",
-                "Largest horizontal reach to a target (%s)" % tf.id,
+                f"Largest horizontal reach to a target ({tf.id})",
                 far,
                 "m",
                 L.get("max_horizontal_reach_m"),
@@ -378,7 +377,7 @@ def screen_route(
         checks.append(
             _check(
                 "PARALLEL",
-                "Smallest clearance to a non-crossed line (%s)" % near.id,
+                f"Smallest clearance to a non-crossed line ({near.id})",
                 clear,
                 "m",
                 (
@@ -431,7 +430,7 @@ def screen_route(
         checks.append(
             _check(
                 "STRAIGHT_" + label,
-                "Straight length at the %s of the route" % label.lower(),
+                f"Straight length at the {label.lower()} of the route",
                 geo.dist(seg_a, seg_b),
                 "m",
                 L.get("min_straight_end_m"),

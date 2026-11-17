@@ -95,7 +95,7 @@ STATUS_ROW = (
 
 def rate_records(*rows, header=RATE_HEADER, enc="cp1252"):
     raw = (header + "\n" + "\n".join(rows) + "\n").encode(enc)
-    h, r, meta = read_table_bytes(raw)
+    h, r, _meta = read_table_bytes(raw)
     return normalize(h, r)
 
 
@@ -241,7 +241,7 @@ def test_merge_environments_does_not_double_count_presalt():
     presalt = rate_records(MERO)
     merged, rep = merge_environments({"Mar": mar, "PreSal": presalt})
     assert len(merged) == 2 and rep["n_overlap"] == 1 and rep["presalt_is_subset"]
-    assert [m for m in merged if m["well"] == "7-MRO-10B-RJS"][0]["presalt"] is True
+    assert next(m for m in merged if m["well"] == "7-MRO-10B-RJS")["presalt"] is True
     naive = mar + presalt
     with pytest.raises(ValueError, match="Duplicate"):
         aggregate(naive, by=("field",))

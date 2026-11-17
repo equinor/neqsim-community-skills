@@ -10,16 +10,16 @@ from fem_coupling import (
 
 
 def _spec(**overrides):
-    defaults = dict(
-        kind="axisymmetric_section",
-        inner_radius_m=0.01752,
-        layers=[
+    defaults = {
+        "kind": "axisymmetric_section",
+        "inner_radius_m": 0.01752,
+        "layers": [
             MeshLayer("steel", "carbon-steel", 0.00356, 4),
             MeshLayer("insulation", "mineral-wool", 0.05, 8),
         ],
-        segments=[MeshSegment("run", 0.5, 20)],
-        name="tube",
-    )
+        "segments": [MeshSegment("run", 0.5, 20)],
+        "name": "tube",
+    }
     defaults.update(overrides)
     return FemMeshSpec(**defaults)
 

@@ -60,7 +60,7 @@ def hydrate_assessment(
         float(get_path(basis, "flow_assurance.subcooling_margin_K") or 3.0)
     ).setWaterRate(water_rate)
     p_nodes = prof["pressure_bara"]
-    z_nodes = prof["node_tvd_m"]
+    prof["node_tvd_m"]
     thyd = []
     z_prof, p_prof, t_prof = [], [], []
     stride = max(1, len(prof["tvd_m"]) // 6)
@@ -71,7 +71,7 @@ def hydrate_assessment(
         p_prof.append(p_here)
         t_prof.append(prof["temperature_C"][i])
     margin = [tp - th for tp, th in zip(t_prof, thyd)]
-    si_p = float(
+    float(
         get_path(basis, "reservoir.pressure_bara")
         if not isinstance(get_path(basis, "reservoir.pressure_bara"), dict)
         else get_path(basis, "reservoir.pressure_bara")["base"]

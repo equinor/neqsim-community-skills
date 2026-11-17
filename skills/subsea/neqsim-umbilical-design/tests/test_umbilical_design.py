@@ -50,7 +50,7 @@ def test_pack_circles_has_no_overlap_and_encloses(result):
 
 
 def test_three_equal_circles_pack_like_the_theory():
-    placed, (_, _, radius) = pack_circles([10.0, 10.0, 10.0])
+    _placed, (_, _, radius) = pack_circles([10.0, 10.0, 10.0])
     # three touching equal circles: enclosing diameter is d (1 + 2/sqrt(3)) = 2.155 d
     assert 2.0 * radius == pytest.approx(10.0 * (1 + 2 / math.sqrt(3)), rel=0.01)
 

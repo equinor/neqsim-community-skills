@@ -165,7 +165,7 @@ def readiness(model: str) -> dict[str, Any]:
         return MODEL_READINESS[model]
     except KeyError:
         raise KeyError(
-            "Unknown model %r; known: %s" % (model, ", ".join(sorted(MODEL_READINESS)))
+            "Unknown model {!r}; known: {}".format(model, ", ".join(sorted(MODEL_READINESS)))
         )
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import math
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -35,7 +36,7 @@ def minimum_curvature(stations: Sequence[Station]) -> list[Station]:
             stations[0].east,
         )
     ]
-    for a, b in zip(stations[:-1], stations[1:]):
+    for a, b in itertools.pairwise(stations):
         dmd = b.md - a.md
         i1, i2 = math.radians(a.inc_deg), math.radians(b.inc_deg)
         a1, a2 = math.radians(a.azi_deg), math.radians(b.azi_deg)
@@ -170,11 +171,11 @@ def torque_and_drag(
     mds_out, ft_out, tq_out = [bit], [ft], [0.0]
     buckling_margin = float("inf")
     for hi, lo, c in comps:
-        n = max(1, int(math.ceil((hi - lo) / 10.0)))
+        n = max(1, math.ceil((hi - lo) / 10.0))
         dl = (hi - lo) / n
         w = c.weight_kg_per_m * 9.80665 / 1000.0 * bf  # kN/m buoyed
         rt = (c.tool_joint_od_in or c.od_in) * M_PER_IN / 2.0
-        r_pipe = c.od_in * M_PER_IN / 2.0
+        c.od_in * M_PER_IN / 2.0
         for k in range(n):
             md_b = hi - k * dl
             md_t = md_b - dl

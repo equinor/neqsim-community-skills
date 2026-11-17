@@ -69,8 +69,8 @@ TRL_ROWS = (
 
 DEFAULT_REFERENCES = (
     "DNV-RP-A203, Technology qualification.",
-    "ISO 20815, Production assurance and reliability management (technology qualification, "
-    "TRL and novelty categorisation annex).",
+    ("ISO 20815, Production assurance and reliability management (technology qualification, "
+    "TRL and novelty categorisation annex)."),
     "ISO 14224, Collection and exchange of reliability and maintenance data for equipment.",
 )
 

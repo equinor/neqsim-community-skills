@@ -69,8 +69,8 @@ def load_result(source: str | Path | dict[str, Any]) -> DesignResult:
     missing = [k for k in REQUIRED_KEYS if k not in data]
     if missing:
         raise ValueError(
-            "not an umbilical design result, missing sections: %s (was it written by a NeqSim "
-            "release with the umbilical physics?)" % ", ".join(missing)
+            "not an umbilical design result, missing sections: {} (was it written by a NeqSim "
+            "release with the umbilical physics?)".format(", ".join(missing))
         )
     return DesignResult(data)
 

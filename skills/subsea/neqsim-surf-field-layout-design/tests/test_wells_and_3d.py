@@ -1,3 +1,4 @@
+import itertools
 import os
 
 import pytest
@@ -57,7 +58,7 @@ class TestWellPaths:
     def test_depth_increases_monotonically_down_the_hole(self, paths):
         for well_path in paths:
             depths = [point[2] for point in well_path.points]
-            assert all(b >= a - 1e-6 for a, b in zip(depths, depths[1:]))
+            assert all(b >= a - 1e-6 for a, b in itertools.pairwise(depths))
 
     def test_measured_depth_exceeds_the_vertical_depth(self, paths):
         for well_path in paths:

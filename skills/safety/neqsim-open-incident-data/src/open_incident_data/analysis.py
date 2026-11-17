@@ -11,13 +11,13 @@ from datetime import date
 from .parse import Investigation, Structure
 
 CAVEATS = (
-    "Numerator is BSEE accident investigations on the US Outer Continental Shelf, not all incidents or all "
-    "hydrocarbon releases; the rate is a lower-bound screening index.",
-    "Investigations are not linked to a structure here (only lease/area/block); events on pipelines, vessels or "
-    "drilling units are in the numerator while the denominator counts platform structures only.",
+    ("Numerator is BSEE accident investigations on the US Outer Continental Shelf, not all incidents or all "
+    "hydrocarbon releases; the rate is a lower-bound screening index."),
+    ("Investigations are not linked to a structure here (only lease/area/block); events on pipelines, vessels or "
+    "drilling units are in the numerator while the denominator counts platform structures only."),
     "Reporting thresholds and practice changed over 1995 to date; compare periods, do not extrapolate one rate.",
-    "Gulf of Mexico regime and equipment mix differ from the Norwegian shelf; use as an open order-of-magnitude "
-    "cross-check, never as the basis of a SIL, QRA or design frequency without review.",
+    ("Gulf of Mexico regime and equipment mix differ from the Norwegian shelf; use as an open order-of-magnitude "
+    "cross-check, never as the basis of a SIL, QRA or design frequency without review."),
 )
 
 

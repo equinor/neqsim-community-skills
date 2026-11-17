@@ -279,12 +279,12 @@ class HeatExchangerFoulingModel:
             warnings=tuple(warnings),
             assumptions=(
                 "Public, educational screening reduction of one operating snapshot.",
-                "Counter-current terminal differences; a correction factor must be "
-                "supplied for multi-pass or cross-flow arrangements.",
+                ("Counter-current terminal differences; a correction factor must be "
+                "supplied for multi-pass or cross-flow arrangements."),
                 "Films scale as G^0.8; fouling and wall resistances are flow independent.",
                 "Constant specific heats over the duty range.",
-                "A vendor design coefficient usually already contains a fouling "
-                "allowance, so the shortfall is fouling in excess of design margin.",
+                ("A vendor design coefficient usually already contains a fouling "
+                "allowance, so the shortfall is fouling in excess of design margin."),
                 "Move to validated NeqSim heat-exchanger classes and qualified review.",
             ),
             neqsim_available=find_spec("neqsim") is not None,
@@ -323,8 +323,8 @@ class HeatExchangerFoulingModel:
                 cold_inlet_temperature=cold_inlet_temperature,
                 set_point_temperature=set_point_temperature,
                 warnings=(
-                    "the cold inlet is at or above the set point; no duty can be "
-                    "transferred at this set point regardless of exchanger condition",
+                    ("the cold inlet is at or above the set point; no duty can be "
+                    "transferred at this set point regardless of exchanger condition"),
                 ),
             )
 

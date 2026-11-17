@@ -81,7 +81,7 @@ class Field:
     )  # (tank a, tank b, kSm3/d per bar)
 
     def initial_state(self) -> dict:
-        return {t: dict(np=0.0, we=0.0) for t in self.tanks}
+        return {t: {"np": 0.0, "we": 0.0} for t in self.tanks}
 
     def tank_rates(self, well_rates: dict[str, float]) -> dict[str, float]:
         """Gas rate per tank (Sm3/d) from well gas rates (Sm3/d) and the well-to-tank shares."""
@@ -118,17 +118,17 @@ class Field:
             state[t]["np"] += n_dot * dt_days
             state[t]["we"] = we
             p_end, depl = tk.pressure(state[t]["np"], we)
-            rec[t] = dict(
-                p_res=p_end,
-                p_start=p0[t],
-                gas_sm3d=q,
-                cond_sm3d=q * st.cgr_sm3_per_sm3 * tk.cgr_scale,
-                mol_s=n_dot / 86400.0,
-                recovery=state[t]["np"] / tk.n0,
-                we_m3=we,
-                depleted=depl,
-                stream=st,
-            )
+            rec[t] = {
+                "p_res": p_end,
+                "p_start": p0[t],
+                "gas_sm3d": q,
+                "cond_sm3d": q * st.cgr_sm3_per_sm3 * tk.cgr_scale,
+                "mol_s": n_dot / 86400.0,
+                "recovery": state[t]["np"] / tk.n0,
+                "we_m3": we,
+                "depleted": depl,
+                "stream": st,
+            }
         return rec
 
     def simulate(

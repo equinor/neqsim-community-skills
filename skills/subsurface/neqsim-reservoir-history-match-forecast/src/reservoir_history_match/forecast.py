@@ -73,7 +73,7 @@ def forecast(fld: Field, state: dict, sc: Scenario) -> SimResult:
             p_w = sum(pres[t] * s for t, s in wl.tank_weights.items()) / sum(
                 wl.tank_weights.values()
             )
-            wd[w] = dict(q_sm3d=q, whp=wl.whp_for(p_w, q / 1e3), wgr=wl.wgr)
+            wd[w] = {"q_sm3d": q, "whp": wl.whp_for(p_w, q / 1e3), "wgr": wl.wgr}
         rec = fld.step(state, fld.tank_rates(q_w), sc.step_days)
         for t, r in rec.items():
             rows.append(
@@ -98,13 +98,13 @@ def well_series(sim: SimResult) -> pd.DataFrame:
     for _, r in sim.table.iterrows():
         for w, v in (r.get("_wells") or {}).items():
             out.append(
-                dict(
-                    date=r.date,
-                    well=w,
-                    gas_sm3d=v["q_sm3d"],
-                    water_m3d=v["q_sm3d"] * v["wgr"],
-                    whp_bara=v["whp"],
-                )
+                {
+                    "date": r.date,
+                    "well": w,
+                    "gas_sm3d": v["q_sm3d"],
+                    "water_m3d": v["q_sm3d"] * v["wgr"],
+                    "whp_bara": v["whp"],
+                }
             )
     return (
         pd.DataFrame(out).drop_duplicates(["date", "well"])

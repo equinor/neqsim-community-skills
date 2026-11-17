@@ -904,7 +904,7 @@ class VofOpenFoamCase(_FoamCaseBase):
         return files
 
     def _constant_files(self) -> dict[str, str]:
-        spec = _FLAVOURS[self.flavour]
+        _FLAVOURS[self.flavour]
         state = self.boundary.state
         files = {
             "constant/g": _foam_file("uniformDimensionedVectorField", "constant", "g")
@@ -1307,9 +1307,9 @@ def _pipe_block_mesh(mesh: MeshSpec, inlet: str, outlet: str, wall: str) -> str:
     inner = [0, 1, 2, 3]
     outer = [4, 5, 6, 7]
     blocks = [
-        f"    hex (0 1 2 3 8 9 10 11) "
+        (f"    hex (0 1 2 3 8 9 10 11) "
         f"({mesh.tangential_cells} {mesh.tangential_cells} {mesh.axial_cells}) "
-        f"simpleGrading (1 1 1)"
+        f"simpleGrading (1 1 1)")
     ]
     edges: list[str] = []
     wall_faces: list[str] = []

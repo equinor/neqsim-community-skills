@@ -65,7 +65,7 @@ def oil_gas_rates(jneqsim, base, stages, kmol_h, feed_p, feed_t):
     fluid = base.clone()
     fluid.setTemperature(feed_t + 273.15)
     fluid.setPressure(feed_p)
-    feed, records, _ = rfs.run_train(
+    _feed, records, _ = rfs.run_train(
         jneqsim, fluid, stages, kmol_h * 1000.0 / 3600.0, "mole/sec"
     )
     sto = records[-1][4]
@@ -266,14 +266,12 @@ def main():
     warnings = []
     if at_bound:
         warnings.append(
-            "Parameters at a bound: %s. Widen the bounds or the match is constrained."
-            % at_bound
+            f"Parameters at a bound: {at_bound}. Widen the bounds or the match is constrained."
         )
     if cond > 1e6:
         warnings.append(
-            "Jacobian condition number %.2g: some P/T combinations are weakly determined "
+            f"Jacobian condition number {cond:.2g}: some P/T combinations are weakly determined "
             "by these fluids; add fluids with different volatility or fix the weak stage."
-            % cond
         )
     costs = sorted(s.cost for s in runs)
     if len(runs) > 1 and costs[-1] - costs[0] > 0.02 * (costs[0] + 1e-9):
@@ -303,8 +301,8 @@ def main():
         bias = max(abs(v["GOR_err_pct_mean"]) for v in formation_report.values())
         if bias > 2.0 * max(0.5, float(np.mean(np.abs(e_gor)))):
             warnings.append(
-                "A formation is biased by %.1f %% in GOR: one P/T set does not fit all formations "
-                "equally well (see formation_report)." % bias
+                f"A formation is biased by {bias:.1f} % in GOR: one P/T set does not fit all formations "
+                "equally well (see formation_report)."
             )
     result = {
         "stages_bara_degC": [

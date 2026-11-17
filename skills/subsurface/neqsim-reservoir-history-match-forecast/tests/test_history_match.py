@@ -96,7 +96,7 @@ def _truth_field(specs):
         specs,
         {},
         pd.DataFrame(),
-        pd.DataFrame(dict(date=[], tank=[], kind=[], value=[], sigma=[])),
+        pd.DataFrame({"date": [], "tank": [], "kind": [], "value": [], "sigma": []}),
         [],
     )
     return m
@@ -139,13 +139,13 @@ def test_single_tank_recovers_volume(specs):
         wells,
         rates,
         pd.DataFrame(
-            dict(
-                date=[rates.index[0]],
-                tank=["A"],
-                kind=["p_res"],
-                value=[0.0],
-                sigma=[1.0],
-            )
+            {
+                "date": [rates.index[0]],
+                "tank": ["A"],
+                "kind": ["p_res"],
+                "value": [0.0],
+                "sigma": [1.0],
+            }
         ),
         [],
     )
@@ -155,22 +155,22 @@ def test_single_tank_recovers_volume(specs):
     obs = pd.concat(
         [
             pd.DataFrame(
-                dict(
-                    date=pick.date,
-                    tank="A",
-                    kind="p_res",
-                    value=pick.p_res + np.random.default_rng(1).normal(0, 2, len(pick)),
-                    sigma=3.0,
-                )
+                {
+                    "date": pick.date,
+                    "tank": "A",
+                    "kind": "p_res",
+                    "value": pick.p_res + np.random.default_rng(1).normal(0, 2, len(pick)),
+                    "sigma": 3.0,
+                }
             ),
             pd.DataFrame(
-                dict(
-                    date=tab.date,
-                    tank="A",
-                    kind="cgr",
-                    value=1e6 * tab.cond_sm3d / tab.gas_sm3d,
-                    sigma=10.0,
-                )
+                {
+                    "date": tab.date,
+                    "tank": "A",
+                    "kind": "cgr",
+                    "value": 1e6 * tab.cond_sm3d / tab.gas_sm3d,
+                    "sigma": 10.0,
+                }
             ),
         ]
     )
@@ -191,13 +191,13 @@ def test_two_tanks_recover_volumes(specs):
         WELLS,
         rates,
         pd.DataFrame(
-            dict(
-                date=[rates.index[0]],
-                tank=["A"],
-                kind=["p_res"],
-                value=[0.0],
-                sigma=[1.0],
-            )
+            {
+                "date": [rates.index[0]],
+                "tank": ["A"],
+                "kind": ["p_res"],
+                "value": [0.0],
+                "sigma": [1.0],
+            }
         ),
         [],
     )
@@ -208,23 +208,23 @@ def test_two_tanks_recover_volumes(specs):
     obs = pd.concat(
         [
             pd.DataFrame(
-                dict(
-                    date=pick.date,
-                    tank=pick.tank,
-                    kind="p_res",
-                    value=pick.p_res + rng.normal(0, 2, len(pick)),
-                    sigma=3.0,
-                )
+                {
+                    "date": pick.date,
+                    "tank": pick.tank,
+                    "kind": "p_res",
+                    "value": pick.p_res + rng.normal(0, 2, len(pick)),
+                    "sigma": 3.0,
+                }
             ),
             pd.DataFrame(
-                dict(
-                    date=sim.field_series().index,
-                    tank="FIELD",
-                    kind="cgr",
-                    value=sim.field_series().cgr_sm3_per_msm3
+                {
+                    "date": sim.field_series().index,
+                    "tank": "FIELD",
+                    "kind": "cgr",
+                    "value": sim.field_series().cgr_sm3_per_msm3
                     * (1 + rng.normal(0, 0.02, len(rates))),
-                    sigma=15.0,
-                )
+                    "sigma": 15.0,
+                }
             ),
         ]
     )
@@ -264,7 +264,7 @@ def test_deliverability_fit_and_forecast(specs):
                 for t, s in wl.tank_weights.items()
             ) / sum(wl.tank_weights.values())
             q = row[w] / 1e3
-            hist.append(dict(date=d, well=w, q_ksm3d=q, whp=wl.whp_for(pres, q)))
+            hist.append({"date": d, "well": w, "q_ksm3d": q, "whp": wl.whp_for(pres, q)})
     fit = fit_deliverability(sim, pd.DataFrame(hist))
     assert fit["W1"]["a"] == pytest.approx(30.0, rel=0.25)
     # forecast: low target is met, high target is capacity limited, pressure falls monotonically
@@ -288,7 +288,7 @@ def test_deliverability_fit_and_forecast(specs):
     tbl = history_forecast_table(sim, fc)
     assert set(tbl.period) == {"history", "forecast"}
     # composition of the produced fluid becomes leaner with depletion
-    c1 = fc.field.tanks["A"].path.fluid.names.index("methane")
+    fc.field.tanks["A"].path.fluid.names.index("methane")
     comp = fc.composition_series("A", fld.tanks["A"].path.fluid.names)
     assert comp.methane.iloc[-1] > comp.methane.iloc[0]
 

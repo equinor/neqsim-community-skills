@@ -3,13 +3,13 @@ from asset_value_npv_screening import AssetValueModel
 
 
 def _base(**overrides):
-    kwargs = dict(
-        annual_revenue_musd=[0.0, 300.0, 320.0, 280.0, 230.0, 180.0],
-        annual_opex_musd=40.0,
-        capex_schedule_musd=[600.0, 200.0, 0.0, 0.0, 0.0, 0.0],
-        discount_rate_fraction=0.08,
-        tax_rate_fraction=0.0,
-    )
+    kwargs = {
+        "annual_revenue_musd": [0.0, 300.0, 320.0, 280.0, 230.0, 180.0],
+        "annual_opex_musd": 40.0,
+        "capex_schedule_musd": [600.0, 200.0, 0.0, 0.0, 0.0, 0.0],
+        "discount_rate_fraction": 0.08,
+        "tax_rate_fraction": 0.0,
+    }
     kwargs.update(overrides)
     return AssetValueModel().evaluate(**kwargs)
 

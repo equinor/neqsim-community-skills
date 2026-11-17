@@ -392,27 +392,26 @@ class SeabedProtectionScreener:
         for name in attrs:
             if name not in RECOGNISED_ATTRIBUTES and name not in seen_unknown:
                 seen_unknown.add(name)
-                warnings.append("Attribute %r is not used by the screener." % name)
+                warnings.append(f"Attribute {name!r} is not used by the screener.")
         contributions: dict[str, float] = {}
         intensity = str(attrs.get("fishing_intensity") or "none").lower()
         if intensity not in a.cover_by_fishing_m:
             gaps.append(
-                "Fishing intensity %r has no cover rule; treated as none." % intensity
+                f"Fishing intensity {intensity!r} has no cover rule; treated as none."
             )
             intensity = "none"
         if a.cover_by_fishing_m[intensity] > 0.0:
-            contributions["trawl (%s fishing intensity)" % intensity] = (
+            contributions[f"trawl ({intensity} fishing intensity)"] = (
                 a.cover_by_fishing_m[intensity]
             )
             used["cover_by_fishing_m"] = (
-                "placeholder cover per fishing intensity: %s"
-                % dict(a.cover_by_fishing_m)
+                f"placeholder cover per fishing intensity: {dict(a.cover_by_fishing_m)}"
             )
         scour = float(attrs.get("ice_scour_depth_m") or 0.0)
         if scour > 0.0:
             contributions["ice scour"] = scour + a.ice_scour_margin_m
             used["ice_scour_margin_m"] = (
-                "ice-scour margin %.2f m on top of scour depth" % a.ice_scour_margin_m
+                f"ice-scour margin {a.ice_scour_margin_m:.2f} m on top of scour depth"
             )
         for key, label in (
             ("anchor_penetration_m", "anchor"),
@@ -436,8 +435,7 @@ class SeabedProtectionScreener:
                 float(attrs["uplift_force_n_per_m"]), od, a
             )
             used["uplift_safety_factor"] = (
-                "uplift factor of safety %.2f on the supplied force"
-                % a.uplift_safety_factor
+                f"uplift factor of safety {a.uplift_safety_factor:.2f} on the supplied force"
             )
         rock_only_t, rock_hazard = (
             max((v, k) for k, v in rock_only.items()) if rock_only else (0.0, "none")
@@ -483,8 +481,7 @@ class SeabedProtectionScreener:
             notes.append("surveyed cover already exceeds the rock cover requirement")
         if rock_t > 0.0 and attrs.get("no_rock"):
             warnings.append(
-                "KP %.0f-%.0f needs rock but the segment is flagged no_rock; choose another route or method."
-                % (seg.start_kp_m, seg.end_kp_m)
+                f"KP {seg.start_kp_m:.0f}-{seg.end_kp_m:.0f} needs rock but the segment is flagged no_rock; choose another route or method."
             )
             notes.append("rock placement restricted by map layer")
 
@@ -496,14 +493,7 @@ class SeabedProtectionScreener:
                 volume * a.rock_bulk_density_kg_m3 * a.rock_spillage_factor / 1000.0
             )
             used["rock"] = (
-                "rock crest %.2f m, slope 1:%.1f, solid %.0f kg/m3, porosity %.2f, spillage x%.2f"
-                % (
-                    a.rock_crest_width_m,
-                    a.rock_side_slope,
-                    a.rock_solid_density_kg_m3,
-                    a.rock_porosity,
-                    a.rock_spillage_factor,
-                )
+                f"rock crest {a.rock_crest_width_m:.2f} m, slope 1:{a.rock_side_slope:.1f}, solid {a.rock_solid_density_kg_m3:.0f} kg/m3, porosity {a.rock_porosity:.2f}, spillage x{a.rock_spillage_factor:.2f}"
             )
         days = seg.length_m / a.trenchers[method].rate_m_per_day if method else 0.0
         if method and strategy in ("trench", "trench_and_rock"):
@@ -543,19 +533,16 @@ class SeabedProtectionScreener:
         su = attrs.get("undrained_shear_strength_kpa")
         if soil is None:
             gaps.append(
-                "KP %.0f-%.0f has no recognised soil class; trenching is not assumed."
-                % (seg.start_kp_m, seg.end_kp_m)
+                f"KP {seg.start_kp_m:.0f}-{seg.end_kp_m:.0f} has no recognised soil class; trenching is not assumed."
             )
             notes.append("soil unknown - rock dump assumed")
         elif soil in CLAY_CLASSES and su is None:
             su = PLACEHOLDER_SU_KPA[soil]
             used["undrained_shear_strength_kpa"] = (
-                "placeholder strengths used where none measured: %s"
-                % PLACEHOLDER_SU_KPA
+                f"placeholder strengths used where none measured: {PLACEHOLDER_SU_KPA}"
             )
             gaps.append(
-                "KP %.0f-%.0f uses a placeholder undrained shear strength for %s; supply geotechnical data."
-                % (seg.start_kp_m, seg.end_kp_m, soil)
+                f"KP {seg.start_kp_m:.0f}-{seg.end_kp_m:.0f} uses a placeholder undrained shear strength for {soil}; supply geotechnical data."
             )
         d_req = od + required + a.trench_allowance_m
         method, d_max = self._select_trencher(soil, su, d_req)
@@ -572,8 +559,7 @@ class SeabedProtectionScreener:
         if d_max >= d_req:
             return "trench", method, d_req, 0.0, False, d_req - od
         notes.append(
-            "achievable trench depth %.2f m is below the %.2f m needed; rock tops up"
-            % (d_max, d_req)
+            f"achievable trench depth {d_max:.2f} m is below the {d_req:.2f} m needed; rock tops up"
         )
         return "trench_and_rock", method, d_max, required, d_max < od, cover_n
 
@@ -641,8 +627,7 @@ class SeabedProtectionScreener:
         if crossed is None:
             crossed = a.crossed_outer_diameter_default_m
             gaps.append(
-                "Crossed outer diameter missing at %s (KP %.0f); %.2f m assumed."
-                % (crossing.feature_id, crossing.kp_m, crossed)
+                f"Crossed outer diameter missing at {crossing.feature_id} (KP {crossing.kp_m:.0f}); {crossed:.2f} m assumed."
             )
         height = crossed + a.crossing_separation_m + od
         length = a.crossing_length_m + a.rock_side_slope * height
@@ -651,8 +636,7 @@ class SeabedProtectionScreener:
         ) * height - math.pi * od * od / 4.0
         volume = area * length
         used["crossing"] = (
-            "crossing separation %.2f m, berm length %.0f m plus slopes"
-            % (a.crossing_separation_m, a.crossing_length_m)
+            f"crossing separation {a.crossing_separation_m:.2f} m, berm length {a.crossing_length_m:.0f} m plus slopes"
         )
         return CrossingProtection(
             crossing.kp_m,
@@ -677,7 +661,7 @@ class SeabedProtectionScreener:
             length = float(_get(cand, "length_m"))
             if length <= allowable:
                 continue
-            supports = int(math.ceil(length / allowable)) - 1
+            supports = math.ceil(length / allowable) - 1
             height = float(_get(cand, "max_gap_m"))
             base_h = max(height, 0.0) + od / 2.0
             area = (a.rock_crest_width_m + a.rock_side_slope * base_h) * base_h
@@ -738,7 +722,7 @@ class SeabedProtectionScreener:
             rock_days=rock_days,
             buried_length_fraction=buried / length if length else 0.0,
             exposed_length_m=length - buried,
-            assumptions=tuple("%s: %s" % item for item in sorted(used.items())),
+            assumptions=tuple("{}: {}".format(*item) for item in sorted(used.items())),
             data_gaps=tuple(dict.fromkeys(gaps)),
             warnings=tuple(dict.fromkeys(warnings)),
         )

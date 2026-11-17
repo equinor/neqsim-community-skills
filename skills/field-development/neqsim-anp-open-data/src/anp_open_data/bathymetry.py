@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import hashlib
+import itertools
 import json
 import math
 from collections.abc import Callable, Sequence
@@ -82,7 +83,7 @@ def fetch_etopo_grid(
     key = hashlib.sha1(url.encode("utf-8")).hexdigest()[:10]
     cache = Path(cache_dir)
     cache.mkdir(parents=True, exist_ok=True)
-    fname = cache / ("etopo_%s.json" % key)
+    fname = cache / (f"etopo_{key}.json")
     manifest = fname.with_suffix(".manifest.json")
     status = "cache"
     if fname.exists():
@@ -95,7 +96,7 @@ def fetch_etopo_grid(
     else:
         if offline:
             raise FileNotFoundError(
-                "offline mode and no cached ETOPO grid %s" % fname.name
+                f"offline mode and no cached ETOPO grid {fname.name}"
             )
         raw = json.loads((getter or _default_get)(url, timeout).decode("utf-8"))
         fname.write_text(json.dumps(raw), encoding="utf-8")
@@ -159,7 +160,7 @@ def _index(axis: Sequence[float], v: float) -> tuple[int, float]:
     """Return lower index and fraction of ``v`` on an ascending regular axis."""
     if not axis[0] <= v <= axis[-1]:
         raise ValueError(
-            "point %.4f outside grid range %.4f..%.4f" % (v, axis[0], axis[-1])
+            f"point {v:.4f} outside grid range {axis[0]:.4f}..{axis[-1]:.4f}"
         )
     step = (axis[-1] - axis[0]) / (len(axis) - 1)
     i = min(int((v - axis[0]) / step), len(axis) - 2)
@@ -223,9 +224,9 @@ def profile_along_route(
     """
     rows: list[dict] = []
     kp = 0.0
-    for (lo0, la0), (lo1, la1) in zip(waypoints[:-1], waypoints[1:]):
+    for (lo0, la0), (lo1, la1) in itertools.pairwise(waypoints):
         seg = haversine_km(lo0, la0, lo1, la1)
-        n = max(1, int(math.ceil(seg / step_km)))
+        n = max(1, math.ceil(seg / step_km))
         start = 0 if not rows else 1
         for k in range(start, n + 1):
             lon, lat = _interp_gc(lo0, la0, lo1, la1, k / n)
@@ -238,7 +239,7 @@ def profile_along_route(
                 }
             )
         kp += seg
-    for a, b in zip(rows[:-1], rows[1:]):
+    for a, b in itertools.pairwise(rows):
         dx = (b["kp_km"] - a["kp_km"]) * 1000.0
         b["slope_deg"] = (
             round(math.degrees(math.atan2(abs(b["depth_m"] - a["depth_m"]), dx)), 2)
@@ -266,8 +267,8 @@ def flag_slopes(
     }
     for lim in limits_deg:
         km = 0.0
-        for a, b in zip(profile[:-1], profile[1:]):
+        for a, b in itertools.pairwise(profile):
             if b["slope_deg"] > lim:
                 km += b["kp_km"] - a["kp_km"]
-        out["length_above_%gdeg_km" % lim] = round(km, 2)
+        out[f"length_above_{lim:g}deg_km"] = round(km, 2)
     return out

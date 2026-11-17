@@ -59,7 +59,7 @@ class KeyFact:
     group: str = ""
 
     def rendered(self) -> str:
-        return "%s %s" % (self.value, self.unit) if self.unit else self.value
+        return f"{self.value} {self.unit}" if self.unit else self.value
 
 
 @dataclass(frozen=True)
@@ -520,13 +520,13 @@ def render_field_illustration(
             fontsize=9.5,
             fontweight="bold",
             zorder=70,
-            bbox=dict(
-                boxstyle="round,pad=0.28",
-                fc="white",
-                ec=THEME["callout_edge"],
-                alpha=0.88,
-                lw=0.7,
-            ),
+            bbox={
+                "boxstyle": "round,pad=0.28",
+                "fc": "white",
+                "ec": THEME["callout_edge"],
+                "alpha": 0.88,
+                "lw": 0.7,
+            },
         )
 
     # --- framing -----------------------------------------------------------
@@ -554,7 +554,7 @@ def render_field_illustration(
         bar_axis = figure.add_axes([0.045, 0.10, 0.013, 0.26])
         bar = figure.colorbar(horizon_artist, cax=bar_axis)
         bar.set_label(
-            "%s [m TVDMSL]" % horizon.name, fontsize=8.0, color=THEME["muted"]
+            f"{horizon.name} [m TVDMSL]", fontsize=8.0, color=THEME["muted"]
         )
         bar.ax.tick_params(labelsize=7.0, colors=THEME["muted"])
         bar.ax.invert_yaxis()

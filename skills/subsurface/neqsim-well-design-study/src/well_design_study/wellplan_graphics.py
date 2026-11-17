@@ -528,7 +528,7 @@ def well_schematic_sheet(spec: dict[str, object], path: Path) -> Path:
             "",
             xy=(0, tz),
             xytext=(12, tz - 2.0 * dm),
-            arrowprops=dict(arrowstyle="-|>", color="#b02a2a", lw=1.4),
+            arrowprops={"arrowstyle": "-|>", "color": "#b02a2a", "lw": 1.4},
         )
         asx.text(
             13,
@@ -837,7 +837,7 @@ def bop_stack_sketch(spec: dict[str, object], path: Path) -> Path:
         "",
         xy=(0, y + 30),
         xytext=(0, y + 22),
-        arrowprops=dict(arrowstyle="-|>", color="k"),
+        arrowprops={"arrowstyle": "-|>", "color": "k"},
     )
     ax.plot([-50, 90], [0.5, 0.5], color="#6b4f2a", lw=3)
     ax.text(-50, -4.2, "seabed", fontsize=7.5, va="top", color="#6b4f2a")
@@ -951,7 +951,7 @@ def barrier_schematic(spec: dict[str, object], path: Path) -> Path:
             fontsize=7.0,
             va="center",
             ha="left",
-            bbox=dict(fc="white", ec=cols.get(p["role"], "#999"), lw=1.0, pad=1.5),
+            bbox={"fc": "white", "ec": cols.get(p["role"], "#999"), "lw": 1.0, "pad": 1.5},
         )
         ax.plot(
             [w, wmax + 17.5],

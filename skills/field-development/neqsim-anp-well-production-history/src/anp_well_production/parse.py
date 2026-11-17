@@ -134,10 +134,10 @@ def parse_period(text: Any) -> tuple[int, int]:
     else:
         m = re.fullmatch(r"(?:\d{1,2}/)?(\d{1,2})/(\d{4})", s)
         if not m:
-            raise ValueError("Unrecognised ANP period: %r" % text)
+            raise ValueError(f"Unrecognised ANP period: {text!r}")
         month, year = int(m.group(1)), int(m.group(2))
     if not 1 <= month <= 12:
-        raise ValueError("Month out of range in period %r" % text)
+        raise ValueError(f"Month out of range in period {text!r}")
     return year, month
 
 
@@ -406,7 +406,7 @@ def detect_schema(headers: Sequence[str]) -> str:
         spec = SCHEMAS[family]
         if all(any(a in folded for a in spec[k]) for k in _REQUIRED[family]):
             return family
-    raise ValueError("Header matches no known ANP family: %s" % sorted(folded)[:12])
+    raise ValueError(f"Header matches no known ANP family: {sorted(folded)[:12]}")
 
 
 def _column_index(
@@ -488,7 +488,7 @@ def normalize(
     missing = [k for k in _REQUIRED[family] if k not in idx]
     if missing:
         raise KeyError(
-            "ANP %s file lacks required column(s): %s" % (family, ", ".join(missing))
+            "ANP {} file lacks required column(s): {}".format(family, ", ".join(missing))
         )
     comp_idx = _composition_index(headers) if family == "well_monthly_rates" else {}
     out: list[dict[str, Any]] = []

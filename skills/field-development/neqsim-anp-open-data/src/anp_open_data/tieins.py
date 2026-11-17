@@ -8,6 +8,7 @@ host ranks where it does. Every weight is an input.
 
 from __future__ import annotations
 
+import itertools
 import math
 from collections.abc import Iterable, Mapping, Sequence
 
@@ -59,7 +60,7 @@ def point_to_polyline_km(
         return d, (float(line[0][0]), float(line[0][1])), 0.0
     best = (float("inf"), (0.0, 0.0), 0.0)
     along = 0.0
-    for (ax, ay), (bx, by) in zip(pts[:-1], pts[1:]):
+    for (ax, ay), (bx, by) in itertools.pairwise(pts):
         dx, dy = bx - ax, by - ay
         seg2 = dx * dx + dy * dy
         t = 0.0 if seg2 == 0 else max(0.0, min(1.0, -(ax * dx + ay * dy) / seg2))
@@ -198,7 +199,7 @@ def rank_tie_in_hosts(
             d = float(h["distance_km"])
         else:
             if h.get("lon") is None or h.get("lat") is None:
-                raise ValueError("host %r has no coordinates" % h.get("name"))
+                raise ValueError("host {!r} has no coordinates".format(h.get("name")))
             d = haversine_km(lon0, lat0, float(h["lon"]), float(h["lat"]))
         s_dist = max(0.0, 1.0 - d / max_step_out_km)
 
@@ -209,7 +210,7 @@ def rank_tie_in_hosts(
             if req is None:
                 return None
             if cap is None or cur is None:
-                notes.append("%s ullage unknown" % label)
+                notes.append(f"{label} ullage unknown")
                 return 0.5
             free = max(0.0, float(cap) - float(cur))
             return min(1.0, free / req) if req > 0 else 1.0

@@ -106,7 +106,7 @@ def survey(
     if profile is None:
         return None
     inc_hold, md_total, radius = profile
-    n = int(math.ceil(md_total / step))
+    n = math.ceil(md_total / step)
     mds = [md_total * k / n for k in range(n + 1)]
     incs = [
         0.0 if m <= env.kop_m else min(inc_hold, math.degrees((m - env.kop_m) / radius))

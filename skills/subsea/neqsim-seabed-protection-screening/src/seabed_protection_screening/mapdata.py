@@ -12,6 +12,7 @@ accuracy and is not a positioning or datum authority.
 
 from __future__ import annotations
 
+import itertools
 import json
 import math
 from collections.abc import Mapping, Sequence
@@ -180,7 +181,7 @@ def plan_protection_data_package(
         requests.append(
             MapDataRequest(
                 key,
-                "%s?%s" % (source.base_url, query),
+                f"{source.base_url}?{query}",
                 "GET",
                 purpose,
                 source.licence,
@@ -192,7 +193,7 @@ def plan_protection_data_package(
         query = urlencode(
             {
                 "where": "1=1",
-                "geometry": "%s,%s,%s,%s" % (west, south, east, north),
+                "geometry": f"{west},{south},{east},{north}",
                 "geometryType": "esriGeometryEnvelope",
                 "inSR": 4326,
                 "outSR": 4326,
@@ -282,9 +283,9 @@ def build_route(
         raise ValueError("spacing_m must be positive")
     points = [RoutePoint(0.0, float(lonlat[0][0]), float(lonlat[0][1]))]
     kp = 0.0
-    for (lon1, lat1), (lon2, lat2) in zip(lonlat[:-1], lonlat[1:]):
+    for (lon1, lat1), (lon2, lat2) in itertools.pairwise(lonlat):
         length = haversine_m(lon1, lat1, lon2, lat2)
-        steps = max(1, int(math.ceil(length / spacing_m)))
+        steps = max(1, math.ceil(length / spacing_m))
         for index in range(1, steps + 1):
             frac = index / steps
             lon = lon1 + (lon2 - lon1) * frac
@@ -321,7 +322,7 @@ def _as_collection(data: Mapping[str, Any]) -> dict[str, Any]:
             "type": "FeatureCollection",
             "features": [{"type": "Feature", "geometry": dict(data), "properties": {}}],
         }
-    raise ValueError("not a GeoJSON object: type=%r" % (kind,))
+    raise ValueError(f"not a GeoJSON object: type={kind!r}")
 
 
 def _frame(route: Sequence[RoutePoint]):

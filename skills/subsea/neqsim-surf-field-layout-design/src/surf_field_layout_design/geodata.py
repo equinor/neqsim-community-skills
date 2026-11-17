@@ -150,8 +150,7 @@ class DataRequest:
 def _source(key: str) -> OpenDataSource:
     if key not in OPEN_DATA_SOURCES:
         raise ValueError(
-            "unknown source %r; known sources are %s"
-            % (key, ", ".join(sorted(OPEN_DATA_SOURCES)))
+            "unknown source {!r}; known sources are {}".format(key, ", ".join(sorted(OPEN_DATA_SOURCES)))
         )
     return OPEN_DATA_SOURCES[key]
 
@@ -168,10 +167,10 @@ def plan_bathymetry_request(
     """Plan a bathymetry coverage request over a WGS84 bounding box."""
     for name, value in (("west", west), ("east", east)):
         if not -180.0 <= value <= 180.0:
-            raise ValueError("%s must be between -180 and 180" % name)
+            raise ValueError(f"{name} must be between -180 and 180")
     for name, value in (("south", south), ("north", north)):
         if not -90.0 <= value <= 90.0:
-            raise ValueError("%s must be between -90 and 90" % name)
+            raise ValueError(f"{name} must be between -90 and 90")
     if west >= east or south >= north:
         raise ValueError("bounding box must have west < east and south < north")
 
@@ -182,11 +181,11 @@ def plan_bathymetry_request(
         "request": "GetCoverage",
         "coverageId": "emodnet__mean",
         "format": "image/tiff",
-        "subset": "Long(%f,%f)" % (west, east),
+        "subset": f"Long({west:f},{east:f})",
     }
-    url = "%s?%s&subset=Lat(%f,%f)" % (source.base_url, urlencode(query), south, north)
+    url = f"{source.base_url}?{urlencode(query)}&subset=Lat({south:f},{north:f})"
     if source.service == "WMS":
-        url = "%s?%s" % (
+        url = "{}?{}".format(
             source.base_url,
             urlencode(
                 {
@@ -195,7 +194,7 @@ def plan_bathymetry_request(
                     "request": "GetMap",
                     "layers": "GEBCO_LATEST",
                     "crs": "EPSG:4326",
-                    "bbox": "%f,%f,%f,%f" % (south, west, north, east),
+                    "bbox": f"{south:f},{west:f},{north:f},{east:f}",
                     "width": width,
                     "height": height,
                     "format": "image/png",
@@ -229,7 +228,7 @@ def plan_sodir_layer_request(
     query = {
         "f": "geojson",
         "where": "1=1",
-        "geometry": "%f,%f,%f,%f" % (west, south, east, north),
+        "geometry": f"{west:f},{south:f},{east:f},{north:f}",
         "geometryType": "esriGeometryEnvelope",
         "inSR": "4326",
         "outSR": "4326",
@@ -238,7 +237,7 @@ def plan_sodir_layer_request(
     }
     return DataRequest(
         source_key=source.key,
-        url="%s/%s/query?%s" % (source.base_url, layer, urlencode(query)),
+        url=f"{source.base_url}/{layer}/query?{urlencode(query)}",
         method="GET",
         purpose="licence blocks, existing wellbores, infrastructure and pipelines near the field",
         licence=source.licence,
@@ -284,17 +283,13 @@ def execute(
         try:
             manifest["results"][request.source_key] = fetch(request.url)
         except Exception as error:  # a failed source must not abort the study
-            manifest["errors"][request.source_key] = "%s: %s" % (
-                type(error).__name__,
-                error,
-            )
+            manifest["errors"][request.source_key] = f"{type(error).__name__}: {error}"
     return manifest
 
 
 def attribution_block(source_keys: Sequence[str]) -> list[str]:
     """Attribution lines to reproduce on any map made from these sources."""
     return [
-        "%s (%s, %s)"
-        % (_source(key).attribution, _source(key).provider, _source(key).licence)
+        f"{_source(key).attribution} ({_source(key).provider}, {_source(key).licence})"
         for key in source_keys
     ]

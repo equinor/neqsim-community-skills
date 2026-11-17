@@ -33,13 +33,13 @@ def field_cgr_observations(
     c = cond_daily.resample("MS").sum()
     cgr = (c / g.replace(0, np.nan) * 1e6).reindex(months).dropna()
     return pd.DataFrame(
-        dict(
-            date=cgr.index,
-            tank="FIELD",
-            kind="cgr",
-            value=cgr.values,
-            sigma=rel_sigma * cgr.values,
-        )
+        {
+            "date": cgr.index,
+            "tank": "FIELD",
+            "kind": "cgr",
+            "value": cgr.values,
+            "sigma": rel_sigma * cgr.values,
+        }
     )
 
 
@@ -83,7 +83,7 @@ def shut_in_pressure_observations(
         m = pw.groupby("month")["median"].quantile(quantile)
         rows.append(
             pd.DataFrame(
-                dict(date=m.index, tank=tank, kind="p_res", value=m.values, sigma=sigma)
+                {"date": m.index, "tank": tank, "kind": "p_res", "value": m.values, "sigma": sigma}
             )
         )
     return (
@@ -106,12 +106,12 @@ def deliverability_history(
     """Daily on-stream rate (kSm3/d) and tubing-head pressure (bara) per well for ``fit_deliverability``."""
     d = wells[wells[hours_col] > min_hours].copy()
     out = pd.DataFrame(
-        dict(
-            date=pd.to_datetime(d[date_col]),
-            well=d[well_col],
-            q_ksm3d=d[gas_col] / 1e3 / (d[hours_col].clip(lower=1) / 24.0),
-            whp=d[whp_col] + 1.01325,
-        )
+        {
+            "date": pd.to_datetime(d[date_col]),
+            "well": d[well_col],
+            "q_ksm3d": d[gas_col] / 1e3 / (d[hours_col].clip(lower=1) / 24.0),
+            "whp": d[whp_col] + 1.01325,
+        }
     )
     if water_col:
         out["water_sm3d"] = d[water_col]

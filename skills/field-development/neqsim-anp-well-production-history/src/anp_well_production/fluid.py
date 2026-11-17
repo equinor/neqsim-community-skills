@@ -112,8 +112,7 @@ def fluid_basis(rec: Mapping[str, Any]) -> dict[str, Any]:
         warnings.append("No gas composition for this well and month.")
     elif not comp["closure_ok"]:
         warnings.append(
-            "Reported composition sums to %.1f %%; it was normalised."
-            % comp["reported_sum_pct"]
+            "Reported composition sums to {:.1f} %; it was normalised.".format(comp["reported_sum_pct"])
         )
     if comp is not None and comp["mole_fraction"].get("oxygen", 0.0) > 0.005:
         warnings.append(

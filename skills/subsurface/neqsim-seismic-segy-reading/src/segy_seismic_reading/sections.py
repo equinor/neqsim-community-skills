@@ -303,16 +303,16 @@ def write_cube(
                 handle.header[trace] = {
                     tf.INLINE_3D: int(il),
                     tf.CROSSLINE_3D: int(xl),
-                    tf.CDP_X: int(round(x * scale)),
-                    tf.CDP_Y: int(round(y * scale)),
+                    tf.CDP_X: round(x * scale),
+                    tf.CDP_Y: round(y * scale),
                     tf.SourceGroupScalar: int(coordinate_scalar),
-                    tf.TRACE_SAMPLE_INTERVAL: int(round(sample_interval_ms * 1000)),
+                    tf.TRACE_SAMPLE_INTERVAL: round(sample_interval_ms * 1000),
                     tf.TRACE_SAMPLE_COUNT: int(cube.shape[2]),
                 }
                 handle.trace[trace] = cube[i, j]
                 trace += 1
         handle.bin.update(
-            hdt=int(round(sample_interval_ms * 1000)),
+            hdt=round(sample_interval_ms * 1000),
             hns=int(cube.shape[2]),
             format=5,
             mfeet=1,

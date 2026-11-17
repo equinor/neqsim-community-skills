@@ -150,7 +150,7 @@ def fetch_layer(
     key = hashlib.sha1(url.encode("utf-8")).hexdigest()[:10]
     cache = Path(cache_dir)
     cache.mkdir(parents=True, exist_ok=True)
-    fname = cache / ("anp_wfs_%s_%s.geojson" % (layer.replace(":", "_"), key))
+    fname = cache / ("anp_wfs_{}_{}.geojson".format(layer.replace(":", "_"), key))
     status = "cache"
     if fname.exists():
         data = json.loads(fname.read_text(encoding="utf-8"))
@@ -163,13 +163,13 @@ def fetch_layer(
     else:
         if offline:
             raise FileNotFoundError(
-                "offline mode and no cache for %s (%s)" % (layer, fname.name)
+                f"offline mode and no cache for {layer} ({fname.name})"
             )
         raw = (getter or _default_get)(url, timeout)
         data = json.loads(raw.decode("utf-8"))
         if data.get("type") != "FeatureCollection":
             raise ValueError(
-                "ANP WFS did not return a FeatureCollection for %s" % layer
+                f"ANP WFS did not return a FeatureCollection for {layer}"
             )
         fname.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
         retrieved = _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds")

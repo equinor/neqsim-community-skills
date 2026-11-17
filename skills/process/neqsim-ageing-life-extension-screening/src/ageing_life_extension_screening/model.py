@@ -317,7 +317,7 @@ class AgeingLifeExtensionModel:
             return None
         if corrective_cost_per_failure <= 0.0 and annual_cost_of_ownership <= 0.0:
             return None
-        horizon = max(1, int(round(max(target_year_offset, 1.0))) + 20)
+        horizon = max(1, round(max(target_year_offset, 1.0)) + 20)
         cumulative = 0.0
         for year in range(1, horizon + 1):
             t0 = observation_years + year - 1
@@ -366,19 +366,19 @@ class AgeingLifeExtensionModel:
     @staticmethod
     def _assumptions(n: int, population_size: int) -> tuple[str, ...]:
         return (
-            "Failures are treated as a non-homogeneous Poisson process (repair "
-            "returns the item to the condition just before failure).",
-            "The power-law (Crow-AMSAA) intensity is fitted by maximum likelihood "
-            "on time-truncated data.",
-            "The Laplace statistic is compared against a standard-normal critical "
-            "value; it is only meaningful for a stationary reporting regime.",
-            "Reporting-practice changes, migration artefacts and campaign-driven "
+            ("Failures are treated as a non-homogeneous Poisson process (repair "
+            "returns the item to the condition just before failure)."),
+            ("The power-law (Crow-AMSAA) intensity is fitted by maximum likelihood "
+            "on time-truncated data."),
+            ("The Laplace statistic is compared against a standard-normal critical "
+            "value; it is only meaningful for a stationary reporting regime."),
+            ("Reporting-practice changes, migration artefacts and campaign-driven "
             "notification bursts are NOT corrected for and must be screened out "
-            "of the input series before use.",
-            f"Rates are normalised over a population of {population_size} item(s) "
-            f"from {n} recorded failure(s).",
-            "Screening only; not a substitute for a qualified life-extension "
-            "assessment or a structural/technical condition survey.",
+            "of the input series before use."),
+            (f"Rates are normalised over a population of {population_size} item(s) "
+            f"from {n} recorded failure(s)."),
+            ("Screening only; not a substitute for a qualified life-extension "
+            "assessment or a structural/technical condition survey."),
         )
 
 

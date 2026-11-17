@@ -386,7 +386,7 @@ def alternatives(
             model, basis, profile_years, CASES
         )
     _dump(paths["results"] / "alternatives.json", out)
-    res = (
+    (
         load_json(paths["results"] / "model_results.json")
         if (paths["results"] / "model_results.json").exists()
         else {}

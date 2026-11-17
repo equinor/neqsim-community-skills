@@ -19,16 +19,16 @@ def _wells():
         for i, d in enumerate(days):
             on = 24 if i % 40 else 0
             rows.append(
-                dict(
-                    date=d,
-                    well=wb.split()[0],
-                    wellbore=wb,
-                    tank=tank,
-                    gas_sm3=on / 24 * 1e6,
-                    on_stream_hrs=on,
-                    dh_press=base - 0.1 * i if not on else 200.0,
-                    whp_barg=30.0,
-                )
+                {
+                    "date": d,
+                    "well": wb.split()[0],
+                    "wellbore": wb,
+                    "tank": tank,
+                    "gas_sm3": on / 24 * 1e6,
+                    "on_stream_hrs": on,
+                    "dh_press": base - 0.1 * i if not on else 200.0,
+                    "whp_barg": 30.0,
+                }
             )
     return pd.DataFrame(rows)
 

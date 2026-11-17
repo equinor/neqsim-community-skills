@@ -35,24 +35,24 @@ def _png_ok(path, min_w=1200):
 
 
 def _liner_basis(**kw):
-    base = dict(
-        name="liner",
-        od_in=17.0,
-        top_tvd_m=1300.0,
-        shoe_tvd_m=1700.0,
-        shoe_md_m=1700.0,
-        toc_tvd_m=1300.0,
-        mud_sg=1.40,
-        next_td_tvd_m=2700.0,
-        next_mud_sg=1.50,
-        next_pore_sg=1.25,
-        frac_shoe_sg=1.60,
-        pore_sg_at=lambda z: 1.03,
-        water_depth_m=350.0,
-        air_gap_m=25.0,
-        max_temp_c=50.0,
-        evacuation_basis="pore_balance",
-    )
+    base = {
+        "name": "liner",
+        "od_in": 17.0,
+        "top_tvd_m": 1300.0,
+        "shoe_tvd_m": 1700.0,
+        "shoe_md_m": 1700.0,
+        "toc_tvd_m": 1300.0,
+        "mud_sg": 1.40,
+        "next_td_tvd_m": 2700.0,
+        "next_mud_sg": 1.50,
+        "next_pore_sg": 1.25,
+        "frac_shoe_sg": 1.60,
+        "pore_sg_at": lambda z: 1.03,
+        "water_depth_m": 350.0,
+        "air_gap_m": 25.0,
+        "max_temp_c": 50.0,
+        "evacuation_basis": "pore_balance",
+    }
     base.update(kw)
     return StringBasis(**base)
 
@@ -416,7 +416,7 @@ def test_report_structure_and_fields(tmp_path):
     rep2.callout("Box", ["line one [ASSUMED]", "line two"])
     after = len(Document(str(rep2.save(tmp_path / "r3.docx"))).tables)
     assert after == base and n_tables >= 1
-    t = [t for t in doc.tables if t.rows[0].cells[0].text == "Item"][0]
+    t = next(t for t in doc.tables if t.rows[0].cells[0].text == "Item")
     assert t.rows[1].cells[1].paragraphs[0].alignment == 2
 
 
@@ -461,7 +461,7 @@ def test_evacuation_level_limit_and_alternatives():
     )
     walls = [a["wall_in"] for a in alts]
     assert walls == sorted(walls)
-    thick = [a for a in alts if a["wall_in"] >= 0.5][0]
+    thick = next(a for a in alts if a["wall_in"] >= 0.5)
     thin = alts[0]
     assert (
         thick["collapse_df_conservative"] > thin["collapse_df_conservative"]
@@ -476,7 +476,6 @@ def test_pore_basis_keeps_planned_mud_in_evacuation_case():
     """Pore-based kick convention must not replace the fluid left in the pipe after loss of returns (skill 0.2.0 did)."""
     from well_design_study import PressureModel, curve_from_points
 
-    z = [0.0, 400.0, 4000.0]
     pm = PressureModel(
         {
             k: curve_from_points([(0, 1.0), (400, 1.03), (4000, 1.2)])

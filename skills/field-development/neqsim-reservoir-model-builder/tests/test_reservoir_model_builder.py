@@ -282,12 +282,12 @@ def test_refine_keeps_the_provenance_of_earlier_data_sources() -> None:
 
 
 def test_drive_aliases_map_to_tabulated_ranges_and_thin_oil_rim_is_known() -> None:
-    kwargs = dict(
-        fluid_type="oil",
-        datum_depth_m_tvdmsl=3200.0,
-        stoiip_Sm3=6.0e6,
-        has_gas_cap=True,
-    )
+    kwargs = {
+        "fluid_type": "oil",
+        "datum_depth_m_tvdmsl": 3200.0,
+        "stoiip_Sm3": 6.0e6,
+        "has_gas_cap": True,
+    }
     alias = build_reservoir_model(
         field_name="Alias", drive_mechanism="gas_cap", **kwargs
     )

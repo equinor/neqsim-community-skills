@@ -9,6 +9,7 @@ or Esri JSON (``rings``, ``paths``, ``x``/``y``) as served by Sodir.
 
 from __future__ import annotations
 
+import itertools
 import math
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
@@ -207,7 +208,7 @@ def point_to_lines_km(lon: float, lat: float, parts: Iterable[Ring]) -> float | 
     best = float("inf")
     for part in parts:
         pts = [_xy(p[0], p[1], lon, lat) for p in part]
-        for a, b in zip(pts, pts[1:]):
+        for a, b in itertools.pairwise(pts):
             best = min(best, _seg_dist(0.0, 0.0, a[0], a[1], b[0], b[1]))
     return None if best == float("inf") else best
 

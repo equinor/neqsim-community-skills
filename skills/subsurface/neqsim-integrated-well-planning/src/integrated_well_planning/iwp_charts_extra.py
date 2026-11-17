@@ -107,7 +107,7 @@ def multi_line_chart(
             continue
         idx = np.where(inside)[0]
         if s.get("label_frac") is not None:
-            j = int(idx[int(round(float(s["label_frac"]) * (len(idx) - 1)))])
+            j = int(idx[round(float(s["label_frac"]) * (len(idx) - 1))])
             ax.annotate(
                 s["label"],
                 (x[j], y[j]),
@@ -116,7 +116,7 @@ def multi_line_chart(
                 fontsize=7.6,
                 color=col,
                 fontweight="bold",
-                bbox=dict(boxstyle="round,pad=0.12", fc="white", ec="none", alpha=0.85),
+                bbox={"boxstyle": "round,pad=0.12", "fc": "white", "ec": "none", "alpha": 0.85},
                 zorder=6,
             )
             continue
@@ -195,10 +195,10 @@ def multi_line_chart(
             fontsize=7.4,
             color=a.get("color", PALETTE["text"]),
             va="center",
-            arrowprops=dict(
-                arrowstyle="-", lw=0.6, color=a.get("color", PALETTE["text"])
-            ),
-            bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.9),
+            arrowprops={
+                "arrowstyle": "-", "lw": 0.6, "color": a.get("color", PALETTE["text"])
+            },
+            bbox={"boxstyle": "round,pad=0.2", "fc": "white", "ec": "none", "alpha": 0.9},
         )
     if label_right and ends:
         y0, y1 = ax.get_ylim()
@@ -217,9 +217,9 @@ def multi_line_chart(
                 fontweight="bold",
                 va="center",
                 annotation_clip=False,
-                arrowprops=dict(
-                    arrowstyle="-", lw=0.5, color=col, shrinkA=0, shrinkB=2
-                ),
+                arrowprops={
+                    "arrowstyle": "-", "lw": 0.5, "color": col, "shrinkA": 0, "shrinkB": 2
+                },
             )
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
@@ -313,7 +313,7 @@ def grouped_bar_chart(
                 fontsize=7.4,
                 color=hline.get("color", PALETTE["limit"]),
                 fontweight="bold",
-                bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.9),
+                bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.9},
                 zorder=6,
             )
     if n > 1:
@@ -524,7 +524,7 @@ def pressure_window_chart(
             color="#8A5A00",
             fontweight="bold",
             va="center",
-            bbox=dict(boxstyle="round,pad=0.12", fc="white", ec="none", alpha=0.85),
+            bbox={"boxstyle": "round,pad=0.12", "fc": "white", "ec": "none", "alpha": 0.85},
             zorder=6,
         )
     marks = {
@@ -629,7 +629,7 @@ def percentile_chart(
                 fontweight="bold",
                 va="top",
                 ha=ha,
-                bbox=dict(boxstyle="round,pad=0.12", fc="white", ec="none", alpha=0.85),
+                bbox={"boxstyle": "round,pad=0.12", "fc": "white", "ec": "none", "alpha": 0.85},
             )
         ax.set_xlim(
             max(0.0, float(np.percentile(v, 0.2)) * 0.8), float(np.percentile(v, 99.6))
@@ -662,7 +662,7 @@ def casing_programme_sheet(
     wd = float(plan.get("water_depth_m", 0.0))
     seabed = wd + air
     td = float(plan["td_m"])
-    fig, sheet, box = a3_sheet(
+    fig, _sheet, box = a3_sheet(
         plan.get("title", "Casing programme"),
         drawing_no,
         revision,
@@ -705,7 +705,7 @@ def casing_programme_sheet(
             ha="center",
             va="center",
             fontweight="bold",
-            bbox=dict(fc="white", ec="none", pad=0.6),
+            bbox={"fc": "white", "ec": "none", "pad": 0.6},
         )
     ax_w.set_xlim(-1.0, 1.6)
     ax_w.set_xticks([])
@@ -843,8 +843,8 @@ def casing_programme_sheet(
             fontsize=7.2,
             va="center",
             ha="left",
-            arrowprops=dict(arrowstyle="-", lw=0.5, color=PALETTE["muted"]),
-            bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.9),
+            arrowprops={"arrowstyle": "-", "lw": 0.5, "color": PALETTE["muted"]},
+            bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.9},
             zorder=7,
         )
     oh = plan.get("open_hole")
@@ -870,8 +870,8 @@ def casing_programme_sheet(
             fontsize=7.4,
             va="center",
             fontweight="bold",
-            arrowprops=dict(arrowstyle="-", lw=0.5, color=PALETTE["muted"]),
-            bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.9),
+            arrowprops={"arrowstyle": "-", "lw": 0.5, "color": PALETTE["muted"]},
+            bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.9},
         )
     ax_w.plot([-0.6, 0.6], [td, td], color="black", lw=1.6, zorder=5)
     for f in forms:

@@ -51,13 +51,13 @@ def test_restrained_hot_run_expansion_exceeded() -> None:
 
 
 def test_routing_relief_lowers_displacement_stress() -> None:
-    inputs = dict(
-        outside_diameter_mm=168.3,
-        wall_thickness_mm=10.97,
-        design_pressure_bar=10.0,
-        design_temperature_c=400.0,
-        pipe_length_m=30.0,
-    )
+    inputs = {
+        "outside_diameter_mm": 168.3,
+        "wall_thickness_mm": 10.97,
+        "design_pressure_bar": 10.0,
+        "design_temperature_c": 400.0,
+        "pipe_length_m": 30.0,
+    }
     restrained = PipingFlexibilityModel().evaluate(anchor_to_anchor=True, **inputs)
     routed = PipingFlexibilityModel().evaluate(anchor_to_anchor=False, **inputs)
 

@@ -240,7 +240,7 @@ def risk_matrix(
                     "",
                     xy=(x, y),
                     xytext=(x0, y0),
-                    arrowprops=dict(arrowstyle="->", color="0.25", lw=0.6, alpha=0.7),
+                    arrowprops={"arrowstyle": "->", "color": "0.25", "lw": 0.6, "alpha": 0.7},
                     zorder=3,
                 )
             ax.add_patch(
@@ -407,7 +407,7 @@ def decision_tree(
                 va="bottom",
                 color="#1f3a5f",
                 fontweight="bold",
-                bbox=dict(fc="white", ec="none", pad=0.6),
+                bbox={"fc": "white", "ec": "none", "pad": 0.6},
             )
     for n in nodes:
         x, y = n["xy"]
@@ -482,7 +482,7 @@ def s_curve_plot(
                 ha="left" if q < 90 else "right",
                 va="top",
                 color=c,
-                bbox=dict(fc="white", ec="none", pad=0.6),
+                bbox={"fc": "white", "ec": "none", "pad": 0.6},
             )
         ax.set_xlabel(f"{name} ({units.get(name, '')})")
         ax.set_xlim(float(a.min()) * 0.9, float(np.percentile(a, 99.5)))
@@ -768,7 +768,7 @@ def location_map(
         ha="center",
         fontsize=9,
         fontweight="bold",
-        arrowprops=dict(arrowstyle="-|>", color="k"),
+        arrowprops={"arrowstyle": "-|>", "color": "k"},
     )
     sb = 5000.0 if (xhi - xlo) > 15000 else 2000.0 if (xhi - xlo) > 6000 else 1000.0
     ax.plot(

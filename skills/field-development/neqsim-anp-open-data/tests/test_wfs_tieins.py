@@ -42,12 +42,12 @@ def test_fetch_layer_caches_and_logs(tmp_path) -> None:
         calls.append(url)
         return json.dumps(payload).encode("utf-8")
 
-    data, rec = fetch_layer(
+    _data, rec = fetch_layer(
         "fields", tmp_path, cql="a=1", getter=getter, max_features=1
     )
     assert rec["status"] == "downloaded" and rec["n_features"] == 1 and rec["truncated"]
     assert rec["retrieved_utc"]
-    data2, rec2 = fetch_layer(
+    _data2, rec2 = fetch_layer(
         "fields", tmp_path, cql="a=1", getter=getter, max_features=1
     )
     assert rec2["status"] == "cache" and len(calls) == 1

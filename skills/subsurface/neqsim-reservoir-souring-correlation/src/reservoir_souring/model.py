@@ -205,7 +205,7 @@ def _fit_model(
                 best = (p, s)
         params = best[0]
     else:
-        raise ValueError("unknown model %s" % model)
+        raise ValueError(f"unknown model {model}")
     return params, _sse(model, params, f, y, w)
 
 
@@ -229,7 +229,7 @@ def fit_well_correlation(
         if a is not None and b is not None and math.isfinite(a) and math.isfinite(b)
     ]
     if len(pairs) < 5:
-        raise ValueError("need at least 5 valid (f_sw, H2S) points for %s" % well)
+        raise ValueError(f"need at least 5 valid (f_sw, H2S) points for {well}")
     f = [a for a, _ in pairs]
     y = [b for _, b in pairs]
     w = (
@@ -270,15 +270,14 @@ def fit_well_correlation(
         if best is None or cand.aicc < best.aicc:
             best = cand
     if best is None:
-        raise ValueError("no model could be fitted for %s" % well)
+        raise ValueError(f"no model could be fitted for {well}")
     if best.f_max < 0.5:
         best.warnings.append(
-            "data span f_sw up to %.2f only; extrapolation to higher seawater fraction is unreliable"
-            % best.f_max
+            f"data span f_sw up to {best.f_max:.2f} only; extrapolation to higher seawater fraction is unreliable"
         )
     if best.r2 < 0.5:
         best.warnings.append(
-            "R2 %.2f: seawater fraction explains little of the H2S variance" % best.r2
+            f"R2 {best.r2:.2f}: seawater fraction explains little of the H2S variance"
         )
     return best
 
@@ -306,12 +305,11 @@ def update_correlation(
         a, b = previous.predict(f_ref), new.predict(f_ref)
         if previous.model != new.model:
             new.warnings.append(
-                "model changed from %s to %s" % (previous.model, new.model)
+                f"model changed from {previous.model} to {new.model}"
             )
         if a > 0 and abs(b - a) / a > 0.25:
             new.warnings.append(
-                "prediction at f_sw=%.2f moved %.0f percent"
-                % (f_ref, 100 * (b - a) / a)
+                f"prediction at f_sw={f_ref:.2f} moved {100 * (b - a) / a:.0f} percent"
             )
     return new
 
@@ -356,7 +354,7 @@ def mixing_zone_h2s_mg_l(
         ("mitigation_factor", mitigation_factor),
     ):
         if not 0.0 <= v <= 1.0:
-            raise ValueError("%s must be in [0, 1]" % name)
+            raise ValueError(f"{name} must be in [0, 1]")
     so4 = f_sw * sulfate_sw_mg_l
     donor = (1.0 - f_sw) * donor_fw_mg_l
     thermal = 1.0

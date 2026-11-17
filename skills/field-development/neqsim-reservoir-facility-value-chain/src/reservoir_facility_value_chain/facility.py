@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 from bisect import bisect_left
 from collections.abc import Callable, Sequence
 
@@ -14,7 +15,7 @@ def capacity_from_sweep(rates: Sequence[float], utilisation: Sequence[float]) ->
     1.0 at the highest tested rate; capacity is a lower bound).
     """
     pairs = sorted(zip(rates, utilisation))
-    for (q0, u0), (q1, u1) in zip(pairs, pairs[1:]):
+    for (q0, u0), (q1, u1) in itertools.pairwise(pairs):
         if u0 <= 1.0 < u1:
             return {"capacity": q0 + (1.0 - u0) * (q1 - q0) / (u1 - u0), "status": "ok"}
     if all(u > 1.0 for _, u in pairs):
@@ -28,7 +29,7 @@ class PressureCapacityCurve:
     def __init__(self, pressure: Sequence[float], capacity: Sequence[float]):
         if len(pressure) != len(capacity) or len(pressure) < 2:
             raise ValueError("need at least two points of equal length")
-        if any(b <= a for a, b in zip(pressure, pressure[1:])):
+        if any(b <= a for a, b in itertools.pairwise(pressure)):
             raise ValueError("pressures must be strictly ascending")
         self.p, self.c = list(pressure), list(capacity)
 

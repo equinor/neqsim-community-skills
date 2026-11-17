@@ -200,8 +200,8 @@ def trajectory_warnings(paths: Sequence[WellPath]) -> list[str]:
         shallowest = min(path.landing_tvd_m - path.kick_off_tvd_m for path in paths)
         if shallowest < 150.0:
             warnings.append(
-                "only %.0f m of true vertical depth is available between the kick-off "
+                f"only {shallowest:.0f} m of true vertical depth is available between the kick-off "
                 "point and the reservoir; a shallow reservoir under deep water is a "
-                "drilling constraint, not a geometry detail" % shallowest
+                "drilling constraint, not a geometry detail"
             )
     return warnings

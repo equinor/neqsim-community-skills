@@ -200,13 +200,13 @@ class InjectorModel:
             "warnings": [],
             "params": {k: v for k, v in p.items() if isinstance(v, (int, float, str))},
         }
-        if not (bh["bhp_bara"] == bh["bhp_bara"]):
+        if bh["bhp_bara"] != bh["bhp_bara"]:
             out.update({"status": "NOT_FEASIBLE", "whp_required_bara": None})
             out["warnings"].append(
                 "matrix injectivity cannot deliver the rate within 800 bar above reservoir pressure"
             )
             return out
-        whp, res, h, tm = self.whp_for_bhp(p, mass, bh["bhp_bara"])
+        whp, res, h, _tm = self.whp_for_bhp(p, mass, bh["bhp_bara"])
         if whp is None:
             out.update({"status": "NOT_FEASIBLE", "whp_required_bara": None})
             out["warnings"].append(

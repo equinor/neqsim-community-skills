@@ -254,12 +254,12 @@ class SurfLayout:
                 polygon_feature(
                     self.summary["reservoir_outline"],
                     {
-                        "name": "%s reservoir outline" % self.field_name,
+                        "name": f"{self.field_name} reservoir outline",
                         "kind": "reservoir_outline",
                     },
                 )
             )
-        return feature_collection(features, name="%s SURF layout" % self.field_name)
+        return feature_collection(features, name=f"{self.field_name} SURF layout")
 
     def to_dict(self) -> dict:
         return {
@@ -338,7 +338,7 @@ def design_surf_layout(
     if slots_per_template < 1:
         raise ValueError("slots_per_template must be at least 1")
     if production_architecture not in ARCHITECTURES:
-        raise ValueError("production_architecture must be one of %s" % (ARCHITECTURES,))
+        raise ValueError(f"production_architecture must be one of {ARCHITECTURES}")
     if water_depth_m <= 0.0:
         raise ValueError("water_depth_m must be positive")
 
@@ -397,8 +397,8 @@ def design_surf_layout(
             drill_centres[service].append(template)
 
             add_node(
-                "%s-PLEM" % template_tag,
-                "%s flowline PLEM" % template_tag,
+                f"{template_tag}-PLEM",
+                f"{template_tag} flowline PLEM",
                 "plem",
                 east + slot_spacing_m * 2.0,
                 north - slot_spacing_m * 2.0,
@@ -415,7 +415,7 @@ def design_surf_layout(
                 well_tag = "%s-%02d" % (prefix, index * slots_per_template + slot + 1)
                 add_node(
                     well_tag,
-                    "%s well %s" % (service.replace("_", " "), well_tag),
+                    "{} well {}".format(service.replace("_", " "), well_tag),
                     "well",
                     slot_east,
                     slot_north,
@@ -425,8 +425,8 @@ def design_surf_layout(
                     slot=slot + 1,
                 )
                 add_node(
-                    "%s-XT" % well_tag,
-                    "Xmas tree %s" % well_tag,
+                    f"{well_tag}-XT",
+                    f"Xmas tree {well_tag}",
                     "xmas_tree",
                     slot_east,
                     slot_north,
@@ -441,7 +441,7 @@ def design_surf_layout(
     host_north = host_offset_km * 1000.0 * cos(radians(host_bearing_deg))
     host = add_node(
         "HOST",
-        "%s %s" % (field_name, host_type),
+        f"{field_name} {host_type}",
         "host",
         host_east,
         host_north,
@@ -514,25 +514,25 @@ def design_surf_layout(
             )
             for centre in ordered:
                 plem = next(
-                    item for item in nodes if item.tag == "%s-PLEM" % centre.tag
+                    item for item in nodes if item.tag == f"{centre.tag}-PLEM"
                 )
                 add_line(
-                    "FL-PROD-%s-%s" % (label, centre.tag),
+                    f"FL-PROD-{label}-{centre.tag}",
                     "production",
                     "insulated rigid flowline",
                     previous,
                     plem,
                     production_size,
                     insulation="pipe-in-pipe or wet insulation, set by the cooldown requirement",
-                    pigging="round-trip pigging loop %s" % label,
+                    pigging=f"round-trip pigging loop {label}",
                 )
                 previous = plem
     elif production_architecture == "daisy_chain":
         previous = riser_base
         for centre in production_centres:
-            plem = next(item for item in nodes if item.tag == "%s-PLEM" % centre.tag)
+            plem = next(item for item in nodes if item.tag == f"{centre.tag}-PLEM")
             add_line(
-                "FL-PROD-%s" % centre.tag,
+                f"FL-PROD-{centre.tag}",
                 "production",
                 "insulated rigid flowline",
                 previous,
@@ -543,9 +543,9 @@ def design_surf_layout(
             previous = plem
     else:
         for centre in production_centres:
-            plem = next(item for item in nodes if item.tag == "%s-PLEM" % centre.tag)
+            plem = next(item for item in nodes if item.tag == f"{centre.tag}-PLEM")
             add_line(
-                "FL-PROD-%s" % centre.tag,
+                f"FL-PROD-{centre.tag}",
                 "production",
                 "insulated rigid flowline",
                 riser_base,
@@ -583,12 +583,12 @@ def design_surf_layout(
         )
         if rate <= 0.0:
             warnings.append(
-                "no design rate supplied for %s, lines routed but not sized" % service
+                f"no design rate supplied for {service}, lines routed but not sized"
             )
         for centre in centres:
-            plem = next(item for item in nodes if item.tag == "%s-PLEM" % centre.tag)
+            plem = next(item for item in nodes if item.tag == f"{centre.tag}-PLEM")
             add_line(
-                "%s-%s" % (prefix, centre.tag),
+                f"{prefix}-{centre.tag}",
                 service,
                 line_type,
                 riser_base,
@@ -600,7 +600,7 @@ def design_surf_layout(
     for service in ("production", "water_injection", "gas_injection"):
         for centre in drill_centres[service]:
             add_line(
-                "UMB-%s" % centre.tag,
+                f"UMB-{centre.tag}",
                 "umbilical",
                 "steel tube umbilical",
                 host,
@@ -697,7 +697,7 @@ def design_surf_layout(
     }
 
     if production_size is not None and production_size.verdict != "ok":
-        warnings.append("production flowline sizing: %s" % production_size.verdict)
+        warnings.append(f"production flowline sizing: {production_size.verdict}")
     if seabed_slope_deg == 0.0:
         warnings.append(
             "a flat seabed was assumed; replace it with an open bathymetry grid before routing"
@@ -706,10 +706,10 @@ def design_surf_layout(
     assumptions = [
         "Screening layout only: straight-line routes, no obstacle avoidance, no crossing design.",
         "Drill centres are spaced evenly over 70 % of the reservoir length on the field axis.",
-        "Water injectors are offset down one flank and gas injectors up the other by the "
-        "supplied offset; no sweep or voidage study lies behind that choice.",
-        "Line sizes are the smallest standard size that meets the velocity target and the "
-        "API RP 14E erosional limit at the supplied design rate and density.",
+        ("Water injectors are offset down one flank and gas injectors up the other by the "
+        "supplied offset; no sweep or voidage study lies behind that choice."),
+        ("Line sizes are the smallest standard size that meets the velocity target and the "
+        "API RP 14E erosional limit at the supplied design rate and density."),
         "Wall thickness follows a fixed diameter-to-thickness ratio and is not a pressure design.",
         "Riser length is the straight riser-base-to-host distance with a lazy-wave allowance.",
         "No on-bottom stability, free-span, expansion, mooring or installation analysis.",

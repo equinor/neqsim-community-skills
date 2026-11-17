@@ -111,8 +111,8 @@ def plot_near_field(
         ax.clabel(cs, fmt="%d m", fontsize=6)
 
     layer_style = {
-        "blocks": dict(fc="none", ec="#7f7f7f", lw=0.5, ls="-"),
-        "relinquished_blocks": dict(fc="none", ec="#bbbbbb", lw=0.4, ls=":"),
+        "blocks": {"fc": "none", "ec": "#7f7f7f", "lw": 0.5, "ls": "-"},
+        "relinquished_blocks": {"fc": "none", "ec": "#bbbbbb", "lw": 0.4, "ls": ":"},
     }
     for key, style in layer_style.items():
         for f in inv.layers.get(key, []) or []:
@@ -199,7 +199,7 @@ def plot_near_field(
             zorder=8,
         )
         if labelled < max_labels:
-            tag = r.name if r.oe_msm3() is None else "%s (%.1f)" % (r.name, r.oe_msm3())
+            tag = r.name if r.oe_msm3() is None else f"{r.name} ({r.oe_msm3():.1f})"
             ax.annotate(
                 tag,
                 (r.lon, r.lat),
@@ -207,7 +207,7 @@ def plot_near_field(
                 textcoords="offset points",
                 fontsize=7,
                 zorder=9,
-                bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.75),
+                bbox={"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.75},
             )
             labelled += 1
 
@@ -248,7 +248,7 @@ def plot_near_field(
         fontsize=10,
         fontweight="bold",
         zorder=11,
-        bbox=dict(boxstyle="round,pad=0.2", fc="gold", ec="black", alpha=0.9),
+        bbox={"boxstyle": "round,pad=0.2", "fc": "gold", "ec": "black", "alpha": 0.9},
     )
 
     present = [
@@ -319,7 +319,7 @@ def plot_near_field(
         ha="right",
         va="top",
         fontsize=8,
-        bbox=dict(boxstyle="round", fc="white", ec="#999999", alpha=0.9),
+        bbox={"boxstyle": "round", "fc": "white", "ec": "#999999", "alpha": 0.9},
         zorder=12,
     )
     ax.set_xlabel("Longitude (deg)")
@@ -327,8 +327,7 @@ def plot_near_field(
     ax.grid(True, lw=0.3, alpha=0.4)
     ax.set_title(
         title
-        or "Near-field discoveries around %s (%.0f km)"
-        % (inv.target.get("name"), radius),
+        or "Near-field discoveries around {} ({:.0f} km)".format(inv.target.get("name"), radius),
         fontsize=12,
     )
     note = (

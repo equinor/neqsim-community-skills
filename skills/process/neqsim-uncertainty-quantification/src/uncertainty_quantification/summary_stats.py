@@ -38,7 +38,7 @@ def percentile(values: Sequence[float], fraction: float) -> float:
     if len(ordered) == 1:
         return ordered[0]
     position = fraction * (len(ordered) - 1)
-    lower = int(math.floor(position))
+    lower = math.floor(position)
     upper = min(lower + 1, len(ordered) - 1)
     weight = position - lower
     return ordered[lower] * (1.0 - weight) + ordered[upper] * weight

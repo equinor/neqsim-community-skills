@@ -240,7 +240,7 @@ def build_load_cases(
         else get_path(basis, "reservoir.pressure_bara")["high"]
     )
     if producer:
-        bh = producer.get("bottomhole", {})
+        producer.get("bottomhole", {})
         wh = producer.get("wellhead", {})
         cases.append(
             {
@@ -401,7 +401,6 @@ def evaluate_integrity(
     load_cases = build_load_cases(basis, producer, injector)
     out["load_cases"] = load_cases
     out["tubing"] = evaluate_tubing(basis, load_cases)
-    res = producer or injector
     depths = effective_tubing_depths(basis)
     pack_tvd = (
         depths["tvd_m"]
@@ -480,7 +479,7 @@ def lifecycle_tubing_matrix(
     rows: list[dict[str, Any]] = []
     for st in states:
         rho = float(st.get("fluid_density_kg_m3", 300.0))
-        a_steel = (
+        (
             math.pi / 4.0 * ((dims["od_in"] * IN) ** 2 - (dims["id_in"] * IN) ** 2)
         )
         a_in = math.pi / 4.0 * (dims["id_in"] * IN) ** 2

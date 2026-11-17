@@ -171,7 +171,7 @@ def direct_label(
         color=color or PALETTE["text"],
         fontweight=weight,
         bbox=(
-            dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.85)
+            {"boxstyle": "round,pad=0.15", "fc": "white", "ec": "none", "alpha": 0.85}
             if bbox
             else None
         ),
@@ -213,7 +213,7 @@ def badge(
         ha="center",
         va="center",
         transform=transform or ax.transData,
-        bbox=dict(boxstyle="round,pad=0.25", fc=status_color(status), ec="none"),
+        bbox={"boxstyle": "round,pad=0.25", "fc": status_color(status), "ec": "none"},
     )
 
 

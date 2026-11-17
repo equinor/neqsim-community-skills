@@ -17,7 +17,6 @@ Equations (OPM Flow ``MultisegmentWellSegments``):
 from __future__ import annotations
 
 from dataclasses import MISSING, asdict, dataclass
-from typing import Union
 
 SECONDS_PER_DAY = 86400.0
 PA_PER_BAR = 1.0e5
@@ -106,7 +105,7 @@ class DensityValve:
         return self.ac_oil, "oil"
 
 
-Device = Union[Aicd, Sicd, Valve, DensityValve]
+Device = Aicd | Sicd | Valve | DensityValve
 
 
 def _check_fractions(fractions: Fractions) -> Fractions:

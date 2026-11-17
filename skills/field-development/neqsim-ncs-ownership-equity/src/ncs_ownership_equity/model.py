@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any, Union
+from typing import Any
 
 TOLERANCE_PCT = 0.01
-Series = Union[Sequence[float], Mapping[Any, float]]
+Series = Sequence[float] | Mapping[Any, float]
 
 
 class OwnershipError(ValueError):

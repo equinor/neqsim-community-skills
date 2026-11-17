@@ -213,7 +213,9 @@ class CfdCouplingModel:
         wall_ok = True
         if y_plus is None:
             wall_ok = False
-            findings.append("y+ not reported, so the wall treatment cannot be verified.")
+            findings.append(
+                "y+ not reported, so the wall treatment cannot be verified."
+            )
         else:
             self._require_positive("y_plus", y_plus)
             if treatment_key == "wall_function":
@@ -345,7 +347,9 @@ class CfdCouplingModel:
             "duct-acoustic propagation or acoustic analogy",
         ]
         if needs_structural_basis:
-            solver_sequence.append("structural modal analysis with one-way pressure coupling")
+            solver_sequence.append(
+                "structural modal analysis with one-way pressure coupling"
+            )
         if moving_component:
             solver_sequence.append(
                 "two-way fluid-structure interaction only if measured motion couples to flow"

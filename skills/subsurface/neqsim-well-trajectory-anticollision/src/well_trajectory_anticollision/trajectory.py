@@ -3,6 +3,7 @@
 Coordinates are (E, N, V) with V positive down (TVD below a common datum, e.g. TVDSS).
 Angles are passed in degrees at the public API and handled in radians internally.
 """
+
 from __future__ import annotations
 
 import math
@@ -16,11 +17,17 @@ def tangent(inc_rad, az_rad):
     """Unit tangent (E, N, V-down) for inclination/azimuth in radians (scalars or arrays)."""
     inc = np.asarray(inc_rad, float)
     az = np.asarray(az_rad, float)
-    return np.stack([np.sin(inc) * np.sin(az), np.sin(inc) * np.cos(az), np.cos(inc)], axis=-1)
+    return np.stack(
+        [np.sin(inc) * np.sin(az), np.sin(inc) * np.cos(az), np.cos(inc)], axis=-1
+    )
 
 
-def minimum_curvature(md: Sequence[float], inc_deg: Sequence[float], az_deg: Sequence[float],
-                      start_xyz: Sequence[float] = (0.0, 0.0, 0.0)) -> np.ndarray:
+def minimum_curvature(
+    md: Sequence[float],
+    inc_deg: Sequence[float],
+    az_deg: Sequence[float],
+    start_xyz: Sequence[float] = (0.0, 0.0, 0.0),
+) -> np.ndarray:
     """Minimum-curvature station positions (E, N, V) from MD/inclination/azimuth in degrees."""
     md = np.asarray(md, float)
     t = tangent(np.radians(inc_deg), np.radians(az_deg))
@@ -33,14 +40,20 @@ def minimum_curvature(md: Sequence[float], inc_deg: Sequence[float], az_deg: Seq
     return pos
 
 
-def dogleg_severity(md: Sequence[float], inc_deg: Sequence[float], az_deg: Sequence[float],
-                    course_length: float = 30.0) -> np.ndarray:
+def dogleg_severity(
+    md: Sequence[float],
+    inc_deg: Sequence[float],
+    az_deg: Sequence[float],
+    course_length: float = 30.0,
+) -> np.ndarray:
     """Dogleg severity in degrees per ``course_length`` (default deg/30 m); first station is 0."""
     md = np.asarray(md, float)
     t = tangent(np.radians(inc_deg), np.radians(az_deg))
     out = np.zeros(len(md))
     for i in range(1, len(md)):
-        ang = math.degrees(math.acos(max(-1.0, min(1.0, float(np.dot(t[i - 1], t[i]))))))
+        ang = math.degrees(
+            math.acos(max(-1.0, min(1.0, float(np.dot(t[i - 1], t[i])))))
+        )
         out[i] = ang / max(md[i] - md[i - 1], 1e-9) * course_length
     return out
 
@@ -64,15 +77,28 @@ class Wellpath:
     info: dict = field(default_factory=dict)
 
     @classmethod
-    def from_survey(cls, name: str, md, inc_deg, az_deg, start_xyz=(0.0, 0.0, 0.0), cov=None,
-                    xyz=None, parent: Optional[str] = None) -> "Wellpath":
+    def from_survey(
+        cls,
+        name: str,
+        md,
+        inc_deg,
+        az_deg,
+        start_xyz=(0.0, 0.0, 0.0),
+        cov=None,
+        xyz=None,
+        parent: Optional[str] = None,
+    ) -> "Wellpath":
         """Build from a survey listing. Positions are computed by minimum curvature unless ``xyz`` is given."""
         md = np.asarray(md, float)
         order = np.argsort(md)
         md = md[order]
         inc_deg = np.asarray(inc_deg, float)[order]
         az_deg = np.asarray(az_deg, float)[order]
-        pos = np.asarray(xyz, float)[order] if xyz is not None else minimum_curvature(md, inc_deg, az_deg, start_xyz)
+        pos = (
+            np.asarray(xyz, float)[order]
+            if xyz is not None
+            else minimum_curvature(md, inc_deg, az_deg, start_xyz)
+        )
         c = None if cov is None else np.asarray(cov, float)[order]
         return cls(name, md, pos, np.radians(inc_deg), np.radians(az_deg), c, parent)
 
@@ -85,7 +111,9 @@ class Wellpath:
         """Index of the station at ``md`` (must coincide with a station)."""
         i = int(np.searchsorted(self.md, md - tol))
         if i >= len(self.md) or abs(self.md[i] - md) > tol:
-            raise ValueError(f"MD {md} is not a station of {self.name}; pick a survey station as tie-in")
+            raise ValueError(
+                f"MD {md} is not a station of {self.name}; pick a survey station as tie-in"
+            )
         return i
 
 
@@ -126,7 +154,9 @@ def curve_hold(p0, t0, target, dls_deg30: float, step: float = 10.0):
     else:
         v = vperp / b
         if a * a + (b - r) ** 2 < r * r:
-            raise ValueError("target inside the turning circle: raise DLS or move the tie-in/kick-off")
+            raise ValueError(
+                "target inside the turning circle: raise DLS or move the tie-in/kick-off"
+            )
 
         def miss(th):
             px, py = r * math.sin(th), r * (1 - math.cos(th))
@@ -134,7 +164,9 @@ def curve_hold(p0, t0, target, dls_deg30: float, step: float = 10.0):
 
         grid = np.linspace(1e-6, math.pi - 1e-6, 2000)
         vals = [miss(g) for g in grid]
-        idx = next((i for i in range(len(grid) - 1) if vals[i] * vals[i + 1] <= 0), None)
+        idx = next(
+            (i for i in range(len(grid) - 1) if vals[i] * vals[i + 1] <= 0), None
+        )
         if idx is None:
             raise ValueError("no curve-hold solution for this target and DLS")
         theta = _bisect(miss, grid[idx], grid[idx + 1])
@@ -150,8 +182,14 @@ def curve_hold(p0, t0, target, dls_deg30: float, step: float = 10.0):
     return s, inc, az, larc, lhold
 
 
-def plan_sidetrack(parent: Wellpath, tie_md: float, target, dls_deg30: float, name: str = "plan",
-                   step: float = 10.0) -> Wellpath:
+def plan_sidetrack(
+    parent: Wellpath,
+    tie_md: float,
+    target,
+    dls_deg30: float,
+    name: str = "plan",
+    step: float = 10.0,
+) -> Wellpath:
     """Plan a sidetrack (or re-entry) that follows ``parent`` to ``tie_md`` then curves and holds to ``target``.
 
     The parent covariance up to the tie-in is copied when present; add new-hole uncertainty with
@@ -161,27 +199,44 @@ def plan_sidetrack(parent: Wellpath, tie_md: float, target, dls_deg30: float, na
     p0 = parent.xyz[i]
     t0 = tangent(parent.inc[i], parent.az[i])
     s, inc, az, larc, lhold = curve_hold(p0, t0, target, dls_deg30, step)
-    md = np.concatenate([parent.md[:i + 1], tie_md + s[1:]])
-    inc_all = np.concatenate([parent.inc[:i + 1], inc[1:]])
-    az_all = np.concatenate([parent.az[:i + 1], az[1:]])
+    md = np.concatenate([parent.md[: i + 1], tie_md + s[1:]])
+    inc_all = np.concatenate([parent.inc[: i + 1], inc[1:]])
+    az_all = np.concatenate([parent.az[: i + 1], az[1:]])
     new_xyz = minimum_curvature(tie_md + s, np.degrees(inc), np.degrees(az), p0)
-    xyz = np.concatenate([parent.xyz[:i + 1], new_xyz[1:]])
+    xyz = np.concatenate([parent.xyz[: i + 1], new_xyz[1:]])
     cov = None
     if parent.cov is not None:
-        cov = np.concatenate([parent.cov[:i + 1], np.repeat(parent.cov[i][None], len(s) - 1, 0)])
+        cov = np.concatenate(
+            [parent.cov[: i + 1], np.repeat(parent.cov[i][None], len(s) - 1, 0)]
+        )
     wp = Wellpath(name, md, xyz, inc_all, az_all, cov, parent.name, tie_md)
-    wp.info = {"tie_index": i, "arc_length_m": larc, "hold_length_m": lhold,
-               "target_miss_m": float(np.linalg.norm(xyz[-1] - np.asarray(target, float)))}
+    wp.info = {
+        "tie_index": i,
+        "arc_length_m": larc,
+        "hold_length_m": lhold,
+        "target_miss_m": float(np.linalg.norm(xyz[-1] - np.asarray(target, float))),
+    }
     return wp
 
 
-def plan_from_surface(slot_xyz, kop_depth: float, target, dls_deg30: float, name: str = "plan",
-                      step: float = 10.0) -> Wellpath:
+def plan_from_surface(
+    slot_xyz,
+    kop_depth: float,
+    target,
+    dls_deg30: float,
+    name: str = "plan",
+    step: float = 10.0,
+) -> Wellpath:
     """Vertical to the kick-off (``kop_depth`` measured along hole from ``slot_xyz``), then curve-hold to target."""
     slot_xyz = np.asarray(slot_xyz, float)
     md_v = np.append(np.arange(0.0, kop_depth, step), kop_depth)
-    vert = Wellpath("vertical", md_v, slot_xyz[None] + np.outer(md_v, [0.0, 0.0, 1.0]),
-                    np.zeros(len(md_v)), np.zeros(len(md_v)))
+    vert = Wellpath(
+        "vertical",
+        md_v,
+        slot_xyz[None] + np.outer(md_v, [0.0, 0.0, 1.0]),
+        np.zeros(len(md_v)),
+        np.zeros(len(md_v)),
+    )
     wp = plan_sidetrack(vert, kop_depth, target, dls_deg30, name, step)
     wp.parent, wp.tie_md = None, None
     wp.info["kop_md"] = kop_depth
@@ -202,7 +257,9 @@ def summarize(wp: Wellpath, slot_en=None) -> dict:
         "hold_az_deg": round(math.degrees(wp.az[-1]), 2),
         "arc_length_m": round(wp.info.get("arc_length_m", float("nan")), 1),
         "hold_length_m": round(wp.info.get("hold_length_m", float("nan")), 1),
-        "max_dls_deg_per_30m": round(float(wp.dls[i0 + 1:].max()) if len(wp.md) > i0 + 1 else 0.0, 2),
+        "max_dls_deg_per_30m": round(
+            float(wp.dls[i0 + 1 :].max()) if len(wp.md) > i0 + 1 else 0.0, 2
+        ),
         "horizontal_displacement_m": round(horiz, 1),
         "step_out_ratio": round(horiz / depth, 2) if depth > 0 else None,
         "target_miss_m": round(wp.info.get("target_miss_m", float("nan")), 3),

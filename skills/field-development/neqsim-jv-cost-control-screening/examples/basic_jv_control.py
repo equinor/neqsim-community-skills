@@ -30,7 +30,9 @@ parsed = parse_hierarchical_rows(rows, range(4), values)
 log.info("totals that do not tie: %d", len(check_subtotals(parsed)))
 
 detail = parsed.detail.assign(budget=[90.0, 150.0, 40.0])
-table = variance_table(detail, "ytd", "budget", ["L2"], abs_threshold=10.0, pct_threshold=0.1)
+table = variance_table(
+    detail, "ytd", "budget", ["L2"], abs_threshold=10.0, pct_threshold=0.1
+)
 for item in variance_commentary(table, ["L2"], "ytd", "budget", unit="MUSD"):
     log.info(item["fact"])
 

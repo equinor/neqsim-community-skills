@@ -150,9 +150,7 @@ def morris_screening(
     from SALib.sample import morris as morris_sample  # type: ignore
 
     problem = unit_problem(parameters)
-    design = morris_sample.sample(
-        problem, trajectories, num_levels=levels, seed=seed
-    )
+    design = morris_sample.sample(problem, trajectories, num_levels=levels, seed=seed)
     outputs = np.asarray(
         [model(to_parameter_values(parameters, row)) for row in design], dtype=float
     )
@@ -189,12 +187,17 @@ def fit_polynomial_chaos(
     joint = cp.J(*[cp.Uniform(0.0, 1.0) for _ in parameters])
     expansion = cp.generate_expansion(order, joint)
     count = samples if samples is not None else 2 * len(expansion)
-    design = joint.sample(count, rule="sobol", seed=seed) if seed is not None else joint.sample(
-        count, rule="sobol"
+    design = (
+        joint.sample(count, rule="sobol", seed=seed)
+        if seed is not None
+        else joint.sample(count, rule="sobol")
     )
     design = np.atleast_2d(design)
     evaluations = np.asarray(
-        [model(to_parameter_values(parameters, design[:, i])) for i in range(design.shape[1])],
+        [
+            model(to_parameter_values(parameters, design[:, i]))
+            for i in range(design.shape[1])
+        ],
         dtype=float,
     )
     surrogate = cp.fit_regression(expansion, design, evaluations)
@@ -227,5 +230,9 @@ def sample_surrogate(
     import numpy as np  # type: ignore
 
     joint = fit["joint"]
-    design = np.atleast_2d(joint.sample(n, rule="random", seed=seed) if seed is not None else joint.sample(n, rule="random"))
+    design = np.atleast_2d(
+        joint.sample(n, rule="random", seed=seed)
+        if seed is not None
+        else joint.sample(n, rule="random")
+    )
     return [float(v) for v in np.atleast_1d(fit["surrogate"](*design))]

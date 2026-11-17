@@ -9,12 +9,30 @@ P_STD = 1.01325  # bara
 T_STD = 288.15  # K
 
 _CRIT = {  # name -> (MW g/mol, Tc K, Pc bara)
-    "N2": (28.013, 126.2, 33.94), "CO2": (44.01, 304.2, 73.76), "C1": (16.043, 190.6, 46.0),
-    "C2": (30.07, 305.4, 48.84), "C3": (44.097, 369.8, 42.46), "iC4": (58.123, 408.1, 36.48),
-    "nC4": (58.123, 425.2, 38.0), "iC5": (72.15, 460.4, 33.84), "nC5": (72.15, 469.6, 33.74),
+    "N2": (28.013, 126.2, 33.94),
+    "CO2": (44.01, 304.2, 73.76),
+    "C1": (16.043, 190.6, 46.0),
+    "C2": (30.07, 305.4, 48.84),
+    "C3": (44.097, 369.8, 42.46),
+    "iC4": (58.123, 408.1, 36.48),
+    "nC4": (58.123, 425.2, 38.0),
+    "iC5": (72.15, 460.4, 33.84),
+    "nC5": (72.15, 469.6, 33.74),
     "C6": (86.177, 507.4, 29.69),
 }
-_A = (0.3265, -1.0700, -0.5339, 0.01569, -0.05165, 0.5475, -0.7361, 0.1844, 0.1056, 0.6134, 0.7210)
+_A = (
+    0.3265,
+    -1.0700,
+    -0.5339,
+    0.01569,
+    -0.05165,
+    0.5475,
+    -0.7361,
+    0.1844,
+    0.1056,
+    0.6134,
+    0.7210,
+)
 
 
 def z_factor(p_bara: float, t_k: float, tc: float, pc: float) -> float:
@@ -62,7 +80,9 @@ class Gas:
     def z(self, p_bara: float, t_k: float) -> float:
         return z_factor(p_bara, t_k, self.tc, self.pc)
 
-    def polytropic(self, p_in: float, p_out: float, t_in_k: float, eta_p: float) -> tuple[float, float]:
+    def polytropic(
+        self, p_in: float, p_out: float, t_in_k: float, eta_p: float
+    ) -> tuple[float, float]:
         """Polytropic head (J/kg) and discharge temperature (K), Z at the mean of inlet and outlet."""
         m1 = (self.kappa - 1.0) / (self.kappa * eta_p)
         t_out = t_in_k * (p_out / p_in) ** m1
@@ -70,12 +90,16 @@ class Gas:
         rs = R / (self.mw * 1e-3)
         return zm * rs * t_in_k / m1 * ((p_out / p_in) ** m1 - 1.0), t_out
 
-    def power_mw(self, mdot_kg_s: float, p_in: float, p_out: float, t_in_k: float, eta_p: float) -> float:
+    def power_mw(
+        self, mdot_kg_s: float, p_in: float, p_out: float, t_in_k: float, eta_p: float
+    ) -> float:
         head, _ = self.polytropic(p_in, p_out, t_in_k, eta_p)
         return mdot_kg_s * head / eta_p / 1e6
 
 
-def static_bottomhole_pressure(whp_barg: float, gas: Gas, tvd_m: float, t_mean_k: float) -> float:
+def static_bottomhole_pressure(
+    whp_barg: float, gas: Gas, tvd_m: float, t_mean_k: float
+) -> float:
     """Bottom-hole pressure (bara) of a shut-in gas well from the static column equation."""
     pwh = whp_barg + P_STD
     pbh = pwh

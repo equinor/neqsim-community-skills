@@ -29,7 +29,9 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 
 Fetch = Callable[[str, float], bytes]
 
-USER_AGENT = "neqsim-weather-data/0.1 (+https://github.com/equinor/neqsim-community-skills)"
+USER_AGENT = (
+    "neqsim-weather-data/0.1 (+https://github.com/equinor/neqsim-community-skills)"
+)
 
 FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
@@ -59,8 +61,12 @@ DEFAULT_MARINE_VARS: List[str] = [
 
 def default_fetch(url: str, timeout: float = 30.0) -> bytes:
     """Perform a bounded, read-only GET and return the body."""
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed https hosts
+    request = urllib.request.Request(
+        url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
+    )
+    with urllib.request.urlopen(
+        request, timeout=timeout
+    ) as response:  # noqa: S310 - fixed https hosts
         return response.read()
 
 
@@ -79,7 +85,9 @@ class WeatherSeries:
     current: Dict[str, Any] = field(default_factory=dict)
     current_units: Dict[str, str] = field(default_factory=dict)
     url: str = ""
-    retrieved_utc: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    retrieved_utc: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+    )
 
     def to_dict(self) -> Dict[str, Any]:
         return dict(self.__dict__)
@@ -214,7 +222,9 @@ class OpenMeteoClient:
         payload = self._get(MARINE_URL, params)
         return self._to_series("open-meteo-marine", payload)
 
-    def geocode(self, name: str, *, count: int = 5, language: str = "en") -> List[GeocodeResult]:
+    def geocode(
+        self, name: str, *, count: int = 5, language: str = "en"
+    ) -> List[GeocodeResult]:
         """Resolve a place/installation name to coordinates, worldwide."""
         params = {"name": name, "count": count, "language": language, "format": "json"}
         payload = self._get(GEOCODING_URL, params)

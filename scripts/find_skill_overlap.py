@@ -51,8 +51,10 @@ from typing import Dict, List, Optional, Tuple
 
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 NAME_RE = re.compile(r'^\s*name:\s*["\']?([^"\'\n]+?)["\']?\s*$', re.MULTILINE)
-DESC_RE = re.compile(r'^\s*description:\s*(.+?)\s*$', re.MULTILINE)
-SKILL_ID_RE = re.compile(r"(?<![a-z0-9-])((?:neqsim|enterprise)-[a-z0-9]+(?:-[a-z0-9]+)*)")
+DESC_RE = re.compile(r"^\s*description:\s*(.+?)\s*$", re.MULTILINE)
+SKILL_ID_RE = re.compile(
+    r"(?<![a-z0-9-])((?:neqsim|enterprise)-[a-z0-9]+(?:-[a-z0-9]+)*)"
+)
 
 # Common words that carry little discriminating signal for skill descriptions.
 STOPWORDS = frozenset(
@@ -109,7 +111,9 @@ def similarity(a: Dict[str, str], b: Dict[str, str]) -> float:
     return round(0.5 * jacc + 0.4 * seq + 0.1 * name_seq, 3)
 
 
-def find_duplicates(skills: List[Dict[str, str]], threshold: float) -> List[Tuple[float, str, str]]:
+def find_duplicates(
+    skills: List[Dict[str, str]], threshold: float
+) -> List[Tuple[float, str, str]]:
     pairs: List[Tuple[float, str, str]] = []
     for i in range(len(skills)):
         for j in range(i + 1, len(skills)):
@@ -178,10 +182,21 @@ def find_orphans(skills: List[Dict[str, str]], skills_dir: Path, repo_root: Path
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Find near-duplicate and orphan skills")
-    parser.add_argument("--threshold", type=float, default=0.80, help="Similarity threshold (0..1) for near-duplicates")
+    parser = argparse.ArgumentParser(
+        description="Find near-duplicate and orphan skills"
+    )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.80,
+        help="Similarity threshold (0..1) for near-duplicates",
+    )
     parser.add_argument("--json", metavar="PATH", help="Also write the report as JSON")
-    parser.add_argument("--fail-on-duplicates", action="store_true", help="Exit 1 if any pair >= threshold")
+    parser.add_argument(
+        "--fail-on-duplicates",
+        action="store_true",
+        help="Exit 1 if any pair >= threshold",
+    )
     args = parser.parse_args()
 
     repo_root = repo_root_from_script()
@@ -194,7 +209,9 @@ def main() -> int:
     duplicates = find_duplicates(skills, args.threshold)
     agent_dirs, orphans = find_orphans(skills, skills_dir, repo_root)
 
-    print(f"Consolidation pass over {len(skills)} skills (threshold {args.threshold})\n")
+    print(
+        f"Consolidation pass over {len(skills)} skills (threshold {args.threshold})\n"
+    )
 
     print(f"Near-duplicate skill pairs (>= {args.threshold}): {len(duplicates)}")
     for score, a, b in duplicates:
@@ -204,9 +221,11 @@ def main() -> int:
 
     print()
     if agent_dirs is None:
-        print("Orphan skills: SKIPPED (agent catalogs not reachable — set "
-              "NEQSIM_COMMUNITY_AGENTS_DIR / NEQSIM_ENTERPRISE_AGENTS_DIR or place "
-              "the agent repos as siblings)")
+        print(
+            "Orphan skills: SKIPPED (agent catalogs not reachable — set "
+            "NEQSIM_COMMUNITY_AGENTS_DIR / NEQSIM_ENTERPRISE_AGENTS_DIR or place "
+            "the agent repos as siblings)"
+        )
     else:
         print(f"Orphan skills (not referenced by any agent or skill): {len(orphans)}")
         print(f"  [agent catalogs scanned: {', '.join(agent_dirs) or 'none'}]")
@@ -220,9 +239,7 @@ def main() -> int:
             "schema": "skill_overlap_report.v1",
             "skill_count": len(skills),
             "threshold": args.threshold,
-            "near_duplicates": [
-                {"score": s, "a": a, "b": b} for s, a, b in duplicates
-            ],
+            "near_duplicates": [{"score": s, "a": a, "b": b} for s, a, b in duplicates],
             "orphans": None if agent_dirs is None else orphans,
             "agent_catalogs_scanned": agent_dirs or [],
         }
@@ -230,7 +247,10 @@ def main() -> int:
         print(f"\nWrote {args.json}")
 
     if args.fail_on_duplicates and duplicates:
-        print("\nFAIL: near-duplicate skills found (--fail-on-duplicates).", file=sys.stderr)
+        print(
+            "\nFAIL: near-duplicate skills found (--fail-on-duplicates).",
+            file=sys.stderr,
+        )
         return 1
     return 0
 

@@ -84,7 +84,9 @@ class RSDeliverability:
         return max(v, 0.0) ** 0.5 - P_STD
 
     @classmethod
-    def fit(cls, pr_bara, whp_barg, rate, n_bounds: tuple[float, float] | None = (0.5, 1.0)) -> "RSDeliverability":
+    def fit(
+        cls, pr_bara, whp_barg, rate, n_bounds: tuple[float, float] | None = (0.5, 1.0)
+    ) -> "RSDeliverability":
         """Log-log least squares; if the exponent falls outside n_bounds it is clipped and C re-fitted."""
         xs, ys = [], []
         for pr, w, q in zip(pr_bara, whp_barg, rate):

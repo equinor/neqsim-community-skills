@@ -62,8 +62,7 @@ def test_thresholds_are_inclusive():
         == "action"
     )
     assert (
-        model.evaluate(**common, measured_spl_at_distance=110.0).noise_warning
-        == "high"
+        model.evaluate(**common, measured_spl_at_distance=110.0).noise_warning == "high"
     )
 
 

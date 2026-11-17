@@ -117,7 +117,9 @@ def fake_install_root(tmp_path: Path) -> Path:
         (root / f"Olga {version}" / "OPGFramework.exe").write_text("", encoding="utf-8")
     # Decoys that must not be reported as the simulator.
     (root / "OLGA-S 2025.1.0" / "OlgaExecutables").mkdir(parents=True)
-    (root / "OLGA-S 2025.1.0" / "OlgaExecutables" / "Olga-2025.1.0.exe").write_text("", encoding="utf-8")
+    (root / "OLGA-S 2025.1.0" / "OlgaExecutables" / "Olga-2025.1.0.exe").write_text(
+        "", encoding="utf-8"
+    )
     (root / "OLGA Namespace Explorer 7.3.34").mkdir(parents=True)
     (root / "Common").mkdir(parents=True)
     return root

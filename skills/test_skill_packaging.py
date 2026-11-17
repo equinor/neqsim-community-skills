@@ -55,5 +55,6 @@ def test_setup_discovers_packages_in_flat_plugin_layout(tmp_path) -> None:
     spec.loader.exec_module(flat_setup)
 
     assert set(flat_setup.PACKAGE_DIR) == set(_top_level_packages())
-    assert all(rel.count("/") == 3 for rel in flat_setup.PACKAGE_DIR.values()), \
-        "flat layout must map skills/<skill>/src/<package>"
+    assert all(
+        rel.count("/") == 3 for rel in flat_setup.PACKAGE_DIR.values()
+    ), "flat layout must map skills/<skill>/src/<package>"

@@ -39,5 +39,8 @@ def runtime():
 @pytest.fixture(scope="session")
 def java(runtime):
     if not runtime.wellplanning_available:
-        pytest.skip("NeqSim wellplanning classes unavailable: " + (runtime.reason or "no runtime"))
+        pytest.skip(
+            "NeqSim wellplanning classes unavailable: "
+            + (runtime.reason or "no runtime")
+        )
     return runtime

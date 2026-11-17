@@ -18,7 +18,7 @@ import csv
 import json
 from dataclasses import dataclass, field as dc_field
 from importlib import resources
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping
 
 _DATA_PACKAGE = "norwegian_continental_shelf_data.data"
 _DATA_FILE = "ncs_reference.json"
@@ -88,9 +88,7 @@ class NcsDataset:
     @classmethod
     def load(cls) -> "NcsDataset":
         """Load the bundled public reference snapshot."""
-        text = (
-            resources.files(_DATA_PACKAGE).joinpath(_DATA_FILE).read_text("utf-8")
-        )
+        text = resources.files(_DATA_PACKAGE).joinpath(_DATA_FILE).read_text("utf-8")
         raw = json.loads(text)
         dataset = cls(raw=raw)
         for row in raw.get("annual_production_seed", []):
@@ -221,9 +219,7 @@ class NcsDataset:
         by_status: dict[str, int] = {}
         for record in self.fields():
             by_area[record.sea_area] = by_area.get(record.sea_area, 0) + 1
-            by_product[record.main_product] = (
-                by_product.get(record.main_product, 0) + 1
-            )
+            by_product[record.main_product] = by_product.get(record.main_product, 0) + 1
             by_status[record.status] = by_status.get(record.status, 0) + 1
         return {
             "by_sea_area": dict(sorted(by_area.items())),
@@ -240,9 +236,7 @@ class NcsDataset:
         """Return the production record for ``year`` if present."""
         return self._production.get(int(year))
 
-    def ingest_annual_production(
-        self, rows: Iterable[Mapping[str, Any]]
-    ) -> int:
+    def ingest_annual_production(self, rows: Iterable[Mapping[str, Any]]) -> int:
         """Ingest parsed annual-production rows into the series.
 
         Each row must provide ``year`` and either ``oe_mill_sm3`` or enough
@@ -362,9 +356,7 @@ class NcsDataset:
             "oe_mill_sm3": pick("prfprdoenetmillsm3", "oe"),
         }
 
-    def _build_field_reserves_record(
-        self, row: Mapping[str, Any]
-    ) -> dict[str, float]:
+    def _build_field_reserves_record(self, row: Mapping[str, Any]) -> dict[str, float]:
         recoverable = _opt_float(row.get("recoverable_oe_mill_sm3"))
         remaining = _opt_float(row.get("remaining_oe_mill_sm3"))
         produced = _opt_float(row.get("cumulative_produced_oe_mill_sm3"))
@@ -384,9 +376,7 @@ class NcsDataset:
         return record
 
     @classmethod
-    def _components_to_oe(
-        cls, row: Mapping[str, Any], *, prefix: str
-    ) -> float | None:
+    def _components_to_oe(cls, row: Mapping[str, Any], *, prefix: str) -> float | None:
         oil = _opt_float(row.get(f"{prefix}oil_mill_sm3"))
         gas = _opt_float(row.get(f"{prefix}gas_bill_sm3"))
         ngl_tonne = _opt_float(row.get(f"{prefix}ngl_mill_tonne"))
@@ -401,9 +391,7 @@ class NcsDataset:
         )
 
     @staticmethod
-    def _map_sodir_field_reserves_row(
-        raw: Mapping[str, str]
-    ) -> dict[str, Any] | None:
+    def _map_sodir_field_reserves_row(raw: Mapping[str, str]) -> dict[str, Any] | None:
         lookup = {str(k).strip().lower(): v for k, v in raw.items()}
 
         def pick(*names: str) -> str | None:

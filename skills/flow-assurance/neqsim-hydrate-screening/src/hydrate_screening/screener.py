@@ -63,7 +63,9 @@ class HydrateScreener:
             "Use validated NeqSim hydrate methods for real calculations.",
         ]
         if not water_present:
-            assumptions.append("Water absent was provided by the caller; verify water basis before relying on low risk.")
+            assumptions.append(
+                "Water absent was provided by the caller; verify water basis before relying on low risk."
+            )
         return tuple(assumptions)
 
     @staticmethod

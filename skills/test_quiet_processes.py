@@ -25,7 +25,11 @@ def _skill_sources():
 
 
 def _strings(node):
-    return [n.value for n in ast.walk(node) if isinstance(n, ast.Constant) and isinstance(n.value, str)]
+    return [
+        n.value
+        for n in ast.walk(node)
+        if isinstance(n, ast.Constant) and isinstance(n.value, str)
+    ]
 
 
 def _dotted(func):
@@ -47,19 +51,25 @@ def _findings():
             if not isinstance(node, ast.Call):
                 continue
             name = _dotted(node.func)
-            span = "\n".join(lines[node.lineno - 1:node.end_lineno])
+            span = "\n".join(lines[node.lineno - 1 : node.end_lineno])
             if "quiet-ok" in span:
                 continue
             where = "{}:{}".format(path.relative_to(REPOSITORY_ROOT), node.lineno)
             if name.startswith("subprocess.") and name.split(".")[-1] in SPAWNERS:
-                if not any(k.arg in ("creationflags", "startupinfo") for k in node.keywords):
-                    yield where, "{} without creationflags=CREATE_NO_WINDOW".format(name)
+                if not any(
+                    k.arg in ("creationflags", "startupinfo") for k in node.keywords
+                ):
+                    yield where, "{} without creationflags=CREATE_NO_WINDOW".format(
+                        name
+                    )
                 words = [s.strip().lower() for s in _strings(node)]
                 if "pip" in words and "install" in words:
                     yield where, "runtime pip install; declare the dependency in pyproject instead"
                 if not in_sso and "login" in words:
                     yield where, "interactive login; use enterprise-sso-auth tokens instead"
-            elif name in ("os.system", "os.startfile") or (name == "webbrowser.open" and not in_sso):
+            elif name in ("os.system", "os.startfile") or (
+                name == "webbrowser.open" and not in_sso
+            ):
                 yield where, "{} opens a window or shell".format(name)
 
 

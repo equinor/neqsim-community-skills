@@ -36,15 +36,27 @@ EXIT_CODES: Dict[int, Tuple[str, str, str]] = {
     4: ("Normal stop", "CONSOLE_CLOSE", "console close event"),
     17: ("Initialization failure", "CMDLINE_FAILED", "illegal command line"),
     18: ("Initialization failure", "VERIFY_FAILED", "verification failed"),
-    19: ("Initialization failure", "STILL_ACTIVE", "the thread tells the parent process it is still alive"),
+    19: (
+        "Initialization failure",
+        "STILL_ACTIVE",
+        "the thread tells the parent process it is still alive",
+    ),
     20: ("Initialization failure", "INIT_FAILED", "initialization failed"),
     21: ("Initialization failure", "RESTART_FAILED", "restart failed"),
     22: ("Initialization failure", "SSPP_FAILED", "steady state pre-processor failed"),
     23: ("Initialization failure", "FLUID_FAILED", "fluid initialization failed"),
     24: ("Initialization failure", "OUTPUT_FAILED", "output initialization failed"),
-    25: ("Initialization failure", "TOPO_FAILED", "internal error; initializing topology"),
+    25: (
+        "Initialization failure",
+        "TOPO_FAILED",
+        "internal error; initializing topology",
+    ),
     26: ("Initialization failure", "LICENSE_FAIL", "license checkout failed"),
-    27: ("Initialization failure", "USER_PRVLGS_INSUFF", "insufficient user privileges"),
+    27: (
+        "Initialization failure",
+        "USER_PRVLGS_INSUFF",
+        "insufficient user privileges",
+    ),
     33: ("Module error", "MUFFIN_FAIL", "internal error; initializing muffin"),
     34: ("Module error", "PVT_FAIL", "component fluid initialization failed"),
     35: ("Module error", "WAX_FAIL", "wax module"),
@@ -56,7 +68,11 @@ EXIT_CODES: Dict[int, Tuple[str, str, str]] = {
     49: ("Communication failure", "COMM_FAIL", "communication failure"),
     50: ("Communication failure", "SERVICE_FAIL", "service failure"),
     51: ("Communication failure", "PROCESS_FAIL", "submodel or child process stopped"),
-    52: ("Communication failure", "SUBMODEL_ABORT", "submodel or child process aborted"),
+    52: (
+        "Communication failure",
+        "SUBMODEL_ABORT",
+        "submodel or child process aborted",
+    ),
     65: ("Simulation error", "PT_BELOW", "pressure below"),
     66: ("Simulation error", "PT_ABOVE", "pressure above"),
     67: ("Simulation error", "PT_NAN", "pressure NaN"),
@@ -86,7 +102,9 @@ _DISABLE_FLAGS = {
 
 def describe_exit_code(code: int) -> Tuple[str, str, str]:
     """Return ``(category, symbolic_name, description)`` for an OLGA exit code."""
-    return EXIT_CODES.get(code, ("Unknown", "UNMAPPED", f"exit code {code} is not in the OLGA table"))
+    return EXIT_CODES.get(
+        code, ("Unknown", "UNMAPPED", f"exit code {code} is not in the OLGA table")
+    )
 
 
 @dataclass(frozen=True)

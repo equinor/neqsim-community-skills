@@ -55,7 +55,9 @@ class JetFireRadiationModel:
             self._require_positive("target_flux", target_flux)
 
         # Radiative power emitted from the flame (W -> kW).
-        radiative_power_w = transmissivity * radiant_fraction * release_rate * heat_of_combustion
+        radiative_power_w = (
+            transmissivity * radiant_fraction * release_rate * heat_of_combustion
+        )
         total_radiative_power_kw = radiative_power_w / 1000.0
 
         radiation_flux_kw_m2: float | None = None
@@ -66,7 +68,9 @@ class JetFireRadiationModel:
         distance_to_target_m: float | None = None
         if target_flux is not None:
             target_flux_w_m2 = target_flux * 1000.0
-            distance_to_target_m = sqrt(radiative_power_w / (4.0 * pi * target_flux_w_m2))
+            distance_to_target_m = sqrt(
+                radiative_power_w / (4.0 * pi * target_flux_w_m2)
+            )
 
         warning = self._warning(radiation_flux_kw_m2)
 

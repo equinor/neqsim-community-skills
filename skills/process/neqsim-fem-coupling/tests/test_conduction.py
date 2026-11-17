@@ -13,7 +13,9 @@ from fem_coupling import (
 
 def _layers(steel_elements=20, insulation_elements=40):
     steel = custom_material(
-        "carbon-steel", conductivity_w_per_mk=50.0, conductivity_temp_coeff_w_per_mk2=0.0
+        "carbon-steel",
+        conductivity_w_per_mk=50.0,
+        conductivity_temp_coeff_w_per_mk2=0.0,
     )
     insulation = custom_material(
         "polyurethane-insulation",
@@ -66,7 +68,9 @@ def test_most_of_the_temperature_drop_falls_across_the_insulation():
 
 def test_a_planar_wall_reproduces_the_series_resistance():
     steel = custom_material(
-        "carbon-steel", conductivity_w_per_mk=50.0, conductivity_temp_coeff_w_per_mk2=0.0
+        "carbon-steel",
+        conductivity_w_per_mk=50.0,
+        conductivity_temp_coeff_w_per_mk2=0.0,
     )
     model = RadialConductionModel(
         [ConductionLayer("plate", steel, 0.02, 10)], geometry="planar"
@@ -190,7 +194,9 @@ def test_geometry_and_layer_inputs_are_validated():
 
 def test_outer_bulk_temperature_is_calibrated_to_a_known_metal_temperature():
     steel = custom_material(
-        "carbon-steel", conductivity_w_per_mk=45.0, conductivity_temp_coeff_w_per_mk2=0.0
+        "carbon-steel",
+        conductivity_w_per_mk=45.0,
+        conductivity_temp_coeff_w_per_mk2=0.0,
     )
     wall = RadialConductionModel(
         [ConductionLayer("tube wall", steel, 0.00356, 12)], inner_radius_m=0.01752

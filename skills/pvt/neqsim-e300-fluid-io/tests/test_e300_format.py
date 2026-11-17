@@ -20,9 +20,7 @@ from e300_fluid_io import (
     write_e300_file,
 )
 
-EXAMPLES_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), "examples"
-)
+EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "examples")
 SAMPLE = os.path.join(EXAMPLES_DIR, "sample_gas.e300")
 
 

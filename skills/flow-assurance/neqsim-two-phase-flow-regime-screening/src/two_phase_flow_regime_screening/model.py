@@ -39,8 +39,13 @@ class TwoPhaseRegimeModel:
         gas_density: float | None = None,
         liquid_density: float | None = None,
     ) -> TwoPhaseRegimeResult:
-        if superficial_gas_velocity is not None and superficial_liquid_velocity is not None:
-            self._require_non_negative("superficial_gas_velocity", superficial_gas_velocity)
+        if (
+            superficial_gas_velocity is not None
+            and superficial_liquid_velocity is not None
+        ):
+            self._require_non_negative(
+                "superficial_gas_velocity", superficial_gas_velocity
+            )
             self._require_non_negative(
                 "superficial_liquid_velocity", superficial_liquid_velocity
             )

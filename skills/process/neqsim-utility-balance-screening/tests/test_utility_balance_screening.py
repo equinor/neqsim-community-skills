@@ -28,7 +28,7 @@ def test_wobbe_index_and_band_check():
         fuel_gas_lhv_mj_sm3=39.0,
         fuel_gas_relative_density=0.62,
     )
-    assert result.wobbe_index_mj_sm3 == pytest.approx(39.0 / (0.62 ** 0.5), rel=1e-3)
+    assert result.wobbe_index_mj_sm3 == pytest.approx(39.0 / (0.62**0.5), rel=1e-3)
     assert result.wobbe_in_band is True
     assert result.wobbe_warning == "ok"
 

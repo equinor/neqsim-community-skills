@@ -98,7 +98,9 @@ def test_quantile_outside_the_unit_interval_is_rejected():
 
 
 def test_to_dict_matches_the_report_table_columns():
-    row = Triangular(name="GIP", unit="GSm3", low=1.0, base_value=2.0, high=3.0).to_dict()
+    row = Triangular(
+        name="GIP", unit="GSm3", low=1.0, base_value=2.0, high=3.0
+    ).to_dict()
     assert row["name"] == "GIP"
     assert row["unit"] == "GSm3"
     assert row["low"] == 1.0
@@ -115,7 +117,13 @@ def test_unbounded_distribution_reports_p10_p90_as_its_range():
 
 def test_from_spec_builds_each_supported_type():
     triangular = from_spec(
-        {"name": "GIP", "distribution": "triangular", "low": 1.0, "base": 2.0, "high": 3.0}
+        {
+            "name": "GIP",
+            "distribution": "triangular",
+            "low": 1.0,
+            "base": 2.0,
+            "high": 3.0,
+        }
     )
     assert isinstance(triangular, Triangular)
     lognormal = from_spec(

@@ -106,8 +106,12 @@ def test_gas_formation_volume_factor_follows_real_gas_law() -> None:
     )
 
     expected = 1.01325 * 0.95 * 373.15 / (288.15 * 300.0)
-    assert model.parameters["gas_formation_volume_factor"].value == pytest.approx(expected)
-    assert model.volumetrics.reservoir_gas_volume_rm3 == pytest.approx(50.0e9 * expected)
+    assert model.parameters["gas_formation_volume_factor"].value == pytest.approx(
+        expected
+    )
+    assert model.volumetrics.reservoir_gas_volume_rm3 == pytest.approx(
+        50.0e9 * expected
+    )
 
 
 def test_productivity_index_from_darcy_and_derived_well_count() -> None:
@@ -202,9 +206,9 @@ def test_neqsim_spec_uses_reservoir_volumes_and_quadratic_production_index() -> 
     drawdown = model.parameters["design_drawdown_bar"].value
     pwf = 300.0 - drawdown
     per_well = 50000.0 * drawdown
-    assert spec["wellModel"]["neqsimWellProductionIndex_MSm3_per_day_bar2"] == pytest.approx(
-        (per_well / 1.0e6) / (300.0**2 - pwf**2)
-    )
+    assert spec["wellModel"][
+        "neqsimWellProductionIndex_MSm3_per_day_bar2"
+    ] == pytest.approx((per_well / 1.0e6) / (300.0**2 - pwf**2))
 
 
 def test_refinement_plan_is_ranked_and_actionable() -> None:
@@ -279,15 +283,30 @@ def test_refine_keeps_the_provenance_of_earlier_data_sources() -> None:
 
 
 def test_drive_aliases_map_to_tabulated_ranges_and_thin_oil_rim_is_known() -> None:
-    kwargs = dict(fluid_type="oil", datum_depth_m_tvdmsl=3200.0, stoiip_Sm3=6.0e6, has_gas_cap=True)
-    alias = build_reservoir_model(field_name="Alias", drive_mechanism="gas_cap", **kwargs)
-    canonical = build_reservoir_model(field_name="Canonical", drive_mechanism="gas_cap_drive", **kwargs)
-    rim = build_reservoir_model(field_name="Rim", drive_mechanism="thin_oil_rim", **kwargs)
+    kwargs = dict(
+        fluid_type="oil",
+        datum_depth_m_tvdmsl=3200.0,
+        stoiip_Sm3=6.0e6,
+        has_gas_cap=True,
+    )
+    alias = build_reservoir_model(
+        field_name="Alias", drive_mechanism="gas_cap", **kwargs
+    )
+    canonical = build_reservoir_model(
+        field_name="Canonical", drive_mechanism="gas_cap_drive", **kwargs
+    )
+    rim = build_reservoir_model(
+        field_name="Rim", drive_mechanism="thin_oil_rim", **kwargs
+    )
 
     assert not any("No screening recovery-factor" in w for w in alias.warnings)
-    assert alias.parameters["recovery_factor"].value == pytest.approx(canonical.parameters["recovery_factor"].value)
+    assert alias.parameters["recovery_factor"].value == pytest.approx(
+        canonical.parameters["recovery_factor"].value
+    )
     assert rim.parameters["recovery_factor"].value == pytest.approx(0.15)
-    unknown = build_reservoir_model(field_name="Unknown", drive_mechanism="magic", **kwargs)
+    unknown = build_reservoir_model(
+        field_name="Unknown", drive_mechanism="magic", **kwargs
+    )
     assert any("Known drives for oil" in w for w in unknown.warnings)
 
 
@@ -332,7 +351,10 @@ def test_invalid_inputs_are_rejected() -> None:
 
 def test_refine_rejects_unknown_fields() -> None:
     model = build_reservoir_model(
-        field_name="X", fluid_type="oil", stoiip_Sm3=1.0e6, initial_pressure_bara=200.0,
+        field_name="X",
+        fluid_type="oil",
+        stoiip_Sm3=1.0e6,
+        initial_pressure_bara=200.0,
         reservoir_temperature_C=80.0,
     )
     with pytest.raises(ValueError, match="unknown input field"):
@@ -358,14 +380,20 @@ def test_builder_is_reusable_across_fields() -> None:
     builder = ReservoirModelBuilder()
     first = builder.build(
         ReservoirInputs(
-            field_name="One", fluid_type="gas", giip_Sm3=1.0e9,
-            initial_pressure_bara=200.0, reservoir_temperature_C=80.0,
+            field_name="One",
+            fluid_type="gas",
+            giip_Sm3=1.0e9,
+            initial_pressure_bara=200.0,
+            reservoir_temperature_C=80.0,
         )
     )
     second = builder.build(
         ReservoirInputs(
-            field_name="Two", fluid_type="oil", stoiip_Sm3=2.0e6,
-            initial_pressure_bara=300.0, reservoir_temperature_C=110.0,
+            field_name="Two",
+            fluid_type="oil",
+            stoiip_Sm3=2.0e6,
+            initial_pressure_bara=300.0,
+            reservoir_temperature_C=110.0,
         )
     )
 

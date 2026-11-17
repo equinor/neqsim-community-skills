@@ -46,7 +46,9 @@ def test_staged_model_re_evaluates_when_the_technical_input_changes():
 
 def test_staged_model_returns_the_composed_value():
     technical, economic, _ = _counting_stages()
-    assert StagedModel(technical, economic)({"a": 3.0}, {"b": 1.0}) == pytest.approx(7.0)
+    assert StagedModel(technical, economic)({"a": 3.0}, {"b": 1.0}) == pytest.approx(
+        7.0
+    )
 
 
 def test_reset_clears_cache_and_counters():

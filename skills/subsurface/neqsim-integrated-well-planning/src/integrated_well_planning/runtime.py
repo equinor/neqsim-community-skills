@@ -135,7 +135,13 @@ def resolve_classpath() -> List[str]:
             cp = [str(classes)]
             cp_file = root / "target" / "neqsim-dev-classpath.txt"
             if cp_file.exists():
-                cp.extend(p for p in cp_file.read_text(encoding="utf-8").strip().split(os.pathsep) if p)
+                cp.extend(
+                    p
+                    for p in cp_file.read_text(encoding="utf-8")
+                    .strip()
+                    .split(os.pathsep)
+                    if p
+                )
             else:
                 cp.extend(str(j) for j in _pip_jars())
             return cp
@@ -174,7 +180,9 @@ def ensure_runtime(start: bool = True) -> RuntimeStatus:
     try:
         import jpype
     except ImportError:
-        st = RuntimeStatus(reason="jpype is not installed; NeqSim-backed calculations are unavailable")
+        st = RuntimeStatus(
+            reason="jpype is not installed; NeqSim-backed calculations are unavailable"
+        )
         _STATE["status"] = st
         return st
     if not jpype.isJVMStarted():
@@ -182,21 +190,37 @@ def ensure_runtime(start: bool = True) -> RuntimeStatus:
             return RuntimeStatus(reason="JVM not started")
         classpath = resolve_classpath()
         if not classpath:
-            st = RuntimeStatus(reason="no NeqSim classpath found (set IWP_NEQSIM_CLASSPATH, NEQSIM_PROJECT_ROOT or install neqsim)")
+            st = RuntimeStatus(
+                reason="no NeqSim classpath found (set IWP_NEQSIM_CLASSPATH, NEQSIM_PROJECT_ROOT or install neqsim)"
+            )
             _STATE["status"] = st
             return st
         os.environ.setdefault("NEQSIM_JVM_AUTOSTART", "0")
         try:
-            jpype.startJVM("-Xmx1g", "--enable-native-access=ALL-UNNAMED", classpath=classpath, convertStrings=True)
+            jpype.startJVM(
+                "-Xmx1g",
+                "--enable-native-access=ALL-UNNAMED",
+                classpath=classpath,
+                convertStrings=True,
+            )
         except Exception as exc:  # noqa: BLE001
             try:
-                sys.path.insert(0, str(next(r for r in _candidate_roots() if (r / "devtools").is_dir()) / "devtools"))
+                sys.path.insert(
+                    0,
+                    str(
+                        next(r for r in _candidate_roots() if (r / "devtools").is_dir())
+                        / "devtools"
+                    ),
+                )
                 from java_locator import ensure_java_home  # type: ignore
 
                 ensure_java_home()
                 jpype.startJVM("-Xmx1g", classpath=classpath, convertStrings=True)
             except Exception as exc2:  # noqa: BLE001
-                st = RuntimeStatus(reason="JVM start failed: {} / {}".format(exc, exc2), classpath=classpath)
+                st = RuntimeStatus(
+                    reason="JVM start failed: {} / {}".format(exc, exc2),
+                    classpath=classpath,
+                )
                 _STATE["status"] = st
                 return st
         used = classpath
@@ -207,7 +231,8 @@ def ensure_runtime(start: bool = True) -> RuntimeStatus:
     if not st.wellplanning_available:
         missing = [k for k, v in st.wellplanning.items() if not v]
         st.reason = "wellplanning classes missing: {} (NeqSim build older than the well-planning physics)".format(
-            ", ".join(missing))
+            ", ".join(missing)
+        )
     _STATE["status"] = st
     return st
 

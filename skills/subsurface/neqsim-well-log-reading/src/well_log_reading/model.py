@@ -61,7 +61,11 @@ class LogFrame:
         if self.is_depth_indexed:
             return None
         for curve in self.curves.values():
-            if curve.canonical == "DEPT" and not curve.is_array and depth_factor_to_m(curve.unit):
+            if (
+                curve.canonical == "DEPT"
+                and not curve.is_array
+                and depth_factor_to_m(curve.unit)
+            ):
                 return curve
         return None
 
@@ -106,7 +110,9 @@ class LogFrame:
             return matches[0]
         if len(matches) > 1:
             names = ", ".join(c.name for c in matches)
-            raise KeyError(f"canonical {name!r} is ambiguous in frame {self.name!r}: {names}")
+            raise KeyError(
+                f"canonical {name!r} is ambiguous in frame {self.name!r}: {names}"
+            )
         raise KeyError(f"no curve {name!r} in frame {self.name!r}")
 
     def to_dataframe(self, depth_in_m: bool = True):

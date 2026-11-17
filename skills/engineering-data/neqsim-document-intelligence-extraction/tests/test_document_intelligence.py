@@ -25,7 +25,9 @@ def test_markdown_normalize_is_optional_and_never_a_provenance_source():
     extractor = DocumentIntelligenceExtractor()
 
     pdf_step = next(
-        step for step in extractor.plan("standard.pdf").steps if step.method == "markdown_normalize"
+        step
+        for step in extractor.plan("standard.pdf").steps
+        if step.method == "markdown_normalize"
     )
     docx_methods = [step.method for step in extractor.plan("datasheet.docx").steps]
 
@@ -110,8 +112,12 @@ def test_package_has_stable_schema_and_detects_source_conflict():
         method="structured_tables",
         confidence=0.99,
     )
-    result_a = extractor.package(extractor.plan("datasheet.pdf", embedded_text_chars=200), "datasheet", [fact_a])
-    result_b = extractor.package(extractor.plan("register.xlsx"), "equipment_register", [fact_b])
+    result_a = extractor.package(
+        extractor.plan("datasheet.pdf", embedded_text_chars=200), "datasheet", [fact_a]
+    )
+    result_b = extractor.package(
+        extractor.plan("register.xlsx"), "equipment_register", [fact_b]
+    )
 
     payload = result_a.to_dict()
     conflicts = find_conflicts([result_a, result_b])

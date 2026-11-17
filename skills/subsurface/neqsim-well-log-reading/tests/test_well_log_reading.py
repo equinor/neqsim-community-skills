@@ -72,9 +72,15 @@ def _write(tmp_path, name, text):
 def test_las_header_curves_nulls_and_duplicates(tmp_path):
     log = read_well_log(_write(tmp_path, "w.las", LAS_TEXT))
     assert log.source_format == "las"
-    assert (log.well_name, log.field_name, log.company) == ("TEST 1/2-3", "DEMO FIELD", "ACME ENERGY")
+    assert (log.well_name, log.field_name, log.company) == (
+        "TEST 1/2-3",
+        "DEMO FIELD",
+        "ACME ENERGY",
+    )
     frame = log.frame()
-    np.testing.assert_allclose(frame.depth_m(), [1500.0, 1500.5, 1501.0, 1501.5, 1502.0])
+    np.testing.assert_allclose(
+        frame.depth_m(), [1500.0, 1500.5, 1501.0, 1501.5, 1502.0]
+    )
     assert np.isnan(frame.curve("RHOB").values[1])
     assert set(frame.curves) == {"GR", "RHOB", "GR:1"}
     assert frame.curve("RHOB").canonical == "RHOB"
@@ -108,20 +114,41 @@ def test_zone_statistics_and_event_contrast(tmp_path):
     depth = np.arange(1000.0, 1100.0, 0.5)
     rhob = np.full(depth.size, 2.50)
     rhob[(depth >= 1048) & (depth <= 1052)] = 2.10  # low-density zone at a loss event
-    las = ["~V", " VERS. 2.0 :", " WRAP. NO :", "~W", " WELL. SYN :", "~C", " DEPT.M :",
-           " RHOB.G/CM3 :", "~A"] + [f"{d:.1f} {r:.3f}" for d, r in zip(depth, rhob)]
+    las = [
+        "~V",
+        " VERS. 2.0 :",
+        " WRAP. NO :",
+        "~W",
+        " WELL. SYN :",
+        "~C",
+        " DEPT.M :",
+        " RHOB.G/CM3 :",
+        "~A",
+    ] + [f"{d:.1f} {r:.3f}" for d, r in zip(depth, rhob)]
     frame = read_well_log(_write(tmp_path, "syn.las", "\n".join(las))).frame()
 
-    zones = [{"name": "Upper", "top_m": 1000.0, "base_m": 1040.0},
-             {"name": "Event", "top_m": 1048.0, "base_m": 1052.0}]
+    zones = [
+        {"name": "Upper", "top_m": 1000.0, "base_m": 1040.0},
+        {"name": "Event", "top_m": 1048.0, "base_m": 1052.0},
+    ]
     rows = {row["zone"]: row for row in zone_statistics(frame, zones, curves=["RHOB"])}
     assert rows["Upper"]["mean"] == pytest.approx(2.50)
     assert rows["Event"]["p50"] == pytest.approx(2.10)
-    halves = zone_statistics(frame, [{"name": "a", "top_m": 1000.0, "base_m": 1050.0},
-                                     {"name": "b", "top_m": 1050.0, "base_m": 1099.5}], curves=["RHOB"])
-    assert sum(row["samples_in_zone"] for row in halves) == depth.size  # no double count, last kept
+    halves = zone_statistics(
+        frame,
+        [
+            {"name": "a", "top_m": 1000.0, "base_m": 1050.0},
+            {"name": "b", "top_m": 1050.0, "base_m": 1099.5},
+        ],
+        curves=["RHOB"],
+    )
+    assert (
+        sum(row["samples_in_zone"] for row in halves) == depth.size
+    )  # no double count, last kept
 
-    contrast = depth_window_contrast(frame, 1050.0, half_width_m=2.0, background_m=10.0)[0]
+    contrast = depth_window_contrast(
+        frame, 1050.0, half_width_m=2.0, background_m=10.0
+    )[0]
     assert contrast["contrast"] == pytest.approx(-0.40)
     assert contrast["data_coverage"] == "ok"
     quiet = depth_window_contrast(frame, 1020.0, half_width_m=2.0, background_m=10.0)[0]
@@ -139,11 +166,15 @@ def _write_dlis(path, md, gr):
     pytest.importorskip("dlisio")
     dlis_file = dliswriter.DLISFile()
     logical_file = dlis_file.add_logical_file()
-    logical_file.add_origin("ORIGIN", well_name="WELL-A", field_name="FIELD-X", company="ACME")
+    logical_file.add_origin(
+        "ORIGIN", well_name="WELL-A", field_name="FIELD-X", company="ACME"
+    )
     depth = logical_file.add_channel("DEPT", data=md, units="m")
     gamma = logical_file.add_channel("GR", data=gr, units="gAPI", long_name="Gamma ray")
     density = logical_file.add_channel("RHOZ", data=np.full(md.size, 2.4), units="kg")
-    logical_file.add_frame("MAIN", channels=(depth, gamma, density), index_type="BOREHOLE-DEPTH")
+    logical_file.add_frame(
+        "MAIN", channels=(depth, gamma, density), index_type="BOREHOLE-DEPTH"
+    )
     dlis_file.write(str(path))
 
 
@@ -165,7 +196,9 @@ def test_dlis_round_trip_through_dlisio(tmp_path):
     assert frame.curve("GR").long_name == "Gamma ray"
 
     record = to_evidence(log)
-    assert record["schema"] == "well_log_evidence.v1" and record["status"] == "unverified"
+    assert (
+        record["schema"] == "well_log_evidence.v1" and record["status"] == "unverified"
+    )
     gr_row = next(c for c in record["frames"][0]["curves"] if c["name"] == "GR")
     assert gr_row["valid_fraction"] == pytest.approx((md.size - 1) / md.size)
     json.dumps(record)  # serialisable
@@ -182,7 +215,9 @@ def test_time_indexed_dlis_takes_depth_from_channel(tmp_path):
     channels = (
         logical_file.add_channel("TIME", data=time_ms, units="ms"),
         logical_file.add_channel("TDEP", data=tdep_in, units="in"),
-        logical_file.add_channel("TENS", data=np.full(time_ms.size, 2000.0), units="lbf"),
+        logical_file.add_channel(
+            "TENS", data=np.full(time_ms.size, 2000.0), units="lbf"
+        ),
     )
     logical_file.add_frame("800T", channels=channels, index_type="TIME")
     path = tmp_path / "station.dlis"
@@ -196,19 +231,38 @@ def test_time_indexed_dlis_takes_depth_from_channel(tmp_path):
     record = to_evidence(log)["frames"][0]
     assert record["depth_from_channel"] == "TDEP"
     assert record["depth_range_m"][0] == pytest.approx(85000.0 * 0.0254)
-    rows = zone_statistics(frame, [{"name": "all", "top_m": 2150.0, "base_m": 2190.0}], curves=["TENS"])
+    rows = zone_statistics(
+        frame, [{"name": "all", "top_m": 2150.0, "base_m": 2190.0}], curves=["TENS"]
+    )
     assert rows[0]["n"] == time_ms.size
 
 
 def test_scan_folder_reports_bad_files_and_cli(tmp_path, capsys):
     _write(tmp_path, "good.las", LAS_TEXT)
     _write(tmp_path, "bad.las", "~V\n VERS. 2.0 :\n~W\n WELL. X :\n")
-    records = {r["source"]["path"].split("\\")[-1].split("/")[-1]: r for r in scan_folder(tmp_path)}
+    records = {
+        r["source"]["path"].split("\\")[-1].split("/")[-1]: r
+        for r in scan_folder(tmp_path)
+    }
     assert records["good.las"]["status"] == "unverified"
-    assert records["bad.las"]["status"] == "error" and "Curve" in records["bad.las"]["error"]
+    assert (
+        records["bad.las"]["status"] == "error"
+        and "Curve" in records["bad.las"]["error"]
+    )
 
     out = tmp_path / "evidence.json"
-    assert main([str(tmp_path / "good.las"), "--out", str(out), "--csv", str(tmp_path / "csv")]) == 0
+    assert (
+        main(
+            [
+                str(tmp_path / "good.las"),
+                "--out",
+                str(out),
+                "--csv",
+                str(tmp_path / "csv"),
+            ]
+        )
+        == 0
+    )
     written = json.loads(out.read_text(encoding="utf-8"))
     assert written["well_name"] == "TEST 1/2-3"
     assert (tmp_path / "csv").is_dir()

@@ -72,8 +72,16 @@ def gas_composition(rec: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
     total = sum(comp.values())
     if total <= 0:
         return None
-    frac = {NEQSIM_COMPONENTS[k]: comp[k] / total for k in GAS_COMPOSITION_KEYS if comp.get(k)}
-    return {"mole_fraction": frac, "reported_sum_pct": total, "closure_ok": 98.0 <= total <= 102.0}
+    frac = {
+        NEQSIM_COMPONENTS[k]: comp[k] / total
+        for k in GAS_COMPOSITION_KEYS
+        if comp.get(k)
+    }
+    return {
+        "mole_fraction": frac,
+        "reported_sum_pct": total,
+        "closure_ok": 98.0 <= total <= 102.0,
+    }
 
 
 def fluid_basis(rec: Mapping[str, Any]) -> Dict[str, Any]:
@@ -102,17 +110,23 @@ def fluid_basis(rec: Mapping[str, Any]) -> Dict[str, Any]:
     if comp is None:
         warnings.append("No gas composition for this well and month.")
     elif not comp["closure_ok"]:
-        warnings.append("Reported composition sums to %.1f %%; it was normalised." % comp["reported_sum_pct"])
+        warnings.append(
+            "Reported composition sums to %.1f %%; it was normalised."
+            % comp["reported_sum_pct"]
+        )
     if comp is not None and comp["mole_fraction"].get("oxygen", 0.0) > 0.005:
         warnings.append(
             "Oxygen above 0.5 %% (%.2f %%) is not physical for produced gas: the oxygen, nitrogen and "
             "carbon dioxide columns may be mislabelled in the operator report (seen for Mero in 2023-12); "
-            "check against the gross calorific value before use." % (100.0 * comp["mole_fraction"]["oxygen"])
+            "check against the gross calorific value before use."
+            % (100.0 * comp["mole_fraction"]["oxygen"])
         )
     if api is None:
         warnings.append("No API gravity for this well and month.")
     if gor is None:
-        warnings.append("Gas-liquid ratio not computable: no liquid production in the month.")
+        warnings.append(
+            "Gas-liquid ratio not computable: no liquid production in the month."
+        )
     return {
         "well": rec.get("well"),
         "field": rec.get("field"),
@@ -129,7 +143,9 @@ def fluid_basis(rec: Mapping[str, Any]) -> Dict[str, Any]:
     }
 
 
-def latest_fluid_basis(history: Iterable[Mapping[str, Any]]) -> Optional[Dict[str, Any]]:
+def latest_fluid_basis(
+    history: Iterable[Mapping[str, Any]],
+) -> Optional[Dict[str, Any]]:
     """Fluid basis of the newest month that has both API gravity and composition.
 
     Args:

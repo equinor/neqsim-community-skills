@@ -23,15 +23,23 @@ from typing import Callable, Sequence
 from .tools import haversine_km
 
 ETOPO_ERDDAP = "https://upwell.pfeg.noaa.gov/erddap/griddap/etopo180.json"
-NOAA_DEM_IDENTIFY = (
-    "https://gis.ngdc.noaa.gov/arcgis/rest/services/DEM_mosaics/DEM_global_mosaic/ImageServer/identify"
-)
+NOAA_DEM_IDENTIFY = "https://gis.ngdc.noaa.gov/arcgis/rest/services/DEM_mosaics/DEM_global_mosaic/ImageServer/identify"
 
 
-def build_etopo_url(bbox: Sequence[float], stride: int = 1, base: str = ETOPO_ERDDAP) -> str:
+def build_etopo_url(
+    bbox: Sequence[float], stride: int = 1, base: str = ETOPO_ERDDAP
+) -> str:
     """Build the ERDDAP griddap query for ``bbox = (min_lon, max_lon, min_lat, max_lat)``."""
     lon0, lon1, lat0, lat1 = bbox
-    return "%s?altitude[(%s):%d:(%s)][(%s):%d:(%s)]" % (base, lat0, stride, lat1, lon0, stride, lon1)
+    return "%s?altitude[(%s):%d:(%s)][(%s):%d:(%s)]" % (
+        base,
+        lat0,
+        stride,
+        lat1,
+        lon0,
+        stride,
+        lon1,
+    )
 
 
 def _default_get(url: str, timeout: float) -> bytes:
@@ -39,7 +47,9 @@ def _default_get(url: str, timeout: float) -> bytes:
     import urllib.request
 
     req = urllib.request.Request(url, headers={"User-Agent": "neqsim-anp-open-data"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:  # noqa: S310 - fixed public host
+    with urllib.request.urlopen(
+        req, timeout=timeout
+    ) as r:  # noqa: S310 - fixed public host
         return r.read()
 
 
@@ -79,10 +89,16 @@ def fetch_etopo_grid(
     status = "cache"
     if fname.exists():
         raw = json.loads(fname.read_text(encoding="utf-8"))
-        retrieved = json.loads(manifest.read_text(encoding="utf-8")).get("retrieved_utc") if manifest.exists() else None
+        retrieved = (
+            json.loads(manifest.read_text(encoding="utf-8")).get("retrieved_utc")
+            if manifest.exists()
+            else None
+        )
     else:
         if offline:
-            raise FileNotFoundError("offline mode and no cached ETOPO grid %s" % fname.name)
+            raise FileNotFoundError(
+                "offline mode and no cached ETOPO grid %s" % fname.name
+            )
         raw = json.loads((getter or _default_get)(url, timeout).decode("utf-8"))
         fname.write_text(json.dumps(raw), encoding="utf-8")
         retrieved = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
@@ -125,7 +141,11 @@ def grid_from_erddap(raw: dict) -> dict:
     rows = table.get("rows") or []
     if not rows:
         raise ValueError("ERDDAP response holds no rows")
-    ilat, ilon, iz = cols.index("latitude"), cols.index("longitude"), cols.index("altitude")
+    ilat, ilon, iz = (
+        cols.index("latitude"),
+        cols.index("longitude"),
+        cols.index("altitude"),
+    )
     lats = sorted({float(r[ilat]) for r in rows})
     lons = sorted({float(r[ilon]) for r in rows})
     li = {v: i for i, v in enumerate(lats)}
@@ -140,7 +160,9 @@ def grid_from_erddap(raw: dict) -> dict:
 def _index(axis: Sequence[float], v: float) -> tuple[int, float]:
     """Return lower index and fraction of ``v`` on an ascending regular axis."""
     if not axis[0] <= v <= axis[-1]:
-        raise ValueError("point %.4f outside grid range %.4f..%.4f" % (v, axis[0], axis[-1]))
+        raise ValueError(
+            "point %.4f outside grid range %.4f..%.4f" % (v, axis[0], axis[-1])
+        )
     step = (axis[-1] - axis[0]) / (len(axis) - 1)
     i = min(int((v - axis[0]) / step), len(axis) - 2)
     return i, (v - axis[i]) / step
@@ -164,10 +186,17 @@ def depth_at(grid: dict, lat: float, lon: float) -> float:
     return max(0.0, -altitude_at(grid, lat, lon))
 
 
-def _interp_gc(lon0: float, lat0: float, lon1: float, lat1: float, f: float) -> tuple[float, float]:
+def _interp_gc(
+    lon0: float, lat0: float, lon1: float, lat1: float, f: float
+) -> tuple[float, float]:
     """Point at fraction ``f`` along the great circle between two points."""
     p0, l0, p1, l1 = map(math.radians, (lat0, lon0, lat1, lon1))
-    d = 2 * math.asin(math.sqrt(math.sin((p1 - p0) / 2) ** 2 + math.cos(p0) * math.cos(p1) * math.sin((l1 - l0) / 2) ** 2))
+    d = 2 * math.asin(
+        math.sqrt(
+            math.sin((p1 - p0) / 2) ** 2
+            + math.cos(p0) * math.cos(p1) * math.sin((l1 - l0) / 2) ** 2
+        )
+    )
     if d < 1e-12:
         return lon0, lat0
     a = math.sin((1 - f) * d) / math.sin(d)
@@ -175,10 +204,14 @@ def _interp_gc(lon0: float, lat0: float, lon1: float, lat1: float, f: float) -> 
     x = a * math.cos(p0) * math.cos(l0) + b * math.cos(p1) * math.cos(l1)
     y = a * math.cos(p0) * math.sin(l0) + b * math.cos(p1) * math.sin(l1)
     zz = a * math.sin(p0) + b * math.sin(p1)
-    return math.degrees(math.atan2(y, x)), math.degrees(math.atan2(zz, math.hypot(x, y)))
+    return math.degrees(math.atan2(y, x)), math.degrees(
+        math.atan2(zz, math.hypot(x, y))
+    )
 
 
-def profile_along_route(grid: dict, waypoints: Sequence[Sequence[float]], step_km: float = 1.0) -> list[dict]:
+def profile_along_route(
+    grid: dict, waypoints: Sequence[Sequence[float]], step_km: float = 1.0
+) -> list[dict]:
     """Seabed profile along a route of ``(lon, lat)`` waypoints.
 
     Args:
@@ -198,18 +231,30 @@ def profile_along_route(grid: dict, waypoints: Sequence[Sequence[float]], step_k
         start = 0 if not rows else 1
         for k in range(start, n + 1):
             lon, lat = _interp_gc(lo0, la0, lo1, la1, k / n)
-            rows.append({"kp_km": round(kp + seg * k / n, 3), "lon": round(lon, 5), "lat": round(lat, 5),
-                         "depth_m": round(depth_at(grid, lat, lon), 1)})
+            rows.append(
+                {
+                    "kp_km": round(kp + seg * k / n, 3),
+                    "lon": round(lon, 5),
+                    "lat": round(lat, 5),
+                    "depth_m": round(depth_at(grid, lat, lon), 1),
+                }
+            )
         kp += seg
     for a, b in zip(rows[:-1], rows[1:]):
         dx = (b["kp_km"] - a["kp_km"]) * 1000.0
-        b["slope_deg"] = round(math.degrees(math.atan2(abs(b["depth_m"] - a["depth_m"]), dx)), 2) if dx > 0 else 0.0
+        b["slope_deg"] = (
+            round(math.degrees(math.atan2(abs(b["depth_m"] - a["depth_m"]), dx)), 2)
+            if dx > 0
+            else 0.0
+        )
     if rows:
         rows[0]["slope_deg"] = 0.0
     return rows
 
 
-def flag_slopes(profile: Sequence[dict], limits_deg: Sequence[float] = (5.0, 10.0)) -> dict:
+def flag_slopes(
+    profile: Sequence[dict], limits_deg: Sequence[float] = (5.0, 10.0)
+) -> dict:
     """Summarise a profile: length, depth range, max slope and length above each slope limit."""
     if not profile:
         return {}

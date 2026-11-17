@@ -189,7 +189,9 @@ class FemDesignBasis:
         )
 
 
-def required_fields(model_kind: str, *, include_stress: bool = False) -> tuple[str, ...]:
+def required_fields(
+    model_kind: str, *, include_stress: bool = False
+) -> tuple[str, ...]:
     """Return the fields a finite-element model of this kind needs.
 
     Raises ``ValueError`` for an unknown model kind so an agent is forced to
@@ -230,7 +232,8 @@ def build_design_basis(
 
     needed = tuple(
         dict.fromkeys(
-            required_fields(model_kind, include_stress=include_stress) + tuple(extra_required)
+            required_fields(model_kind, include_stress=include_stress)
+            + tuple(extra_required)
         )
     )
     unit_map = dict(units or {})

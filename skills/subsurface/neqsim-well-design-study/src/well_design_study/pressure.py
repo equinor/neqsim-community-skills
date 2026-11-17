@@ -84,7 +84,14 @@ class PressureModel:
         frac = self.frac_sg(tvd_m, frac_case)
         lo = pore + trip_margin_sg
         hi = frac - frac_margin_sg
-        return {"tvd_m": tvd_m, "pore_sg": pore, "frac_sg": frac, "min_mw_sg": lo, "max_mw_sg": hi, "width_sg": hi - lo}
+        return {
+            "tvd_m": tvd_m,
+            "pore_sg": pore,
+            "frac_sg": frac,
+            "min_mw_sg": lo,
+            "max_mw_sg": hi,
+            "width_sg": hi - lo,
+        }
 
     def window_table(self, depths_m: Sequence[float], **kw) -> List[Dict[str, float]]:
         """Window at several depths."""
@@ -112,7 +119,9 @@ def overburden_sg(
     n = 400
     zz = np.linspace(0.0, below, n + 1) if below > 0 else np.array([0.0])
     rho = rho_deep - (rho_deep - rho_mudline) * np.exp(-zz / z_scale_m)
-    sed_mass = float(np.sum(0.5 * (rho[1:] + rho[:-1]) * np.diff(zz))) if below > 0 else 0.0
+    sed_mass = (
+        float(np.sum(0.5 * (rho[1:] + rho[:-1]) * np.diff(zz))) if below > 0 else 0.0
+    )
     return (rho_sea * sea + sed_mass) / tvd_m
 
 
@@ -126,7 +135,13 @@ def curve_from_points(points: Sequence[Sequence[float]]) -> EmwCurve:
     return EmwCurve([p[0] for p in points], [p[1] for p in points])
 
 
-def hydrostatic_pressure_bar(tvd_rkb_m: float, gradient_sg: float, air_gap_m: float, water_depth_m: float = 0.0, sea_sg: float = 1.03) -> float:
+def hydrostatic_pressure_bar(
+    tvd_rkb_m: float,
+    gradient_sg: float,
+    air_gap_m: float,
+    water_depth_m: float = 0.0,
+    sea_sg: float = 1.03,
+) -> float:
     """Normal (hydrostatic) pore pressure in bar at a depth below RKB.
 
     Pressure builds from mean sea level, not from the rotary table: the air gap carries no fluid. A normal 1.03 sg formation therefore
@@ -140,4 +155,6 @@ def hydrostatic_pressure_bar(tvd_rkb_m: float, gradient_sg: float, air_gap_m: fl
 
 def emw_curve_from_pressure_points(points_bar: Sequence[Sequence[float]]) -> EmwCurve:
     """Build an EmwCurve from (tvd_rkb_m, pressure_bar) pairs: EMW = p / (0.0980665 TVD). Use dense points when the pressure is not linear in depth."""
-    return EmwCurve([p[0] for p in points_bar], [p[1] / (BAR_PER_SG_M * p[0]) for p in points_bar])
+    return EmwCurve(
+        [p[0] for p in points_bar], [p[1] / (BAR_PER_SG_M * p[0]) for p in points_bar]
+    )

@@ -18,7 +18,9 @@ def main(argv=None) -> int:
     """Run discovery or the structure workflow; exit 2 when the workflow is blocked."""
     parser = argparse.ArgumentParser(prog="seismic_structure", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    d = sub.add_parser("discover", help="inventory surfaces, seismic, logs and ties in folders")
+    d = sub.add_parser(
+        "discover", help="inventory surfaces, seismic, logs and ties in folders"
+    )
     d.add_argument("paths", nargs="+")
     d.add_argument("--out")
     r = sub.add_parser("run", help="run the workflow from a JSON config")
@@ -27,8 +29,11 @@ def main(argv=None) -> int:
 
     if args.command == "discover":
         inventory = discover(args.paths)
-        result = {"inventory": inventory, "geometry_candidates": geometry_candidates(inventory),
-                  "absent_geometry_rungs": geometry_attempts(inventory)}
+        result = {
+            "inventory": inventory,
+            "geometry_candidates": geometry_candidates(inventory),
+            "absent_geometry_rungs": geometry_attempts(inventory),
+        }
         text = json.dumps(result, indent=2)
         if args.out:
             with open(args.out, "w", encoding="utf-8") as handle:
@@ -46,7 +51,8 @@ def main(argv=None) -> int:
     sys.stdout.write(
         f"status={evidence['status']} crest={closure.get('crest_m')} spill={closure.get('spill_m')} "
         f"contact={evidence.get('contact_m')} builder_inputs={evidence.get('builder_inputs')} "
-        f"missing={evidence['missing']} evidence={evidence['outputs'].get('evidence_json')}\n")
+        f"missing={evidence['missing']} evidence={evidence['outputs'].get('evidence_json')}\n"
+    )
     return 2 if evidence["status"] == "blocked" else 0
 
 

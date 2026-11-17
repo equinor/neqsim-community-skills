@@ -40,7 +40,13 @@ LAYER_CATEGORIES = {
 }
 """Cached-file name fragment to category key."""
 
-PIPELINE_CATEGORIES = ("gas_outflow", "gas_transport", "oil_outflow", "oil_transfer", "oil_transport")
+PIPELINE_CATEGORIES = (
+    "gas_outflow",
+    "gas_transport",
+    "oil_outflow",
+    "oil_transfer",
+    "oil_transport",
+)
 
 PIPELINE_STYLE = {
     "gas_outflow": ("tab:red", "Gas outflow (escoamento)"),
@@ -105,7 +111,9 @@ def _lines(geometry: Mapping | None) -> list[list[tuple[float, float]]]:
         parts = c
     else:
         return []
-    return [[(float(p[0]), float(p[1])) for p in part] for part in parts if len(part) >= 2]
+    return [
+        [(float(p[0]), float(p[1])) for p in part] for part in parts if len(part) >= 2
+    ]
 
 
 def _rings(geometry: Mapping | None) -> list[list[tuple[float, float]]]:
@@ -137,7 +145,9 @@ def _point(geometry: Mapping | None) -> tuple[float, float] | None:
     return sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
 
 
-def point_in_rings(lon: float, lat: float, rings: Iterable[Sequence[tuple[float, float]]]) -> bool:
+def point_in_rings(
+    lon: float, lat: float, rings: Iterable[Sequence[tuple[float, float]]]
+) -> bool:
     """Ray-casting point-in-polygon test over several exterior rings."""
     for ring in rings:
         inside = False
@@ -146,7 +156,9 @@ def point_in_rings(lon: float, lat: float, rings: Iterable[Sequence[tuple[float,
         for i in range(n):
             xi, yi = ring[i]
             xj, yj = ring[j]
-            if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / ((yj - yi) or 1e-300) + xi:
+            if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / (
+                (yj - yi) or 1e-300
+            ) + xi:
                 inside = not inside
             j = i
         if inside:
@@ -220,14 +232,30 @@ def pipeline_register(layers: Mapping[str, list[dict]]) -> list[dict]:
             if maritime:
                 step = max(1, len(verts) // 50)
                 sample = verts[::step]
-                off = round(sum(point_in_rings(x, y, maritime) for x, y in sample) / len(sample), 2)
+                off = round(
+                    sum(point_in_rings(x, y, maritime) for x, y in sample)
+                    / len(sample),
+                    2,
+                )
             rows.append(
                 {
                     "id": "%s_%03d" % (cat, i),
                     "category": cat,
-                    "name": _first(p, ("NOME_DUTO", "DUTO", "NOME", "TRECHO", "DUTO_ID", "ID")),
+                    "name": _first(
+                        p, ("NOME_DUTO", "DUTO", "NOME", "TRECHO", "DUTO_ID", "ID")
+                    ),
                     "segment": _first(p, ("TRECHO",)),
-                    "origin": _first(p, ("INST_ORIGEM", "INST_ORIG", "INST_ORIGE", "CONC_ORIG", "MUN_ORIG", "MUN_ORIGEM")),
+                    "origin": _first(
+                        p,
+                        (
+                            "INST_ORIGEM",
+                            "INST_ORIG",
+                            "INST_ORIGE",
+                            "CONC_ORIG",
+                            "MUN_ORIG",
+                            "MUN_ORIGEM",
+                        ),
+                    ),
                     "destination": _first(p, ("INST_DEST", "CONC_DEST", "MUN_DEST")),
                     "diameter_in": _num(_first(p, ("DIAM_POL",))),
                     "length_km_reported": _num(_first(p, ("EXTENS_KM", "EXTENSAOKM"))),
@@ -256,9 +284,19 @@ def node_register(layers: Mapping[str, list[dict]]) -> list[dict]:
         operator, capacity, detail``.
     """
     spec = (
-        ("platforms", "platform", ("NOM_INSTALACAO", "NOM_FANTASIA", "SIG_INSTALACAO"), ("NOM_PROPRIETARIO",)),
+        (
+            "platforms",
+            "platform",
+            ("NOM_INSTALACAO", "NOM_FANTASIA", "SIG_INSTALACAO"),
+            ("NOM_PROPRIETARIO",),
+        ),
         ("gas_processing_plants", "gas_processing_plant", ("NOME",), ("TITULARIDA",)),
-        ("limit_terminals", "limit_terminal", ("TERMINAL_NOME", "NOME"), ("OPERADOR_NOME_REDUZIDO",)),
+        (
+            "limit_terminals",
+            "limit_terminal",
+            ("TERMINAL_NOME", "NOME"),
+            ("OPERADOR_NOME_REDUZIDO",),
+        ),
         ("refineries", "refinery", ("NOME", "SIGLA"), ()),
         ("lng_terminals", "lng_terminal", ("NOME",), ()),
     )
@@ -280,7 +318,17 @@ def node_register(layers: Mapping[str, list[dict]]) -> list[dict]:
                     detail = "%s; serves %s" % (detail, fields)
             else:
                 cap = _first(p, ("CAPACIDADE", "CAPAC_BPD"))
-                detail = _first(p, ("TERMINAL_TIPO", "TIPO", "SITUACAO_A", "MUNICIPIO", "UF", "ESTADO"))
+                detail = _first(
+                    p,
+                    (
+                        "TERMINAL_TIPO",
+                        "TIPO",
+                        "SITUACAO_A",
+                        "MUNICIPIO",
+                        "UF",
+                        "ESTADO",
+                    ),
+                )
             nodes.append(
                 {
                     "node_id": "%s_%03d" % (kind, i),
@@ -288,7 +336,11 @@ def node_register(layers: Mapping[str, list[dict]]) -> list[dict]:
                     "name": _first(p, name_keys),
                     "lon": round(pt[0], 5),
                     "lat": round(pt[1], 5),
-                    "water_depth_m": _num(_first(p, ("MED_DISTANCIA_LAMINA",))) if kind == "platform" else None,
+                    "water_depth_m": (
+                        _num(_first(p, ("MED_DISTANCIA_LAMINA",)))
+                        if kind == "platform"
+                        else None
+                    ),
                     "operator": _first(p, op_keys) if op_keys else None,
                     "capacity": cap,
                     "detail": detail,
@@ -389,7 +441,9 @@ def summarise(pipes: list[dict], conns: Mapping[str, list[dict]]) -> dict:
         c["length_km"] = round(c["length_km"] + p["length_km_geodesic"], 1)
     offshore = [p for p in pipes if (p.get("offshore_fraction") or 0) >= 0.5]
     nodes = conns["nodes"]
-    unnamed = sum(1 for p in pipes for s in ("from", "to") if p.get(s + "_node") is None)
+    unnamed = sum(
+        1 for p in pipes for s in ("from", "to") if p.get(s + "_node") is None
+    )
     top = sorted(nodes, key=lambda n: -n["n_pipelines"])[:15]
     return {
         "pipeline_count": len(pipes),
@@ -402,7 +456,8 @@ def summarise(pipes: list[dict], conns: Mapping[str, list[dict]]) -> dict:
         "connected_nodes": sum(1 for n in nodes if n["n_pipelines"] > 0),
         "unnamed_endpoints": unnamed,
         "top_connected_nodes": [
-            {"name": n["name"], "kind": n["kind"], "n_pipelines": n["n_pipelines"]} for n in top
+            {"name": n["name"], "kind": n["kind"], "n_pipelines": n["n_pipelines"]}
+            for n in top
         ],
     }
 
@@ -454,31 +509,68 @@ def plot_overview(
     for f in layers.get("basins", []):
         sit = str(repair_name(f["properties"].get("SITUAÇÃO") or "")).lower()
         for r in _rings(f.get("geometry")):
-            ax.fill(*zip(*r), color="#e3f0fb" if sit.startswith("mar") else "#f3efe6", lw=0.3, ec="#9bb", zorder=0)
+            ax.fill(
+                *zip(*r),
+                color="#e3f0fb" if sit.startswith("mar") else "#f3efe6",
+                lw=0.3,
+                ec="#9bb",
+                zorder=0,
+            )
     first_field = True
     for f in layers.get("fields", []):
         for r in _rings(f.get("geometry")):
-            ax.fill(*zip(*r), color="#c9e7c0", ec="#5a8f4e", lw=0.3, zorder=1,
-                    label="Fields (ANP)" if first_field else None)
+            ax.fill(
+                *zip(*r),
+                color="#c9e7c0",
+                ec="#5a8f4e",
+                lw=0.3,
+                zorder=1,
+                label="Fields (ANP)" if first_field else None,
+            )
             first_field = False
     seen = set()
     for p in pipes:
         col, lab = PIPELINE_STYLE[p["category"]]
         for part in p["_parts"]:
-            ax.plot(*zip(*part), color=col, lw=1.1, zorder=3, label=None if p["category"] in seen else lab)
+            ax.plot(
+                *zip(*part),
+                color=col,
+                lw=1.1,
+                zorder=3,
+                label=None if p["category"] in seen else lab,
+            )
             seen.add(p["category"])
     seen_k = set()
     for n in conns["nodes"]:
         if not inside(n["lon"], n["lat"]):
             continue
         mk, col, lab = NODE_STYLE[n["kind"]]
-        ax.plot(n["lon"], n["lat"], marker=mk, color=col, mec="k", mew=0.5,
-                ms=5 if n["kind"] != "junction" else 4, ls="none", zorder=5,
-                label=None if n["kind"] in seen_k else lab)
+        ax.plot(
+            n["lon"],
+            n["lat"],
+            marker=mk,
+            color=col,
+            mec="k",
+            mew=0.5,
+            ms=5 if n["kind"] != "junction" else 4,
+            ls="none",
+            zorder=5,
+            label=None if n["kind"] in seen_k else lab,
+        )
         seen_k.add(n["kind"])
-        if label_nodes and n["kind"] != "junction" and n["n_pipelines"] >= min_label_pipelines:
-            ax.annotate(str(n["name"])[:28], (n["lon"], n["lat"]), fontsize=5.5, xytext=(3, 3),
-                        textcoords="offset points", zorder=6)
+        if (
+            label_nodes
+            and n["kind"] != "junction"
+            and n["n_pipelines"] >= min_label_pipelines
+        ):
+            ax.annotate(
+                str(n["name"])[:28],
+                (n["lon"], n["lat"]),
+                fontsize=5.5,
+                xytext=(3, 3),
+                textcoords="offset points",
+                zorder=6,
+            )
     if bbox is not None:
         ax.set_xlim(bbox[0], bbox[1])
         ax.set_ylim(bbox[2], bbox[3])

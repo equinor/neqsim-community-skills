@@ -62,9 +62,7 @@ def main() -> None:
         compare(
             "Water density at 25 C, 1 atm",
             MODEL_VALUES["water_density_ambient"],
-            find_anchor(
-                "water", "density", temperature_K=298.15, pressure_Pa=101325.0
-            ),
+            find_anchor("water", "density", temperature_K=298.15, pressure_Pa=101325.0),
         )
     )
 

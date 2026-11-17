@@ -54,14 +54,20 @@ def split_labels(accident_type: str) -> Tuple[str, ...]:
     text = (accident_type or "").strip()
     if text.startswith("-"):
         text = text[1:]
-    return tuple(part.strip() for part in re.split(r"\s+-\s+", text.strip()) if part.strip())
+    return tuple(
+        part.strip() for part in re.split(r"\s+-\s+", text.strip()) if part.strip()
+    )
 
 
 def _rows(text: str, source: str) -> List[dict]:
     reader = csv.DictReader(io.StringIO(text))
-    missing = [c for c in SOURCES[source]["columns"] if c not in (reader.fieldnames or [])]
+    missing = [
+        c for c in SOURCES[source]["columns"] if c not in (reader.fieldnames or [])
+    ]
     if missing:
-        raise ValueError(f"{source} file lacks expected columns {missing}; BSEE may have changed the format")
+        raise ValueError(
+            f"{source} file lacks expected columns {missing}; BSEE may have changed the format"
+        )
     return list(reader)
 
 
@@ -73,8 +79,16 @@ def parse_investigations(text: str) -> List[Investigation]:
         if occurred is None:
             continue
         area, _, block = (row["AREA_BLOCK"] or "").strip().partition(" ")
-        out.append(Investigation(occurred, row["LEASE_NUMBER"].strip(), area, block.strip(),
-                                 split_labels(row["ACCIDENT_TYPE"]), row["STATUS"].strip()))
+        out.append(
+            Investigation(
+                occurred,
+                row["LEASE_NUMBER"].strip(),
+                area,
+                block.strip(),
+                split_labels(row["ACCIDENT_TYPE"]),
+                row["STATUS"].strip(),
+            )
+        )
     return out
 
 
@@ -89,7 +103,16 @@ def parse_structures(text: str) -> List[Structure]:
             depth: Optional[float] = float(row["WATER_DEPTH"])
         except ValueError:
             depth = None
-        out.append(Structure(row["STRUCTURE_NUMBER"].strip(), row["AREA_CODE"].strip(), row["STRUC_TYPE_CODE"].strip(),
-                             row["MAJ_STRUC_FLAG"].strip().upper() == "Y", row["MANNED_24_HR_FL"].strip().upper() == "Y",
-                             installed, parse_date(row["REMOVAL_DATE"]), depth))
+        out.append(
+            Structure(
+                row["STRUCTURE_NUMBER"].strip(),
+                row["AREA_CODE"].strip(),
+                row["STRUC_TYPE_CODE"].strip(),
+                row["MAJ_STRUC_FLAG"].strip().upper() == "Y",
+                row["MANNED_24_HR_FL"].strip().upper() == "Y",
+                installed,
+                parse_date(row["REMOVAL_DATE"]),
+                depth,
+            )
+        )
     return out

@@ -45,8 +45,13 @@ def run_concept(
     Returns:
         Dictionary with ``candidates``, ``profile``, ``statistics``, ``sizing``, ``basis`` and ``assumptions``.
     """
-    profile = build_profile((float(source["lon"]), float(source["lat"])),
-                            (float(landing["lon"]), float(landing["lat"])), spacing_km, fetch, cache_path)
+    profile = build_profile(
+        (float(source["lon"]), float(source["lat"])),
+        (float(landing["lon"]), float(landing["lat"])),
+        spacing_km,
+        fetch,
+        cache_path,
+    )
     stats = profile_statistics(profile)
     basis = PipelineDesignBasis(length_m=profile.length_km * 1000.0)
     basis.net_elevation_m = profile.depth_m[0] - profile.depth_m[-1]
@@ -58,10 +63,18 @@ def run_concept(
     sizing = size_pipeline(props, basis, rates_sm3d, design_case, turndown_case)
     ranking = []
     if hosts is not None:
-        ranking = [c.__dict__ for c in rank_candidates(source, hosts, feeds_into, terminal_hosts)]
+        ranking = [
+            c.__dict__
+            for c in rank_candidates(source, hosts, feeds_into, terminal_hosts)
+        ]
     return {
         "candidates": ranking,
-        "profile": {"kp_km": profile.kp_km, "lon": profile.lon, "lat": profile.lat, "depth_m": profile.depth_m},
+        "profile": {
+            "kp_km": profile.kp_km,
+            "lon": profile.lon,
+            "lat": profile.lat,
+            "depth_m": profile.depth_m,
+        },
         "statistics": stats,
         "sizing": sizing,
         "basis": {k: v for k, v in basis.__dict__.items() if k != "standard_wt_mm"},

@@ -100,11 +100,15 @@ def verify_stop_capacity(
     equal-percentage valve needs the vendor curve; the function then refuses).
     """
     if characteristic != "linear":
-        raise ValueError("only linear characteristic is implemented; supply vendor curve for others")
+        raise ValueError(
+            "only linear characteristic is implemented; supply vendor curve for others"
+        )
     if not 0 < stop_fraction <= 1:
         raise ValueError("stop_fraction must be in (0, 1]")
     cvs = tuple(
-        cv_from_gas_flow(t["q_sm3h"], t["p1_bara"], t["p2_bara"], temperature_k, molar_mass, z, k, xt)
+        cv_from_gas_flow(
+            t["q_sm3h"], t["p1_bara"], t["p2_bara"], temperature_k, molar_mass, z, k, xt
+        )
         for t in tests
     )
     nominal = cv_max * stop_fraction
@@ -119,12 +123,28 @@ def verify_stop_capacity(
     if limit_case:
         cv_mean = sum(cvs) / len(cvs)
         q_lim = gas_flow_sm3h(
-            cv_mean, limit_case["p1_bara"], limit_case["p2_bara"], temperature_k, molar_mass, z, k, xt
+            cv_mean,
+            limit_case["p1_bara"],
+            limit_case["p2_bara"],
+            temperature_k,
+            molar_mass,
+            z,
+            k,
+            xt,
         )
         cv_lim = cv_from_gas_flow(
-            limit_case["q_limit_sm3h"], limit_case["p1_bara"], limit_case["p2_bara"], temperature_k, molar_mass, z, k, xt
+            limit_case["q_limit_sm3h"],
+            limit_case["p1_bara"],
+            limit_case["p2_bara"],
+            temperature_k,
+            molar_mass,
+            z,
+            k,
+            xt,
         )
         open_lim = cv_lim / cv_max
         if open_lim > 1.0:
             notes.append("Limit exceeds the valve at 100 % opening in this case.")
-    return StopCapacityResult(cvs, nominal, ratios, openings, q_lim, open_lim, tuple(notes))
+    return StopCapacityResult(
+        cvs, nominal, ratios, openings, q_lim, open_lim, tuple(notes)
+    )

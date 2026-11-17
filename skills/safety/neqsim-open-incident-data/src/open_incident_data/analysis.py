@@ -70,8 +70,18 @@ def poisson_interval(count: int, confidence: float = 0.90) -> tuple:
         raise ValueError("count must be >= 0 and confidence in (0, 1)")
     alpha = 1.0 - confidence
     upper_bound = max(10.0, 4.0 * count + 20.0)
-    lower = 0.0 if count == 0 else _bisect(lambda lam: (1.0 - _poisson_cdf(count - 1, lam)) - alpha / 2.0, 0.0, upper_bound)
-    upper = _bisect(lambda lam: alpha / 2.0 - _poisson_cdf(count, lam), 0.0, upper_bound)
+    lower = (
+        0.0
+        if count == 0
+        else _bisect(
+            lambda lam: (1.0 - _poisson_cdf(count - 1, lam)) - alpha / 2.0,
+            0.0,
+            upper_bound,
+        )
+    )
+    upper = _bisect(
+        lambda lam: alpha / 2.0 - _poisson_cdf(count, lam), 0.0, upper_bound
+    )
     return lower, upper
 
 
@@ -88,7 +98,11 @@ def structure_years(
     wanted = {a.upper() for a in areas} if areas else None
     total_days = 0
     for s in structures:
-        if (major_only and not s.major) or (manned_only and not s.manned_24h) or (wanted and s.area.upper() not in wanted):
+        if (
+            (major_only and not s.major)
+            or (manned_only and not s.manned_24h)
+            or (wanted and s.area.upper() not in wanted)
+        ):
             continue
         first = max(s.installed, start)
         last = min(s.removed or end, end)
@@ -97,7 +111,9 @@ def structure_years(
     return total_days / 365.25
 
 
-def label_counts(investigations: Iterable[Investigation], start_year: int, end_year: int) -> List[tuple]:
+def label_counts(
+    investigations: Iterable[Investigation], start_year: int, end_year: int
+) -> List[tuple]:
     """Return ``(label, count)`` for single labels in the period, most frequent first."""
     counter: Counter = Counter()
     for item in investigations:
@@ -106,7 +122,9 @@ def label_counts(investigations: Iterable[Investigation], start_year: int, end_y
     return counter.most_common()
 
 
-def annual_counts(investigations: Iterable[Investigation], labels: Iterable[str]) -> Dict[int, int]:
+def annual_counts(
+    investigations: Iterable[Investigation], labels: Iterable[str]
+) -> Dict[int, int]:
     """Investigations per year that carry any of ``labels`` (case-insensitive)."""
     wanted = {l.lower() for l in labels}
     counter: Counter = Counter()
@@ -143,13 +161,38 @@ def estimate_rate(
         and wanted & {l.lower() for l in item.labels}
         and (areas_set is None or item.area.upper() in areas_set)
     )
-    exposure = structure_years(structures, date(start_year, 1, 1), date(end_year, 12, 31),
-                               major_only=major_only, manned_only=manned_only, areas=areas)
+    exposure = structure_years(
+        structures,
+        date(start_year, 1, 1),
+        date(end_year, 12, 31),
+        major_only=major_only,
+        manned_only=manned_only,
+        areas=areas,
+    )
     lower, upper = poisson_interval(count, confidence)
     if exposure <= 0:
-        return RateEstimate(label_list, f"{start_year}-{end_year}", count, exposure, None, None, None, confidence)
+        return RateEstimate(
+            label_list,
+            f"{start_year}-{end_year}",
+            count,
+            exposure,
+            None,
+            None,
+            None,
+            confidence,
+        )
     return RateEstimate(
-        label_list, f"{start_year}-{end_year}", count, exposure, count / exposure, lower / exposure, upper / exposure,
+        label_list,
+        f"{start_year}-{end_year}",
+        count,
+        exposure,
+        count / exposure,
+        lower / exposure,
+        upper / exposure,
         confidence,
-        {"major_only": major_only, "manned_only": manned_only, "areas": sorted(areas_set) if areas_set else None},
+        {
+            "major_only": major_only,
+            "manned_only": manned_only,
+            "areas": sorted(areas_set) if areas_set else None,
+        },
     )

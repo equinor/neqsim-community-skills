@@ -30,12 +30,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         except CrsError as exc:
             print(f"refused: {exc}", file=sys.stderr)
             return 2
-        print(json.dumps({"coordinates": result.coordinates[0], **result.provenance()}, indent=2))
+        print(
+            json.dumps(
+                {"coordinates": result.coordinates[0], **result.provenance()}, indent=2
+            )
+        )
         return 0
     evidence = run_crs_check(json.loads(Path(args.config).read_text(encoding="utf-8")))
     shift = (evidence["results"].get("datum_sensitivity") or {}).get("max_shift_m")
-    print(f"status={evidence['status']} engine={evidence['engine']} findings={len(evidence['findings'])} "
-          f"datum_shift_m={shift} missing={evidence['missing']} evidence={evidence['outputs'].get('evidence')}")
+    print(
+        f"status={evidence['status']} engine={evidence['engine']} findings={len(evidence['findings'])} "
+        f"datum_shift_m={shift} missing={evidence['missing']} evidence={evidence['outputs'].get('evidence')}"
+    )
     return 2 if evidence["status"] == "blocked" else 0
 
 

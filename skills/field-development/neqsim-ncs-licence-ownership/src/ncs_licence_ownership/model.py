@@ -86,7 +86,8 @@ class EquityTable:
             if len(owners) > 1:
                 raise ValueError(
                     f"{self.name} has several owners {owners}; pass owner=... because shares of "
-                    "different owners must not be added")
+                    "different owners must not be added"
+                )
             return list(self.interests)
         return [i for i in self.interests if norm(i.owner) == norm(owner)]
 
@@ -95,7 +96,10 @@ class EquityTable:
 
     def is_complete(self, owner: Optional[str] = None) -> bool:
         """True when active shares sum to 100 pct within rounding."""
-        return bool(self.interests) and abs(self.total_pct(owner) - 100.0) <= SUM_TOLERANCE_PCT
+        return (
+            bool(self.interests)
+            and abs(self.total_pct(owner) - 100.0) <= SUM_TOLERANCE_PCT
+        )
 
     def by_company(self, owner: Optional[str] = None) -> Dict[str, float]:
         """Active share per company in pct, merging repeated rows of one company."""
@@ -120,12 +124,18 @@ class EquityTable:
         if exact:
             return exact
         part = [i for i in items if q and q in norm(i.company)]
-        keys = {i.company_id if i.company_id is not None else norm(i.company) for i in part}
+        keys = {
+            i.company_id if i.company_id is not None else norm(i.company) for i in part
+        }
         if len(keys) > 1:
-            raise ValueError(f"'{query}' matches several partners: {sorted({i.company for i in part})}")
+            raise ValueError(
+                f"'{query}' matches several partners: {sorted({i.company for i in part})}"
+            )
         return part
 
-    def share_of(self, company: Any, owner: Optional[str] = None, group: bool = False) -> float:
+    def share_of(
+        self, company: Any, owner: Optional[str] = None, group: bool = False
+    ) -> float:
         """Share in pct of a company (or parent group). Unknown names raise instead of returning 0."""
         items = self._select(owner)
         if group:
@@ -133,8 +143,10 @@ class EquityTable:
         else:
             matched = self.find_company(company, owner)
         if not matched:
-            raise LookupError(f"'{company}' holds no active interest in {self.name} on {self.as_of}; "
-                              f"partners: {sorted({i.company for i in items})}")
+            raise LookupError(
+                f"'{company}' holds no active interest in {self.name} on {self.as_of}; "
+                f"partners: {sorted({i.company for i in items})}"
+            )
         return sum(i.share_pct for i in matched)
 
     def share_on(self, company: Any, on: date, owner: Optional[str] = None) -> float:
@@ -142,9 +154,13 @@ class EquityTable:
         if not self.history:
             raise ValueError("no history loaded; call the reader with history=True")
         q = norm(company)
-        rows = [i for i in self.history
-                if (q == norm(i.company) or q == str(i.company_id)) and i.active_on(on)
-                and (owner is None or norm(i.owner) == norm(owner))]
+        rows = [
+            i
+            for i in self.history
+            if (q == norm(i.company) or q == str(i.company_id))
+            and i.active_on(on)
+            and (owner is None or norm(i.owner) == norm(owner))
+        ]
         return sum(i.share_pct for i in rows)
 
     def confidence(self) -> str:
@@ -160,11 +176,20 @@ class EquityTable:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "entity_type": self.entity_type, "name": self.name, "entity_id": self.entity_id,
-            "as_of": self.as_of.isoformat(), "operator": self.operator, "status": self.status,
-            "confidence": self.confidence(), "owners": self.owners(),
-            "total_pct": {o or "all": round(self.total_pct(o), 6) for o in self.owners()},
+            "entity_type": self.entity_type,
+            "name": self.name,
+            "entity_id": self.entity_id,
+            "as_of": self.as_of.isoformat(),
+            "operator": self.operator,
+            "status": self.status,
+            "confidence": self.confidence(),
+            "owners": self.owners(),
+            "total_pct": {
+                o or "all": round(self.total_pct(o), 6) for o in self.owners()
+            },
             "interests": [i.to_dict() for i in self.interests],
-            "warnings": list(self.warnings), "gaps": list(self.gaps),
-            "included_in_field": self.included_in_field, "provenance": list(self.provenance),
+            "warnings": list(self.warnings),
+            "gaps": list(self.gaps),
+            "included_in_field": self.included_in_field,
+            "provenance": list(self.provenance),
         }

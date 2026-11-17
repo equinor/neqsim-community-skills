@@ -16,8 +16,12 @@ def main() -> None:
     )
 
     print(f"Flow margin:          {result.flow_margin:.2f} [{result.flow_flag}]")
-    print(f"Pressure margin:      {result.pressure_margin:.2f} [{result.pressure_flag}]")
-    print(f"Temperature margin:   {result.temperature_margin_c:.1f} C [{result.temperature_flag}]")
+    print(
+        f"Pressure margin:      {result.pressure_margin:.2f} [{result.pressure_flag}]"
+    )
+    print(
+        f"Temperature margin:   {result.temperature_margin_c:.1f} C [{result.temperature_flag}]"
+    )
     print(f"Standards:            {', '.join(result.standards) or 'none'}")
     print(f"Design warning:       {result.design_warning}")
     if result.flags:

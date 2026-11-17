@@ -74,7 +74,7 @@ class PipeSegment(object):
 
         :return: length in m
         """
-        return math.sqrt(self.horizontal_length ** 2 + self.elevation_change ** 2)
+        return math.sqrt(self.horizontal_length**2 + self.elevation_change**2)
 
     @property
     def nsegments(self):
@@ -106,11 +106,14 @@ class PipeSegment(object):
         lengths = ", ".join("{0:.4f}".format(v) for v in self.section_lengths)
         lines = [
             "{0}PIPE LABEL={1}, ROUGHNESS={2:.6e} m, DIAMETER={3:.4f} m, \\".format(
-                indent, self.label, roughness_m, diameter_m),
-            "{0}     WALL=\"{1}\", NSEGMENT={2:d}, LSEGMENT=({3}) m, \\".format(
-                indent, wall_label, self.nsegments, lengths),
+                indent, self.label, roughness_m, diameter_m
+            ),
+            '{0}     WALL="{1}", NSEGMENT={2:d}, LSEGMENT=({3}) m, \\'.format(
+                indent, wall_label, self.nsegments, lengths
+            ),
             "{0}     XEND={1:.3f} m, YEND={2:.3f} m, ZEND=0 m".format(
-                indent, self.x_end, self.y_end),
+                indent, self.x_end, self.y_end
+            ),
         ]
         return "\n".join(lines)
 
@@ -185,7 +188,8 @@ class Discretization(object):
         """
         return "\n".join(
             pipe.to_genkey(diameter_m, roughness_m, wall_label, indent)
-            for pipe in self.pipes)
+            for pipe in self.pipes
+        )
 
 
 def _graded_lengths(total, first, ratio, target):
@@ -250,7 +254,7 @@ def _enforce_neighbour_ratio(pipes_lengths, ratio, min_length):
         if length / 2.0 < min_length:
             return
         lengths = pipes_lengths[pipe_index]
-        lengths[section_index:section_index + 1] = [length / 2.0, length / 2.0]
+        lengths[section_index : section_index + 1] = [length / 2.0, length / 2.0]
 
 
 def _section_count(length, target, minimum, maximum):
@@ -279,15 +283,27 @@ def _local_minima(y):
     """
     minima = []
     for i in range(1, len(y) - 1):
-        if y[i] <= y[i - 1] and y[i] <= y[i + 1] and (y[i] < y[i - 1] or y[i] < y[i + 1]):
+        if (
+            y[i] <= y[i - 1]
+            and y[i] <= y[i + 1]
+            and (y[i] < y[i - 1] or y[i] < y[i + 1])
+        ):
             minima.append(i)
     return minima
 
 
-def discretize_route(x, y, target_section_length, min_section_length=1.0,
-                     max_section_length=None, max_adjacent_ratio=2.0,
-                     boundary_section_length=None, refine_low_points=False,
-                     low_point_section_length=None, label_prefix="PIPE"):
+def discretize_route(
+    x,
+    y,
+    target_section_length,
+    min_section_length=1.0,
+    max_section_length=None,
+    max_adjacent_ratio=2.0,
+    boundary_section_length=None,
+    refine_low_points=False,
+    low_point_section_length=None,
+    label_prefix="PIPE",
+):
     """Turn a route profile into OLGA pipes with sections.
 
     Each interval between consecutive route points becomes one `PIPE`. Section
@@ -323,7 +339,8 @@ def discretize_route(x, y, target_section_length, min_section_length=1.0,
         if x[i] <= x[i - 1]:
             raise DiscretizationError(
                 "route distances must increase: x[%d]=%r is not beyond x[%d]=%r"
-                % (i, x[i], i - 1, x[i - 1]))
+                % (i, x[i], i - 1, x[i - 1])
+            )
     if max_section_length is None:
         max_section_length = 2.0 * target_section_length
     if max_section_length < min_section_length:
@@ -347,8 +364,10 @@ def discretize_route(x, y, target_section_length, min_section_length=1.0,
         dy = y[i + 1] - y[i]
         lengths.append(math.sqrt(dx * dx + dy * dy))
 
-    counts = [_section_count(lengths[i], targets[i], min_section_length,
-                             max_section_length) for i in range(npipes)]
+    counts = [
+        _section_count(lengths[i], targets[i], min_section_length, max_section_length)
+        for i in range(npipes)
+    ]
 
     pipes_lengths = []
     for i in range(npipes):
@@ -357,21 +376,34 @@ def discretize_route(x, y, target_section_length, min_section_length=1.0,
         if boundary_section_length is not None and boundary_section_length > 0.0:
             if i == 0:
                 section_lengths = _graded_lengths(
-                    lengths[i], boundary_section_length, max_adjacent_ratio,
-                    targets[i])
+                    lengths[i], boundary_section_length, max_adjacent_ratio, targets[i]
+                )
             elif i == npipes - 1:
-                section_lengths = list(reversed(_graded_lengths(
-                    lengths[i], boundary_section_length, max_adjacent_ratio,
-                    targets[i])))
+                section_lengths = list(
+                    reversed(
+                        _graded_lengths(
+                            lengths[i],
+                            boundary_section_length,
+                            max_adjacent_ratio,
+                            targets[i],
+                        )
+                    )
+                )
         pipes_lengths.append(section_lengths)
 
     _enforce_neighbour_ratio(pipes_lengths, max_adjacent_ratio, min_section_length)
 
     pipes = []
     for i in range(npipes):
-        pipes.append(PipeSegment(
-            label="%s_%02d" % (label_prefix, i + 1),
-            x_start=x[i], y_start=y[i], x_end=x[i + 1], y_end=y[i + 1],
-            section_lengths=pipes_lengths[i]))
+        pipes.append(
+            PipeSegment(
+                label="%s_%02d" % (label_prefix, i + 1),
+                x_start=x[i],
+                y_start=y[i],
+                x_end=x[i + 1],
+                y_end=y[i + 1],
+                section_lengths=pipes_lengths[i],
+            )
+        )
 
     return Discretization(pipes)

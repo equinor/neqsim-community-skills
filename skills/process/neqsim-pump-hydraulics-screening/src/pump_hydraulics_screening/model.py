@@ -96,7 +96,9 @@ class PumpHydraulicsModel:
         return PumpHydraulicsResult(
             hydraulic_power_kw=round(hydraulic_power_kw, 4),
             shaft_power_kw=round(shaft_power_kw, 4),
-            npsh_available_m=(None if npsh_available is None else round(npsh_available, 3)),
+            npsh_available_m=(
+                None if npsh_available is None else round(npsh_available, 3)
+            ),
             npsh_margin_m=(None if npsh_margin is None else round(npsh_margin, 3)),
             bep_ratio=(None if bep_ratio is None else round(bep_ratio, 4)),
             pump_warning=warning,
@@ -112,18 +114,14 @@ class PumpHydraulicsModel:
             ),
         )
 
-    def _warning(
-        self, npsh_margin: float | None, bep_ratio: float | None
-    ) -> str:
+    def _warning(self, npsh_margin: float | None, bep_ratio: float | None) -> str:
         if npsh_margin is not None and npsh_margin <= 0.0:
             return "npsh-deficit"
         if bep_ratio is not None and (bep_ratio < 0.50 or bep_ratio > self.bep_high):
             return "off-bep"
         if npsh_margin is not None and npsh_margin < self.npsh_watch_margin:
             return "watch"
-        if bep_ratio is not None and (
-            bep_ratio < self.bep_low or bep_ratio > 1.10
-        ):
+        if bep_ratio is not None and (bep_ratio < self.bep_low or bep_ratio > 1.10):
             return "watch"
         if npsh_margin is None and bep_ratio is None:
             return "no-rating"

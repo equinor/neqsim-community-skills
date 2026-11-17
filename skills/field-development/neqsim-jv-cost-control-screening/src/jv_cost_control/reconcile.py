@@ -43,8 +43,12 @@ def reconcile_tables(
         Outer-joined table with ``diff`` and ``status`` (``MATCH``, ``DIFF``,
         ``ONLY_<a>`` or ``ONLY_<b>``), sorted by absolute difference.
     """
-    left = a.groupby(list(key), dropna=False)[value_a].sum().rename(names[0]).reset_index()
-    right = b.groupby(list(key), dropna=False)[value_b].sum().rename(names[1]).reset_index()
+    left = (
+        a.groupby(list(key), dropna=False)[value_a].sum().rename(names[0]).reset_index()
+    )
+    right = (
+        b.groupby(list(key), dropna=False)[value_b].sum().rename(names[1]).reset_index()
+    )
     merged = left.merge(right, on=list(key), how="outer", indicator=True)
     merged[[names[0], names[1]]] = merged[[names[0], names[1]]].fillna(0.0)
     merged["diff"] = merged[names[0]] - merged[names[1]]
@@ -79,7 +83,12 @@ def rollforward_check(
         retroactive adjustments the operator posted to earlier months.
     """
     frame = pd.concat(
-        {"prior_ytd": prior_ytd, "current_month": current_month, "current_ytd": current_ytd}, axis=1
+        {
+            "prior_ytd": prior_ytd,
+            "current_month": current_month,
+            "current_ytd": current_ytd,
+        },
+        axis=1,
     ).fillna(0.0)
     frame["expected_ytd"] = frame["prior_ytd"] + frame["current_month"]
     frame["diff"] = frame["current_ytd"] - frame["expected_ytd"]
@@ -130,7 +139,9 @@ def _evaluate(node: ast.AST, values: Mapping[str, float]) -> float:
             raise ValueError(f"unknown name {node.id}")
         return float(values[node.id])
     if isinstance(node, ast.BinOp) and type(node.op) in _OPS:
-        return _OPS[type(node.op)](_evaluate(node.left, values), _evaluate(node.right, values))
+        return _OPS[type(node.op)](
+            _evaluate(node.left, values), _evaluate(node.right, values)
+        )
     if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd)):
         value = _evaluate(node.operand, values)
         return -value if isinstance(node.op, ast.USub) else value
@@ -160,8 +171,14 @@ def check_identities(
             lhs = float(values[lhs_code])
             rhs = _evaluate(ast.parse(expression, mode="eval"), values)
         except (KeyError, ValueError, ZeroDivisionError):
-            results.append(IdentityResult(name, float("nan"), float("nan"), float("nan"), False, expression))
+            results.append(
+                IdentityResult(
+                    name, float("nan"), float("nan"), float("nan"), False, expression
+                )
+            )
             continue
         diff = lhs - rhs
-        results.append(IdentityResult(name, lhs, rhs, diff, abs(diff) <= tol_abs, expression))
+        results.append(
+            IdentityResult(name, lhs, rhs, diff, abs(diff) <= tol_abs, expression)
+        )
     return results

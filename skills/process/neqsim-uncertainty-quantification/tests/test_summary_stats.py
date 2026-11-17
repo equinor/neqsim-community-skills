@@ -103,5 +103,13 @@ def test_summarise_rejects_an_empty_sample():
 
 def test_summary_dict_carries_the_report_block_keys():
     payload = summarise([float(i) for i in range(100)]).to_dict()
-    for key in ("p10", "p50", "p90", "mean", "std", "prob_negative_pct", "n_simulations"):
+    for key in (
+        "p10",
+        "p50",
+        "p90",
+        "mean",
+        "std",
+        "prob_negative_pct",
+        "n_simulations",
+    ):
         assert key in payload

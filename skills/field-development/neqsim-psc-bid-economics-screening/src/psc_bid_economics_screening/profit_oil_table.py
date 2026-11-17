@@ -33,7 +33,9 @@ RATE_STEP_BBLD = 500.0
 class ProfitOilTable:
     """Lookup of the Annex XX adjustment (percentage points) by Brent price and rate per producer."""
 
-    def __init__(self, rows: Iterable[Tuple[float, Optional[float], float, float]]) -> None:
+    def __init__(
+        self, rows: Iterable[Tuple[float, Optional[float], float, float]]
+    ) -> None:
         """Build from ``(price_lo, price_hi_or_None, rate_lo, adjustment_pp)`` rows, grid complete."""
         cells: Dict[Tuple[Tuple[float, float], float], float] = {}
         for price_lo, price_hi, rate_lo, pp in rows:
@@ -42,10 +44,15 @@ class ProfitOilTable:
         self._bands: List[Tuple[float, float]] = sorted({band for band, _ in cells})
         self._rate_lo: List[float] = sorted({rate for _, rate in cells})
         if len(cells) != len(self._bands) * len(self._rate_lo):
-            raise ValueError("profit-oil grid is not complete: {} cells for {} bands x {} rates".format(
-                len(cells), len(self._bands), len(self._rate_lo)))
+            raise ValueError(
+                "profit-oil grid is not complete: {} cells for {} bands x {} rates".format(
+                    len(cells), len(self._bands), len(self._rate_lo)
+                )
+            )
         self._grid: Dict[Tuple[int, float], float] = {
-            (i, rate): cells[(band, rate)] for i, band in enumerate(self._bands) for rate in self._rate_lo
+            (i, rate): cells[(band, rate)]
+            for i, band in enumerate(self._bands)
+            for rate in self._rate_lo
         }
 
     @classmethod
@@ -96,17 +103,24 @@ class ProfitOilTable:
 
     def adjustment_pp(self, price: float, rate_bbld: float) -> float:
         """Adjustment in percentage points at Dated Brent ``price`` (USD/bbl) and ``rate_bbld`` per producer."""
-        return self._grid[(self._band_of_price(price), self._rate_lo[self._rate_index(rate_bbld)])]
+        return self._grid[
+            (self._band_of_price(price), self._rate_lo[self._rate_index(rate_bbld)])
+        ]
 
     def effective_share(self, offer: float, price: float, rate_bbld: float) -> float:
         """Union profit-oil share paid: offer plus adjustment, floored at 1 % and capped at 100 %."""
-        return min(MAX_SHARE, max(MIN_SHARE, offer + self.adjustment_pp(price, rate_bbld) / 100.0))
+        return min(
+            MAX_SHARE,
+            max(MIN_SHARE, offer + self.adjustment_pp(price, rate_bbld) / 100.0),
+        )
 
 
 @lru_cache(maxsize=1)
 def load_annex_xx() -> ProfitOilTable:
     """Packaged Annex XX grid of the ANP OPP edital (versions 2026; check the edital of the round)."""
-    path = resources.files(__package__).joinpath("data", "annex_xx_profit_oil_adjustment.csv")
+    path = resources.files(__package__).joinpath(
+        "data", "annex_xx_profit_oil_adjustment.csv"
+    )
     with resources.as_file(path) as real_path:
         return ProfitOilTable.from_csv(real_path)
 

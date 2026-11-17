@@ -11,6 +11,7 @@ Examples:
 
 comp.json: {"eos": "srk", "components": {"methane": 0.7, "ethane": 0.1, "n-heptane": 0.2}}
 """
+
 import argparse
 import json
 import math
@@ -26,6 +27,7 @@ def load_jneqsim():
     """Return the jneqsim namespace from the pip package."""
     try:
         from neqsim import jneqsim
+
         return jneqsim
     except ImportError:
         sys.exit("The neqsim Python package is required (pip install neqsim).")
@@ -38,7 +40,9 @@ def build_fluid(jneqsim, args):
     else:
         with open(args.composition) as f:
             spec = json.load(f)
-        cls = {"srk": "SystemSrkEos", "pr": "SystemPrEos"}[spec.get("eos", "srk").lower()]
+        cls = {"srk": "SystemSrkEos", "pr": "SystemPrEos"}[
+            spec.get("eos", "srk").lower()
+        ]
         fluid = getattr(jneqsim.thermo.system, cls)(273.15 + args.feed_t, args.feed_p)
         for name, z in spec["components"].items():
             fluid.addComponent(name, float(z))
@@ -97,12 +101,18 @@ def collect(feed, records, flow_kg_h):
         g_sm3 = gas.getFlowRate("mole/sec") * 3.6 * SM3_PER_KMOL if g_kg > 0 else 0.0
         gas_total += g_sm3
         gas_mass += g_kg
-        stages.append({
-            "stage": name, "P_bara": p, "T_C": t,
-            "gas_Sm3_h": g_sm3,
-            "gas_MW_gmol": gas.getFluid().getMolarMass() * 1000.0 if g_kg > 0 else None,
-            "liquid_kg_h": liq.getFlowRate("kg/hr"),
-        })
+        stages.append(
+            {
+                "stage": name,
+                "P_bara": p,
+                "T_C": t,
+                "gas_Sm3_h": g_sm3,
+                "gas_MW_gmol": (
+                    gas.getFluid().getMolarMass() * 1000.0 if g_kg > 0 else None
+                ),
+                "liquid_kg_h": liq.getFlowRate("kg/hr"),
+            }
+        )
     sto = records[-1][4]
     sto_kg = sto.getFlowRate("kg/hr")
     if sto_kg <= 0:
@@ -125,12 +135,20 @@ def collect(feed, records, flow_kg_h):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
     ap.add_argument("e300", nargs="?", help="E300 fluid file")
     ap.add_argument("--composition", help="JSON with eos and component mole fractions")
     ap.add_argument("--feed-p", type=float, default=250.0, help="feed pressure, bara")
-    ap.add_argument("--feed-t", type=float, default=100.0, help="feed temperature, degC")
-    ap.add_argument("--stages", default="70:60,20:50,2:40", help="bara:degC per stage, comma separated")
+    ap.add_argument(
+        "--feed-t", type=float, default=100.0, help="feed temperature, degC"
+    )
+    ap.add_argument(
+        "--stages",
+        default="70:60,20:50,2:40",
+        help="bara:degC per stage, comma separated",
+    )
     ap.add_argument("--flow", type=float, default=100000.0, help="feed rate, kg/hr")
     ap.add_argument("--out", help="write result JSON here")
     args = ap.parse_args()
@@ -142,12 +160,19 @@ def main():
     fluid = build_fluid(jneqsim, args)
     feed, records, _ = run_train(jneqsim, fluid, stages, args.flow)
     result = collect(feed, records, args.flow)
-    result["inputs"] = {"fluid": args.e300 or args.composition, "feed_P_bara": args.feed_p,
-                        "feed_T_C": args.feed_t, "stages_bara_C": stages, "feed_kg_h": args.flow}
+    result["inputs"] = {
+        "fluid": args.e300 or args.composition,
+        "feed_P_bara": args.feed_p,
+        "feed_T_C": args.feed_t,
+        "stages_bara_C": stages,
+        "feed_kg_h": args.flow,
+    }
     result["warnings"] = []
     if result["feed_n_phases"] > 1:
-        result["warnings"].append("Feed is two-phase at the given feed P/T; Bo and GOR are for the "
-                                  "mixed stream, not a single-phase reservoir fluid.")
+        result["warnings"].append(
+            "Feed is two-phase at the given feed P/T; Bo and GOR are for the "
+            "mixed stream, not a single-phase reservoir fluid."
+        )
     if not math.isfinite(result["GOR_Sm3_Sm3"]):
         result["warnings"].append("GOR is not finite.")
     text = json.dumps(result, indent=2)

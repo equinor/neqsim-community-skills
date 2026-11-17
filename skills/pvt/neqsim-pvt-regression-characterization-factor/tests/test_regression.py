@@ -15,8 +15,14 @@ def test_weighted_ssr_zero_at_match():
 
 def test_weighted_ssr_respects_weight():
     predicted = {"psat": 187.0, "gor": 250.0}  # 10% high on psat
-    low_weight = [RegressionTarget("psat", 170.0, weight=1.0), RegressionTarget("gor", 250.0)]
-    high_weight = [RegressionTarget("psat", 170.0, weight=4.0), RegressionTarget("gor", 250.0)]
+    low_weight = [
+        RegressionTarget("psat", 170.0, weight=1.0),
+        RegressionTarget("gor", 250.0),
+    ]
+    high_weight = [
+        RegressionTarget("psat", 170.0, weight=4.0),
+        RegressionTarget("gor", 250.0),
+    ]
     assert weighted_ssr(predicted, high_weight) > weighted_ssr(predicted, low_weight)
 
 
@@ -32,7 +38,9 @@ def test_regress_fits_factor_to_multiple_targets():
         RegressionTarget("psat", 170.0, weight=1.0),
         RegressionTarget("sto_density", 810.0, weight=1.0),
     ]
-    result = regress_characterization_factor(forward, targets, low=0.5, high=2.5, tol=1e-6)
+    result = regress_characterization_factor(
+        forward, targets, low=0.5, high=2.5, tol=1e-6
+    )
     assert result.converged
     assert result.factor == pytest.approx(1.4, abs=1e-3)
     assert abs(result.residuals["psat"]) < 1e-3

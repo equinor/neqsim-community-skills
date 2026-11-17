@@ -33,7 +33,13 @@ class DynamicProcessPreparationModel:
     """Readiness checks for NeqSim dynamic process preparation."""
 
     VALID_PROCESS_KINDS = {"ProcessSystem", "ProcessModel"}
-    VESSEL_TYPES = {"separator", "threephaseseparator", "gas scrubber", "vessel", "tank"}
+    VESSEL_TYPES = {
+        "separator",
+        "threephaseseparator",
+        "gas scrubber",
+        "vessel",
+        "tank",
+    }
 
     def evaluate(
         self,
@@ -57,10 +63,14 @@ class DynamicProcessPreparationModel:
 
         equipment_actions = tuple(self._evaluate_equipment(item) for item in equipment)
         estimated_volumes = {
-            item.name: item.volume_m3 for item in equipment_actions if item.volume_m3 is not None
+            item.name: item.volume_m3
+            for item in equipment_actions
+            if item.volume_m3 is not None
         }
         warnings = list(self._global_warnings(equipment_actions, total_time_seconds))
-        dynamic_ready = not warnings and all(not item.warnings for item in equipment_actions)
+        dynamic_ready = not warnings and all(
+            not item.warnings for item in equipment_actions
+        )
 
         return DynamicPreparationPlan(
             process_name=process_name,
@@ -101,7 +111,9 @@ class DynamicProcessPreparationModel:
         is_vessel = normalized_type in self.VESSEL_TYPES
         if is_vessel:
             if length is None or diameter is None:
-                warnings.append("vessel geometry is missing; set length and internal diameter")
+                warnings.append(
+                    "vessel geometry is missing; set length and internal diameter"
+                )
             else:
                 volume = round(pi * diameter**2 / 4.0 * length, 6)
                 if level is not None:
@@ -109,10 +121,14 @@ class DynamicProcessPreparationModel:
             if level is None:
                 warnings.append("initial liquid level fraction is missing")
         elif length is not None or diameter is not None or level is not None:
-            warnings.append("geometry or level was supplied for non-vessel equipment; verify basis")
+            warnings.append(
+                "geometry or level was supplied for non-vessel equipment; verify basis"
+            )
 
         if requires_mechanical_design and not is_vessel:
-            warnings.append("mechanical-design request should be mapped to a supported NeqSim design class")
+            warnings.append(
+                "mechanical-design request should be mapped to a supported NeqSim design class"
+            )
 
         return DynamicEquipment(
             name=name,
@@ -136,7 +152,8 @@ class DynamicProcessPreparationModel:
 
     @staticmethod
     def _global_warnings(
-        equipment_actions: tuple[DynamicEquipment, ...], total_time_seconds: float | None
+        equipment_actions: tuple[DynamicEquipment, ...],
+        total_time_seconds: float | None,
     ) -> tuple[str, ...]:
         warnings: list[str] = []
         if total_time_seconds is None:

@@ -28,7 +28,11 @@ def category_of(layer_id: int) -> str:
 @lru_cache(maxsize=1)
 def load_catalog() -> Dict[str, Any]:
     """Load the bundled catalog JSON (see ``refresh.py`` to regenerate it from the live service)."""
-    with resources.files("sodir_open_data").joinpath("data/dataservice_catalog.json").open("r", encoding="utf-8") as fh:
+    with (
+        resources.files("sodir_open_data")
+        .joinpath("data/dataservice_catalog.json")
+        .open("r", encoding="utf-8") as fh
+    ):
         return json.load(fh)
 
 
@@ -47,7 +51,9 @@ def resolve_id(layer: "str | int") -> int:
     for item in items():
         if item["name"].lower() == text.lower():
             return int(item["id"])
-    raise KeyError(f"unknown Sodir DataService layer or table {layer!r}; use search() to find it")
+    raise KeyError(
+        f"unknown Sodir DataService layer or table {layer!r}; use search() to find it"
+    )
 
 
 def get(layer: "str | int") -> Dict[str, Any]:
@@ -56,7 +62,9 @@ def get(layer: "str | int") -> Dict[str, Any]:
     for item in items():
         if int(item["id"]) == layer_id:
             return item
-    raise KeyError(f"layer id {layer_id} is not in the bundled catalog; run refresh to update it")
+    raise KeyError(
+        f"layer id {layer_id} is not in the bundled catalog; run refresh to update it"
+    )
 
 
 def search(text: str, limit: int = 15) -> List[Dict[str, Any]]:
@@ -67,7 +75,9 @@ def search(text: str, limit: int = 15) -> List[Dict[str, Any]]:
         name = item["name"].lower().replace("_", " ")
         desc = (item.get("description") or "").lower()
         fields = " ".join(f["name"].lower() for f in item.get("fields", []))
-        score = sum(3 * (w in name) + 1 * (w in desc) + 1 * (w in fields) for w in words)
+        score = sum(
+            3 * (w in name) + 1 * (w in desc) + 1 * (w in fields) for w in words
+        )
         if score:
             scored.append((score, item))
     scored.sort(key=lambda pair: (-pair[0], pair[1]["id"]))
@@ -83,7 +93,10 @@ def describe(layer: "str | int", with_fields: bool = True) -> str:
     """Return a short text description of a layer or table, optionally listing attribute descriptions."""
     item = get(layer)
     kind = item["kind"] + (f"/{item['geometry']}" if item.get("geometry") else "")
-    lines = [f"{item['id']} {item['name']} [{kind}] - {category_of(item['id'])}", (item.get("description") or "").strip()]
+    lines = [
+        f"{item['id']} {item['name']} [{kind}] - {category_of(item['id'])}",
+        (item.get("description") or "").strip(),
+    ]
     if with_fields:
         for f in item.get("fields", []):
             tail = f" - {f['description']}" if f.get("description") else ""

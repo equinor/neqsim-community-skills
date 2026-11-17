@@ -124,9 +124,7 @@ class ProducedWaterBuilder:
         """
         provided = [x for x in (ions_mg_l, preset, tds_mg_l) if x is not None]
         if len(provided) != 1:
-            raise ValueError(
-                "Provide exactly one of ions_mg_l, preset, or tds_mg_l."
-            )
+            raise ValueError("Provide exactly one of ions_mg_l, preset, or tds_mg_l.")
 
         warnings: list[str] = []
 
@@ -157,9 +155,7 @@ class ProducedWaterBuilder:
                 if value < 0.0:
                     raise ValueError(f"Concentration for '{key}' is negative.")
                 if key not in ION_MOLAR_MASS:
-                    warnings.append(
-                        f"Ion '{key}' is not recognized and is ignored."
-                    )
+                    warnings.append(f"Ion '{key}' is not recognized and is ignored.")
                     continue
                 ions[key] = float(value)
 
@@ -230,10 +226,9 @@ class ProducedWaterBuilder:
         fraction_b = 1.0 - fraction_a
         mixed: dict[str, float] = {}
         for ion in set(water_a.ions_mg_l) | set(water_b.ions_mg_l):
-            mixed[ion] = (
-                fraction_a * water_a.ions_mg_l.get(ion, 0.0)
-                + fraction_b * water_b.ions_mg_l.get(ion, 0.0)
-            )
+            mixed[ion] = fraction_a * water_a.ions_mg_l.get(
+                ion, 0.0
+            ) + fraction_b * water_b.ions_mg_l.get(ion, 0.0)
         ph = None
         if water_a.ph is not None and water_b.ph is not None:
             ph = fraction_a * water_a.ph + fraction_b * water_b.ph

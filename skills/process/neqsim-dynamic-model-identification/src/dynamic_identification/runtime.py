@@ -40,7 +40,9 @@ def find_assemblies(version: str = DEFAULT_VERSION) -> Optional[Path]:
     try:
         import timeseriesanalysis  # type: ignore[import-not-found]
 
-        candidates.append(Path(timeseriesanalysis.__file__).resolve().parent / "_assemblies")
+        candidates.append(
+            Path(timeseriesanalysis.__file__).resolve().parent / "_assemblies"
+        )
     except Exception:  # noqa: BLE001 - the py package is optional
         pass
     candidates.append(default_bundle_dir(version))
@@ -59,15 +61,20 @@ def load(version: str = DEFAULT_VERSION) -> Path:
     if folder is None:
         raise TsaUnavailable(
             "TimeSeriesAnalysis.dll not found. Run '<python> -m dynamic_identification setup' once (needs the .NET SDK), "
-            "or set TIMESERIESANALYSIS_ASSEMBLY_PATH to a folder with the published assemblies.")
+            "or set TIMESERIESANALYSIS_ASSEMBLY_PATH to a folder with the published assemblies."
+        )
     try:
         from pythonnet import load as load_runtime
 
         load_runtime("coreclr")
-    except Exception as exc:  # noqa: BLE001 - also raised when another runtime is already loaded
+    except (
+        Exception
+    ) as exc:  # noqa: BLE001 - also raised when another runtime is already loaded
         if "already" not in str(exc).lower():
-            raise TsaUnavailable(f".NET runtime (CoreCLR) could not be loaded: {exc}. Install the .NET 8 runtime "
-                                 f"or newer, and pythonnet (declared in this skill's pyproject.toml).") from exc
+            raise TsaUnavailable(
+                f".NET runtime (CoreCLR) could not be loaded: {exc}. Install the .NET 8 runtime "
+                f"or newer, and pythonnet (declared in this skill's pyproject.toml)."
+            ) from exc
     import clr  # type: ignore[import-not-found]
 
     if str(folder) not in sys.path:
@@ -88,23 +95,45 @@ _PROJECT = """<Project Sdk="Microsoft.NET.Sdk">
 """
 
 
-def setup_assemblies(version: str = DEFAULT_VERSION, dest: Optional[Path] = None) -> Path:
+def setup_assemblies(
+    version: str = DEFAULT_VERSION, dest: Optional[Path] = None
+) -> Path:
     """Publish TimeSeriesAnalysis and its dependencies from NuGet into ``dest`` with the .NET SDK.
 
     Run once, on purpose. It needs ``dotnet`` on PATH and network access to nuget.org.
     """
     dotnet = shutil.which("dotnet")
     if dotnet is None:
-        raise TsaUnavailable("the .NET SDK (dotnet) is not on PATH; install it or point "
-                             "TIMESERIESANALYSIS_ASSEMBLY_PATH at published assemblies")
+        raise TsaUnavailable(
+            "the .NET SDK (dotnet) is not on PATH; install it or point "
+            "TIMESERIESANALYSIS_ASSEMBLY_PATH at published assemblies"
+        )
     dest = Path(dest) if dest else default_bundle_dir(version)
     build = dest.parent / f"_build_{version}"
     build.mkdir(parents=True, exist_ok=True)
-    (build / "tsa_bundle.csproj").write_text(_PROJECT.format(version=version), encoding="utf-8")
-    result = subprocess.run([dotnet, "publish", str(build / "tsa_bundle.csproj"), "-c", "Release", "-o", str(dest),
-                             "--nologo", "-v", "q"], capture_output=True, text=True,
-                            creationflags=_CREATE_NO_WINDOW)
+    (build / "tsa_bundle.csproj").write_text(
+        _PROJECT.format(version=version), encoding="utf-8"
+    )
+    result = subprocess.run(
+        [
+            dotnet,
+            "publish",
+            str(build / "tsa_bundle.csproj"),
+            "-c",
+            "Release",
+            "-o",
+            str(dest),
+            "--nologo",
+            "-v",
+            "q",
+        ],
+        capture_output=True,
+        text=True,
+        creationflags=_CREATE_NO_WINDOW,
+    )
     shutil.rmtree(build, ignore_errors=True)
     if result.returncode != 0 or not (dest / f"{ASSEMBLY}.dll").exists():
-        raise TsaUnavailable(f"dotnet publish failed: {result.stdout[-800:]} {result.stderr[-800:]}")
+        raise TsaUnavailable(
+            f"dotnet publish failed: {result.stdout[-800:]} {result.stderr[-800:]}"
+        )
     return dest

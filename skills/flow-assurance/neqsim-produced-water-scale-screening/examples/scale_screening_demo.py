@@ -42,7 +42,11 @@ def main() -> None:
     print("\n=== Standalone scale screening (seawater) ===")
     screening = screener.screen(seawater)
     for result in screening.results:
-        si = "n/a" if result.saturation_index is None else f"{result.saturation_index:+.2f}"
+        si = (
+            "n/a"
+            if result.saturation_index is None
+            else f"{result.saturation_index:+.2f}"
+        )
         print(f"  {result.salt:<6}  SI={si:<6}  risk={result.risk}")
 
     print("\n=== Mixing incompatibility (formation water x seawater) ===")
@@ -59,7 +63,9 @@ def main() -> None:
         )
 
     print("\n=== Corrosion screening flags ===")
-    for flag in screener.corrosion_flags(seawater, co2_mol_percent=3.0, h2s_mol_percent=0.05):
+    for flag in screener.corrosion_flags(
+        seawater, co2_mol_percent=3.0, h2s_mol_percent=0.05
+    ):
         print(f"  - {flag}")
 
     print(

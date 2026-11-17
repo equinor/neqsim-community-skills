@@ -16,17 +16,28 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from . import catalog
-from .downloads import DATASERVICE_DATA, DATASERVICE_METADATA, LICENCE, factpages_table_url
+from .downloads import (
+    DATASERVICE_DATA,
+    DATASERVICE_METADATA,
+    LICENCE,
+    factpages_table_url,
+)
 
 Fetch = Callable[[str, float], bytes]
-USER_AGENT = "neqsim-sodir-open-data/0.1 (+https://github.com/equinor/neqsim-community-skills)"
+USER_AGENT = (
+    "neqsim-sodir-open-data/0.1 (+https://github.com/equinor/neqsim-community-skills)"
+)
 _EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
 
 def default_fetch(url: str, timeout: float = 120.0) -> bytes:
     """Perform a bounded GET and return the body (www.sodir.no pages answer 403; use the service hosts)."""
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed https hosts
+    request = urllib.request.Request(
+        url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"}
+    )
+    with urllib.request.urlopen(
+        request, timeout=timeout
+    ) as response:  # noqa: S310 - fixed https hosts
         return response.read()
 
 
@@ -54,7 +65,9 @@ class ReadRecord:
     url: str
     rows: int
     where: str = ""
-    retrieved_utc: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    retrieved_utc: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+    )
     licence: str = LICENCE
     ok: bool = True
     error: Optional[str] = None
@@ -67,8 +80,14 @@ class ReadRecord:
 class SodirOpenData:
     """Query any DataService layer or table, FactPages CSV view or metadata table."""
 
-    def __init__(self, fetch: Fetch = default_fetch, *, timeout: float = 120.0, page_size: int = 1000,
-                 max_pages: int = 100) -> None:
+    def __init__(
+        self,
+        fetch: Fetch = default_fetch,
+        *,
+        timeout: float = 120.0,
+        page_size: int = 1000,
+        max_pages: int = 100,
+    ) -> None:
         self.fetch = fetch
         self.timeout = timeout
         self.page_size = min(int(page_size), 2000)  # server maxRecordCount is 2000
@@ -78,7 +97,11 @@ class SodirOpenData:
     def _json(self, url: str) -> Dict[str, Any]:
         payload = json.loads(self.fetch(url, self.timeout).decode("utf-8"))
         if "error" in payload:
-            self.records.append(ReadRecord("sodir-dataservice", url, 0, ok=False, error=str(payload["error"])))
+            self.records.append(
+                ReadRecord(
+                    "sodir-dataservice", url, 0, ok=False, error=str(payload["error"])
+                )
+            )
             raise RuntimeError(f"Sodir service error: {payload['error']}")
         return payload
 
@@ -95,13 +118,26 @@ class SodirOpenData:
 
     def count(self, layer: "str | int", where: str = "1=1") -> int:
         """Return the number of rows matching ``where``."""
-        url = f"{DATASERVICE_DATA}/{catalog.resolve_id(layer)}/query?" + urllib.parse.urlencode(
-            {"where": where, "returnCountOnly": "true", "f": "json"})
+        url = (
+            f"{DATASERVICE_DATA}/{catalog.resolve_id(layer)}/query?"
+            + urllib.parse.urlencode(
+                {"where": where, "returnCountOnly": "true", "f": "json"}
+            )
+        )
         return int(self._json(url).get("count", 0))
 
-    def query(self, layer: "str | int", where: str = "1=1", out_fields: str = "*", *,
-              geometry: bool = False, out_sr: Optional[int] = None, bbox: Optional[Sequence[float]] = None,
-              order_by: Optional[str] = None, max_rows: Optional[int] = None) -> List[Dict[str, Any]]:
+    def query(
+        self,
+        layer: "str | int",
+        where: str = "1=1",
+        out_fields: str = "*",
+        *,
+        geometry: bool = False,
+        out_sr: Optional[int] = None,
+        bbox: Optional[Sequence[float]] = None,
+        order_by: Optional[str] = None,
+        max_rows: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
         """Return rows of a layer/table as dicts, paging past the 2000-row server limit.
 
         ``geometry=True`` adds ``_geometry`` (ArcGIS JSON). Geometry is ED50 (EPSG 4230) unless
@@ -114,12 +150,21 @@ class SodirOpenData:
         offset = 0
         url = base
         for _ in range(self.max_pages):
-            take = self.page_size if max_rows is None else min(self.page_size, max_rows - len(rows))
+            take = (
+                self.page_size
+                if max_rows is None
+                else min(self.page_size, max_rows - len(rows))
+            )
             if take <= 0:
                 break
-            params: Dict[str, Any] = {"where": where, "outFields": out_fields,
-                                      "returnGeometry": "true" if geometry else "false", "f": "json",
-                                      "resultOffset": offset, "resultRecordCount": take}
+            params: Dict[str, Any] = {
+                "where": where,
+                "outFields": out_fields,
+                "returnGeometry": "true" if geometry else "false",
+                "f": "json",
+                "resultOffset": offset,
+                "resultRecordCount": take,
+            }
             if out_sr:
                 params["outSR"] = out_sr
             if order_by:
@@ -140,28 +185,52 @@ class SodirOpenData:
         self.records.append(ReadRecord("sodir-dataservice", base, len(rows), where))
         return rows
 
-    def distinct(self, layer: "str | int", column: str, where: str = "1=1") -> List[Any]:
+    def distinct(
+        self, layer: "str | int", column: str, where: str = "1=1"
+    ) -> List[Any]:
         """Return the distinct values of one column (useful for enumerations such as ``wlbPurpose``)."""
         layer_id = catalog.resolve_id(layer)
         url = f"{DATASERVICE_DATA}/{layer_id}/query?" + urllib.parse.urlencode(
-            {"where": where, "outFields": column, "returnDistinctValues": "true",
-             "returnGeometry": "false", "f": "json"})
+            {
+                "where": where,
+                "outFields": column,
+                "returnDistinctValues": "true",
+                "returnGeometry": "false",
+                "f": "json",
+            }
+        )
         feats = self._json(url).get("features", [])
         self.records.append(ReadRecord("sodir-dataservice", url, len(feats), where))
-        return sorted({f["attributes"].get(column) for f in feats if f["attributes"].get(column) is not None})
+        return sorted(
+            {
+                f["attributes"].get(column)
+                for f in feats
+                if f["attributes"].get(column) is not None
+            }
+        )
 
-    def by_name(self, layer: "str | int", column: str, value: str, **kwargs: Any) -> List[Dict[str, Any]]:
+    def by_name(
+        self, layer: "str | int", column: str, value: str, **kwargs: Any
+    ) -> List[Dict[str, Any]]:
         """Query rows where ``column`` equals ``value`` (names are upper/lower case sensitive in Sodir data)."""
         return self.query(layer, f"{column}={sql_quote(value)}", **kwargs)
 
-    def children(self, layer: "str | int", wellbore_npdid: int, **kwargs: Any) -> List[Dict[str, Any]]:
+    def children(
+        self, layer: "str | int", wellbore_npdid: int, **kwargs: Any
+    ) -> List[Dict[str, Any]]:
         """Return the rows of a wellbore child table (tops, DST, cores, samples, mud, logs...) for one wellbore."""
         return self.query(layer, f"wlbNpdidWellbore={int(wellbore_npdid)}", **kwargs)
 
     def metadata_attributes(self, table_name: str) -> List[Dict[str, Any]]:
         """Return the attribute descriptions of a table from the live Metadata service."""
         url = f"{DATASERVICE_METADATA}/11/query?" + urllib.parse.urlencode(
-            {"where": f"TableName={sql_quote(table_name)}", "outFields": "*", "returnGeometry": "false", "f": "json"})
+            {
+                "where": f"TableName={sql_quote(table_name)}",
+                "outFields": "*",
+                "returnGeometry": "false",
+                "f": "json",
+            }
+        )
         feats = self._json(url).get("features", [])
         self.records.append(ReadRecord("sodir-metadata", url, len(feats)))
         return [f["attributes"] for f in feats]

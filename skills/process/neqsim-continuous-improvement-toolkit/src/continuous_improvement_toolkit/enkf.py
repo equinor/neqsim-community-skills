@@ -48,11 +48,18 @@ def identifiability(jacobian, names=None, parameter_scale=None, rel_tol=1e-3):
     weak = []
     for i in range(rank, len(s)):
         direction = vt[i]
-        weak.append({n: round(float(c), 3) for n, c in zip(names, direction) if abs(c) > 0.2})
+        weak.append(
+            {n: round(float(c), 3) for n, c in zip(names, direction) if abs(c) > 0.2}
+        )
     column_norm = np.linalg.norm(j, axis=0)
-    return {"singular_values": s.tolist(),
-            "condition_number": float(s[0] / s[-1]) if len(s) and s[-1] > 0 else float("inf"),
-            "rank": rank, "n_parameters": j.shape[1],
-            "identifiable": rank == j.shape[1],
-            "unidentifiable_directions": weak,
-            "sensitivity_norm": {n: float(v) for n, v in zip(names, column_norm)}}
+    return {
+        "singular_values": s.tolist(),
+        "condition_number": (
+            float(s[0] / s[-1]) if len(s) and s[-1] > 0 else float("inf")
+        ),
+        "rank": rank,
+        "n_parameters": j.shape[1],
+        "identifiable": rank == j.shape[1],
+        "unidentifiable_directions": weak,
+        "sensitivity_norm": {n: float(v) for n, v in zip(names, column_norm)},
+    }

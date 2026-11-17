@@ -15,7 +15,7 @@ of failures (ROCOF).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from math import exp, isfinite, log, sqrt
+from math import isfinite, log, sqrt
 from typing import Sequence, Tuple
 
 _DAYS_PER_YEAR = 365.25
@@ -158,7 +158,9 @@ class AgeingLifeExtensionModel:
             annual_cost_of_ownership=annual_cost_of_ownership,
             discount_rate=discount_rate,
         )
-        life_verdict = self._life_extension_verdict(ageing_verdict, crossover, target_year_offset)
+        life_verdict = self._life_extension_verdict(
+            ageing_verdict, crossover, target_year_offset
+        )
 
         return AgeingScreeningResult(
             n_failures=n,
@@ -252,18 +254,25 @@ class AgeingLifeExtensionModel:
             return "improving"
         return "no-significant-trend"
 
-    def _ageing_verdict(self, laplace_verdict: str, beta_low: float, rate_ratio: float) -> str:
+    def _ageing_verdict(
+        self, laplace_verdict: str, beta_low: float, rate_ratio: float
+    ) -> str:
         if laplace_verdict == "insufficient-data":
             return "insufficient-data"
         significant = (
             laplace_verdict == "deteriorating"
             and beta_low > 1.0
-            and (beta_low >= self.beta_significant or rate_ratio >= self.rate_ratio_significant)
+            and (
+                beta_low >= self.beta_significant
+                or rate_ratio >= self.rate_ratio_significant
+            )
         )
         if significant:
             return "significant-ageing"
-        watch = laplace_verdict == "deteriorating" or beta_low > 1.0 or (
-            rate_ratio >= self.rate_ratio_watch
+        watch = (
+            laplace_verdict == "deteriorating"
+            or beta_low > 1.0
+            or (rate_ratio >= self.rate_ratio_watch)
         )
         if watch:
             return "ageing-suspected"
@@ -323,7 +332,9 @@ class AgeingLifeExtensionModel:
     # ---------------------------------------------------------------- plumbing
 
     @staticmethod
-    def _clean_times(times: Sequence[float], observation_years: float) -> Tuple[float, ...]:
+    def _clean_times(
+        times: Sequence[float], observation_years: float
+    ) -> Tuple[float, ...]:
         cleaned = []
         for t in times:
             value = float(t)

@@ -19,7 +19,10 @@ def test_finds_versions_newest_first(fake_install_root: Path) -> None:
 
 
 def test_excludes_olga_s_and_namespace_explorer(fake_install_root: Path) -> None:
-    roots = {i.root.name for i in find_olga_installations(search_roots=[fake_install_root], env={})}
+    roots = {
+        i.root.name
+        for i in find_olga_installations(search_roots=[fake_install_root], env={})
+    }
     assert roots == {"Olga 2025.1.0", "Olga 2024.1.5"}
 
 
@@ -42,8 +45,12 @@ def test_olga_home_environment_override(fake_install_root: Path) -> None:
 
 
 def test_olga_engine_environment_override(fake_install_root: Path) -> None:
-    engine = fake_install_root / "Olga 2025.1.0" / "OlgaExecutables" / "Olga-2025.1.0.exe"
-    installations = find_olga_installations(search_roots=[], env={"OLGA_ENGINE": str(engine)})
+    engine = (
+        fake_install_root / "Olga 2025.1.0" / "OlgaExecutables" / "Olga-2025.1.0.exe"
+    )
+    installations = find_olga_installations(
+        search_roots=[], env={"OLGA_ENGINE": str(engine)}
+    )
     assert len(installations) == 1
     assert installations[0].engine == engine
     assert installations[0].root.name == "Olga 2025.1.0"
@@ -70,4 +77,7 @@ def test_license_and_point_model_environment_are_filtered() -> None:
         "OLGAS_SLB_x64_2025.1.0": r"C:\olgas\Win64",
     }
     assert license_environment(env) == {"LM_LICENSE_FILE": "7570@licence.example"}
-    assert set(olgas_point_model_roots(env)) == {"OLGAS_SLB_x64", "OLGAS_SLB_x64_2025.1.0"}
+    assert set(olgas_point_model_roots(env)) == {
+        "OLGAS_SLB_x64",
+        "OLGAS_SLB_x64_2025.1.0",
+    }

@@ -56,7 +56,9 @@ class ReliabilityDataModel:
         self._require_positive("mean_time_to_repair_h", mean_time_to_repair_h)
         self._require_positive_int("redundancy", redundancy)
         self._require_positive("mission_time_years", mission_time_years)
-        self._require_planned_downtime("planned_downtime_h_per_year", planned_downtime_h_per_year)
+        self._require_planned_downtime(
+            "planned_downtime_h_per_year", planned_downtime_h_per_year
+        )
 
         lam = failure_rate_per_year
 

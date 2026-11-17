@@ -45,7 +45,10 @@ def test_restrained_hot_run_expansion_exceeded() -> None:
 
     assert result.delta_temperature_k == pytest.approx(380.0, abs=1e-6)
     assert result.displacement_stress_ratio > 1.0
-    assert result.stress_warning in {"expansion-stress-exceeded", "hoop-stress-exceeded"}
+    assert result.stress_warning in {
+        "expansion-stress-exceeded",
+        "hoop-stress-exceeded",
+    }
 
 
 def test_routing_relief_lowers_displacement_stress() -> None:

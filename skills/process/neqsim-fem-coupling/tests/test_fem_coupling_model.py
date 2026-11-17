@@ -56,7 +56,9 @@ def test_an_unreported_energy_balance_is_treated_as_unchecked(model):
 
 def test_a_broken_energy_balance_and_a_coarse_mesh_is_not_usable(model):
     result = model.assess_quality(
-        **_good_gate(energy_balance_error_percent=12.0, elements_across_critical_layer=1)
+        **_good_gate(
+            energy_balance_error_percent=12.0, elements_across_critical_layer=1
+        )
     )
     assert result.verdict == "not_usable"
 

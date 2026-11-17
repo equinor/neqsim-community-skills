@@ -211,7 +211,9 @@ def film_coefficient(
     _require_positive("thermal conductivity", fluid.thermal_conductivity_w_per_mk)
     _require_positive("heat capacity", fluid.heat_capacity_j_per_kgk)
 
-    velocity = velocity_m_per_s if velocity_m_per_s is not None else fluid.velocity_m_per_s
+    velocity = (
+        velocity_m_per_s if velocity_m_per_s is not None else fluid.velocity_m_per_s
+    )
     if velocity is None:
         raise ValueError(
             "supply velocity_m_per_s, or a FemFluidState carrying velocity_m_per_s"
@@ -283,7 +285,9 @@ def film_coefficient(
         )
 
     return FilmCoefficient(
-        h_w_per_m2k=nusselt * fluid.thermal_conductivity_w_per_mk / hydraulic_diameter_m,
+        h_w_per_m2k=nusselt
+        * fluid.thermal_conductivity_w_per_mk
+        / hydraulic_diameter_m,
         reynolds=reynolds,
         prandtl=prandtl,
         nusselt=nusselt,
@@ -316,16 +320,14 @@ def derive_thermal_conditions(
     """
     _require_positive("wall_thickness_m", wall_thickness_m)
     _require_positive("solid_conductivity_w_per_mk", solid_conductivity_w_per_mk)
-    _require_positive("solid_thermal_diffusivity_m2_per_s", solid_thermal_diffusivity_m2_per_s)
+    _require_positive(
+        "solid_thermal_diffusivity_m2_per_s", solid_thermal_diffusivity_m2_per_s
+    )
     _require_positive(
         "outer_film_coefficient_w_per_m2k", outer_film_coefficient_w_per_m2k
     )
 
-    film = (
-        inner_film
-        if isinstance(inner_film, FilmCoefficient)
-        else None
-    )
+    film = inner_film if isinstance(inner_film, FilmCoefficient) else None
     h_inner = film.h_w_per_m2k if film is not None else float(inner_film)
     _require_positive("inner film coefficient", h_inner)
 
@@ -362,8 +364,14 @@ def derive_thermal_conditions(
         # interest. Elements coarser than this cannot represent it.
         penetration = sqrt(solid_thermal_diffusivity_m2_per_s * transient_duration_s)
         element_size = min(element_size, penetration / _ELEMENTS_PER_PENETRATION_DEPTH)
-        time_step = _MESH_FOURIER_TARGET * element_size**2 / solid_thermal_diffusivity_m2_per_s
-        fourier = solid_thermal_diffusivity_m2_per_s * transient_duration_s / wall_thickness_m**2
+        time_step = (
+            _MESH_FOURIER_TARGET * element_size**2 / solid_thermal_diffusivity_m2_per_s
+        )
+        fourier = (
+            solid_thermal_diffusivity_m2_per_s
+            * transient_duration_s
+            / wall_thickness_m**2
+        )
         assumptions.append(
             "Transient element size resolves the penetration depth "
             "sqrt(alpha t) with at least "
@@ -436,7 +444,9 @@ def effective_diffusivity(
     return porosity * molecular_diffusivity_m2_per_s / tortuosity, assumptions
 
 
-def hydraulic_diameter_annulus(outer_diameter_m: float, inner_diameter_m: float) -> float:
+def hydraulic_diameter_annulus(
+    outer_diameter_m: float, inner_diameter_m: float
+) -> float:
     """Hydraulic diameter of an annulus, ``D_o - D_i``."""
     _require_positive("outer_diameter_m", outer_diameter_m)
     _require_positive("inner_diameter_m", inner_diameter_m)
@@ -467,7 +477,10 @@ def _read_diffusion_coefficients(
     for component in components:
         try:
             values.append(
-                (component, float(properties.getEffectiveDiffusionCoefficient(component)))
+                (
+                    component,
+                    float(properties.getEffectiveDiffusionCoefficient(component)),
+                )
             )
         except Exception:  # pragma: no cover - component absent or model unsupported
             continue

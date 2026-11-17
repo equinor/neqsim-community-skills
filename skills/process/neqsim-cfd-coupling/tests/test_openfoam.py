@@ -26,7 +26,9 @@ def boundary():
 def build_case(boundary, **overrides) -> OpenFoamCase:
     settings = dict(
         boundary=boundary,
-        mesh=MeshSpec(kind="pipe", diameter_m=0.3048, length_m=3.0, first_cell_height_m=0.0005),
+        mesh=MeshSpec(
+            kind="pipe", diameter_m=0.3048, length_m=3.0, first_cell_height_m=0.0005
+        ),
         name="test-case",
     )
     settings.update(overrides)
@@ -54,7 +56,9 @@ def test_case_writes_a_complete_tree(tmp_path, boundary) -> None:
         assert (case_dir / expected).is_file()
 
 
-def test_viscosity_written_is_the_kinematic_viscosity_of_the_fluid(tmp_path, boundary) -> None:
+def test_viscosity_written_is_the_kinematic_viscosity_of_the_fluid(
+    tmp_path, boundary
+) -> None:
     case_dir = tmp_path / "case"
     build_case(boundary).write(case_dir)
 
@@ -73,7 +77,9 @@ def test_turbulence_fields_match_the_derived_inlet_state(tmp_path, boundary) -> 
     assert f"{boundary.specific_dissipation_1_per_s:.8g}" in omega_text
 
 
-def test_wall_treatment_selects_the_matching_nut_wall_function(tmp_path, boundary) -> None:
+def test_wall_treatment_selects_the_matching_nut_wall_function(
+    tmp_path, boundary
+) -> None:
     wall_function_dir = tmp_path / "wf"
     resolved_dir = tmp_path / "res"
     build_case(boundary, wall_treatment="wall_function").write(wall_function_dir)
@@ -96,11 +102,17 @@ def test_pipe_block_mesh_has_five_blocks_and_named_patches(tmp_path, boundary) -
     assert text.count("(") == text.count(")")
 
 
-def test_near_wall_grading_is_solved_from_the_requested_first_cell(tmp_path, boundary) -> None:
+def test_near_wall_grading_is_solved_from_the_requested_first_cell(
+    tmp_path, boundary
+) -> None:
     fine = build_case(
         boundary,
         mesh=MeshSpec(
-            kind="pipe", diameter_m=0.3048, length_m=3.0, radial_cells=14, first_cell_height_m=1e-5
+            kind="pipe",
+            diameter_m=0.3048,
+            length_m=3.0,
+            radial_cells=14,
+            first_cell_height_m=1e-5,
         ),
     )
     uniform = build_case(
@@ -117,11 +129,17 @@ def test_near_wall_grading_is_solved_from_the_requested_first_cell(tmp_path, bou
     assert "Radial grading 1 " not in fine_text
 
 
-def test_over_stretched_near_wall_mesh_is_warned_about_with_a_cell_count(boundary) -> None:
+def test_over_stretched_near_wall_mesh_is_warned_about_with_a_cell_count(
+    boundary,
+) -> None:
     case = build_case(
         boundary,
         mesh=MeshSpec(
-            kind="pipe", diameter_m=0.3048, length_m=3.0, radial_cells=10, first_cell_height_m=2e-4
+            kind="pipe",
+            diameter_m=0.3048,
+            length_m=3.0,
+            radial_cells=10,
+            first_cell_height_m=2e-4,
         ),
     )
 
@@ -136,7 +154,11 @@ def test_a_well_proportioned_near_wall_mesh_produces_no_warning(boundary) -> Non
     case = build_case(
         boundary,
         mesh=MeshSpec(
-            kind="pipe", diameter_m=0.3048, length_m=3.0, radial_cells=30, first_cell_height_m=2e-4
+            kind="pipe",
+            diameter_m=0.3048,
+            length_m=3.0,
+            radial_cells=30,
+            first_cell_height_m=2e-4,
         ),
     )
 
@@ -204,7 +226,9 @@ def test_bend_geometry_is_validated() -> None:
         bend_mesh(bend_angle_deg=200.0)
 
 
-def test_wall_shear_is_reduced_to_a_magnitude_before_it_is_sampled(tmp_path, boundary) -> None:
+def test_wall_shear_is_reduced_to_a_magnitude_before_it_is_sampled(
+    tmp_path, boundary
+) -> None:
     # surfaceFieldValue's max on a vector is component-wise, so sampling
     # wallShearStress directly returns a peak that can be below the mean.
     case_dir = tmp_path / "case"
@@ -245,10 +269,15 @@ def test_legacy_flavour_uses_the_older_dictionary_names(tmp_path, boundary) -> N
     assert "constant/transportProperties" in written
     assert "constant/turbulenceProperties" in written
     assert "RASModel" in (case_dir / "constant" / "turbulenceProperties").read_text()
-    assert "application     simpleFoam;" in (case_dir / "system" / "controlDict").read_text()
+    assert (
+        "application     simpleFoam;"
+        in (case_dir / "system" / "controlDict").read_text()
+    )
 
 
-def test_each_flavour_uses_the_viscosity_keyword_its_solver_accepts(tmp_path, boundary) -> None:
+def test_each_flavour_uses_the_viscosity_keyword_its_solver_accepts(
+    tmp_path, boundary
+) -> None:
     # simpleFoam rejects a transportProperties without transportModel; foamRun
     # rejects a physicalProperties without viscosityModel.
     legacy_dir = tmp_path / "legacy"
@@ -282,7 +311,9 @@ def test_external_mesh_selects_the_converter_from_the_file_type(boundary) -> Non
 
 
 def test_unknown_external_mesh_type_demands_an_explicit_command(boundary) -> None:
-    case = build_case(boundary, mesh=MeshSpec(kind="external", mesh_file="/tmp/vessel.xyz"))
+    case = build_case(
+        boundary, mesh=MeshSpec(kind="external", mesh_file="/tmp/vessel.xyz")
+    )
 
     with pytest.raises(ValueError, match="no converter known"):
         case.commands()
@@ -298,7 +329,9 @@ def test_existing_directory_is_not_silently_replaced(tmp_path, boundary) -> None
     assert build_case(boundary).write(case_dir, overwrite=True)
 
 
-def test_run_reports_not_executed_when_openfoam_is_missing(tmp_path, boundary, monkeypatch) -> None:
+def test_run_reports_not_executed_when_openfoam_is_missing(
+    tmp_path, boundary, monkeypatch
+) -> None:
     monkeypatch.setattr("cfd_coupling.openfoam.detect_openfoam", lambda **_: None)
     case_dir = tmp_path / "case"
     case = build_case(boundary)
@@ -339,7 +372,9 @@ def test_results_are_read_back_and_converted_to_engineering_units(tmp_path) -> N
     assert results.pressure_drop_pa == pytest.approx(50.0 * 52.4)
     assert results.y_plus_max == pytest.approx(180.0)
     # Vector wall shear is reduced to its magnitude, then scaled by density.
-    assert results.peak_wall_shear_pa == pytest.approx((0.03**2 + 0.004**2) ** 0.5 * 52.4)
+    assert results.peak_wall_shear_pa == pytest.approx(
+        (0.03**2 + 0.004**2) ** 0.5 * 52.4
+    )
     assert results.wall_shear_enhancement == pytest.approx(
         (0.03**2 + 0.004**2) ** 0.5 / 0.01
     )

@@ -23,7 +23,12 @@ _SEGYIO_MISSING = (
 )
 
 #: Inline/crossline header byte pairs tried in order: SEG-Y rev1 standard, then common legacy.
-DEFAULT_HEADER_BYTES: Tuple[Tuple[int, int], ...] = ((189, 193), (9, 21), (9, 13), (5, 21))
+DEFAULT_HEADER_BYTES: Tuple[Tuple[int, int], ...] = (
+    (189, 193),
+    (9, 21),
+    (9, 13),
+    (5, 21),
+)
 
 COORDINATE_FIELDS = {
     "cdp": ("CDP_X", "CDP_Y"),
@@ -34,7 +39,10 @@ COORDINATE_FIELDS = {
 _CRS_PATTERNS = (
     ("epsg", re.compile(r"EPSG\s*[:#]?\s*(\d{4,5})", re.I)),
     ("utm_zone", re.compile(r"UTM\s*(?:ZONE)?\s*(\d{1,2}\s*[NS]?)", re.I)),
-    ("datum", re.compile(r"\b(ED\s?50|ED\s?87|WGS\s?84|ETRS\s?89|NAD\s?27|NAD\s?83)\b", re.I)),
+    (
+        "datum",
+        re.compile(r"\b(ED\s?50|ED\s?87|WGS\s?84|ETRS\s?89|NAD\s?27|NAD\s?83)\b", re.I),
+    ),
 )
 
 
@@ -86,7 +94,9 @@ class SegyGeometry:
 
 
 @contextmanager
-def open_segy(path, header_bytes: Sequence[Tuple[int, int]] = DEFAULT_HEADER_BYTES) -> Iterator:
+def open_segy(
+    path, header_bytes: Sequence[Tuple[int, int]] = DEFAULT_HEADER_BYTES
+) -> Iterator:
     """Open a SEG-Y file, trying inline/crossline byte pairs, else unstructured.
 
     Yields ``(segyfile, used_bytes, note)``; ``used_bytes`` is ``None`` for unstructured
@@ -113,7 +123,9 @@ def open_segy(path, header_bytes: Sequence[Tuple[int, int]] = DEFAULT_HEADER_BYT
         handle.close()
 
 
-def trace_coordinates(handle, source: str = "cdp") -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def trace_coordinates(
+    handle, source: str = "cdp"
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return trace X, Y with the SEG-Y coordinate scalar applied, and the raw scalars.
 
     Scalar convention (bytes 71-72): positive multiplies, negative divides, zero means 1.
@@ -167,7 +179,7 @@ def _amplitude_stats(handle, max_traces: int = 2000) -> Dict[str, float]:
         "zero_fraction": float(np.mean(finite == 0.0)),
         "min": float(finite.min()),
         "max": float(finite.max()),
-        "rms": float(np.sqrt(np.mean(finite ** 2))),
+        "rms": float(np.sqrt(np.mean(finite**2))),
         "p01": float(p01),
         "p50": float(p50),
         "p99": float(p99),
@@ -212,7 +224,9 @@ def inspect_segy(
             geometry.inlines = np.asarray(handle.ilines)
             geometry.crosslines = np.asarray(handle.xlines)
             geometry.offsets = [int(o) for o in handle.offsets]
-            geometry.sorting = {1: "crossline", 2: "inline"}.get(handle.sorting, str(handle.sorting))
+            geometry.sorting = {1: "crossline", 2: "inline"}.get(
+                handle.sorting, str(handle.sorting)
+            )
             if len(geometry.offsets) > 1:
                 geometry.warnings.append(
                     f"pre-stack data: {len(geometry.offsets)} offsets per bin ({geometry.offsets}); "
@@ -225,18 +239,28 @@ def inspect_segy(
                 f"({note})"
             )
         unit_code = handle.bin[segyio.BinField.MeasurementSystem]
-        geometry.coordinate_unit = {1: "m", 2: "ft"}.get(unit_code, "unknown (binary header byte 3255)")
+        geometry.coordinate_unit = {1: "m", 2: "ft"}.get(
+            unit_code, "unknown (binary header byte 3255)"
+        )
         x, y, scalars = trace_coordinates(handle, coordinate_source)
         geometry.coordinate_scalars = sorted({int(s) for s in np.unique(scalars)})
         if np.allclose(x, 0) and np.allclose(y, 0):
-            geometry.warnings.append(f"{coordinate_source} coordinates are all zero; try another source")
+            geometry.warnings.append(
+                f"{coordinate_source} coordinates are all zero; try another source"
+            )
         else:
-            geometry.bbox = {"xmin": float(x.min()), "xmax": float(x.max()),
-                             "ymin": float(y.min()), "ymax": float(y.max())}
+            geometry.bbox = {
+                "xmin": float(x.min()),
+                "xmax": float(x.max()),
+                "ymin": float(y.min()),
+                "ymax": float(y.max()),
+            }
             if used is not None:
                 geometry.bin_spacing = _bin_spacing(handle, x, y)
         if not geometry.crs_hints:
-            geometry.warnings.append("no CRS found in the text header; obtain it from the data owner")
+            geometry.warnings.append(
+                "no CRS found in the text header; obtain it from the data owner"
+            )
         geometry.amplitude = _amplitude_stats(handle)
     return geometry
 

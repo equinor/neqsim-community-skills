@@ -4,6 +4,7 @@ SF = (D - Rr - Ro - Sm) / (k * sqrt(sigma_S^2 + sigma_pa^2)), sigma_S^2 = n^T (C
 centre-to-centre distance and n its unit vector. Default k = 3.5, Sm = 0.3 m, sigma_pa = 0.5 m.
 Operator rules (k, thresholds, hole/casing radii, minimum separation) override these defaults.
 """
+
 from __future__ import annotations
 
 import math
@@ -40,11 +41,17 @@ class SFRule:
 def separation_factor(d: float, sigma_s2: float, rule: SFRule = SFRule()) -> float:
     """ISCWSA SF for a centre-to-centre distance ``d`` (m) and combined variance along n (m^2)."""
     return (d - rule.ref_radius_m - rule.offset_radius_m - rule.surface_margin_m) / (
-        rule.k_sigma * math.sqrt(max(sigma_s2, 0.0) + rule.sigma_pa_m ** 2))
+        rule.k_sigma * math.sqrt(max(sigma_s2, 0.0) + rule.sigma_pa_m**2)
+    )
 
 
-def _segments(offsets: Iterable[Wellpath], parents: Sequence[str], tie_md: Optional[float],
-              model: ErrorModel, warnings: List[str]):
+def _segments(
+    offsets: Iterable[Wellpath],
+    parents: Sequence[str],
+    tie_md: Optional[float],
+    model: ErrorModel,
+    warnings: List[str],
+):
     names, A, B, CA, CB, MA, MB = [], [], [], [], [], [], []
     for w in offsets:
         if len(w.md) < 2:
@@ -52,21 +59,39 @@ def _segments(offsets: Iterable[Wellpath], parents: Sequence[str], tie_md: Optio
         cov = w.cov
         if cov is None:
             cov = model.covariance(w.md, w.inc, w.az)
-            warnings.append(f"{w.name}: no survey covariance, modelled with {model.name}")
+            warnings.append(
+                f"{w.name}: no survey covariance, modelled with {model.name}"
+            )
         keep = np.ones(len(w.md) - 1, bool)
         if w.name in parents and tie_md is not None:
             keep &= w.md[1:] > tie_md + 1e-6
         for j in np.where(keep)[0]:
             names.append(w.name)
-            A.append(w.xyz[j]); B.append(w.xyz[j + 1])
-            CA.append(cov[j]); CB.append(cov[j + 1])
-            MA.append(w.md[j]); MB.append(w.md[j + 1])
-    return (np.array(names), np.array(A), np.array(B), np.array(CA), np.array(CB), np.array(MA), np.array(MB))
+            A.append(w.xyz[j])
+            B.append(w.xyz[j + 1])
+            CA.append(cov[j])
+            CB.append(cov[j + 1])
+            MA.append(w.md[j])
+            MB.append(w.md[j + 1])
+    return (
+        np.array(names),
+        np.array(A),
+        np.array(B),
+        np.array(CA),
+        np.array(CB),
+        np.array(MA),
+        np.array(MB),
+    )
 
 
-def scan(reference: Wellpath, offsets: Iterable[Wellpath], rule: SFRule = SFRule(),
-         parents: Optional[Sequence[str]] = None, from_md: Optional[float] = None,
-         model: Optional[ErrorModel] = None) -> Dict:
+def scan(
+    reference: Wellpath,
+    offsets: Iterable[Wellpath],
+    rule: SFRule = SFRule(),
+    parents: Optional[Sequence[str]] = None,
+    from_md: Optional[float] = None,
+    model: Optional[ErrorModel] = None,
+) -> Dict:
     """Closest-approach scan: every reference station from ``from_md`` against every offset segment.
 
     ``parents`` names the bores the reference shares hole with (sidetrack parent and its other
@@ -79,7 +104,11 @@ def scan(reference: Wellpath, offsets: Iterable[Wellpath], rule: SFRule = SFRule
     model = model or ErrorModel()
     parents = tuple(parents or ((reference.parent,) if reference.parent else ()))
     tie = reference.tie_md
-    start_md = from_md if from_md is not None else (tie if tie is not None else float(reference.md[0]))
+    start_md = (
+        from_md
+        if from_md is not None
+        else (tie if tie is not None else float(reference.md[0]))
+    )
     warnings: List[str] = []
     names, A, B, CA, CB, MA, MB = _segments(offsets, parents, tie, model, warnings)
     result = {"offsets": [], "profile": [], "warnings": warnings, "rule": asdict(rule)}
@@ -87,7 +116,7 @@ def scan(reference: Wellpath, offsets: Iterable[Wellpath], rule: SFRule = SFRule
         warnings.append("no offset segments to scan")
         return result
     AB = B - A
-    L2 = np.maximum((AB ** 2).sum(1), 1e-12)
+    L2 = np.maximum((AB**2).sum(1), 1e-12)
     uniq, inv = np.unique(names, return_inverse=True)
     best = {str(u): {"sf": math.inf} for u in uniq}
     track: Dict[str, list] = {}
@@ -97,31 +126,48 @@ def scan(reference: Wellpath, offsets: Iterable[Wellpath], rule: SFRule = SFRule
         u = np.clip(((p - A) * AB).sum(1) / L2, 0, 1)
         q = A + u[:, None] * AB
         dvec = p - q
-        D = np.sqrt((dvec ** 2).sum(1))
+        D = np.sqrt((dvec**2).sum(1))
         n = dvec / np.maximum(D, 1e-9)[:, None]
         co = CA + u[:, None, None] * (CB - CA)
         sig2 = np.einsum("ki,kij,kj->k", n, co + cr[None], n)
-        ell = rule.k_sigma * np.sqrt(np.maximum(sig2, 0) + rule.sigma_pa_m ** 2)
+        ell = rule.k_sigma * np.sqrt(np.maximum(sig2, 0) + rule.sigma_pa_m**2)
         sf = (D - r_sum) / ell
         order = np.lexsort((sf, inv))
         first = np.r_[0, np.where(np.diff(inv[order]) != 0)[0] + 1]
         kmin = int(np.argmin(sf))
-        result["profile"].append({"md": float(reference.md[i]), "v": float(p[2]), "min_sf": float(sf[kmin]),
-                                  "min_sf_offset": str(names[kmin]), "cc_m": float(D[kmin])})
+        result["profile"].append(
+            {
+                "md": float(reference.md[i]),
+                "v": float(p[2]),
+                "min_sf": float(sf[kmin]),
+                "min_sf_offset": str(names[kmin]),
+                "cc_m": float(D[kmin]),
+            }
+        )
         for f in first:
             k = order[f]
             w = str(names[k])
             if w in parents:
                 track.setdefault(w, []).append((float(reference.md[i]), float(sf[k])))
             if sf[k] < best[w]["sf"]:
-                best[w] = {"sf": float(sf[k]), "cc_m": float(D[k]), "ref_md": float(reference.md[i]),
-                           "ref_v": float(p[2]), "offset_md": float(MA[k] + u[k] * (MB[k] - MA[k])),
-                           "ellipse_sum_m": float(ell[k])}
+                best[w] = {
+                    "sf": float(sf[k]),
+                    "cc_m": float(D[k]),
+                    "ref_md": float(reference.md[i]),
+                    "ref_v": float(p[2]),
+                    "offset_md": float(MA[k] + u[k] * (MB[k] - MA[k])),
+                    "ellipse_sum_m": float(ell[k]),
+                }
     table = []
     for w, v in best.items():
         if not math.isfinite(v["sf"]):
             continue
-        row = {"wellbore": w, **v, "status": rule.classify(v["sf"]), "parent_bore": w in parents}
+        row = {
+            "wellbore": w,
+            **v,
+            "status": rule.classify(v["sf"]),
+            "parent_bore": w in parents,
+        }
         if row["parent_bore"]:
             row.update(parent_exit(track.get(w, []), rule))
         table.append(row)
@@ -135,9 +181,11 @@ def parent_exit(track: Sequence, rule: SFRule = SFRule()) -> Dict:
     below_caution = [m for m, s in track if s < rule.caution_below]
     exit_md = max(below_caution) if below_caution else None
     after = [s for m, s in track if exit_md is None or m > exit_md]
-    return {"last_md_below_stop": max(below_stop) if below_stop else None,
-            "last_md_below_caution": exit_md,
-            "min_sf_after_exit": round(min(after), 2) if after else None}
+    return {
+        "last_md_below_stop": max(below_stop) if below_stop else None,
+        "last_md_below_caution": exit_md,
+        "min_sf_after_exit": round(min(after), 2) if after else None,
+    }
 
 
 def governing(result: Dict, include_parents: bool = False) -> Optional[Dict]:
@@ -146,9 +194,16 @@ def governing(result: Dict, include_parents: bool = False) -> Optional[Dict]:
     return rows[0] if rows else None
 
 
-def pull_back_search(plan_fn: Callable[[np.ndarray], Wellpath], target, origin_en, offsets: Iterable[Wellpath],
-                     rule: SFRule = SFRule(), distances: Sequence[float] = (0, 25, 50, 75, 100, 125, 150, 200, 250),
-                     required_sf: Optional[float] = None, **scan_kwargs) -> Dict:
+def pull_back_search(
+    plan_fn: Callable[[np.ndarray], Wellpath],
+    target,
+    origin_en,
+    offsets: Iterable[Wellpath],
+    rule: SFRule = SFRule(),
+    distances: Sequence[float] = (0, 25, 50, 75, 100, 125, 150, 200, 250),
+    required_sf: Optional[float] = None,
+    **scan_kwargs,
+) -> Dict:
     """Move the target back towards ``origin_en`` along the approach azimuth until the governing
     non-parent SF reaches ``required_sf`` (default the CAUTION threshold).
 
@@ -172,9 +227,19 @@ def pull_back_search(plan_fn: Callable[[np.ndarray], Wellpath], target, origin_e
         res = scan(wp, offsets, rule, **scan_kwargs)
         g = governing(res)
         sf = g["sf"] if g else math.inf
-        rows.append({"pull_back_m": back, "target": [round(float(x), 2) for x in tgt],
-                     "governing_offset": g["wellbore"] if g else None, "governing_sf": round(sf, 2),
-                     "td_md_m": round(float(wp.md[-1]), 1)})
+        rows.append(
+            {
+                "pull_back_m": back,
+                "target": [round(float(x), 2) for x in tgt],
+                "governing_offset": g["wellbore"] if g else None,
+                "governing_sf": round(sf, 2),
+                "td_md_m": round(float(wp.md[-1]), 1),
+            }
+        )
         if chosen is None and sf >= required:
-            chosen = {"pull_back_m": back, "target": [float(x) for x in tgt], "governing_sf": sf}
+            chosen = {
+                "pull_back_m": back,
+                "target": [float(x) for x in tgt],
+                "governing_sf": sf,
+            }
     return {"required_sf": required, "sweep": rows, "chosen": chosen}

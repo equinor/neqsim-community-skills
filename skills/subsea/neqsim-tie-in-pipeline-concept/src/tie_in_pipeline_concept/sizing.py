@@ -17,11 +17,35 @@ E_MOD_MPA = 207000.0
 POISSON = 0.3
 
 NPS_OD_M: Dict[int, float] = {
-    4: 0.1143, 6: 0.1683, 8: 0.2191, 10: 0.2731, 12: 0.3239, 14: 0.3556, 16: 0.4064, 18: 0.4572, 20: 0.5080,
+    4: 0.1143,
+    6: 0.1683,
+    8: 0.2191,
+    10: 0.2731,
+    12: 0.3239,
+    14: 0.3556,
+    16: 0.4064,
+    18: 0.4572,
+    20: 0.5080,
     24: 0.6096,
 }
-STANDARD_WT_MM: Sequence[float] = (4.8, 5.6, 6.4, 7.1, 7.9, 8.7, 9.5, 10.3, 11.1, 12.7, 14.3, 15.9, 17.5, 19.1,
-                                   22.2, 25.4)
+STANDARD_WT_MM: Sequence[float] = (
+    4.8,
+    5.6,
+    6.4,
+    7.1,
+    7.9,
+    8.7,
+    9.5,
+    10.3,
+    11.1,
+    12.7,
+    14.3,
+    15.9,
+    17.5,
+    19.1,
+    22.2,
+    25.4,
+)
 
 
 @dataclass
@@ -76,7 +100,9 @@ class PipelineDesignBasis:
     coating_k: float = 0.22
     insulation_thickness_m: float = 0.0
     insulation_k: float = 0.17
-    standard_wt_mm: Sequence[float] = field(default_factory=lambda: tuple(STANDARD_WT_MM))
+    standard_wt_mm: Sequence[float] = field(
+        default_factory=lambda: tuple(STANDARD_WT_MM)
+    )
 
 
 def overall_u(d_i: float, t_wall: float, basis: PipelineDesignBasis) -> float:
@@ -111,7 +137,9 @@ def friction_factor(reynolds: float, rel_roughness: float) -> float:
     return haaland(reynolds)
 
 
-def _viscosity_pa_s(props: OilProperties, t_c: float, basis: PipelineDesignBasis) -> float:
+def _viscosity_pa_s(
+    props: OilProperties, t_c: float, basis: PipelineDesignBasis
+) -> float:
     mu1, mu2 = props.viscosity_cp_inlet, props.viscosity_cp_sea
     t1, t2 = basis.t_inlet_c, basis.t_sea_c
     if abs(t1 - t2) < 1e-9:
@@ -120,8 +148,14 @@ def _viscosity_pa_s(props: OilProperties, t_c: float, basis: PipelineDesignBasis
     return math.exp(math.log(mu1) + slope * (t_c - t1)) / 1000.0
 
 
-def solve_hydraulics(q_sm3d: float, props: OilProperties, d_i_m: float, basis: PipelineDesignBasis,
-                     u_w_m2k: float, steps: int = 200) -> Dict[str, object]:
+def solve_hydraulics(
+    q_sm3d: float,
+    props: OilProperties,
+    d_i_m: float,
+    basis: PipelineDesignBasis,
+    u_w_m2k: float,
+    steps: int = 200,
+) -> Dict[str, object]:
     """March along the pipe with temperature-dependent density and viscosity.
 
     Args:
@@ -137,7 +171,7 @@ def solve_hydraulics(q_sm3d: float, props: OilProperties, d_i_m: float, basis: P
         velocity, Reynolds number at the outlet and axial profiles.
     """
     m_dot = q_sm3d * props.std_density_kg_m3 / 86400.0
-    area = math.pi / 4.0 * d_i_m ** 2
+    area = math.pi / 4.0 * d_i_m**2
     dx = basis.length_m / steps
     t = basis.t_inlet_c
     dp_fric = 0.0
@@ -147,7 +181,9 @@ def solve_hydraulics(q_sm3d: float, props: OilProperties, d_i_m: float, basis: P
     v_out = 0.0
     rho_out = props.std_density_kg_m3
     for i in range(steps):
-        rho = props.std_density_kg_m3 * (1.0 - props.thermal_expansion_per_k * (t - 15.0))
+        rho = props.std_density_kg_m3 * (
+            1.0 - props.thermal_expansion_per_k * (t - 15.0)
+        )
         mu = _viscosity_pa_s(props, t, basis)
         v = m_dot / (rho * area)
         re = rho * v * d_i_m / mu
@@ -177,16 +213,25 @@ def solve_hydraulics(q_sm3d: float, props: OilProperties, d_i_m: float, basis: P
     }
 
 
-def f101_checks(d_o_m: float, t_nom_m: float, basis: PipelineDesignBasis, rho_oil: float) -> Dict[str, float]:
+def f101_checks(
+    d_o_m: float, t_nom_m: float, basis: PipelineDesignBasis, rho_oil: float
+) -> Dict[str, float]:
     """DNV-ST-F101 pressure containment and system collapse utilisation (hand calculation, screening).
 
     Pressure containment uses the incidental pressure 1.1 x design pressure at deck level and the local value
     at the seabed; collapse uses the external pressure at the deepest point with 0.5 % ovality.
     """
-    t1 = t_nom_m * (1.0 - basis.fabrication_tolerance) - basis.corrosion_allowance_mm / 1000.0
+    t1 = (
+        t_nom_m * (1.0 - basis.fabrication_tolerance)
+        - basis.corrosion_allowance_mm / 1000.0
+    )
     if t1 <= 0:
-        return {"util_pressure": float("inf"), "util_collapse": float("inf"), "t1_mm": t1 * 1000.0,
-                "d_over_t": d_o_m / t_nom_m}
+        return {
+            "util_pressure": float("inf"),
+            "util_collapse": float("inf"),
+            "t1_mm": t1 * 1000.0,
+            "d_over_t": d_o_m / t_nom_m,
+        }
     fy = basis.smys_mpa * basis.alpha_u
     fu = basis.smts_mpa * basis.alpha_u
     fcb = min(fy, fu / 1.15)
@@ -197,37 +242,57 @@ def f101_checks(d_o_m: float, t_nom_m: float, basis: PipelineDesignBasis, rho_oi
     ref_h = basis.max_water_depth_m + (basis.riser_height_m - basis.max_water_depth_m)
     p_li_seabed = p_inc + rho_oil * G * ref_h / 1e6
     util_p = max(p_inc, p_li_seabed - p_ext) / (p_b / gamma)
-    p_el = 2.0 * E_MOD_MPA * (t1 / d_o_m) ** 3 / (1.0 - POISSON ** 2)
+    p_el = 2.0 * E_MOD_MPA * (t1 / d_o_m) ** 3 / (1.0 - POISSON**2)
     p_p = fy * basis.alpha_fab * 2.0 * t1 / d_o_m
     f0 = 0.005
     lo, hi = 1e-6, max(p_el, p_p) * 2.0
     for _ in range(200):
         mid = 0.5 * (lo + hi)
-        if (mid - p_el) * (mid ** 2 - p_p ** 2) > mid * p_el * p_p * f0 * d_o_m / t1:
+        if (mid - p_el) * (mid**2 - p_p**2) > mid * p_el * p_p * f0 * d_o_m / t1:
             hi = mid
         else:
             lo = mid
     p_c = 0.5 * (lo + hi)
-    return {"t1_mm": t1 * 1000.0, "burst_mpa": p_b, "collapse_mpa": p_c, "util_pressure": util_p,
-            "util_collapse": p_ext / (p_c / gamma), "d_over_t": d_o_m / t_nom_m}
+    return {
+        "t1_mm": t1 * 1000.0,
+        "burst_mpa": p_b,
+        "collapse_mpa": p_c,
+        "util_pressure": util_p,
+        "util_collapse": p_ext / (p_c / gamma),
+        "d_over_t": d_o_m / t_nom_m,
+    }
 
 
-def select_wall_thickness(d_o_m: float, basis: PipelineDesignBasis, rho_oil: float) -> Dict[str, float]:
+def select_wall_thickness(
+    d_o_m: float, basis: PipelineDesignBasis, rho_oil: float
+) -> Dict[str, float]:
     """Smallest standard wall thickness that passes containment, collapse and the D/t handling limit."""
     for t_mm in basis.standard_wt_mm:
         c = f101_checks(d_o_m, t_mm / 1000.0, basis, rho_oil)
-        if c["util_pressure"] <= 1.0 and c["util_collapse"] <= 1.0 and c["d_over_t"] <= basis.d_over_t_limit:
+        if (
+            c["util_pressure"] <= 1.0
+            and c["util_collapse"] <= 1.0
+            and c["d_over_t"] <= basis.d_over_t_limit
+        ):
             c = dict(c)
             c["t_nom_mm"] = t_mm
             c["od_m"] = d_o_m
             c["id_m"] = d_o_m - 2.0 * t_mm / 1000.0
-            c["steel_kg_per_m"] = math.pi * (d_o_m - t_mm / 1000.0) * t_mm / 1000.0 * 7850.0
+            c["steel_kg_per_m"] = (
+                math.pi * (d_o_m - t_mm / 1000.0) * t_mm / 1000.0 * 7850.0
+            )
             return c
     raise ValueError("no standard wall thickness satisfies the checks")
 
 
-def size_pipeline(props: OilProperties, basis: PipelineDesignBasis, rates_sm3d: Dict[str, float],
-                  design_case: str, turndown_case: str, nps_list: Optional[Sequence[int]] = None) -> Dict[str, object]:
+def size_pipeline(
+    props: OilProperties,
+    basis: PipelineDesignBasis,
+    rates_sm3d: Dict[str, float],
+    design_case: str,
+    turndown_case: str,
+    nps_list: Optional[Sequence[int]] = None,
+) -> Dict[str, object]:
     """Sweep nominal sizes and recommend the smallest that meets the criteria at the design rate.
 
     Criteria: operating inlet pressure at the design rate below ``operating_fraction_of_design`` x design
@@ -256,28 +321,49 @@ def size_pipeline(props: OilProperties, basis: PipelineDesignBasis, rates_sm3d: 
             h = solve_hydraulics(q, props, w["id_m"], basis, u)
             area = math.pi / 4.0 * w["id_m"] ** 2
             q_act = q * props.std_density_kg_m3 / 86400.0 / props.std_density_kg_m3
-            cases.append({
-                "nps": nps, "rate_case": name, "q_sm3d": q, "u_w_m2k": u,
-                "inlet_pressure_barg": h["inlet_pressure_barg"], "dp_friction_bar": h["dp_friction_bar"],
-                "t_out_c": h["t_out_c"], "velocity_ms": h["velocity_in_ms"], "reynolds_out": h["reynolds_out"],
-                "pump_power_kw": q_act * h["dp_friction_bar"] * 1e5 / basis.pump_efficiency / 1000.0,
-                "area_m2": area,
-            })
+            cases.append(
+                {
+                    "nps": nps,
+                    "rate_case": name,
+                    "q_sm3d": q,
+                    "u_w_m2k": u,
+                    "inlet_pressure_barg": h["inlet_pressure_barg"],
+                    "dp_friction_bar": h["dp_friction_bar"],
+                    "t_out_c": h["t_out_c"],
+                    "velocity_ms": h["velocity_in_ms"],
+                    "reynolds_out": h["reynolds_out"],
+                    "pump_power_kw": q_act
+                    * h["dp_friction_bar"]
+                    * 1e5
+                    / basis.pump_efficiency
+                    / 1000.0,
+                    "area_m2": area,
+                }
+            )
     limit = basis.operating_fraction_of_design * basis.design_pressure_barg
     recommended: Optional[int] = None
     reasons: Dict[int, List[str]] = {}
     for nps in sizes:
         d = next(c for c in cases if c["nps"] == nps and c["rate_case"] == design_case)
-        t = next(c for c in cases if c["nps"] == nps and c["rate_case"] == turndown_case)
+        t = next(
+            c for c in cases if c["nps"] == nps and c["rate_case"] == turndown_case
+        )
         why = []
         if d["inlet_pressure_barg"] > limit:
             why.append(f"inlet {d['inlet_pressure_barg']:.0f} barg > {limit:.0f} barg")
         if d["velocity_ms"] > basis.v_max_ms:
             why.append(f"velocity {d['velocity_ms']:.2f} m/s > {basis.v_max_ms} m/s")
         if t["velocity_ms"] < basis.v_min_ms:
-            why.append(f"turndown velocity {t['velocity_ms']:.2f} m/s < {basis.v_min_ms} m/s")
+            why.append(
+                f"turndown velocity {t['velocity_ms']:.2f} m/s < {basis.v_min_ms} m/s"
+            )
         reasons[nps] = why
         if not why and recommended is None:
             recommended = nps
-    return {"wall": wall, "cases": cases, "recommended": recommended, "rejection_reasons": reasons,
-            "operating_pressure_limit_barg": limit}
+    return {
+        "wall": wall,
+        "cases": cases,
+        "recommended": recommended,
+        "rejection_reasons": reasons,
+        "operating_pressure_limit_barg": limit,
+    }

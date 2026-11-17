@@ -54,7 +54,9 @@ def test_resource_model_accepts_explicit_sodir_additional_recovery_class() -> No
 
 
 def test_prms_on_hold_does_not_invent_sodir_class() -> None:
-    result = ResourceClassificationModel().evaluate(maturity_stage="development on hold")
+    result = ResourceClassificationModel().evaluate(
+        maturity_stage="development on hold"
+    )
 
     assert result.resource_category == "contingent-resources"
     assert result.sodir_resource_class == "unclassified"

@@ -38,7 +38,9 @@ class ArtificialLiftModel:
         *,
         gas_lift_lightening_fraction: float = _GAS_LIFT_LIGHTENING_FRACTION,
     ) -> None:
-        self._require_fraction("gas_lift_lightening_fraction", gas_lift_lightening_fraction)
+        self._require_fraction(
+            "gas_lift_lightening_fraction", gas_lift_lightening_fraction
+        )
         self.gas_lift_lightening_fraction = gas_lift_lightening_fraction
 
     def evaluate(
@@ -56,8 +58,12 @@ class ArtificialLiftModel:
         well_depth_m: float = 2000.0,
     ) -> ArtificialLiftResult:
         self._require_positive("reservoir_pressure_bar", reservoir_pressure_bar)
-        self._require_positive("bottomhole_flowing_pressure_bar", bottomhole_flowing_pressure_bar)
-        self._require_positive("productivity_index_sm3_d_bar", productivity_index_sm3_d_bar)
+        self._require_positive(
+            "bottomhole_flowing_pressure_bar", bottomhole_flowing_pressure_bar
+        )
+        self._require_positive(
+            "productivity_index_sm3_d_bar", productivity_index_sm3_d_bar
+        )
         self._require_positive("target_rate_sm3_d", target_rate_sm3_d)
         self._require_unit_interval("water_cut", water_cut)
         self._require_positive("fluid_gradient_bar_per_m", fluid_gradient_bar_per_m)

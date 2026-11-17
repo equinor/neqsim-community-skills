@@ -101,7 +101,9 @@ class Uniform(Distribution):
     def __post_init__(self) -> None:
         if self.high < self.low:
             raise DistributionError(
-                "{}: high ({}) must be >= low ({})".format(self.name, self.high, self.low)
+                "{}: high ({}) must be >= low ({})".format(
+                    self.name, self.high, self.low
+                )
             )
 
     def ppf(self, u: float) -> float:
@@ -202,7 +204,9 @@ class LogNormal(Distribution):
     ) -> "LogNormal":
         """Fit a log-normal to a stated 10th and 90th percentile."""
         if p10 <= 0.0 or p90 <= 0.0:
-            raise DistributionError("{}: log-normal requires positive quantiles".format(name))
+            raise DistributionError(
+                "{}: log-normal requires positive quantiles".format(name)
+            )
         if p90 <= p10:
             raise DistributionError("{}: p90 must exceed p10".format(name))
         z = _NORMAL.inv_cdf(0.9)
@@ -240,16 +244,22 @@ _SPEC_BUILDERS = {
         mu=float(s.get("mu", s.get("base"))),
         sigma=float(s["sigma"]),
     ),
-    "lognormal": lambda s: LogNormal.from_p10_p90(
-        s["name"], float(s["low"]), float(s["high"]), s.get("unit", ""), s.get("kind", "technical")
-    )
-    if "low" in s
-    else LogNormal(
-        name=s["name"],
-        unit=s.get("unit", ""),
-        kind=s.get("kind", "technical"),
-        mu_log=float(s["mu_log"]),
-        sigma_log=float(s["sigma_log"]),
+    "lognormal": lambda s: (
+        LogNormal.from_p10_p90(
+            s["name"],
+            float(s["low"]),
+            float(s["high"]),
+            s.get("unit", ""),
+            s.get("kind", "technical"),
+        )
+        if "low" in s
+        else LogNormal(
+            name=s["name"],
+            unit=s.get("unit", ""),
+            kind=s.get("kind", "technical"),
+            mu_log=float(s["mu_log"]),
+            sigma_log=float(s["sigma_log"]),
+        )
     ),
 }
 

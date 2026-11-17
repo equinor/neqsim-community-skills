@@ -5,8 +5,19 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 
 from sodir_open_data import (
-    BULK_DATASETS, USE_CASES, SodirOpenData, bulk_download_url, describe, factpages_table_url, field_names,
-    items, resolve_id, search, sql_quote, to_date, use_case,
+    BULK_DATASETS,
+    USE_CASES,
+    SodirOpenData,
+    bulk_download_url,
+    describe,
+    factpages_table_url,
+    field_names,
+    items,
+    resolve_id,
+    search,
+    sql_quote,
+    to_date,
+    use_case,
 )
 from sodir_open_data.client import point_lonlat, to_float
 
@@ -15,7 +26,11 @@ def test_catalog_covers_all_categories():
     ids = {int(i["id"]) for i in items()}
     assert len(ids) >= 100
     assert {i // 1000 for i in ids} >= {1, 2, 3, 4, 5, 6, 7, 9}
-    assert resolve_id("wellbore") == 5000 and resolve_id("7113") == 7113 and resolve_id(9001) == 9001
+    assert (
+        resolve_id("wellbore") == 5000
+        and resolve_id("7113") == 7113
+        and resolve_id(9001) == 9001
+    )
 
 
 def test_search_and_describe():
@@ -44,7 +59,10 @@ def test_guides_reference_real_layers_and_keys():
 
 
 def test_urls():
-    assert bulk_download_url("wlbPoint") == "https://factpages.sodir.no/downloads/csv/wlbPoint.zip"
+    assert (
+        bulk_download_url("wlbPoint")
+        == "https://factpages.sodir.no/downloads/csv/wlbPoint.zip"
+    )
     assert bulk_download_url("fldArea", "shape").endswith("/shape/fldArea.zip")
     assert "tableview/field_reserves&" in factpages_table_url("field_reserves")
     assert "pipLine" in BULK_DATASETS
@@ -63,22 +81,48 @@ class FakeSodir:
         if q.get("returnCountOnly"):
             return json.dumps({"count": self.total}).encode()
         if q.get("returnDistinctValues"):
-            return json.dumps({"features": [{"attributes": {"wlbPurpose": v}} for v in ("WILDCAT", "APPRAISAL", "WILDCAT")]}).encode()
+            return json.dumps(
+                {
+                    "features": [
+                        {"attributes": {"wlbPurpose": v}}
+                        for v in ("WILDCAT", "APPRAISAL", "WILDCAT")
+                    ]
+                }
+            ).encode()
         offset, take = int(q["resultOffset"]), int(q["resultRecordCount"])
-        rows = [{"attributes": {"id": n}, "geometry": {"x": 1.0, "y": 60.0}} for n in range(self.total)][offset:offset + take]
-        return json.dumps({"features": rows, "exceededTransferLimit": offset + take < self.total}).encode()
+        rows = [
+            {"attributes": {"id": n}, "geometry": {"x": 1.0, "y": 60.0}}
+            for n in range(self.total)
+        ][offset : offset + take]
+        return json.dumps(
+            {"features": rows, "exceededTransferLimit": offset + take < self.total}
+        ).encode()
 
 
 def test_query_pages_and_bbox_and_geometry():
     fake = FakeSodir(total=5)
     client = SodirOpenData(fake, page_size=2)
-    rows = client.query("wellbore", "wlbPurpose='WILDCAT'", geometry=True, out_sr=4326, bbox=(1, 59, 3, 61))
+    rows = client.query(
+        "wellbore",
+        "wlbPurpose='WILDCAT'",
+        geometry=True,
+        out_sr=4326,
+        bbox=(1, 59, 3, 61),
+    )
     assert [r["id"] for r in rows] == [0, 1, 2, 3, 4]
     assert point_lonlat(rows[0]) == (1.0, 60.0)
     first = fake.urls[0]
-    assert "/5000/query" in first and "outSR=4326" in first and "esriGeometryEnvelope" in first and "inSR=4326" in first
+    assert (
+        "/5000/query" in first
+        and "outSR=4326" in first
+        and "esriGeometryEnvelope" in first
+        and "inSR=4326" in first
+    )
     assert len(fake.urls) == 3
-    assert client.provenance()[0]["rows"] == 5 and "NLOD" in client.provenance()[0]["licence"]
+    assert (
+        client.provenance()[0]["rows"] == 5
+        and "NLOD" in client.provenance()[0]["licence"]
+    )
 
 
 def test_max_rows_count_distinct():

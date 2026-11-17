@@ -9,7 +9,13 @@ from weather_data.ncs_facilities import FacilityLocation
 
 
 class FakeOpenMeteo:
-    def __init__(self, geocode_results=None, forecast_series=None, historical_series=None, marine_series=None):
+    def __init__(
+        self,
+        geocode_results=None,
+        forecast_series=None,
+        historical_series=None,
+        marine_series=None,
+    ):
         self.geocode_results = geocode_results or []
         self.forecast_series = forecast_series
         self.historical_series = historical_series
@@ -53,14 +59,20 @@ class FakeMetNo:
 
 def _series(source, hourly_time, temperature, wind):
     return WeatherSeries(
-        source=source, latitude=60.64, longitude=3.72, elevation_m=12.0, timezone="UTC",
+        source=source,
+        latitude=60.64,
+        longitude=3.72,
+        elevation_m=12.0,
+        timezone="UTC",
         hourly_time=hourly_time,
         hourly={"temperature_2m": temperature, "wind_speed_10m": wind},
     )
 
 
 def test_resolve_location_prefers_explicit_coordinates():
-    service = WeatherDataService(open_meteo=FakeOpenMeteo(), ncs_locator=FakeNcsLocator())
+    service = WeatherDataService(
+        open_meteo=FakeOpenMeteo(), ncs_locator=FakeNcsLocator()
+    )
 
     location = service.resolve_location(name="Anything", latitude=60.0, longitude=3.0)
 
@@ -69,9 +81,13 @@ def test_resolve_location_prefers_explicit_coordinates():
 
 
 def test_resolve_location_uses_ncs_facility_register_before_geocoding():
-    facility = FacilityLocation(name="TROLL A", latitude=60.64, longitude=3.72, attributes={})
+    facility = FacilityLocation(
+        name="TROLL A", latitude=60.64, longitude=3.72, attributes={}
+    )
     service = WeatherDataService(
-        open_meteo=FakeOpenMeteo(geocode_results=[GeocodeResult("Troll", 1.0, 1.0, "NO", None, None, None)]),
+        open_meteo=FakeOpenMeteo(
+            geocode_results=[GeocodeResult("Troll", 1.0, 1.0, "NO", None, None, None)]
+        ),
         ncs_locator=FakeNcsLocator(matches=[facility]),
     )
 
@@ -83,7 +99,13 @@ def test_resolve_location_uses_ncs_facility_register_before_geocoding():
 
 def test_resolve_location_falls_back_to_geocoding_when_no_ncs_match():
     service = WeatherDataService(
-        open_meteo=FakeOpenMeteo(geocode_results=[GeocodeResult("Prudhoe Bay", 70.25, -148.32, "US", "Alaska", 10.0, "US/Alaska")]),
+        open_meteo=FakeOpenMeteo(
+            geocode_results=[
+                GeocodeResult(
+                    "Prudhoe Bay", 70.25, -148.32, "US", "Alaska", 10.0, "US/Alaska"
+                )
+            ]
+        ),
         ncs_locator=FakeNcsLocator(matches=[]),
     )
 
@@ -94,26 +116,37 @@ def test_resolve_location_falls_back_to_geocoding_when_no_ncs_match():
 
 
 def test_resolve_location_raises_when_nothing_matches():
-    service = WeatherDataService(open_meteo=FakeOpenMeteo(geocode_results=[]), ncs_locator=FakeNcsLocator(matches=[]))
+    service = WeatherDataService(
+        open_meteo=FakeOpenMeteo(geocode_results=[]),
+        ncs_locator=FakeNcsLocator(matches=[]),
+    )
 
     with pytest.raises(LocationNotResolvedError):
         service.resolve_location(name="Nowhere At All")
 
 
 def test_resolve_location_requires_name_or_coordinates():
-    service = WeatherDataService(open_meteo=FakeOpenMeteo(), ncs_locator=FakeNcsLocator())
+    service = WeatherDataService(
+        open_meteo=FakeOpenMeteo(), ncs_locator=FakeNcsLocator()
+    )
     with pytest.raises(ValueError):
         service.resolve_location()
 
 
 def test_design_site_conditions_requests_years_back_window():
-    historical_series = _series("open-meteo-archive", ["2016-09-30T00:00"] * 24 * 400, [5.0] * (24 * 400),
-                                 [8.0] * (24 * 400))
+    historical_series = _series(
+        "open-meteo-archive",
+        ["2016-09-30T00:00"] * 24 * 400,
+        [5.0] * (24 * 400),
+        [8.0] * (24 * 400),
+    )
     open_meteo = FakeOpenMeteo(historical_series=historical_series)
     service = WeatherDataService(open_meteo=open_meteo, ncs_locator=FakeNcsLocator())
     location = service.resolve_location(latitude=60.64, longitude=3.72)
 
-    summary = service.design_site_conditions(location, years_back=5, end_date="2021-09-24")
+    summary = service.design_site_conditions(
+        location, years_back=5, end_date="2021-09-24"
+    )
 
     assert open_meteo.historical_calls[0][2] == "2016-09-24"
     assert open_meteo.historical_calls[0][3] == "2021-09-24"
@@ -148,7 +181,9 @@ def test_compare_forecast_sources_pairs_by_timestamp_and_reports_mean_abs_delta(
 
 
 def test_compare_forecast_sources_reports_error_when_metno_fails():
-    open_meteo_series = _series("open-meteo-forecast", ["2026-09-30T00:00"], [8.0], [10.0])
+    open_meteo_series = _series(
+        "open-meteo-forecast", ["2026-09-30T00:00"], [8.0], [10.0]
+    )
     service = WeatherDataService(
         open_meteo=FakeOpenMeteo(forecast_series=open_meteo_series),
         metno=FakeMetNo(raise_error=True),

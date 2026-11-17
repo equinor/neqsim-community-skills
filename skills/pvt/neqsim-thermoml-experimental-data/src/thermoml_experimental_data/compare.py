@@ -84,8 +84,16 @@ def compare_points(
         if not math.isfinite(value):
             skipped += 1
             continue
-        deviation = None if point.value == 0 else 100.0 * (value - point.value) / abs(point.value)
-        within = None if point.uncertainty is None else abs(value - point.value) <= point.uncertainty
+        deviation = (
+            None
+            if point.value == 0
+            else 100.0 * (value - point.value) / abs(point.value)
+        )
+        within = (
+            None
+            if point.uncertainty is None
+            else abs(value - point.value) <= point.uncertainty
+        )
         results.append(PointResult(point, value, deviation, within))
     deviations = [r.deviation_pct for r in results if r.deviation_pct is not None]
     judged = [r.within_uncertainty for r in results if r.within_uncertainty is not None]

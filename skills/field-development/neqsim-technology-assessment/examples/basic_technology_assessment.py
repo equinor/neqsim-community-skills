@@ -8,7 +8,11 @@ from technology_assessment import from_dict
 
 
 def main() -> None:
-    spec = json.loads((Path(__file__).parent / "example_novel_technology.json").read_text(encoding="utf-8"))
+    spec = json.loads(
+        (Path(__file__).parent / "example_novel_technology.json").read_text(
+            encoding="utf-8"
+        )
+    )
     result = from_dict(spec).assess()
 
     summary = result["summary"]

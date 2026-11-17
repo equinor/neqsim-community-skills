@@ -155,7 +155,9 @@ def derive_multiphase_conditions(
     _require_positive("hydraulic_diameter_m", hydraulic_diameter_m)
     _require_positive("interfacial tension", state.interfacial_tension_n_per_m)
 
-    area = flow_area_m2 if flow_area_m2 is not None else pi * hydraulic_diameter_m**2 / 4.0
+    area = (
+        flow_area_m2 if flow_area_m2 is not None else pi * hydraulic_diameter_m**2 / 4.0
+    )
     _require_positive("flow_area_m2", area)
 
     continuous_flow = state.continuous.volumetric_flow_m3_per_s
@@ -179,7 +181,9 @@ def derive_multiphase_conditions(
         fraction * state.dispersed.viscosity_pa_s
         + (1.0 - fraction) * state.continuous.viscosity_pa_s
     )
-    reynolds = mixture_density * mixture_velocity * hydraulic_diameter_m / mixture_viscosity
+    reynolds = (
+        mixture_density * mixture_velocity * hydraulic_diameter_m / mixture_viscosity
+    )
 
     weber = (
         state.continuous.density_kg_per_m3
@@ -339,7 +343,8 @@ def _hinze_diameter(
         return float("nan")
     return (
         _HINZE_CONSTANT
-        * (state.interfacial_tension_n_per_m / state.continuous.density_kg_per_m3) ** 0.6
+        * (state.interfacial_tension_n_per_m / state.continuous.density_kg_per_m3)
+        ** 0.6
         * dissipation ** (-0.4)
     )
 
@@ -351,7 +356,9 @@ def _stokes_number(
     if not isfinite(droplet) or droplet <= 0.0:
         return float("nan")
     relaxation = (
-        state.dispersed.density_kg_per_m3 * droplet**2 / (18.0 * state.continuous.viscosity_pa_s)
+        state.dispersed.density_kg_per_m3
+        * droplet**2
+        / (18.0 * state.continuous.viscosity_pa_s)
     )
     return relaxation * velocity / diameter
 
@@ -365,7 +372,9 @@ def _select(entries, requested, available, role):
     for entry in entries:
         if entry[0] == wanted:
             return entry
-    raise ValueError(f"{role} phase '{requested}' not available; phases present: {available}")
+    raise ValueError(
+        f"{role} phase '{requested}' not available; phases present: {available}"
+    )
 
 
 def _state(system: Any, entry) -> FluidState:

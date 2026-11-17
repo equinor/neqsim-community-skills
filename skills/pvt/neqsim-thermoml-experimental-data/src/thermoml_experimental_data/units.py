@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Optional, Tuple
 
-_PRESSURE_TO_BARA = {"pa": 1.0e-5, "kpa": 1.0e-2, "mpa": 10.0, "bar": 1.0, "atm": 1.01325}
+_PRESSURE_TO_BARA = {
+    "pa": 1.0e-5,
+    "kpa": 1.0e-2,
+    "mpa": 10.0,
+    "bar": 1.0,
+    "atm": 1.01325,
+}
 
 
 def split_name_unit(label: str) -> Tuple[str, str]:

@@ -12,7 +12,14 @@ from .analysis import (
     structure_years,
 )
 from .client import BseeClient, SourceError, default_fetch
-from .parse import Investigation, Structure, parse_date, parse_investigations, parse_structures, split_labels
+from .parse import (
+    Investigation,
+    Structure,
+    parse_date,
+    parse_investigations,
+    parse_structures,
+    split_labels,
+)
 
 __all__ = [
     "BseeClient",

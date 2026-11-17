@@ -195,7 +195,11 @@ def find_olga_installations(
     if explicit_engine:
         engine = Path(explicit_engine)
         if engine.is_file():
-            root = engine.parent.parent if engine.parent.name == "OlgaExecutables" else engine.parent
+            root = (
+                engine.parent.parent
+                if engine.parent.name == "OlgaExecutables"
+                else engine.parent
+            )
             found[root] = OlgaInstallation(
                 root=root,
                 version=_engine_version(engine, root),
@@ -222,7 +226,9 @@ def find_olga_installations(
             if installation is not None:
                 found.setdefault(installation.root, installation)
 
-    return sorted(found.values(), key=lambda i: (i.version_key, i.version), reverse=True)
+    return sorted(
+        found.values(), key=lambda i: (i.version_key, i.version), reverse=True
+    )
 
 
 def _split_paths(value: Optional[str]) -> Iterable[Path]:
@@ -276,4 +282,6 @@ def olgas_point_model_roots(env: Optional[Mapping[str, str]] = None) -> Dict[str
     (process simulators, nodal-analysis tools) rather than by the OLGA engine.
     """
     environ = os.environ if env is None else env
-    return {k: v for k, v in sorted(environ.items()) if k.upper().startswith("OLGAS_SLB")}
+    return {
+        k: v for k, v in sorted(environ.items()) if k.upper().startswith("OLGAS_SLB")
+    }

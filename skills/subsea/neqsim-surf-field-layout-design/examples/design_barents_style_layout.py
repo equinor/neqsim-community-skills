@@ -67,13 +67,23 @@ print("riser length       : %.2f km" % layout.summary["riser_length_km"])
 print("max step-out       : %.2f km" % layout.summary["max_step_out_km"])
 for line in layout.lines_of_service("production")[:1]:
     if line.size:
-        print("production flowline: %g inch nominal, %.2f m/s, erosional ratio %.2f"
-              % (line.size.nominal_inch, line.size.velocity_m_per_s, line.size.erosional_ratio))
+        print(
+            "production flowline: %g inch nominal, %.2f m/s, erosional ratio %.2f"
+            % (
+                line.size.nominal_inch,
+                line.size.velocity_m_per_s,
+                line.size.erosional_ratio,
+            )
+        )
 for warning in layout.warnings:
     print("  !", warning)
 
-(OUTPUT / "layout.geojson").write_text(json.dumps(layout.to_geojson(), indent=2), encoding="utf-8")
-(OUTPUT / "layout.json").write_text(json.dumps(layout.to_dict(), indent=2), encoding="utf-8")
+(OUTPUT / "layout.geojson").write_text(
+    json.dumps(layout.to_geojson(), indent=2), encoding="utf-8"
+)
+(OUTPUT / "layout.json").write_text(
+    json.dumps(layout.to_dict(), indent=2), encoding="utf-8"
+)
 plot_layout_map(
     layout,
     str(OUTPUT / "layout_map.png"),

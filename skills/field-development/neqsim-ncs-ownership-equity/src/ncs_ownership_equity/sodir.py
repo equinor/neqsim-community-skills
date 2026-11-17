@@ -11,8 +11,12 @@ from typing import Any, Callable, Dict, List, Optional
 
 _EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 USER_AGENT = "neqsim-ncs-ownership-equity/0.1 (+https://github.com/equinor/neqsim-community-skills)"
-SODIR_DATASERVICE = "https://factmaps.sodir.no/api/rest/services/DataService/Data/MapServer"
-SODIR_FACTMAPS = "https://factmaps.sodir.no/api/rest/services/Factmaps/FactMapsWGS84/FeatureServer"
+SODIR_DATASERVICE = (
+    "https://factmaps.sodir.no/api/rest/services/DataService/Data/MapServer"
+)
+SODIR_FACTMAPS = (
+    "https://factmaps.sodir.no/api/rest/services/Factmaps/FactMapsWGS84/FeatureServer"
+)
 LICENCE_TASK_LAYER = 652  # FactMapsWGS84 layer with the work obligations of a licence
 
 # Layer ids probed against the live service; they are not all listed in the MapServer index.
@@ -35,8 +39,12 @@ Fetch = Callable[[str, float], bytes]
 
 def default_fetch(url: str, timeout: float = 90.0) -> bytes:
     """Perform a bounded, read-only GET and return the body."""
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"})
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed https host
+    request = urllib.request.Request(
+        url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"}
+    )
+    with urllib.request.urlopen(
+        request, timeout=timeout
+    ) as response:  # noqa: S310 - fixed https host
         return response.read()
 
 
@@ -73,7 +81,9 @@ class ReadRecord:
     where: str
     rows: int
     url: str
-    retrieved_utc: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    retrieved_utc: str = field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+    )
     licence: str = "NLOD 2.0 (Sodir); reuse with attribution"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -83,15 +93,23 @@ class ReadRecord:
 class SodirClient:
     """Page through one layer with a where clause."""
 
-    def __init__(self, fetch: Fetch = default_fetch, *, timeout: float = 120.0, page_size: int = 1000,
-                 max_pages: int = 50) -> None:
+    def __init__(
+        self,
+        fetch: Fetch = default_fetch,
+        *,
+        timeout: float = 120.0,
+        page_size: int = 1000,
+        max_pages: int = 50,
+    ) -> None:
         self.fetch = fetch
         self.timeout = timeout
         self.page_size = page_size
         self.max_pages = max_pages
         self.records: List[ReadRecord] = []
 
-    def query(self, layer: str | int, where: str = "1=1", service: str = SODIR_DATASERVICE) -> List[Dict[str, Any]]:
+    def query(
+        self, layer: str | int, where: str = "1=1", service: str = SODIR_DATASERVICE
+    ) -> List[Dict[str, Any]]:
         """Return the attribute dicts of every matching row (``service`` selects the REST service)."""
         layer_id = LAYERS[layer] if isinstance(layer, str) else int(layer)
         base = f"{service}/{layer_id}/query"
@@ -99,12 +117,20 @@ class SodirClient:
         offset = 0
         url = base
         for _ in range(self.max_pages):
-            params = {"where": where, "outFields": "*", "returnGeometry": "false", "f": "json",
-                      "resultOffset": offset, "resultRecordCount": self.page_size}
+            params = {
+                "where": where,
+                "outFields": "*",
+                "returnGeometry": "false",
+                "f": "json",
+                "resultOffset": offset,
+                "resultRecordCount": self.page_size,
+            }
             url = base + "?" + urllib.parse.urlencode(params)
             payload = json.loads(self.fetch(url, self.timeout).decode("utf-8"))
             if "error" in payload:
-                raise RuntimeError(f"Sodir DataService error for layer {layer_id}: {payload['error']}")
+                raise RuntimeError(
+                    f"Sodir DataService error for layer {layer_id}: {payload['error']}"
+                )
             features = payload.get("features", [])
             rows.extend(dict(f.get("attributes", {})) for f in features)
             if not payload.get("exceededTransferLimit") or not features:

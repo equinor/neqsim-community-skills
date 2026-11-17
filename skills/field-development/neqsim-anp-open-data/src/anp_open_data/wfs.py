@@ -156,14 +156,20 @@ def fetch_layer(
         retrieved = None
         meta = fname.with_suffix(".log.json")
         if meta.exists():
-            retrieved = json.loads(meta.read_text(encoding="utf-8")).get("retrieved_utc")
+            retrieved = json.loads(meta.read_text(encoding="utf-8")).get(
+                "retrieved_utc"
+            )
     else:
         if offline:
-            raise FileNotFoundError("offline mode and no cache for %s (%s)" % (layer, fname.name))
+            raise FileNotFoundError(
+                "offline mode and no cache for %s (%s)" % (layer, fname.name)
+            )
         raw = (getter or _default_get)(url, timeout)
         data = json.loads(raw.decode("utf-8"))
         if data.get("type") != "FeatureCollection":
-            raise ValueError("ANP WFS did not return a FeatureCollection for %s" % layer)
+            raise ValueError(
+                "ANP WFS did not return a FeatureCollection for %s" % layer
+            )
         fname.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
         retrieved = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
         status = "downloaded"
@@ -179,7 +185,9 @@ def fetch_layer(
         "native_crs": "EPSG:4674",
     }
     if status == "downloaded":
-        fname.with_suffix(".log.json").write_text(json.dumps(rec, indent=1), encoding="utf-8")
+        fname.with_suffix(".log.json").write_text(
+            json.dumps(rec, indent=1), encoding="utf-8"
+        )
     return data, rec
 
 
@@ -265,7 +273,9 @@ def locate_installations(
     for f in wells_geojson.get("features", []):
         p = f.get("properties") or {}
         lon, lat = p.get(lon_key), p.get(lat_key)
-        if (lon is None or lat is None) and (f.get("geometry") or {}).get("type") == "Point":
+        if (lon is None or lat is None) and (f.get("geometry") or {}).get(
+            "type"
+        ) == "Point":
             lon, lat = f["geometry"]["coordinates"][:2]
         if lon is None or lat is None:
             continue
@@ -305,11 +315,14 @@ def locate_installations(
                 lon=round(lon, 5),
                 lat=round(lat, 5),
                 well_spread_max_km=round(spread, 1),
-                water_depth_m_median=round(statistics.median(depths)) if depths else None,
+                water_depth_m_median=(
+                    round(statistics.median(depths)) if depths else None
+                ),
                 location_quality="approximate-derived-from-ANP-wells",
                 location_method=(
                     "median of ANP wellhead coordinates of %d producing wells; the hull "
-                    "position is not published by ANP, wells spread up to %.1f km" % (len(pts), spread)
+                    "position is not published by ANP, wells spread up to %.1f km"
+                    % (len(pts), spread)
                 ),
             )
         out.append(rec)
@@ -369,7 +382,9 @@ def installation_production(
             continue
         ik = aliases.get(ik, ik)
         disp.setdefault(ik, repair_name(r.get(installation_col)))
-        m = acc.setdefault(ik, {}).setdefault(per, {"oil": 0.0, "gas": 0.0, "water": 0.0})
+        m = acc.setdefault(ik, {}).setdefault(
+            per, {"oil": 0.0, "gas": 0.0, "water": 0.0}
+        )
         m["oil"] += sum(float(r.get(c) or 0.0) for c in oil_m3_cols)
         m["gas"] += sum(float(r.get(c) or 0.0) for c in gas_mm3_cols)
         m["water"] += sum(float(r.get(c) or 0.0) for c in water_m3_cols)
@@ -390,6 +405,8 @@ def installation_production(
             "oil_m3d_latest": round(months[latest]["oil"] / d, 1),
             "gas_mm3d_latest": round(months[latest]["gas"] / d, 2),
             "water_m3d_latest": round(months[latest]["water"] / d, 1),
-            "oil_m3d_peak": round(max(v["oil"] / days(p) for p, v in months.items()), 1),
+            "oil_m3d_peak": round(
+                max(v["oil"] / days(p) for p, v in months.items()), 1
+            ),
         }
     return out

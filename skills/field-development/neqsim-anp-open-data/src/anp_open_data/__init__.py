@@ -24,7 +24,12 @@ from .overview import (
     summarise,
     write_csv,
 )
-from .tieins import DEFAULT_WEIGHTS, nearest_pipeline, point_to_polyline_km, rank_tie_in_hosts
+from .tieins import (
+    DEFAULT_WEIGHTS,
+    nearest_pipeline,
+    point_to_polyline_km,
+    rank_tie_in_hosts,
+)
 from .tools import (
     OIL_M3_TO_BBL,
     check_crs,

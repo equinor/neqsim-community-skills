@@ -35,7 +35,9 @@ def test_options_are_rendered(runner: OlgaRunner, tmp_path: Path) -> None:
         console_log=True,
     )
     assert "-nthreads" in command and command[command.index("-nthreads") + 1] == "4"
-    assert "-outDir" in command and command[command.index("-outDir") + 1] == str(out_dir.resolve())
+    assert "-outDir" in command and command[command.index("-outDir") + 1] == str(
+        out_dir.resolve()
+    )
     assert "-noppl" in command and "-noplt" in command
     assert "-consoleLog" in command
 

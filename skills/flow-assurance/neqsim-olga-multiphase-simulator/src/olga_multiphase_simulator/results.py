@@ -310,7 +310,11 @@ def _parse_header(lines: Sequence[str]) -> _Header:
         metadata["engine"] = lines[0].strip().strip("'")
     kind = lines[1].strip().upper() if len(lines) > 1 else ""
     metadata["kind"] = kind
-    for key, label in (("input_file", "INPUT FILE"), ("date", "DATE"), ("project", "PROJECT")):
+    for key, label in (
+        ("input_file", "INPUT FILE"),
+        ("date", "DATE"),
+        ("project", "PROJECT"),
+    ):
         index = _index_of_token(lines[:catalog_index], label)
         if index is not None and index + 1 < catalog_index:
             metadata[key] = lines[index + 1].strip().strip("'")
@@ -323,7 +327,9 @@ def _parse_header(lines: Sequence[str]) -> _Header:
         raise OlgaResultError("CATALOG is not followed by a variable count") from exc
     catalog_lines = lines[catalog_index + 2 : catalog_index + 2 + count]
     if len(catalog_lines) < count:
-        raise OlgaResultError(f"CATALOG declares {count} variables but only {len(catalog_lines)} follow")
+        raise OlgaResultError(
+            f"CATALOG declares {count} variables but only {len(catalog_lines)} follow"
+        )
     variables = tuple(_parse_catalog_line(line) for line in catalog_lines)
 
     data_start = catalog_index + 2 + count
@@ -333,7 +339,9 @@ def _parse_header(lines: Sequence[str]) -> _Header:
             if match:
                 raw_unit = match.group(1).strip()
                 unit_match = _UNIT_RE.match(raw_unit)
-                metadata["time_unit"] = unit_match.group("unit").strip() if unit_match else raw_unit
+                metadata["time_unit"] = (
+                    unit_match.group("unit").strip() if unit_match else raw_unit
+                )
             data_start = offset + 1
             break
     return _Header(
@@ -360,7 +368,11 @@ def _parse_branches(header_lines: Sequence[str]) -> Tuple[OlgaBranch, ...]:
         if header_lines[index].strip().upper() != "BRANCH":
             index += 1
             continue
-        name = header_lines[index + 1].strip().strip("'") if index + 1 < len(header_lines) else ""
+        name = (
+            header_lines[index + 1].strip().strip("'")
+            if index + 1 < len(header_lines)
+            else ""
+        )
         nsections = 0
         if index + 2 < len(header_lines):
             try:

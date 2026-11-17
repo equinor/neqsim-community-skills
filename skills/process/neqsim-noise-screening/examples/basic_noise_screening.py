@@ -38,7 +38,9 @@ def main() -> None:
         measured_spl_at_distance=92.0,
         measured_uncertainty_db=2.0,
     )
-    print(f"measured_receiver_level_dba   : {measured_result.estimated_spl_at_distance_dba}")
+    print(
+        f"measured_receiver_level_dba   : {measured_result.estimated_spl_at_distance_dba}"
+    )
     print(f"measured_assessment_basis     : {measured_result.assessment_basis}")
 
 

@@ -1,6 +1,11 @@
 """Reservoir -> wells -> facility value-chain helpers for gas systems (screening; validate with NeqSim process models)."""
 
-from .facility import PressureCapacityCurve, capacity_from_sweep, flow_balance, maximise_rate
+from .facility import (
+    PressureCapacityCurve,
+    capacity_from_sweep,
+    flow_balance,
+    maximise_rate,
+)
 from .gasprops import Gas, static_bottomhole_pressure, z_factor
 from .reservoir import GasTank, RSDeliverability, fit_pz_line
 

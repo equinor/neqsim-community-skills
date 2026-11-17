@@ -25,8 +25,15 @@ DEFAULT_SCENARIO: Dict[str, Any] = {
         "gas_nok_per_sm3": 3.0,
         "liquid_nok_per_sm3": 4500.0,
         # relative gas price by exit market (1.0 = hub parity)
-        "gas_exit_factor": {"MARKET_DE": 1.0, "MARKET_BE": 1.0, "MARKET_FR": 1.0, "MARKET_UK": 1.0,
-                            "MARKET_DK_PL": 1.0, "MARKET_LNG": 1.0, "MARKET_NO_GAS": 0.9},
+        "gas_exit_factor": {
+            "MARKET_DE": 1.0,
+            "MARKET_BE": 1.0,
+            "MARKET_FR": 1.0,
+            "MARKET_UK": 1.0,
+            "MARKET_DK_PL": 1.0,
+            "MARKET_LNG": 1.0,
+            "MARKET_NO_GAS": 0.9,
+        },
     },
     "tariffs": {
         # screening transport + processing cost per unit shipped; Gassled tariffs are
@@ -36,16 +43,19 @@ DEFAULT_SCENARIO: Dict[str, Any] = {
         "liquid_nok_per_sm3_default": 30.0,
         "liquid_nok_per_sm3_by_arc": {},
     },
-    "capacity_overrides": {},     # {element_id: capacity}
-    "outages": [],                # [{"element": id, "years": [y..], "available_fraction": 0.5}]
-    "forecast_overrides": {},     # {entity: {"gas_msm3d": {year: v}, "liquid_sm3d": {...}}}
+    "capacity_overrides": {},  # {element_id: capacity}
+    "outages": [],  # [{"element": id, "years": [y..], "available_fraction": 0.5}]
+    "forecast_overrides": {},  # {entity: {"gas_msm3d": {year: v}, "liquid_sm3d": {...}}}
     "field_cost_nok_per_sm3oe": {},  # {entity: NOK per Sm3 oe} e.g. CO2 tax x intensity, or OPEX
     "include_discoveries": True,
     "include_not_evaluated": False,
     "tieback_max_km": 60.0,
     "max_paths_per_entity": 20,
-    "provenance": {"prices": "public screening default", "tariffs": "public screening default",
-                   "forecast": "Arps decline capped by Sodir remaining reserves"},
+    "provenance": {
+        "prices": "public screening default",
+        "tariffs": "public screening default",
+        "forecast": "Arps decline capped by Sodir remaining reserves",
+    },
 }
 
 
@@ -79,5 +89,7 @@ def validate_scenario(scenario: Dict[str, Any]) -> List[str]:
             problems.append(f"prices.{key} must be positive")
     for outage in scenario.get("outages", []):
         if not 0 <= float(outage.get("available_fraction", 0)) <= 1:
-            problems.append(f"outage {outage.get('element')}: available_fraction must be in [0, 1]")
+            problems.append(
+                f"outage {outage.get('element')}: available_fraction must be in [0, 1]"
+            )
     return problems

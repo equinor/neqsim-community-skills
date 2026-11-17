@@ -15,7 +15,9 @@ def model() -> FireWaterCoverageModel:
 
 
 def test_area_demand_follows_application_rate(model: FireWaterCoverageModel) -> None:
-    r = model.demand(protected_area_m2=510.0, area_rate_lpm_per_m2=10.0, duration_min=30.0)
+    r = model.demand(
+        protected_area_m2=510.0, area_rate_lpm_per_m2=10.0, duration_min=30.0
+    )
     assert r.area_demand_lpm == pytest.approx(5100.0)
     assert r.total_demand_m3_per_h == pytest.approx(306.0)
     assert r.water_volume_m3 == pytest.approx(153.0)
@@ -46,7 +48,9 @@ def test_selective_protection_is_a_small_fraction_of_blanket_coverage(
     assert r.object_to_area_ratio < 0.10
 
 
-def test_foam_concentrate_scales_with_water_volume(model: FireWaterCoverageModel) -> None:
+def test_foam_concentrate_scales_with_water_volume(
+    model: FireWaterCoverageModel,
+) -> None:
     r = model.demand(
         protected_area_m2=100.0,
         area_rate_lpm_per_m2=10.0,
@@ -64,7 +68,9 @@ def test_simultaneous_factor_multiplies_demand(model: FireWaterCoverageModel) ->
     assert r.total_demand_lpm == pytest.approx(4000.0)
 
 
-def test_nozzle_count_is_the_larger_of_flow_and_coverage(model: FireWaterCoverageModel) -> None:
+def test_nozzle_count_is_the_larger_of_flow_and_coverage(
+    model: FireWaterCoverageModel,
+) -> None:
     r = model.deluge_layout(
         protected_area_m2=510.0,
         required_density_lpm_per_m2=10.0,
@@ -94,7 +100,9 @@ def test_flow_governs_for_a_low_capacity_nozzle(model: FireWaterCoverageModel) -
     assert r.nozzle_count_from_flow > r.nozzle_count_from_coverage
 
 
-def test_pressure_below_the_nozzle_minimum_is_flagged(model: FireWaterCoverageModel) -> None:
+def test_pressure_below_the_nozzle_minimum_is_flagged(
+    model: FireWaterCoverageModel,
+) -> None:
     r = model.deluge_layout(
         protected_area_m2=100.0,
         required_density_lpm_per_m2=10.0,
@@ -106,7 +114,9 @@ def test_pressure_below_the_nozzle_minimum_is_flagged(model: FireWaterCoverageMo
     assert not r.pressure_adequate
 
 
-def test_monitors_fail_the_density_over_a_large_deck(model: FireWaterCoverageModel) -> None:
+def test_monitors_fail_the_density_over_a_large_deck(
+    model: FireWaterCoverageModel,
+) -> None:
     r = model.monitor_screening(
         target_area_m2=510.0,
         required_density_lpm_per_m2=10.0,
@@ -155,10 +165,16 @@ def test_shadowing_disqualifies_a_monitor_even_when_the_density_passes(
     [
         {"protected_area_m2": -1.0, "area_rate_lpm_per_m2": 10.0},
         {"protected_area_m2": 100.0, "area_rate_lpm_per_m2": 10.0, "duration_min": 0.0},
-        {"protected_area_m2": 100.0, "area_rate_lpm_per_m2": 10.0, "simultaneous_area_factor": 0.5},
+        {
+            "protected_area_m2": 100.0,
+            "area_rate_lpm_per_m2": 10.0,
+            "simultaneous_area_factor": 0.5,
+        },
     ],
 )
-def test_invalid_demand_inputs_raise(model: FireWaterCoverageModel, kwargs: dict) -> None:
+def test_invalid_demand_inputs_raise(
+    model: FireWaterCoverageModel, kwargs: dict
+) -> None:
     with pytest.raises(ValueError):
         model.demand(**kwargs)
 

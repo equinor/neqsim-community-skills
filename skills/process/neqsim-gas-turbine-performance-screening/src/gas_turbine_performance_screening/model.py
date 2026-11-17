@@ -47,7 +47,9 @@ class GasTurbinePerformanceModel:
         self._require_positive("ambient_derate_per_k", ambient_derate_per_k)
         self._require_positive("altitude_derate_per_m", altitude_derate_per_m)
         self._require_positive("inlet_loss_derate_per_mbar", inlet_loss_derate_per_mbar)
-        self._require_positive("exhaust_loss_derate_per_mbar", exhaust_loss_derate_per_mbar)
+        self._require_positive(
+            "exhaust_loss_derate_per_mbar", exhaust_loss_derate_per_mbar
+        )
         self._require_positive(
             "specific_exhaust_flow_kg_s_per_kw", specific_exhaust_flow_kg_s_per_kw
         )
@@ -77,7 +79,9 @@ class GasTurbinePerformanceModel:
         self._require_non_negative("site_elevation_m", site_elevation_m)
         self._require_unit_interval("relative_humidity", relative_humidity)
         self._require_non_negative("inlet_pressure_loss_mbar", inlet_pressure_loss_mbar)
-        self._require_non_negative("exhaust_pressure_loss_mbar", exhaust_pressure_loss_mbar)
+        self._require_non_negative(
+            "exhaust_pressure_loss_mbar", exhaust_pressure_loss_mbar
+        )
         if required_shaft_power_kw is not None:
             self._require_positive("required_shaft_power_kw", required_shaft_power_kw)
 
@@ -104,7 +108,9 @@ class GasTurbinePerformanceModel:
         # Small humidity effect relative to the 0.6 reference.
         humidity_factor = self._clamp_factor(1.0 - 0.01 * (relative_humidity - 0.6))
 
-        total_factor = ambient_factor * altitude_factor * pressure_loss_factor * humidity_factor
+        total_factor = (
+            ambient_factor * altitude_factor * pressure_loss_factor * humidity_factor
+        )
         site_power = iso_base_power_kw * total_factor
 
         # Heat rate degrades as power derates (efficiency loss screening).

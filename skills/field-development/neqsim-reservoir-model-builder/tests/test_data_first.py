@@ -12,7 +12,6 @@ from reservoir_model_builder.data_first import (
     rank_of,
 )
 
-
 FULL = {
     "geometry": [{"source": "published_grid", "outcome": "used"}],
     "petrophysics": [{"source": "grid_property_arrays", "outcome": "used"}],
@@ -39,14 +38,20 @@ def test_rank_of_finds_and_misses():
 
 
 def test_best_available_reports_what_was_given_up():
-    summary = best_available("geometry", [
-        {"source": "published_grid", "outcome": "blocked",
-         "detail": "401 on maap/omegas"},
-        {"source": "horizons_and_faults", "outcome": "blocked"},
-        {"source": "structure_map", "outcome": "absent"},
-        {"source": "well_tops", "outcome": "absent"},
-        {"source": "assumed_block", "outcome": "used"},
-    ])
+    summary = best_available(
+        "geometry",
+        [
+            {
+                "source": "published_grid",
+                "outcome": "blocked",
+                "detail": "401 on maap/omegas",
+            },
+            {"source": "horizons_and_faults", "outcome": "blocked"},
+            {"source": "structure_map", "outcome": "absent"},
+            {"source": "well_tops", "outcome": "absent"},
+            {"source": "assumed_block", "outcome": "used"},
+        ],
+    )
     assert summary["used"] == "assumed_block"
     assert summary["isDowngraded"] is True
     assert summary["unattempted"] == []
@@ -58,8 +63,10 @@ def test_unattempted_rung_blocks_the_build():
     attempts["geometry"] = [{"source": "assumed_block", "outcome": "used"}]
     gate = data_first_gate(attempts)
     assert gate["decision"] == "blocked"
-    assert any("published_grid" in text and "never attempted" in text
-               for text in gate["blockers"])
+    assert any(
+        "published_grid" in text and "never attempted" in text
+        for text in gate["blockers"]
+    )
 
 
 def test_recorded_refusal_permits_the_downgrade():

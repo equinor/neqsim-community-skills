@@ -6,8 +6,22 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 KINDS = (
-    "equipment", "pump", "gate_valve", "ball_valve", "esdv", "check_valve", "control_valve", "psv",
-    "pig_launcher", "pig_receiver", "spec_break", "transmitter", "flow_meter", "sampler", "tie_in", "riser",
+    "equipment",
+    "pump",
+    "gate_valve",
+    "ball_valve",
+    "esdv",
+    "check_valve",
+    "control_valve",
+    "psv",
+    "pig_launcher",
+    "pig_receiver",
+    "spec_break",
+    "transmitter",
+    "flow_meter",
+    "sampler",
+    "tie_in",
+    "riser",
     "note_box",
 )
 

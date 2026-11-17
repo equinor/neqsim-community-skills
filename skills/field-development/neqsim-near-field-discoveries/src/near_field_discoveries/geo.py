@@ -15,7 +15,24 @@ from typing import Any, Iterable, Mapping, Sequence
 EARTH_RADIUS_KM = 6371.0088
 Ring = Sequence[Sequence[float]]
 
-_COMPASS = ("N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW")
+_COMPASS = (
+    "N",
+    "NNE",
+    "NE",
+    "ENE",
+    "E",
+    "ESE",
+    "SE",
+    "SSE",
+    "S",
+    "SSW",
+    "SW",
+    "WSW",
+    "W",
+    "WNW",
+    "NW",
+    "NNW",
+)
 
 
 def haversine_km(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
@@ -41,20 +58,26 @@ def compass(bearing: float) -> str:
     return _COMPASS[int((bearing % 360.0) / 22.5 + 0.5) % 16]
 
 
-def bbox_around(lon: float, lat: float, radius_km: float) -> tuple[float, float, float, float]:
+def bbox_around(
+    lon: float, lat: float, radius_km: float
+) -> tuple[float, float, float, float]:
     """Return ``(min_lon, min_lat, max_lon, max_lat)`` enclosing a circle of ``radius_km``."""
     dlat = math.degrees(radius_km / EARTH_RADIUS_KM)
     dlon = dlat / max(math.cos(math.radians(lat)), 1e-6)
     return lon - dlon, lat - dlat, lon + dlon, lat + dlat
 
 
-def circle_points(lon: float, lat: float, radius_km: float, n: int = 120) -> list[tuple[float, float]]:
+def circle_points(
+    lon: float, lat: float, radius_km: float, n: int = 120
+) -> list[tuple[float, float]]:
     """Closed ring of (lon, lat) points on the circle of ``radius_km`` around a point."""
     pts = []
     for i in range(n + 1):
         th = 2 * math.pi * i / n
         dlat = math.degrees(radius_km * math.cos(th) / EARTH_RADIUS_KM)
-        dlon = math.degrees(radius_km * math.sin(th) / EARTH_RADIUS_KM) / max(math.cos(math.radians(lat)), 1e-6)
+        dlon = math.degrees(radius_km * math.sin(th) / EARTH_RADIUS_KM) / max(
+            math.cos(math.radians(lat)), 1e-6
+        )
         pts.append((lon + dlon, lat + dlat))
     return pts
 
@@ -67,19 +90,27 @@ def _xy(lon: float, lat: float, lon0: float, lat0: float) -> tuple[float, float]
     )
 
 
-def _seg_dist(px: float, py: float, ax: float, ay: float, bx: float, by: float) -> float:
+def _seg_dist(
+    px: float, py: float, ax: float, ay: float, bx: float, by: float
+) -> float:
     dx, dy = bx - ax, by - ay
     d2 = dx * dx + dy * dy
     t = 0.0 if d2 == 0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / d2))
     return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
 
 
-def rings_from_geometry(geometry: Mapping[str, Any] | None) -> list[list[tuple[float, float]]]:
+def rings_from_geometry(
+    geometry: Mapping[str, Any] | None,
+) -> list[list[tuple[float, float]]]:
     """Exterior rings of a GeoJSON polygon/multipolygon or Esri ``rings`` as (lon, lat) lists."""
     if not geometry:
         return []
     if "rings" in geometry:
-        return [[(float(p[0]), float(p[1])) for p in ring] for ring in geometry["rings"] if len(ring) >= 3]
+        return [
+            [(float(p[0]), float(p[1])) for p in ring]
+            for ring in geometry["rings"]
+            if len(ring) >= 3
+        ]
     kind = geometry.get("type")
     coords = geometry.get("coordinates") or []
     if kind == "Polygon":
@@ -88,15 +119,25 @@ def rings_from_geometry(geometry: Mapping[str, Any] | None) -> list[list[tuple[f
         polys = coords
     else:
         return []
-    return [[(float(p[0]), float(p[1])) for p in poly[0]] for poly in polys if poly and len(poly[0]) >= 3]
+    return [
+        [(float(p[0]), float(p[1])) for p in poly[0]]
+        for poly in polys
+        if poly and len(poly[0]) >= 3
+    ]
 
 
-def lines_from_geometry(geometry: Mapping[str, Any] | None) -> list[list[tuple[float, float]]]:
+def lines_from_geometry(
+    geometry: Mapping[str, Any] | None,
+) -> list[list[tuple[float, float]]]:
     """Parts of a GeoJSON line/multiline or Esri ``paths`` as (lon, lat) lists."""
     if not geometry:
         return []
     if "paths" in geometry:
-        return [[(float(p[0]), float(p[1])) for p in part] for part in geometry["paths"] if len(part) >= 2]
+        return [
+            [(float(p[0]), float(p[1])) for p in part]
+            for part in geometry["paths"]
+            if len(part) >= 2
+        ]
     kind = geometry.get("type")
     coords = geometry.get("coordinates") or []
     if kind == "LineString":
@@ -105,10 +146,14 @@ def lines_from_geometry(geometry: Mapping[str, Any] | None) -> list[list[tuple[f
         parts = coords
     else:
         return []
-    return [[(float(p[0]), float(p[1])) for p in part] for part in parts if len(part) >= 2]
+    return [
+        [(float(p[0]), float(p[1])) for p in part] for part in parts if len(part) >= 2
+    ]
 
 
-def point_from_geometry(geometry: Mapping[str, Any] | None) -> tuple[float, float] | None:
+def point_from_geometry(
+    geometry: Mapping[str, Any] | None,
+) -> tuple[float, float] | None:
     """(lon, lat) of a point geometry, or the vertex-mean of a polygon; ``None`` if empty."""
     if not geometry:
         return None
@@ -131,7 +176,9 @@ def point_in_rings(lon: float, lat: float, rings: Iterable[Ring]) -> bool:
         for i in range(len(ring)):
             xi, yi = ring[i][0], ring[i][1]
             xj, yj = ring[j][0], ring[j][1]
-            if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / ((yj - yi) or 1e-300) + xi:
+            if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / (
+                (yj - yi) or 1e-300
+            ) + xi:
                 inside = not inside
             j = i
         if inside:
@@ -164,7 +211,9 @@ def point_to_lines_km(lon: float, lat: float, parts: Iterable[Ring]) -> float | 
     return None if best == float("inf") else best
 
 
-def cluster_points(points: Sequence[tuple[float, float]], link_km: float) -> list[list[int]]:
+def cluster_points(
+    points: Sequence[tuple[float, float]], link_km: float
+) -> list[list[int]]:
     """Single-linkage clusters of (lon, lat) points; points closer than ``link_km`` join one cluster.
 
     Returns:
@@ -181,7 +230,10 @@ def cluster_points(points: Sequence[tuple[float, float]], link_km: float) -> lis
 
     for i in range(n):
         for j in range(i + 1, n):
-            if haversine_km(points[i][0], points[i][1], points[j][0], points[j][1]) <= link_km:
+            if (
+                haversine_km(points[i][0], points[i][1], points[j][0], points[j][1])
+                <= link_km
+            ):
                 parent[find(i)] = find(j)
     groups: dict[int, list[int]] = {}
     for i in range(n):

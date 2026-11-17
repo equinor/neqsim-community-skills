@@ -1,7 +1,13 @@
 """Read SEG-Y seismic with equinor/segyio: geometry, coordinates, sections, fences, evidence."""
 
 from .evidence import SCHEMA, scan_folder, to_evidence, write_evidence
-from .geometry import DEFAULT_HEADER_BYTES, SegyGeometry, inspect_segy, open_segy, trace_coordinates
+from .geometry import (
+    DEFAULT_HEADER_BYTES,
+    SegyGeometry,
+    inspect_segy,
+    open_segy,
+    trace_coordinates,
+)
 from .sections import (
     Section,
     densify_polyline,

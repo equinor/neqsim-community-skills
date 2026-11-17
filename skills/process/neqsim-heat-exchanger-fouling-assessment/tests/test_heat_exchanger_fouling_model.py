@@ -26,7 +26,9 @@ def test_duty_is_reconciled_from_both_sides() -> None:
     assert result.duty_hot_kw == pytest.approx(180.0 * 3.6 * 20.0)
     assert result.duty_cold_kw == pytest.approx(260.0 * 4.0 * 12.5)
     assert result.duty_imbalance_fraction < 0.01
-    assert result.duty_kw == pytest.approx(0.5 * (result.duty_hot_kw + result.duty_cold_kw))
+    assert result.duty_kw == pytest.approx(
+        0.5 * (result.duty_hot_kw + result.duty_cold_kw)
+    )
     assert result.duty_source == "auto-mean"
 
 
@@ -50,7 +52,9 @@ def test_normalisation_is_identity_at_design_flow() -> None:
     assert result.u_normalised_to_design_flow_w_m2k == pytest.approx(
         result.u_measured_w_m2k, rel=1e-6
     )
-    assert result.u_naive_one_sided_w_m2k == pytest.approx(result.u_measured_w_m2k, rel=1e-6)
+    assert result.u_naive_one_sided_w_m2k == pytest.approx(
+        result.u_measured_w_m2k, rel=1e-6
+    )
 
 
 def test_fouling_resistance_closes_the_series_resistance_balance() -> None:
@@ -60,7 +64,8 @@ def test_fouling_resistance_closes_the_series_resistance_balance() -> None:
     design_resistance = 1.0 / result.u_design_w_m2k
     assert total_resistance > design_resistance
     assert result.excess_fouling_resistance_m2k_w == pytest.approx(
-        result.fouling_resistance_m2k_w - result.design_fouling_allowance_m2k_w, abs=1e-12
+        result.fouling_resistance_m2k_w - result.design_fouling_allowance_m2k_w,
+        abs=1e-12,
     )
 
 
@@ -69,7 +74,9 @@ def test_maldistribution_scan_raises_apparent_coefficient() -> None:
     scan = result.maldistribution_scan
 
     assert [row.units_credited for row in scan] == [3, 2, 1]
-    assert scan[0].u_apparent_w_m2k < scan[1].u_apparent_w_m2k < scan[2].u_apparent_w_m2k
+    assert (
+        scan[0].u_apparent_w_m2k < scan[1].u_apparent_w_m2k < scan[2].u_apparent_w_m2k
+    )
     assert scan[0].credited_area_m2 == pytest.approx(BASE_CASE["area"])
 
 

@@ -24,7 +24,9 @@ from .topology import ALIASES, norm
 
 _GAS = re.compile(r"\b(rich gas|dry gas|gas)\b", re.I)
 _LIQ = re.compile(r"\b(oil|condensate|ngl|liquids?|crude)\b", re.I)
-_BOTH = re.compile(r"\b(well ?stream|oil and gas|gas and oil|hydrocarbons|production)\b", re.I)
+_BOTH = re.compile(
+    r"\b(well ?stream|oil and gas|gas and oil|hydrocarbons|production)\b", re.I
+)
 _HISTORIC = re.compile(r"\b(was|were|had been)\b", re.I)
 _END_NODES = {"TANKER_EXPORT", "GAS_REINJECTION"}
 # Proper names that contain commodity words ("Shell-Esso Gas and Liquid", "Troll Oil
@@ -98,13 +100,19 @@ def split_clauses(text: str) -> List[str]:
     sentences = re.split(r"(?<=[.!?])\s+", (text or "").replace("\n", " ").strip())
     clauses: List[str] = []
     for sentence in sentences:
-        clauses.extend(part.strip() for part in _CLAUSE_SPLIT.split(sentence) if part.strip())
+        clauses.extend(
+            part.strip() for part in _CLAUSE_SPLIT.split(sentence) if part.strip()
+        )
     return clauses
 
 
 def _medium(clause: str) -> Optional[str]:
     clause = _NAME_MASK.sub(" ", clause)
-    gas, liq, both = bool(_GAS.search(clause)), bool(_LIQ.search(clause)), bool(_BOTH.search(clause))
+    gas, liq, both = (
+        bool(_GAS.search(clause)),
+        bool(_LIQ.search(clause)),
+        bool(_BOTH.search(clause)),
+    )
     if both or (gas and liq):
         return "both"
     if gas:
@@ -114,12 +122,16 @@ def _medium(clause: str) -> Optional[str]:
     return None
 
 
-def parse_transport_text(field_id: str, text: str, gazetteer: Gazetteer) -> List[ParsedRoute]:
+def parse_transport_text(
+    field_id: str, text: str, gazetteer: Gazetteer
+) -> List[ParsedRoute]:
     """Parse one field's Transport text into gas and liquid routes."""
     routes: Dict[str, List[str]] = {"gas": [field_id], "liquid": [field_id]}
     evidence: Dict[str, List[str]] = {"gas": [], "liquid": []}
     unresolved: Dict[str, bool] = {"gas": False, "liquid": False}
-    historic = bool(_HISTORIC.search(text or "")) and not re.search(r"\b(is|are|will be)\b", text or "")
+    historic = bool(_HISTORIC.search(text or "")) and not re.search(
+        r"\b(is|are|will be)\b", text or ""
+    )
     current: Optional[str] = None
     for clause in split_clauses(text):
         medium = _medium(clause) or current
@@ -149,12 +161,23 @@ def parse_transport_text(field_id: str, text: str, gazetteer: Gazetteer) -> List
             continue
         long_route = len(cleaned) > 4
         confidence = "high" if not (unresolved[medium] or long_route) else "medium"
-        out.append(ParsedRoute(field_id, medium, cleaned, " ".join(evidence[medium]), confidence,
-                               needs_review=confidence != "high" or historic, historic=historic))
+        out.append(
+            ParsedRoute(
+                field_id,
+                medium,
+                cleaned,
+                " ".join(evidence[medium]),
+                confidence,
+                needs_review=confidence != "high" or historic,
+                historic=historic,
+            )
+        )
     return out
 
 
-def parse_many(texts: Iterable[Tuple[str, str]], gazetteer: Gazetteer) -> List[ParsedRoute]:
+def parse_many(
+    texts: Iterable[Tuple[str, str]], gazetteer: Gazetteer
+) -> List[ParsedRoute]:
     routes: List[ParsedRoute] = []
     for field_id, text in texts:
         routes.extend(parse_transport_text(field_id, text, gazetteer))

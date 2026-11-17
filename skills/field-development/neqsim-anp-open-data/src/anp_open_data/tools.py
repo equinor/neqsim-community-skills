@@ -25,7 +25,9 @@ def oil_volume(value: float, from_unit: str, to_unit: str) -> float:
     try:
         return value * _OIL_TO_M3[from_unit] / _OIL_TO_M3[to_unit]
     except KeyError as exc:
-        raise ValueError(f"unknown oil unit {exc}; use one of {sorted(_OIL_TO_M3)}") from None
+        raise ValueError(
+            f"unknown oil unit {exc}; use one of {sorted(_OIL_TO_M3)}"
+        ) from None
 
 
 def gas_volume(value: float, from_unit: str, to_unit: str) -> float:
@@ -37,7 +39,9 @@ def gas_volume(value: float, from_unit: str, to_unit: str) -> float:
     try:
         return value * _GAS_TO_SM3[from_unit] / _GAS_TO_SM3[to_unit]
     except KeyError as exc:
-        raise ValueError(f"unknown gas unit {exc}; use one of {sorted(_GAS_TO_SM3)}") from None
+        raise ValueError(
+            f"unknown gas unit {exc}; use one of {sorted(_GAS_TO_SM3)}"
+        ) from None
 
 
 def monthly_to_daily(volume: float, year: int, month: int) -> float:
@@ -64,7 +68,10 @@ def check_crs(declared: Optional[str]) -> Dict[str, object]:
     distances or reproject to a projected CRS before computing lengths and areas.
     """
     if not declared:
-        return {"status": "unknown", "action": "find the CRS in the dataset metadata before use"}
+        return {
+            "status": "unknown",
+            "action": "find the CRS in the dataset metadata before use",
+        }
     code = declared.strip().upper().replace(" ", "")
     if code in ("EPSG:4326", "EPSG:4674"):
         return {
@@ -72,7 +79,11 @@ def check_crs(declared: Optional[str]) -> Dict[str, object]:
             "crs": code,
             "action": "use haversine_km for distances or reproject to a projected CRS first",
         }
-    return {"status": "other", "crs": code, "action": "confirm units are metres before computing lengths"}
+    return {
+        "status": "other",
+        "crs": code,
+        "action": "confirm units are metres before computing lengths",
+    }
 
 
 def load_table(

@@ -19,7 +19,9 @@ from reservoir_souring import (
 
 def test_tracer_mixing_and_clipping():
     assert seawater_fraction_from_tracer(10000.0, 30000.0, 19000.0) == 1.0
-    assert seawater_fraction_from_tracer(24500.0, 30000.0, 19000.0) == pytest.approx(0.5)
+    assert seawater_fraction_from_tracer(24500.0, 30000.0, 19000.0) == pytest.approx(
+        0.5
+    )
     assert seawater_fraction_from_tracer(35000.0, 30000.0, 19000.0) == 0.0
     with pytest.raises(ValueError):
         seawater_fraction_from_tracer(1.0, 5.0, 5.0)
@@ -84,7 +86,9 @@ def test_forgetting_tracks_recent_data():
     f = [i / 59 * 0.6 for i in range(60)]
     y = [100.0 * v if i < 30 else 200.0 * v for i, v in enumerate(f)]
     static = fit_well_correlation("A-5", f, y, models=["linear"])
-    recent = update_correlation(None, "A-5", f, y, half_life_points=8, models=["linear"])
+    recent = update_correlation(
+        None, "A-5", f, y, half_life_points=8, models=["linear"]
+    )
     assert recent.predict(0.6) > static.predict(0.6)
 
 
@@ -95,13 +99,17 @@ def test_mixing_zone_substrate_limits_and_temperature():
     assert mid == pytest.approx(min(0.355 * 1350.0, 0.577 * 100.0), rel=0.01)
     hot = mixing_zone_h2s_mg_l(0.5, 2700.0, 200.0, temperature_c=110.0)
     assert hot < 0.01 * mid
-    assert mixing_zone_h2s_mg_l(0.5, 2700.0, 200.0, mitigation_factor=0.1) == pytest.approx(0.1 * mid)
+    assert mixing_zone_h2s_mg_l(
+        0.5, 2700.0, 200.0, mitigation_factor=0.1
+    ) == pytest.approx(0.1 * mid)
     with pytest.raises(ValueError):
         mixing_zone_h2s_mg_l(1.2, 2700.0, 200.0)
 
 
 def test_mass_balance_helpers():
-    assert sulfate_balance_h2s_mg_l(2700.0, 1700.0) == pytest.approx(1000.0 * 34.081 / 96.06)
+    assert sulfate_balance_h2s_mg_l(2700.0, 1700.0) == pytest.approx(
+        1000.0 * 34.081 / 96.06
+    )
     assert sulfate_balance_h2s_mg_l(100.0, 200.0) == 0.0
     assert water_h2s_to_well_stream_rate(10.0, 5000.0) == pytest.approx(50.0)
     ppm = h2s_ppmv_in_gas_from_mass_rate(34.081, 23.64)

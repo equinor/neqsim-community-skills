@@ -153,11 +153,15 @@ class PipelineSurveyProcessor:
         raw = list(records or [])
         if len(raw) < 2:
             raise ValueError("at least two survey records are required")
-        log.append(f"read {len(raw)} raw survey records for {pipeline_id} / {survey_id}")
+        log.append(
+            f"read {len(raw)} raw survey records for {pipeline_id} / {survey_id}"
+        )
 
         rows = [self._normalize_row(row, log) for row in raw]
         rows = [row for row in rows if row is not None]
-        log.append(f"{len(raw) - len(rows)} records removed as non-valid or sentinel values")
+        log.append(
+            f"{len(raw) - len(rows)} records removed as non-valid or sentinel values"
+        )
 
         convention = self._detect_depth_convention(rows, log)
         rows = self._apply_depth_convention(rows, convention)
@@ -184,7 +188,11 @@ class PipelineSurveyProcessor:
             SurveyPoint(
                 kp_m=round(row["kp_m"], 3),
                 depth_to_top_m=round(row["depth_to_top_m"], 3),
-                seabed_depth_m=None if row["seabed_depth_m"] is None else round(row["seabed_depth_m"], 3),
+                seabed_depth_m=(
+                    None
+                    if row["seabed_depth_m"] is None
+                    else round(row["seabed_depth_m"], 3)
+                ),
                 easting_m=row["easting_m"],
                 northing_m=row["northing_m"],
             )
@@ -196,8 +204,12 @@ class PipelineSurveyProcessor:
         route_length = round(kp_profile[-1] - kp_profile[0], 3)
         max_slope = self._max_slope(kp_profile, elevation_profile)
 
-        diameter, diameter_source = self._resolve_diameter(rows, outer_diameter_m, log, gaps)
-        spans, buried, exposed_length, minimum_cover = self._gap_analysis(rows, flagged_indices, log, gaps)
+        diameter, diameter_source = self._resolve_diameter(
+            rows, outer_diameter_m, log, gaps
+        )
+        spans, buried, exposed_length, minimum_cover = self._gap_analysis(
+            rows, flagged_indices, log, gaps
+        )
 
         return SurveyProfileResult(
             pipeline_id=pipeline_id,
@@ -216,7 +228,9 @@ class PipelineSurveyProcessor:
             slope_warning=self._slope_warning(max_slope),
             span_candidates=spans,
             exposed_length_m=round(exposed_length, 3),
-            longest_span_m=round(max((span.length_m for span in spans), default=0.0), 3),
+            longest_span_m=round(
+                max((span.length_m for span in spans), default=0.0), 3
+            ),
             buried_intervals=buried,
             minimum_cover_m=minimum_cover,
             outer_diameter_m=diameter,
@@ -262,7 +276,10 @@ class PipelineSurveyProcessor:
         grid = [start + step * index for index in range(sample_count)]
         base_depths = [self._interpolate(baseline, value) for value in grid]
         repeat_depths = [self._interpolate(repeat, value) for value in grid]
-        changes = [repeat_depth - base_depth for base_depth, repeat_depth in zip(base_depths, repeat_depths)]
+        changes = [
+            repeat_depth - base_depth
+            for base_depth, repeat_depth in zip(base_depths, repeat_depths)
+        ]
         log.append(f"compared {sample_count} interpolated stations")
 
         intervals: list[ChangedInterval] = []
@@ -276,7 +293,9 @@ class PipelineSurveyProcessor:
                 current = []
         if current:
             intervals.append(self._changed_interval(current))
-        log.append(f"{len(intervals)} intervals exceed the {change_threshold_m} m change threshold")
+        log.append(
+            f"{len(intervals)} intervals exceed the {change_threshold_m} m change threshold"
+        )
 
         return SurveyComparisonResult(
             baseline_survey_id=baseline.survey_id,
@@ -285,9 +304,15 @@ class PipelineSurveyProcessor:
             baseline_depth_m=tuple(round(value, 3) for value in base_depths),
             repeat_depth_m=tuple(round(value, 3) for value in repeat_depths),
             depth_change_m=tuple(round(value, 3) for value in changes),
-            max_lowering_m=round(max((value for value in changes if value > 0.0), default=0.0), 3),
-            max_lifting_m=round(-min((value for value in changes if value < 0.0), default=0.0), 3),
-            mean_absolute_change_m=round(sum(abs(value) for value in changes) / len(changes), 3),
+            max_lowering_m=round(
+                max((value for value in changes if value > 0.0), default=0.0), 3
+            ),
+            max_lifting_m=round(
+                -min((value for value in changes if value < 0.0), default=0.0), 3
+            ),
+            mean_absolute_change_m=round(
+                sum(abs(value) for value in changes) / len(changes), 3
+            ),
             changed_intervals=tuple(intervals),
             overlap_length_m=round(end - start, 3),
             processing_log=tuple(log),
@@ -304,7 +329,9 @@ class PipelineSurveyProcessor:
     # NeqSim handoff
     # ------------------------------------------------------------------
     @staticmethod
-    def to_neqsim_elevation_profile(result: SurveyProfileResult, section_count: int = 20) -> dict[str, list[float]]:
+    def to_neqsim_elevation_profile(
+        result: SurveyProfileResult, section_count: int = 20
+    ) -> dict[str, list[float]]:
         """Resample the profile onto an evenly spaced grid for a NeqSim pipe model."""
         if section_count < 1:
             raise ValueError("section_count must be at least 1")
@@ -313,7 +340,8 @@ class PipelineSurveyProcessor:
         step = (end - start) / section_count
         positions = [start + step * index for index in range(section_count + 1)]
         elevations = [
-            -PipelineSurveyProcessor._interpolate(result, position) for position in positions
+            -PipelineSurveyProcessor._interpolate(result, position)
+            for position in positions
         ]
         return {
             "leg_positions_m": [round(value - start, 3) for value in positions],
@@ -358,12 +386,16 @@ class PipelineSurveyProcessor:
     def _detect_depth_convention(self, rows, log: list[str]) -> str:
         depths = [row["depth_to_top_m"] for row in rows]
         if all(value <= 0.0 for value in depths):
-            log.append("depth convention detected as negative-up; converted to positive-down")
+            log.append(
+                "depth convention detected as negative-up; converted to positive-down"
+            )
             return "negative-up"
         if all(value >= 0.0 for value in depths):
             log.append("depth convention detected as positive-down")
             return "positive-down"
-        raise ValueError("depth_to_top_m has mixed signs; state the depth convention explicitly")
+        raise ValueError(
+            "depth_to_top_m has mixed signs; state the depth convention explicitly"
+        )
 
     @staticmethod
     def _apply_depth_convention(rows, convention: str):
@@ -381,7 +413,9 @@ class PipelineSurveyProcessor:
         if all(row.get("latitude_deg") is not None for row in rows):
             self._project_lat_lon(rows, log)
         if any(row["easting_m"] is None or row["northing_m"] is None for row in rows):
-            raise ValueError("kp_m is missing and no complete coordinate set is available to derive it")
+            raise ValueError(
+                "kp_m is missing and no complete coordinate set is available to derive it"
+            )
 
         cumulative = 0.0
         rows[0]["kp_m"] = 0.0
@@ -395,7 +429,9 @@ class PipelineSurveyProcessor:
             cumulative += step
             current["kp_m"] = cumulative
         log.append("KP derived from cumulative projected coordinate distance")
-        gaps.append("KP was derived from coordinates; confirm against the survey KP reference.")
+        gaps.append(
+            "KP was derived from coordinates; confirm against the survey KP reference."
+        )
         return rows
 
     @staticmethod
@@ -404,9 +440,15 @@ class PipelineSurveyProcessor:
         origin_lon = rows[0]["longitude_deg"]
         scale = cos(radians(origin_lat))
         for row in rows:
-            row["easting_m"] = radians(row["longitude_deg"] - origin_lon) * EARTH_RADIUS_M * scale
-            row["northing_m"] = radians(row["latitude_deg"] - origin_lat) * EARTH_RADIUS_M
-        log.append("latitude/longitude projected to local easting/northing (equirectangular, screening only)")
+            row["easting_m"] = (
+                radians(row["longitude_deg"] - origin_lon) * EARTH_RADIUS_M * scale
+            )
+            row["northing_m"] = (
+                radians(row["latitude_deg"] - origin_lat) * EARTH_RADIUS_M
+            )
+        log.append(
+            "latitude/longitude projected to local easting/northing (equirectangular, screening only)"
+        )
 
     @staticmethod
     def _enforce_monotonic_kp(rows, log: list[str]):
@@ -431,7 +473,9 @@ class PipelineSurveyProcessor:
         return kept
 
     @staticmethod
-    def _trim_section(rows, start_kp_m: float | None, end_kp_m: float | None, log: list[str]):
+    def _trim_section(
+        rows, start_kp_m: float | None, end_kp_m: float | None, log: list[str]
+    ):
         if start_kp_m is None and end_kp_m is None:
             return rows
         low = -float("inf") if start_kp_m is None else float(start_kp_m)
@@ -439,7 +483,9 @@ class PipelineSurveyProcessor:
         if high <= low:
             raise ValueError("end_kp_m must be greater than start_kp_m")
         trimmed = [row for row in rows if low <= row["kp_m"] <= high]
-        log.append(f"section trimmed to KP {low} m - {high} m keeping {len(trimmed)} points")
+        log.append(
+            f"section trimmed to KP {low} m - {high} m keeping {len(trimmed)} points"
+        )
         return trimmed
 
     def _rolling_median(self, values) -> list[float]:
@@ -514,15 +560,21 @@ class PipelineSurveyProcessor:
             if value <= 0.0:
                 raise ValueError("outer_diameter_m must be positive")
             log.append(f"outer diameter set to {value} m by user override")
-            gaps.append("Outer diameter was supplied manually; confirm against the line list or pipe class.")
+            gaps.append(
+                "Outer diameter was supplied manually; confirm against the line list or pipe class."
+            )
             return value, "user_override"
         surveyed = [row["outer_diameter_m"] for row in rows if row["outer_diameter_m"]]
         if surveyed:
             value = sum(surveyed) / len(surveyed)
-            log.append(f"outer diameter taken from survey records as {round(value, 4)} m")
+            log.append(
+                f"outer diameter taken from survey records as {round(value, 4)} m"
+            )
             return round(value, 4), "survey"
         log.append("no outer diameter available in the survey or as an override")
-        gaps.append("Outer diameter is missing; embedment, cover, and span screening cannot be normalised by D.")
+        gaps.append(
+            "Outer diameter is missing; embedment, cover, and span screening cannot be normalised by D."
+        )
         return None, "missing"
 
     def _gap_analysis(self, rows, flagged_indices, log: list[str], gaps: list[str]):
@@ -533,7 +585,9 @@ class PipelineSurveyProcessor:
         ]
         if len(with_seabed) < 2:
             log.append("seabed depth unavailable; span and burial screening skipped")
-            gaps.append("Seabed depth per KP is missing; free-span and cover screening cannot be performed.")
+            gaps.append(
+                "Seabed depth per KP is missing; free-span and cover screening cannot be performed."
+            )
             return (), (), 0.0, None
 
         spans: list[SpanCandidate] = []

@@ -51,7 +51,9 @@ def main() -> None:
 
     print("\nBarents Sea fields:")
     for f in ds.list_fields(sea_area="barents_sea"):
-        print(f"  {f.name} ({f.operator}, {f.main_product}, from {f.production_start_year})")
+        print(
+            f"  {f.name} ({f.operator}, {f.main_product}, from {f.production_start_year})"
+        )
 
     latest = ds.production_for_year(prod["as_of_year"])
     if latest is not None:

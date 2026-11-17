@@ -97,7 +97,9 @@ class ControlValveCvModel:
             required_cv=round(required_cv, 4),
             choked=choked,
             choke_limit=round(choke_limit, 4),
-            cv_margin_ratio=(None if cv_margin_ratio is None else round(cv_margin_ratio, 4)),
+            cv_margin_ratio=(
+                None if cv_margin_ratio is None else round(cv_margin_ratio, 4)
+            ),
             valve_warning=warning,
             neqsim_available=find_spec("neqsim") is not None,
             assumptions=(
@@ -122,9 +124,7 @@ class ControlValveCvModel:
         fl: float,
     ) -> tuple[float, bool, float]:
         if flow_rate is None or specific_gravity is None:
-            raise ValueError(
-                "liquid service requires flow_rate and specific_gravity"
-            )
+            raise ValueError("liquid service requires flow_rate and specific_gravity")
         self._require_positive("flow_rate", flow_rate)
         self._require_positive("specific_gravity", specific_gravity)
         self._require_finite("vapor_pressure", vapor_pressure)

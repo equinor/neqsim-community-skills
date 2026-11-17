@@ -14,7 +14,11 @@ for sibling in (
 from technology_assessment import from_dict as assessment_from_dict  # noqa: E402
 from technology_fmirr import from_dict as fmirr_from_dict  # noqa: E402
 
-from technology_assessment_report import ReportMeta, build_report, check_report_inputs  # noqa: E402
+from technology_assessment_report import (
+    ReportMeta,
+    build_report,
+    check_report_inputs,
+)  # noqa: E402
 
 
 def _load(path):
@@ -23,13 +27,25 @@ def _load(path):
 
 @pytest.fixture(scope="module")
 def assessment():
-    path = SKILLS / "field-development" / "neqsim-technology-assessment" / "examples" / "example_novel_technology.json"
+    path = (
+        SKILLS
+        / "field-development"
+        / "neqsim-technology-assessment"
+        / "examples"
+        / "example_novel_technology.json"
+    )
     return assessment_from_dict(_load(path)).assess()
 
 
 @pytest.fixture(scope="module")
 def fmirr():
-    path = SKILLS / "safety" / "neqsim-technology-fmirr" / "examples" / "example_fmirr.json"
+    path = (
+        SKILLS
+        / "safety"
+        / "neqsim-technology-fmirr"
+        / "examples"
+        / "example_fmirr.json"
+    )
     return fmirr_from_dict(_load(path)).evaluate()
 
 
@@ -37,9 +53,21 @@ def test_report_has_expected_chapters(assessment, fmirr):
     report = build_report(assessment, fmirr)
     ids = [s.section_id for s in report.sections]
     assert ids == [
-        "executive_summary", "introduction", "qualification_basis", "composition", "maturity", "role",
-        "step_out", "benefits_risks", "standardisation", "fmirr", "qualification_outline", "conclusions",
-        "open_points", "references", "appendix_definitions",
+        "executive_summary",
+        "introduction",
+        "qualification_basis",
+        "composition",
+        "maturity",
+        "role",
+        "step_out",
+        "benefits_risks",
+        "standardisation",
+        "fmirr",
+        "qualification_outline",
+        "conclusions",
+        "open_points",
+        "references",
+        "appendix_definitions",
     ]
     assert next(s for s in report.sections if s.section_id == "fmirr").landscape
 
@@ -51,7 +79,9 @@ def test_report_without_fmirr_omits_chapter_and_reports_issue(assessment):
 
 
 def test_markdown_contains_key_results(assessment, fmirr):
-    md = build_report(assessment, fmirr, ReportMeta(title="Test report", author="A")).to_markdown()
+    md = build_report(
+        assessment, fmirr, ReportMeta(title="Test report", author="A")
+    ).to_markdown()
     assert md.startswith("# Test report")
     assert "enabling" in md
     assert "Internal separation device" in md
@@ -61,7 +91,9 @@ def test_markdown_contains_key_results(assessment, fmirr):
 
 
 def test_narrative_is_appended(assessment, fmirr):
-    report = build_report(assessment, fmirr, narrative={"conclusions": ["Author conclusion text."]})
+    report = build_report(
+        assessment, fmirr, narrative={"conclusions": ["Author conclusion text."]}
+    )
     conclusions = next(s for s in report.sections if s.section_id == "conclusions")
     assert conclusions.blocks[-1].text == "Author conclusion text."
 
@@ -74,14 +106,18 @@ def test_extra_references_listed(assessment):
 
 def test_check_inputs_flags_missing_failure_modes(assessment, fmirr):
     trimmed = dict(fmirr)
-    trimmed["rows"] = [r for r in fmirr["rows"] if r["item"] != "Internal separation device"]
+    trimmed["rows"] = [
+        r for r in fmirr["rows"] if r["item"] != "Internal separation device"
+    ]
     issues = check_report_inputs(assessment, trimmed)
     assert any("S.2" in i and "no failure mode" in i for i in issues)
 
 
 def test_check_inputs_flags_name_mismatch(assessment, fmirr):
     other = dict(fmirr, technology="Another technology")
-    assert any("technology name differs" in i for i in check_report_inputs(assessment, other))
+    assert any(
+        "technology name differs" in i for i in check_report_inputs(assessment, other)
+    )
 
 
 def test_check_inputs_rejects_wrong_schema(assessment, fmirr):
@@ -98,8 +134,16 @@ def test_to_dict_is_json_serialisable(assessment, fmirr):
 def test_proven_only_technology_needs_no_qualification():
     spec = {
         "technology": "Standard pump",
-        "elements": [{"id": "P", "name": "Pump", "technology_novelty": "proven",
-                      "application_area": "known", "trl": 7, "evidence": ["standard"]}],
+        "elements": [
+            {
+                "id": "P",
+                "name": "Pump",
+                "technology_novelty": "proven",
+                "application_area": "known",
+                "trl": 7,
+                "evidence": ["standard"],
+            }
+        ],
     }
     result = assessment_from_dict(spec).assess()
     md = build_report(result).to_markdown()
@@ -121,22 +165,34 @@ def test_column_widths_and_font_size():
     assert abs(sum(widths) - 6.0) < 1e-9
     assert widths[0] < widths[1] < widths[2]
     assert widths[1] >= len("Medium") * 9 * 0.0085  # the longest word always fits
-    crowded = _column_widths(headers, rows, 0.5, 9)  # too little room: scaled down, still sums
+    crowded = _column_widths(
+        headers, rows, 0.5, 9
+    )  # too little room: scaled down, still sums
     assert abs(sum(crowded) - 0.5) < 1e-9
-    assert _table_font_size(12) == 8 and _table_font_size(6) == 9 and _table_font_size(3) is None
+    assert (
+        _table_font_size(12) == 8
+        and _table_font_size(6) == 9
+        and _table_font_size(3) is None
+    )
 
 
 def test_docx_landscape_table_widths_fit_page(tmp_path, assessment, fmirr):
     docx = pytest.importorskip("docx")
     path = build_report(assessment, fmirr).save_docx(tmp_path / "w.docx")
     document = docx.Document(str(path))
-    register = next(t for t in document.tables if t.rows[0].cells[0].text == "Id" and len(t.columns) == 12)
+    register = next(
+        t
+        for t in document.tables
+        if t.rows[0].cells[0].text == "Id" and len(t.columns) == 12
+    )
     widths = [c.width for c in register.rows[1].cells]
     landscape = next(s for s in document.sections if s.orientation == 1)
     usable = landscape.page_width - landscape.left_margin - landscape.right_margin
     assert abs(sum(widths) - usable) < 20000  # EMU rounding only
     assert widths[0] < widths[3]  # id column narrower than failure mode column
-    assert widths[10] >= 460000  # the risk column keeps "Medium" on one line (about 0.5 in)
+    assert (
+        widths[10] >= 460000
+    )  # the risk column keeps "Medium" on one line (about 0.5 in)
 
 
 def test_save_docx(tmp_path, assessment, fmirr):
@@ -144,7 +200,9 @@ def test_save_docx(tmp_path, assessment, fmirr):
     meta = ReportMeta(title="Doc test", classification="Restricted", status="Draft")
     path = build_report(assessment, fmirr, meta).save_docx(tmp_path / "r.docx")
     document = docx.Document(str(path))
-    headings = [p.text for p in document.paragraphs if p.style.name.startswith("Heading")]
+    headings = [
+        p.text for p in document.paragraphs if p.style.name.startswith("Heading")
+    ]
     assert any("Executive summary" in h for h in headings)
     assert any("Failure mode identification" in h for h in headings)
     assert len(document.tables) >= 10

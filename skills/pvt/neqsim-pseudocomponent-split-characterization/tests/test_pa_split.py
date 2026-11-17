@@ -1,4 +1,3 @@
-import math
 
 import pytest
 
@@ -91,8 +90,12 @@ def test_apply_constant_split_reassigns_and_conserves():
     assert out[0] == pytest.approx(0.02)
     assert out[1] == pytest.approx(0.90)
     # Each heavy lump total preserved, now split 50/50.
-    assert out[2] == pytest.approx(0.02) and out[3] == pytest.approx(0.02)  # C7 total 0.04
-    assert out[4] == pytest.approx(0.02) and out[5] == pytest.approx(0.02)  # C8 total 0.04
+    assert out[2] == pytest.approx(0.02) and out[3] == pytest.approx(
+        0.02
+    )  # C7 total 0.04
+    assert out[4] == pytest.approx(0.02) and out[5] == pytest.approx(
+        0.02
+    )  # C8 total 0.04
     assert sum(out) == pytest.approx(sum(zi))
 
 
@@ -126,10 +129,13 @@ def test_map_source_to_pa_core_totals_lights_and_nearest_mw():
 
 def test_map_source_to_pa_core_totals_normalizes():
     m = map_source_to_pa_core_totals(
-        ["C1", "C7"], [8.0, 2.0], [16.0, 96.0],
-        light_names=["C1"], core_labels=["C7"], core_molecular_weights=[96.0],
+        ["C1", "C7"],
+        [8.0, 2.0],
+        [16.0, 96.0],
+        light_names=["C1"],
+        core_labels=["C7"],
+        core_molecular_weights=[96.0],
     )
     assert m.light_fractions["C1"] == pytest.approx(0.8)
     assert m.core_totals["C7"] == pytest.approx(0.2)
     assert m.sum_in == pytest.approx(10.0)
-

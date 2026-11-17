@@ -109,14 +109,20 @@ def run_design(spec: UmbilicalSpec, ns: Optional[Any] = None) -> DesignResult:
         u.setMaxInstallationTensionKN(float(spec.max_installation_tension_kn))
     for line in spec.lines:
         if line.kind == "hydraulic":
-            u.addHydraulicLine(line.name, line.inner_diameter_mm, line.design_pressure_bar)
+            u.addHydraulicLine(
+                line.name, line.inner_diameter_mm, line.design_pressure_bar
+            )
         else:
-            u.addChemicalLine(line.name, line.inner_diameter_mm, line.design_pressure_bar)
+            u.addChemicalLine(
+                line.name, line.inner_diameter_mm, line.design_pressure_bar
+            )
         if line.design_flow_m3_per_hr > 0:
             u.setInjectionRate(line.name, line.design_flow_m3_per_hr, "m3/hr")
     for cable in spec.cables:
         if cable.conductor_area_mm2:
-            u.addElectricalCable(cable.name, cable.cores, cable.voltage_v, cable.conductor_area_mm2)
+            u.addElectricalCable(
+                cable.name, cable.cores, cable.voltage_v, cable.conductor_area_mm2
+            )
         else:
             u.addElectricalCable(cable.name, cable.cores, cable.voltage_v)
     for fiber in spec.fibers:

@@ -161,7 +161,9 @@ class BenchmarkReport:
         rows = []
         for result in self.results:
             deviation = (
-                "-" if result.deviation_pct is None else "{:+.3g}".format(result.deviation_pct)
+                "-"
+                if result.deviation_pct is None
+                else "{:+.3g}".format(result.deviation_pct)
             )
             rows.append(
                 "| {} | {} | {:.6g} {} | {:.6g} {} | {} | {:.3g} | {} |".format(

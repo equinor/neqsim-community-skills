@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from .elements import Element, TieInEndSketch
 
@@ -30,9 +30,19 @@ def source_end_oil_export(
     Returns:
         A :class:`TieInEndSketch`.
     """
-    els: List[Element] = [Element("equipment", existing_tag, existing_equipment_label, existing=True, proposed=False)]
+    els: List[Element] = [
+        Element(
+            "equipment",
+            existing_tag,
+            existing_equipment_label,
+            existing=True,
+            proposed=False,
+        )
+    ]
     if keep_old_route:
-        els.append(Element("spec_break", "SB-01", "Skillt mot\ngammel rute\n(FSO/tanker)"))
+        els.append(
+            Element("spec_break", "SB-01", "Skillt mot\ngammel rute\n(FSO/tanker)")
+        )
     if new_export_pump:
         els.append(Element("pump", "PA-01", "Ny eksportpumpe\n(trykk fra\nhydraulikk)"))
     els += [
@@ -122,4 +132,7 @@ def landing_end_oil_header(
 
 def pair_sketch(source: str, landing: str) -> Dict[str, TieInEndSketch]:
     """Both ends with consistent names."""
-    return {"source": source_end_oil_export(source, landing), "landing": landing_end_oil_header(landing, source)}
+    return {
+        "source": source_end_oil_export(source, landing),
+        "landing": landing_end_oil_header(landing, source),
+    }

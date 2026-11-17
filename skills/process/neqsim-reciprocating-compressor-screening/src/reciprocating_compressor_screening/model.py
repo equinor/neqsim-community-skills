@@ -36,7 +36,9 @@ class ReciprocatingCompressorModel:
         max_discharge_temperature_k: float = 423.15,
     ) -> None:
         self._require_positive("max_stage_ratio", max_stage_ratio)
-        self._require_positive("max_discharge_temperature_k", max_discharge_temperature_k)
+        self._require_positive(
+            "max_discharge_temperature_k", max_discharge_temperature_k
+        )
         self.max_stage_ratio = max_stage_ratio
         self.max_discharge_temperature_k = max_discharge_temperature_k
 
@@ -78,7 +80,11 @@ class ReciprocatingCompressorModel:
         stage_ratio = overall_ratio ** (1.0 / stages)
 
         # Clearance volumetric efficiency: VE = 1 - C (r^(1/k) - 1) - L.
-        ve = 1.0 - clearance_fraction * (stage_ratio ** (1.0 / k) - 1.0) - leakage_allowance
+        ve = (
+            1.0
+            - clearance_fraction * (stage_ratio ** (1.0 / k) - 1.0)
+            - leakage_allowance
+        )
         ve = max(ve, 0.0)
         actual_capacity = swept_volume_rate_m3_h * ve
 
@@ -102,7 +108,9 @@ class ReciprocatingCompressorModel:
             volumetric_efficiency=round(ve, 4),
             actual_inlet_capacity_m3_h=round(actual_capacity, 3),
             discharge_temperature_k=round(discharge_temperature, 3),
-            rod_load_ratio=(None if rod_load_ratio is None else round(rod_load_ratio, 4)),
+            rod_load_ratio=(
+                None if rod_load_ratio is None else round(rod_load_ratio, 4)
+            ),
             capacity_warning=capacity_warning,
             rod_load_warning=rod_load_warning,
             neqsim_available=find_spec("neqsim") is not None,

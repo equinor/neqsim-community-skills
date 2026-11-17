@@ -10,7 +10,14 @@ from ncs_ownership_equity.sodir import SodirClient, sql_quote, to_date
 
 def ms(y, m, d):
     from datetime import datetime, timezone
-    return int((datetime(y, m, d, tzinfo=timezone.utc) - datetime(1970, 1, 1, tzinfo=timezone.utc)).total_seconds() * 1000)
+
+    return int(
+        (
+            datetime(y, m, d, tzinfo=timezone.utc)
+            - datetime(1970, 1, 1, tzinfo=timezone.utc)
+        ).total_seconds()
+        * 1000
+    )
 
 
 def make_fetch(layers):
@@ -24,7 +31,7 @@ def make_fetch(layers):
         offset = int(query["resultOffset"][0])
         size = int(query["resultRecordCount"][0])
         rows = layers.get(layer, [])
-        page = rows[offset:offset + size]
+        page = rows[offset : offset + size]
         payload = {"features": [{"attributes": r} for r in page]}
         if offset + size < len(rows):
             payload["exceededTransferLimit"] = True
@@ -35,45 +42,122 @@ def make_fetch(layers):
 
 
 def lic(pid, name, company, cid, pct, start, end=None, oper=False):
-    return {"prlNpdidLicence": pid, "prlName": name, "cmpLongName": company, "cmpNpdidCompany": cid,
-            "prlLicenseeInterest": pct, "prlLicenseeSdfi": None, "prlLicenseeDateValidFrom": start,
-            "prlLicenseeDateValidTo": end, "prlOperDateValidFrom": ms(2020, 1, 1) if oper else None,
-            "prlOperDateValidTo": None, "prlLicenseeDateUpdated": ms(2026, 2, 1)}
+    return {
+        "prlNpdidLicence": pid,
+        "prlName": name,
+        "cmpLongName": company,
+        "cmpNpdidCompany": cid,
+        "prlLicenseeInterest": pct,
+        "prlLicenseeSdfi": None,
+        "prlLicenseeDateValidFrom": start,
+        "prlLicenseeDateValidTo": end,
+        "prlOperDateValidFrom": ms(2020, 1, 1) if oper else None,
+        "prlOperDateValidTo": None,
+        "prlLicenseeDateUpdated": ms(2026, 2, 1),
+    }
 
 
-def fld(fid, name, company, cid, pct, start, end=None, owner=("BUSINESS ARRANGEMENT AREA", "ALPHA UNIT")):
-    return {"fldNpdidField": fid, "fldName": name, "cmpLongName": company, "cmpNpdidCompany": cid,
-            "fldCompanyShare": pct, "fldSdfiShare": None, "fldLicenseeFrom": start, "fldLicenseeTo": end,
-            "fldOwnerKind": owner[0], "fldOwnerName": owner[1], "fldLicenseeDateUpdated": ms(2026, 2, 1)}
+def fld(
+    fid,
+    name,
+    company,
+    cid,
+    pct,
+    start,
+    end=None,
+    owner=("BUSINESS ARRANGEMENT AREA", "ALPHA UNIT"),
+):
+    return {
+        "fldNpdidField": fid,
+        "fldName": name,
+        "cmpLongName": company,
+        "cmpNpdidCompany": cid,
+        "fldCompanyShare": pct,
+        "fldSdfiShare": None,
+        "fldLicenseeFrom": start,
+        "fldLicenseeTo": end,
+        "fldOwnerKind": owner[0],
+        "fldOwnerName": owner[1],
+        "fldLicenseeDateUpdated": ms(2026, 2, 1),
+    }
 
 
 LAYERS = {
-    7100: [{"fldNpdidField": 1, "fldName": "ALPHA", "cmpLongName": "Opco AS", "cmpNpdidCompany": 10}],
+    7100: [
+        {
+            "fldNpdidField": 1,
+            "fldName": "ALPHA",
+            "cmpLongName": "Opco AS",
+            "cmpNpdidCompany": 10,
+        }
+    ],
     7108: [
         fld(1, "ALPHA", "Opco AS", 10, 60.0, ms(2020, 1, 1)),
         fld(1, "ALPHA", "Partner AS", 20, 40.0, ms(2020, 1, 1)),
         fld(1, "ALPHA", "Opco AS", 10, 50.0, ms(2010, 1, 1), ms(2019, 12, 31)),
         fld(1, "ALPHA", "Oldco AS", 30, 50.0, ms(2010, 1, 1), ms(2019, 12, 31)),
     ],
-    7110: [{"fldNpdidField": 1, "cmpNpdidCompany": 10, "cmpLongName": "Opco AS",
-            "fldOperatorFrom": ms(2010, 1, 1), "fldOperatorTo": None}],
-    7000: [
-        {"dscNpdidDiscovery": 100, "dscName": "1/1-1 Beta", "fldName": None, "cmpLongName": "Opco AS",
-         "cmpNpdidCompany": 10, "dscCurrentActivityStatus": "Evaluation"},
-        {"dscNpdidDiscovery": 200, "dscName": "2/2-2 Gamma", "fldName": "ALPHA", "cmpLongName": "Opco AS",
-         "cmpNpdidCompany": 10, "dscCurrentActivityStatus": "Producing"},
-        {"dscNpdidDiscovery": 300, "dscName": "3/3-3 Beta North", "fldName": None, "cmpLongName": "Opco AS",
-         "cmpNpdidCompany": 10, "dscCurrentActivityStatus": "Evaluation"},
+    7110: [
+        {
+            "fldNpdidField": 1,
+            "cmpNpdidCompany": 10,
+            "cmpLongName": "Opco AS",
+            "fldOperatorFrom": ms(2010, 1, 1),
+            "fldOperatorTo": None,
+        }
     ],
-    7006: [{"dscNpdidDiscovery": 100, "cmpNpdidCompany": 10, "cmpLongName": "Opco AS",
-            "dscOperatorFrom": ms(2019, 1, 1), "dscOperatorTo": None}],
+    7000: [
+        {
+            "dscNpdidDiscovery": 100,
+            "dscName": "1/1-1 Beta",
+            "fldName": None,
+            "cmpLongName": "Opco AS",
+            "cmpNpdidCompany": 10,
+            "dscCurrentActivityStatus": "Evaluation",
+        },
+        {
+            "dscNpdidDiscovery": 200,
+            "dscName": "2/2-2 Gamma",
+            "fldName": "ALPHA",
+            "cmpLongName": "Opco AS",
+            "cmpNpdidCompany": 10,
+            "dscCurrentActivityStatus": "Producing",
+        },
+        {
+            "dscNpdidDiscovery": 300,
+            "dscName": "3/3-3 Beta North",
+            "fldName": None,
+            "cmpLongName": "Opco AS",
+            "cmpNpdidCompany": 10,
+            "dscCurrentActivityStatus": "Evaluation",
+        },
+    ],
+    7006: [
+        {
+            "dscNpdidDiscovery": 100,
+            "cmpNpdidCompany": 10,
+            "cmpLongName": "Opco AS",
+            "dscOperatorFrom": ms(2019, 1, 1),
+            "dscOperatorTo": None,
+        }
+    ],
     7007: [
-        {"dscNpdidDiscovery": 100, "dscOwnerKind": "PRODUCTION LICENCE", "dscOwnerName": "555",
-         "dscOwnerFactPageUrl": "https://factpages.sodir.no/licence/pageview/all/5550",
-         "dscOwnershipFromDate": ms(2019, 1, 1), "dscOwnershipToDate": None},
-        {"dscNpdidDiscovery": 200, "dscOwnerKind": "BUSINESS ARRANGEMENT AREA", "dscOwnerName": "ALPHA UNIT",
-         "dscOwnerFactPageUrl": "https://factpages.sodir.no/bsns_arr_area/pageview/all/777",
-         "dscOwnershipFromDate": ms(2015, 1, 1), "dscOwnershipToDate": None},
+        {
+            "dscNpdidDiscovery": 100,
+            "dscOwnerKind": "PRODUCTION LICENCE",
+            "dscOwnerName": "555",
+            "dscOwnerFactPageUrl": "https://factpages.sodir.no/licence/pageview/all/5550",
+            "dscOwnershipFromDate": ms(2019, 1, 1),
+            "dscOwnershipToDate": None,
+        },
+        {
+            "dscNpdidDiscovery": 200,
+            "dscOwnerKind": "BUSINESS ARRANGEMENT AREA",
+            "dscOwnerName": "ALPHA UNIT",
+            "dscOwnerFactPageUrl": "https://factpages.sodir.no/bsns_arr_area/pageview/all/777",
+            "dscOwnershipFromDate": ms(2015, 1, 1),
+            "dscOwnershipToDate": None,
+        },
     ],
     3007: [
         lic(5550, "555", "Opco AS", 10, 55.0, ms(2019, 1, 1), oper=True),
@@ -81,12 +165,28 @@ LAYERS = {
         lic(5550, "555", "Opco AS", 10, 100.0, ms(2010, 1, 1), ms(2018, 12, 31)),
     ],
     3304: [
-        {"baaNpdidBsnsArrArea": 777, "baaName": "ALPHA UNIT", "cmpLongName": "Opco AS", "cmpNpdidCompany": 10,
-         "baaLicenseeInterest": 60.0, "baaLicenseeSdfi": None, "baaLicenseeDateValidFrom": ms(2020, 1, 1),
-         "baaLicenseeDateValidTo": None, "baaLicenseeDateUpdated": ms(2026, 2, 1)},
-        {"baaNpdidBsnsArrArea": 777, "baaName": "ALPHA UNIT", "cmpLongName": "Partner AS", "cmpNpdidCompany": 20,
-         "baaLicenseeInterest": 40.0, "baaLicenseeSdfi": None, "baaLicenseeDateValidFrom": ms(2020, 1, 1),
-         "baaLicenseeDateValidTo": None, "baaLicenseeDateUpdated": ms(2026, 2, 1)},
+        {
+            "baaNpdidBsnsArrArea": 777,
+            "baaName": "ALPHA UNIT",
+            "cmpLongName": "Opco AS",
+            "cmpNpdidCompany": 10,
+            "baaLicenseeInterest": 60.0,
+            "baaLicenseeSdfi": None,
+            "baaLicenseeDateValidFrom": ms(2020, 1, 1),
+            "baaLicenseeDateValidTo": None,
+            "baaLicenseeDateUpdated": ms(2026, 2, 1),
+        },
+        {
+            "baaNpdidBsnsArrArea": 777,
+            "baaName": "ALPHA UNIT",
+            "cmpLongName": "Partner AS",
+            "cmpNpdidCompany": 20,
+            "baaLicenseeInterest": 40.0,
+            "baaLicenseeSdfi": None,
+            "baaLicenseeDateValidFrom": ms(2020, 1, 1),
+            "baaLicenseeDateValidTo": None,
+            "baaLicenseeDateUpdated": ms(2026, 2, 1),
+        },
     ],
 }
 
@@ -206,13 +306,21 @@ def test_company_portfolio_lists_fields_and_discoveries_not_in_fields(reader):
     assert kinds[("field", "ALPHA")] == 60.0
     assert kinds[("discovery", "1/1-1 Beta")] == 55.0
     assert ("discovery", "2/2-2 Gamma") not in kinds
-    with_included = reader.portfolio("Opco AS", date(2026, 1, 1), include_discoveries_in_fields=True)
-    assert ("discovery", "2/2-2 Gamma") in {(i["kind"], i["name"]) for i in with_included["items"]}
+    with_included = reader.portfolio(
+        "Opco AS", date(2026, 1, 1), include_discoveries_in_fields=True
+    )
+    assert ("discovery", "2/2-2 Gamma") in {
+        (i["kind"], i["name"]) for i in with_included["items"]
+    }
 
 
 def test_portfolio_company_ambiguity_is_reported():
-    layers = {3007: [lic(1, "1", "Equinor Energy AS", 11, 50.0, ms(2020, 1, 1)),
-                     lic(2, "2", "Equinor UK Ltd", 12, 50.0, ms(2020, 1, 1))]}
+    layers = {
+        3007: [
+            lic(1, "1", "Equinor Energy AS", 11, 50.0, ms(2020, 1, 1)),
+            lic(2, "2", "Equinor UK Ltd", 12, 50.0, ms(2020, 1, 1)),
+        ]
+    }
     with pytest.raises(OwnershipError, match="several companies"):
         OwnershipReader(make_fetch(layers)).portfolio("Equinor")
 
@@ -236,6 +344,7 @@ def test_sql_quote_escapes_apostrophes():
 def test_service_error_is_raised():
     def fetch(url, timeout):
         return json.dumps({"error": {"code": 400}}).encode()
+
     with pytest.raises(RuntimeError, match="DataService error"):
         SodirClient(fetch).query(7108)
 
@@ -253,14 +362,30 @@ def test_licence_milestones_use_local_oslo_dates():
             rows = [lic(1263, "1263", "Opco AS", 10, 100.0, ms(2025, 1, 1), oper=True)]
         else:
             assert "/FeatureServer/652/" in url
-            rows = [{"prlTaskTypeCode": "DOD", "prlTaskTypeEn": "Decision to drill", "prlTaskCategory": "WORK",
-                     "prlTaskStatusEn": "OPEN", "prlTaskExpiryDate": oslo_midnight(2027, 3, 14)},
-                    {"prlTaskTypeCode": "BOK", "prlTaskTypeEn": "Drill or drop", "prlTaskCategory": "WORK",
-                     "prlTaskStatusEn": "OPEN", "prlTaskExpiryDate": oslo_midnight(2026, 3, 14)}]
-        return json.dumps({"features": [{"attributes": r} for r in rows]}).encode("utf-8")
+            rows = [
+                {
+                    "prlTaskTypeCode": "DOD",
+                    "prlTaskTypeEn": "Decision to drill",
+                    "prlTaskCategory": "WORK",
+                    "prlTaskStatusEn": "OPEN",
+                    "prlTaskExpiryDate": oslo_midnight(2027, 3, 14),
+                },
+                {
+                    "prlTaskTypeCode": "BOK",
+                    "prlTaskTypeEn": "Drill or drop",
+                    "prlTaskCategory": "WORK",
+                    "prlTaskStatusEn": "OPEN",
+                    "prlTaskExpiryDate": oslo_midnight(2026, 3, 14),
+                },
+            ]
+        return json.dumps({"features": [{"attributes": r} for r in rows]}).encode(
+            "utf-8"
+        )
 
     out = OwnershipReader(fetch=fetch).licence_milestones("1263")
     assert [r["deadline"] for r in out] == ["2026-03-14", "2027-03-14"]
     assert out[1]["code"] == "DOD"
     with pytest.raises(OwnershipError):
-        OwnershipReader(fetch=lambda u, t: json.dumps({"features": []}).encode()).licence_milestones("nope")
+        OwnershipReader(
+            fetch=lambda u, t: json.dumps({"features": []}).encode()
+        ).licence_milestones("nope")

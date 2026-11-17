@@ -14,7 +14,9 @@ ANP_CO2_SPEC_MOL_PCT = 3.0
 MME_MIDSTREAM_SHARE = 0.46
 
 
-def co2_removal_fraction(co2_mol_pct: float, spec_mol_pct: float = ANP_CO2_SPEC_MOL_PCT) -> float:
+def co2_removal_fraction(
+    co2_mol_pct: float, spec_mol_pct: float = ANP_CO2_SPEC_MOL_PCT
+) -> float:
     """Fraction of the feed-gas moles that must be removed as CO2 to reach the CO2 spec.
 
     Pure CO2 removal: x = (y - s) / (1 - s) with y and s as mole fractions. A
@@ -26,7 +28,9 @@ def co2_removal_fraction(co2_mol_pct: float, spec_mol_pct: float = ANP_CO2_SPEC_
     return 0.0 if y <= s else (y - s) / (1.0 - s)
 
 
-def wellhead_netback(city_gate_usd_mmbtu: float, midstream_share: float = MME_MIDSTREAM_SHARE) -> float:
+def wellhead_netback(
+    city_gate_usd_mmbtu: float, midstream_share: float = MME_MIDSTREAM_SHARE
+) -> float:
     """Wellhead gas net-back (USD/MMBtu) after escoamento plus processing.
 
     ``midstream_share`` defaults to the MME estimate (46 % of the delivered price),
@@ -67,7 +71,9 @@ def gas_export_upside(
     if oil_net_price_usd_bbl is not None:
         oil_revenue = volume_mmbbl * oil_net_price_usd_bbl
         out["oil_revenue_musd"] = oil_revenue
-        out["gas_pct_of_oil_revenue"] = 100.0 * revenue_musd / oil_revenue if oil_revenue > 0.0 else float("nan")
+        out["gas_pct_of_oil_revenue"] = (
+            100.0 * revenue_musd / oil_revenue if oil_revenue > 0.0 else float("nan")
+        )
     return out
 
 
@@ -83,7 +89,11 @@ def host_capacity_check(
     (from a process model or the host owner). A tie-back competes for gas
     handling, so the effective limit is the lower of nameplate and that limit.
     """
-    for label, val in (("nameplate", host_nameplate_kbd), ("demand", host_demand_kbd), ("additional", additional_demand_kbd)):
+    for label, val in (
+        ("nameplate", host_nameplate_kbd),
+        ("demand", host_demand_kbd),
+        ("additional", additional_demand_kbd),
+    ):
         if val < 0.0:
             raise ValueError("{} must be >= 0".format(label))
     if compression_limit_kbd is not None and compression_limit_kbd < 0.0:
@@ -99,7 +109,8 @@ def host_capacity_check(
         "binding_constraint": binding,
         "ullage_kbd": ullage,
         "nameplate_ullage_kbd": max(0.0, host_nameplate_kbd - host_demand_kbd),
-        "ullage_overstatement_kbd": max(0.0, host_nameplate_kbd - host_demand_kbd) - ullage,
+        "ullage_overstatement_kbd": max(0.0, host_nameplate_kbd - host_demand_kbd)
+        - ullage,
         "additional_demand_kbd": additional_demand_kbd,
         "fits": additional_demand_kbd <= ullage,
     }

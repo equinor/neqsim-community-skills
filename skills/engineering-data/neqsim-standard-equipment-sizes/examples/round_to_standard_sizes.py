@@ -2,7 +2,11 @@
 
 import json
 
-from standard_equipment_sizes import next_motor_kw, select_api526_orifice, select_pipe_nps
+from standard_equipment_sizes import (
+    next_motor_kw,
+    select_api526_orifice,
+    select_pipe_nps,
+)
 
 if __name__ == "__main__":
     print(

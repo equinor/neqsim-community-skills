@@ -134,7 +134,9 @@ def derive_boundary_conditions(
     _require_positive("density", fluid.density_kg_per_m3)
     _require_positive("viscosity", fluid.viscosity_pa_s)
 
-    area = flow_area_m2 if flow_area_m2 is not None else pi * hydraulic_diameter_m**2 / 4.0
+    area = (
+        flow_area_m2 if flow_area_m2 is not None else pi * hydraulic_diameter_m**2 / 4.0
+    )
     _require_positive("flow_area_m2", area)
 
     warnings: list[str] = []
@@ -165,7 +167,9 @@ def derive_boundary_conditions(
     if flow_area_m2 is None:
         assumptions.append("A circular cross-section was assumed for the flow area.")
 
-    reynolds = fluid.density_kg_per_m3 * velocity * hydraulic_diameter_m / fluid.viscosity_pa_s
+    reynolds = (
+        fluid.density_kg_per_m3 * velocity * hydraulic_diameter_m / fluid.viscosity_pa_s
+    )
 
     if reynolds < _LAMINAR_REYNOLDS:
         regime = "laminar"
@@ -184,7 +188,9 @@ def derive_boundary_conditions(
 
     if turbulence_intensity is None:
         # Fully developed pipe-flow correlation; only meaningful when turbulent.
-        intensity = 0.16 * reynolds ** (-0.125) if reynolds >= _TURBULENT_REYNOLDS else 0.05
+        intensity = (
+            0.16 * reynolds ** (-0.125) if reynolds >= _TURBULENT_REYNOLDS else 0.05
+        )
         assumptions.append(
             "Inlet turbulence intensity from the fully developed pipe correlation "
             "I = 0.16 Re^(-1/8); override it when the upstream fitting is known."
@@ -235,7 +241,11 @@ def derive_boundary_conditions(
             "separated or unsteady flow."
         )
 
-    solver = "incompressibleFluid" if compressibility == "incompressible" else "compressibleFluid"
+    solver = (
+        "incompressibleFluid"
+        if compressibility == "incompressible"
+        else "compressibleFluid"
+    )
 
     return CfdBoundaryConditions(
         fluid=fluid,
@@ -285,9 +295,13 @@ def _require_positive(name: str, value: float) -> None:
         raise ValueError(f"{name} must be a positive finite number")
 
 
-def friction_velocity(fluid: FluidState, velocity_m_per_s: float, reynolds: float) -> float:
+def friction_velocity(
+    fluid: FluidState, velocity_m_per_s: float, reynolds: float
+) -> float:
     """Friction velocity from Blasius smooth-wall friction, used for y+ sizing."""
     _require_positive("velocity", velocity_m_per_s)
     _require_positive("reynolds", reynolds)
-    friction_factor = 64.0 / reynolds if reynolds < _LAMINAR_REYNOLDS else 0.3164 / reynolds**0.25
+    friction_factor = (
+        64.0 / reynolds if reynolds < _LAMINAR_REYNOLDS else 0.3164 / reynolds**0.25
+    )
     return velocity_m_per_s * sqrt(friction_factor / 8.0)

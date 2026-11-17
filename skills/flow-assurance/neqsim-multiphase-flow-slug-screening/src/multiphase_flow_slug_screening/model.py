@@ -47,16 +47,12 @@ class SlugScreeningModel:
         surge_factor: float = 1.2,
         available_slug_catcher_volume: float | None = None,
     ) -> SlugScreeningResult:
-        self._require_positive(
-            "superficial_gas_velocity", superficial_gas_velocity
-        )
+        self._require_positive("superficial_gas_velocity", superficial_gas_velocity)
         self._require_positive(
             "superficial_liquid_velocity", superficial_liquid_velocity
         )
         self._require_positive("pipe_internal_diameter", pipe_internal_diameter)
-        self._require_positive(
-            "slug_length_to_diameter", slug_length_to_diameter
-        )
+        self._require_positive("slug_length_to_diameter", slug_length_to_diameter)
         self._require_fraction("liquid_holdup_in_slug", liquid_holdup_in_slug)
         self._require_at_least("surge_factor", surge_factor, 1.0)
         if available_slug_catcher_volume is not None:
@@ -64,9 +60,7 @@ class SlugScreeningModel:
                 "available_slug_catcher_volume", available_slug_catcher_volume
             )
 
-        mixture_velocity = (
-            superficial_gas_velocity + superficial_liquid_velocity
-        )
+        mixture_velocity = superficial_gas_velocity + superficial_liquid_velocity
         froude_number = mixture_velocity / sqrt(
             GRAVITY_M_PER_S2 * pipe_internal_diameter
         )
@@ -77,9 +71,7 @@ class SlugScreeningModel:
 
         pipe_area = pi * pipe_internal_diameter**2 / 4.0
         slug_length = slug_length_to_diameter * pipe_internal_diameter
-        estimated_slug_volume = (
-            slug_length * pipe_area * liquid_holdup_in_slug
-        )
+        estimated_slug_volume = slug_length * pipe_area * liquid_holdup_in_slug
         recommended_slug_catcher_volume = estimated_slug_volume * surge_factor
 
         capacity_ratio: float | None = None
@@ -88,9 +80,7 @@ class SlugScreeningModel:
                 recommended_slug_catcher_volume / available_slug_catcher_volume
             )
 
-        slug_warning = self._slug_warning(
-            flow_regime_indicator, capacity_ratio
-        )
+        slug_warning = self._slug_warning(flow_regime_indicator, capacity_ratio)
 
         return SlugScreeningResult(
             mixture_velocity_m_per_s=round(mixture_velocity, 3),

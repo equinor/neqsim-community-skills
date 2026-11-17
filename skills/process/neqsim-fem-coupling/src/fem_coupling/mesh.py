@@ -193,7 +193,9 @@ class FemMeshSpec:
         planar = sum(segment.cells for segment in self.segments) * sum(
             layer.cells for layer in self.layers
         )
-        return planar * self.circumferential_cells if self.is_three_dimensional else planar
+        return (
+            planar * self.circumferential_cells if self.is_three_dimensional else planar
+        )
 
     def material_of(self, segment: MeshSegment, layer: MeshLayer) -> str:
         """Material assigned to one grid cell, honouring the segment override."""
@@ -255,7 +257,9 @@ class FemMeshSpec:
                 worst = max(worst, dx / dy, dy / dx)
         return worst
 
-    def mesh_warnings(self, *, max_element_size_m: float | None = None) -> tuple[str, ...]:
+    def mesh_warnings(
+        self, *, max_element_size_m: float | None = None
+    ) -> tuple[str, ...]:
         """Report the discretisation problems that quietly invalidate a result.
 
         ``max_element_size_m`` is normally the element-size target returned by
@@ -314,8 +318,8 @@ class FemMeshSpec:
             "// Structured tensor grid: one block per (axial segment, layer), with every",
             "// layer interface on an element boundary. Physical names carry the material",
             "// assignment and the boundary faces to the solver.",
-            f'// model: {self.name}   kind: {self.kind}',
-            "SetFactory(\"Built-in\");",
+            f"// model: {self.name}   kind: {self.kind}",
+            'SetFactory("Built-in");',
             "",
         ]
 
@@ -506,7 +510,9 @@ class FemMeshSpec:
         geo_path.write_text(self.geo_script(), encoding="utf-8")
         return geo_path
 
-    def generate(self, directory: str | Path, *, timeout_seconds: int = 300) -> "MeshOutcome":
+    def generate(
+        self, directory: str | Path, *, timeout_seconds: int = 300
+    ) -> "MeshOutcome":
         """Write the ``.geo`` and mesh it with Gmsh when Gmsh is available.
 
         Returns a :class:`MeshOutcome` describing what happened. When Gmsh is
@@ -553,8 +559,15 @@ class FemMeshSpec:
         if shutil.which("gmsh"):
             try:
                 completed = subprocess.run(  # noqa: S603 - fixed command shape
-                    ["gmsh", f"-{dimension}", "-order", str(self.element_order),
-                     geo_path.name, "-o", msh_path.name],
+                    [
+                        "gmsh",
+                        f"-{dimension}",
+                        "-order",
+                        str(self.element_order),
+                        geo_path.name,
+                        "-o",
+                        msh_path.name,
+                    ],
                     cwd=str(target),
                     capture_output=True,
                     text=True,
@@ -565,10 +578,18 @@ class FemMeshSpec:
                 return MeshOutcome("failed", geo_path, None, command, str(error))
             if completed.returncode == 0 and msh_path.exists():
                 return MeshOutcome(
-                    "completed", geo_path, msh_path, command, "meshed with the gmsh executable"
+                    "completed",
+                    geo_path,
+                    msh_path,
+                    command,
+                    "meshed with the gmsh executable",
                 )
             return MeshOutcome(
-                "failed", geo_path, None, command, (completed.stderr or completed.stdout)[-800:]
+                "failed",
+                geo_path,
+                None,
+                command,
+                (completed.stderr or completed.stdout)[-800:],
             )
 
         return MeshOutcome(

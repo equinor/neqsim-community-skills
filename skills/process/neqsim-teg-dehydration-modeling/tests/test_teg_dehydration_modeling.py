@@ -147,5 +147,3 @@ def test_glycol_purity_excludes_hydrocarbon_solvent() -> None:
     s = _Stream()
     assert glycol_purity_wt(s) > teg_mass_fraction(s)
     assert glycol_purity_wt(s) == pytest.approx(99.94, abs=0.05)
-
-

@@ -148,7 +148,9 @@ def pressure_stress(
     b2 = outer_radius_m**2
     span = b2 - a2
     membrane = (internal_pressure_pa * a2 - external_pressure_pa * b2) / span
-    varying = (internal_pressure_pa - external_pressure_pa) * a2 * b2 / (span * radius**2)
+    varying = (
+        (internal_pressure_pa - external_pressure_pa) * a2 * b2 / (span * radius**2)
+    )
 
     hoop = membrane + varying
     radial = membrane - varying
@@ -156,8 +158,10 @@ def pressure_stress(
 
     thickness = outer_radius_m - inner_radius_m
     mean_diameter = inner_radius_m + outer_radius_m
-    thin_wall = (internal_pressure_pa - external_pressure_pa) * mean_diameter / (
-        2.0 * thickness
+    thin_wall = (
+        (internal_pressure_pa - external_pressure_pa)
+        * mean_diameter
+        / (2.0 * thickness)
     )
     ratio = 2.0 * outer_radius_m / thickness
 

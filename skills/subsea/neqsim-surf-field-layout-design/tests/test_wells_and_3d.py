@@ -44,7 +44,9 @@ class TestWellPaths:
     def test_one_trajectory_per_well(self, layout, paths):
         assert len(paths) == len(layout.nodes_of_kind("well"))
 
-    def test_trajectory_starts_at_the_tree_and_ends_in_the_reservoir(self, layout, paths):
+    def test_trajectory_starts_at_the_tree_and_ends_in_the_reservoir(
+        self, layout, paths
+    ):
         for well_path in paths:
             well = layout.node(well_path.well_tag)
             start = well_path.points[0]
@@ -85,6 +87,7 @@ class TestWellPaths:
         water = [p for p in paths if p.service == "water_injection"]
         gas = [p for p in paths if p.service == "gas_injection"]
         assert production and water and gas
+
         # the injector bands sit on opposite sides of the producer band
         def mean_across(group):
             return sum(p.points[-2][0] for p in group) / len(group)
@@ -110,7 +113,13 @@ class TestWellPaths:
 
     def test_path_dict_is_reportable(self, paths):
         payload = paths[0].to_dict()
-        for key in ("well", "service", "measured_depth_m", "build_rate_deg_per_30m", "drillable"):
+        for key in (
+            "well",
+            "service",
+            "measured_depth_m",
+            "build_rate_deg_per_30m",
+            "drillable",
+        ):
             assert key in payload
 
 

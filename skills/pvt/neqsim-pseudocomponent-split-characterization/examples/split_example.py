@@ -20,7 +20,9 @@ def main() -> None:
         alpha=1.0,
         eta=90.0,
     )
-    print("Pseudocomponent mole fractions:", [round(x, 5) for x in split.mole_fractions])
+    print(
+        "Pseudocomponent mole fractions:", [round(x, 5) for x in split.mole_fractions]
+    )
     print("Pseudocomponent molar masses  :", [round(x, 1) for x in split.molar_masses])
 
     full = [0.70, 0.10, 0.06, 0.04, 0.03, 0.07]

@@ -142,7 +142,9 @@ class HeatExchangerFoulingModel:
             self._require_positive(name, value)
         self._require_non_negative("design_fouling_allowance", design_fouling_allowance)
         self._require_non_negative("wall_resistance", wall_resistance)
-        self._require_fraction("hot_film_resistance_fraction", hot_film_resistance_fraction)
+        self._require_fraction(
+            "hot_film_resistance_fraction", hot_film_resistance_fraction
+        )
         self._require_unit_interval("lmtd_correction_factor", lmtd_correction_factor)
         if installed_units < 1:
             raise ValueError("installed_units must be at least 1")
@@ -216,9 +218,9 @@ class HeatExchangerFoulingModel:
 
         # Only the two convective films respond to flow. A deposit is a fixed
         # conduction resistance, so it is held out of the normalisation.
-        film_resistance_now = 1.0 / (hot_film * hot_ratio**FILM_FLOW_EXPONENT) + 1.0 / (
-            cold_film * cold_ratio**FILM_FLOW_EXPONENT
-        )
+        film_resistance_now = 1.0 / (
+            hot_film * hot_ratio**FILM_FLOW_EXPONENT
+        ) + 1.0 / (cold_film * cold_ratio**FILM_FLOW_EXPONENT)
         fouling_resistance = 1.0 / u_measured - film_resistance_now - wall_resistance
         if fouling_resistance < 0.0:
             warnings.append(
@@ -348,9 +350,13 @@ class HeatExchangerFoulingModel:
                 "valve or a pump"
             )
         return CapacityLimitResult(
-            maximum_duty_kw=round(maximum_duty, 3) if isfinite(maximum_duty) else maximum_duty,
+            maximum_duty_kw=(
+                round(maximum_duty, 3) if isfinite(maximum_duty) else maximum_duty
+            ),
             duty_margin_kw=(
-                round(maximum_duty - required_duty, 3) if isfinite(maximum_duty) else maximum_duty
+                round(maximum_duty - required_duty, 3)
+                if isfinite(maximum_duty)
+                else maximum_duty
             ),
             limited=limited,
             limit_cause=cause,
@@ -377,7 +383,9 @@ class HeatExchangerFoulingModel:
         self._require_positive("elapsed_days", elapsed_days)
         self._require_positive("fouling_resistance_limit", fouling_resistance_limit)
         if not 0.0 <= cleaning_residual_fraction < 1.0:
-            raise ValueError("cleaning_residual_fraction must be in the interval [0, 1)")
+            raise ValueError(
+                "cleaning_residual_fraction must be in the interval [0, 1)"
+            )
 
         warnings: list[str] = []
         rate = (fouling_resistance_end - fouling_resistance_start) / elapsed_days
@@ -395,7 +403,9 @@ class HeatExchangerFoulingModel:
                 warnings=tuple(warnings),
             )
 
-        days_to_limit = max(fouling_resistance_limit - fouling_resistance_end, 0.0) / rate
+        days_to_limit = (
+            max(fouling_resistance_limit - fouling_resistance_end, 0.0) / rate
+        )
         residual = cleaning_residual_fraction * fouling_resistance_end
         effective = residual < fouling_resistance_limit
         if effective:
@@ -430,7 +440,9 @@ class HeatExchangerFoulingModel:
 
     @staticmethod
     def _lmtd(delta_hot_end: float, delta_cold_end: float) -> float:
-        if abs(delta_hot_end - delta_cold_end) < 1.0e-6 * max(delta_hot_end, delta_cold_end):
+        if abs(delta_hot_end - delta_cold_end) < 1.0e-6 * max(
+            delta_hot_end, delta_cold_end
+        ):
             return 0.5 * (delta_hot_end + delta_cold_end)
         return (delta_hot_end - delta_cold_end) / log(delta_hot_end / delta_cold_end)
 

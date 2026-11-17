@@ -56,11 +56,13 @@ class DepressurizationModel:
 
         exponent = (self.isentropic_exponent - 1.0) / self.isentropic_exponent
         initial_temperature_k = relieving_temperature + 273.15
-        estimated_min_temperature_k = initial_temperature_k * pressure_ratio ** exponent
+        estimated_min_temperature_k = initial_temperature_k * pressure_ratio**exponent
         estimated_min_temperature_c = estimated_min_temperature_k - 273.15
         low_temperature_flag = estimated_min_temperature_c < mdmt
 
-        depressurization_warning = self._warning(blowdown_time_indicator, low_temperature_flag)
+        depressurization_warning = self._warning(
+            blowdown_time_indicator, low_temperature_flag
+        )
 
         return DepressurizationResult(
             blowdown_time_indicator=round(blowdown_time_indicator, 4),

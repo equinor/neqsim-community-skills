@@ -65,6 +65,11 @@ uv run pre-commit run
 uv run pytest
 ```
 
+Pre-commit runs Ruff lint checks and Black formatting on staged Python files,
+alongside the skill metadata checks. Fix Ruff findings before committing; do not
+disable rules or add blanket suppressions to make checks pass. Black remains the
+formatter; Ruff is used for linting, not formatting.
+
 Pre-commit checks staged files locally; CI checks files changed in the pull
 request or push. Avoid `--all-files` until the existing Python formatting
 baseline has been normalized.

@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
-      - name: Run pre-commit hooks (Black, skill metadata, manifest schema, calculation_basis)
+      - name: Run pre-commit hooks (Ruff, Black, skill metadata, manifest schema, calculation_basis)
         env:
           PRE_COMMIT_FROM_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
           PRE_COMMIT_TO_REF: ${{ github.event.pull_request.head.sha || github.sha }}

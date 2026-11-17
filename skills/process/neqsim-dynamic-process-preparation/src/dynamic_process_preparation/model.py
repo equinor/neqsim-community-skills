@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite, pi
-from typing import Any
+from typing import Any, ClassVar
 
 
 @dataclass(frozen=True)
@@ -33,8 +33,8 @@ class DynamicPreparationPlan:
 class DynamicProcessPreparationModel:
     """Readiness checks for NeqSim dynamic process preparation."""
 
-    VALID_PROCESS_KINDS = {"ProcessSystem", "ProcessModel"}
-    VESSEL_TYPES = {
+    VALID_PROCESS_KINDS: ClassVar[set[str]] = {"ProcessSystem", "ProcessModel"}
+    VESSEL_TYPES: ClassVar[set[str]] = {
         "separator",
         "threephaseseparator",
         "gas scrubber",

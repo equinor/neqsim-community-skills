@@ -70,8 +70,10 @@ class FlareRadiationModel:
             assumptions=(
                 "Educational screening placeholder only.",
                 "Total heat release uses Q = mass_flow * heat_of_combustion.",
-                "Radiant flux uses the public API 521 / API 537 point-source form "
-                "q = tau F Q / (4 pi r^2).",
+                (
+                    "Radiant flux uses the public API 521 / API 537 point-source form "
+                    "q = tau F Q / (4 pi r^2)."
+                ),
                 "No flame length, tilt, wind, view factor, or solar radiation is included.",
                 "Move to validated NeqSim flare classes (Flare.estimateRadiationHeatFlux) and qualified review.",
             ),

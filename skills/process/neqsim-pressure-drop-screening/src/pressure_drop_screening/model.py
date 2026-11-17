@@ -77,8 +77,10 @@ class PressureDropModel:
             assumptions=(
                 "Educational screening placeholder only.",
                 "Reynolds number uses the standard Re = rho v D / mu form.",
-                "Friction factor uses f = 64 / Re in laminar flow and the public Haaland "
-                "approximation of the Colebrook equation in turbulent flow.",
+                (
+                    "Friction factor uses f = 64 / Re in laminar flow and the public Haaland "
+                    "approximation of the Colebrook equation in turbulent flow."
+                ),
                 "Pressure gradient uses the Darcy-Weisbach form dP/L = f (1/D) (rho v^2 / 2).",
                 "Guideline gradient reflects NORSOK P-002 and GPSA style line pressure-gradient limits.",
                 "No two-phase, fittings, elevation, or acceleration losses are included.",

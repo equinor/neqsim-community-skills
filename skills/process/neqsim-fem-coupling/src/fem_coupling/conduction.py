@@ -276,14 +276,22 @@ class RadialConductionModel:
             nonlinear_converged=converged,
             warnings=tuple(warnings),
             assumptions=(
-                "Linear P1 elements on a one-dimensional mesh; the profile is "
-                "piecewise linear within each element.",
-                "Perfect thermal contact between layers - no contact resistance, no "
-                "annulus gap, no water ingress into the insulation.",
-                "Conductivity is evaluated at each layer's mean temperature and "
-                "iterated to convergence.",
-                "Axial conduction is neglected, which is valid while the geometry and "
-                "the boundary conditions do not change along the axis.",
+                (
+                    "Linear P1 elements on a one-dimensional mesh; the profile is "
+                    "piecewise linear within each element."
+                ),
+                (
+                    "Perfect thermal contact between layers - no contact resistance, no "
+                    "annulus gap, no water ingress into the insulation."
+                ),
+                (
+                    "Conductivity is evaluated at each layer's mean temperature and "
+                    "iterated to convergence."
+                ),
+                (
+                    "Axial conduction is neglected, which is valid while the geometry and "
+                    "the boundary conditions do not change along the axis."
+                ),
             ),
         )
 
@@ -511,10 +519,14 @@ class RadialConductionModel:
             )
 
         assumptions = [
-            "Backward Euler time integration with a consistent mass matrix: "
-            "unconditionally stable, first order, numerically damped.",
-            "The outer film coefficient and ambient temperature are constant over "
-            "the window.",
+            (
+                "Backward Euler time integration with a consistent mass matrix: "
+                "unconditionally stable, first order, numerically damped."
+            ),
+            (
+                "The outer film coefficient and ambient temperature are constant over "
+                "the window."
+            ),
             "No phase change, no latent heat and no wax or hydrate deposition.",
         ]
         if track_fluid:

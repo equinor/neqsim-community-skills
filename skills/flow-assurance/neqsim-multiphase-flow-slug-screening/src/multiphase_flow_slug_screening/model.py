@@ -98,16 +98,26 @@ class SlugScreeningModel:
             neqsim_available=find_spec("neqsim") is not None,
             assumptions=(
                 "Educational screening placeholder only.",
-                "Mixture velocity is the sum of the superficial gas and liquid "
-                "velocities.",
-                "The Froude number uses the pipe inside diameter as the length "
-                "scale.",
-                "The flow regime indicator is a coarse public heuristic, not a "
-                "validated flow-pattern map.",
-                "Slug volume is slug length x pipe area x liquid holdup, with a "
-                "surge factor for the recommended slug-catcher volume.",
-                "Move to validated NeqSim multiphase pipe flow and qualified "
-                "flow-assurance review for real slug-catcher sizing.",
+                (
+                    "Mixture velocity is the sum of the superficial gas and liquid "
+                    "velocities."
+                ),
+                (
+                    "The Froude number uses the pipe inside diameter as the length "
+                    "scale."
+                ),
+                (
+                    "The flow regime indicator is a coarse public heuristic, not a "
+                    "validated flow-pattern map."
+                ),
+                (
+                    "Slug volume is slug length x pipe area x liquid holdup, with a "
+                    "surge factor for the recommended slug-catcher volume."
+                ),
+                (
+                    "Move to validated NeqSim multiphase pipe flow and qualified "
+                    "flow-assurance review for real slug-catcher sizing."
+                ),
             ),
         )
 

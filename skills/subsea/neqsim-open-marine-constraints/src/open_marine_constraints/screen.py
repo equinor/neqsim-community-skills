@@ -27,8 +27,10 @@ VALUE_FIELD = "mw_fshn"  # EMODnet fishing effort: average MW fishing hours (eng
 CAVEATS = [
     "Open data is a screening layer: positions and attributes are as published, not survey grade.",
     "A layer that returns zero features means none in the published layer, not that the hazard is absent.",
-    "Fishing effort is vessel-tracking based (AIS/VMS) and misses small vessels and recent change; "
-    "obtain the owner's current data before sizing protection.",
+    (
+        "Fishing effort is vessel-tracking based (AIS/VMS) and misses small vessels and recent change; "
+        "obtain the owner's current data before sizing protection."
+    ),
     "Check the layer metadata at the owner for year, class definitions and units before quoting a value.",
 ]
 

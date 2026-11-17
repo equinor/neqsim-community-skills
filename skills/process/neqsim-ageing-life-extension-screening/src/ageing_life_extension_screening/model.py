@@ -366,19 +366,31 @@ class AgeingLifeExtensionModel:
     @staticmethod
     def _assumptions(n: int, population_size: int) -> tuple[str, ...]:
         return (
-            "Failures are treated as a non-homogeneous Poisson process (repair "
-            "returns the item to the condition just before failure).",
-            "The power-law (Crow-AMSAA) intensity is fitted by maximum likelihood "
-            "on time-truncated data.",
-            "The Laplace statistic is compared against a standard-normal critical "
-            "value; it is only meaningful for a stationary reporting regime.",
-            "Reporting-practice changes, migration artefacts and campaign-driven "
-            "notification bursts are NOT corrected for and must be screened out "
-            "of the input series before use.",
-            f"Rates are normalised over a population of {population_size} item(s) "
-            f"from {n} recorded failure(s).",
-            "Screening only; not a substitute for a qualified life-extension "
-            "assessment or a structural/technical condition survey.",
+            (
+                "Failures are treated as a non-homogeneous Poisson process (repair "
+                "returns the item to the condition just before failure)."
+            ),
+            (
+                "The power-law (Crow-AMSAA) intensity is fitted by maximum likelihood "
+                "on time-truncated data."
+            ),
+            (
+                "The Laplace statistic is compared against a standard-normal critical "
+                "value; it is only meaningful for a stationary reporting regime."
+            ),
+            (
+                "Reporting-practice changes, migration artefacts and campaign-driven "
+                "notification bursts are NOT corrected for and must be screened out "
+                "of the input series before use."
+            ),
+            (
+                f"Rates are normalised over a population of {population_size} item(s) "
+                f"from {n} recorded failure(s)."
+            ),
+            (
+                "Screening only; not a substitute for a qualified life-extension "
+                "assessment or a structural/technical condition survey."
+            ),
         )
 
 

@@ -254,7 +254,9 @@ class FireWaterCoverageModel:
             assumptions=(
                 "Drift displacement dx = h * u_wind / v_terminal, a screening relation.",
                 "Coverage loss scales linearly with drift over the characteristic dimension.",
-                "Shadowing is reported as a flag, not modelled: a monitor cannot wet what it "
-                "cannot see.",
+                (
+                    "Shadowing is reported as a flag, not modelled: a monitor cannot wet what it "
+                    "cannot see."
+                ),
             ),
         )

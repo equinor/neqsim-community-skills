@@ -263,12 +263,16 @@ class ControlAuthorityModel:
             assumptions=(
                 "Public, educational screening of a controller output history only.",
                 "A sample is saturated when the output sits within the band of a stop.",
-                "Both stops count; bottoming out removes authority as surely as "
-                "topping out.",
+                (
+                    "Both stops count; bottoming out removes authority as surely as "
+                    "topping out."
+                ),
                 "Regime statistics assume the samples are evenly spaced in time.",
                 "Time to limit uses the largest observed rate, not a forecast.",
-                "A saturated loop explains lost rejection; it does not identify what "
-                "consumed the authority.",
+                (
+                    "A saturated loop explains lost rejection; it does not identify what "
+                    "consumed the authority."
+                ),
                 "Move to a validated loop review and qualified human judgement.",
             ),
             neqsim_available=find_spec("neqsim") is not None,

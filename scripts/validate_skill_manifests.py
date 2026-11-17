@@ -118,8 +118,10 @@ def check_description_length(manifest):
     description = manifest.get("description")
     if isinstance(description, str) and len(description) > MAX_CATALOG_DESCRIPTION:
         return [
-            f"description is {len(description)} chars; keep it <= {MAX_CATALOG_DESCRIPTION} (resent on every chat request) and "
-            "move detail into the SKILL.md body"
+            (
+                f"description is {len(description)} chars; keep it <= {MAX_CATALOG_DESCRIPTION} (resent on every chat request) and "
+                "move detail into the SKILL.md body"
+            )
         ]
     return []
 
@@ -128,8 +130,10 @@ def check_directory_matches_name(manifest, skill_md):
     name = manifest.get("name")
     if isinstance(name, str) and skill_md.parent.name != name:
         return [
-            f"directory '{skill_md.parent.name}' must equal frontmatter name '{name}' (agent-plugin loaders skip "
-            "mismatched skills)"
+            (
+                f"directory '{skill_md.parent.name}' must equal frontmatter name '{name}' (agent-plugin loaders skip "
+                "mismatched skills)"
+            )
         ]
     return []
 

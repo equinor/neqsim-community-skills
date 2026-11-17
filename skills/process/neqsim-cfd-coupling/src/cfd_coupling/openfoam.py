@@ -1307,9 +1307,11 @@ def _pipe_block_mesh(mesh: MeshSpec, inlet: str, outlet: str, wall: str) -> str:
     inner = [0, 1, 2, 3]
     outer = [4, 5, 6, 7]
     blocks = [
-        f"    hex (0 1 2 3 8 9 10 11) "
-        f"({mesh.tangential_cells} {mesh.tangential_cells} {mesh.axial_cells}) "
-        f"simpleGrading (1 1 1)"
+        (
+            f"    hex (0 1 2 3 8 9 10 11) "
+            f"({mesh.tangential_cells} {mesh.tangential_cells} {mesh.axial_cells}) "
+            f"simpleGrading (1 1 1)"
+        )
     ]
     edges: list[str] = []
     wall_faces: list[str] = []

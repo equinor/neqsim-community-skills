@@ -119,8 +119,11 @@ def main() -> None:
     print("=" * 78)
     print("CONSISTENCY CHECK - what an over-mapped area looks like")
     print("=" * 78)
-    oversized = stage_3.refine({"area_km2": 55.0}, provenance="interpreted",
-                               reference="deliberately over-mapped area")
+    oversized = stage_3.refine(
+        {"area_km2": 55.0},
+        provenance="interpreted",
+        reference="deliberately over-mapped area",
+    )
     for warning in oversized.warnings:
         if "implies a recovery factor" in warning:
             print(f"  ! {warning}")

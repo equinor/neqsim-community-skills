@@ -39,9 +39,7 @@ def test_energy_cost_term_converts_to_musd() -> None:
     # 100000 MWh/yr * 50 USD/MWh = 5,000,000 USD/yr = 5 MUSD/yr.
     result = _base(annual_energy_use_mwh=100000.0, energy_price_usd_per_mwh=50.0)
     assert result.annual_energy_cost_musd == pytest.approx(5.0)
-    assert result.total_annual_opex_musd == pytest.approx(
-        result.annual_opex_musd + 5.0
-    )
+    assert result.total_annual_opex_musd == pytest.approx(result.annual_opex_musd + 5.0)
 
 
 def test_total_cost_of_ownership_is_capex_plus_lifecycle_opex() -> None:

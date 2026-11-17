@@ -99,7 +99,12 @@ class CapillaryCondensationScreeningModel:
 
         cos_theta = math.cos(math.radians(contact_angle_deg))
         kelvin_length_nm = (
-            geometry_factor * surface_tension * molar_volume * cos_theta / (R_GAS * temperature) * 1e9
+            geometry_factor
+            * surface_tension
+            * molar_volume
+            * cos_theta
+            / (R_GAS * temperature)
+            * 1e9
         )
         onset = math.exp(-kelvin_length_nm / pore_radius_nm)
         max_mole_fraction = onset * saturation_mole_fraction

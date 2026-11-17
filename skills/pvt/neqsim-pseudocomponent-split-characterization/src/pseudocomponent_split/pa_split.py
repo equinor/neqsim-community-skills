@@ -135,7 +135,9 @@ def two_endpoint_pa_split(
     if not totals or not mws:
         raise ValueError("core_totals and core_molecular_weights must be non-empty")
     if len(totals) != len(mws):
-        raise ValueError("core_totals and core_molecular_weights must have equal length")
+        raise ValueError(
+            "core_totals and core_molecular_weights must have equal length"
+        )
     if any(z < 0.0 for z in totals):
         raise ValueError("core_totals mole fractions must be non-negative")
     for name, value in (("split_light", split_light), ("split_heavy", split_heavy)):
@@ -245,9 +247,13 @@ def recombine_core_totals(
     aromatic_index: List[int] = []
     for label in order:
         if label not in par_by_label:
-            raise ValueError(f"aromatic copy '{label}{aromatic_suffix}' has no paraffinic pair")
+            raise ValueError(
+                f"aromatic copy '{label}{aromatic_suffix}' has no paraffinic pair"
+            )
         if label not in aro_by_label:
-            raise ValueError(f"paraffinic copy '{label}{paraffinic_suffix}' has no aromatic pair")
+            raise ValueError(
+                f"paraffinic copy '{label}{paraffinic_suffix}' has no aromatic pair"
+            )
         p_idx = par_by_label[label]
         a_idx = aro_by_label[label]
         core_labels.append(label)
@@ -387,11 +393,15 @@ def map_source_to_pa_core_totals(
     fractions = [float(x) for x in source_fractions]
     mws = [float(m) for m in source_molecular_weights]
     if not (len(names) == len(fractions) == len(mws)):
-        raise ValueError("source_names, source_fractions, source_molecular_weights must align")
+        raise ValueError(
+            "source_names, source_fractions, source_molecular_weights must align"
+        )
     labels = [str(c) for c in core_labels]
     core_mws = [float(m) for m in core_molecular_weights]
     if not labels or len(labels) != len(core_mws):
-        raise ValueError("core_labels and core_molecular_weights must be non-empty and aligned")
+        raise ValueError(
+            "core_labels and core_molecular_weights must be non-empty and aligned"
+        )
 
     def norm(text: str) -> str:
         return "".join(str(text).split()).upper()

@@ -27,9 +27,15 @@ class Stake:
     is_operator: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"company": self.company, "company_id": self.company_id, "interest_pct": self.interest_pct,
-                "sdfi_pct": self.sdfi_pct, "valid_from": _iso(self.valid_from), "valid_to": _iso(self.valid_to),
-                "is_operator": self.is_operator}
+        return {
+            "company": self.company,
+            "company_id": self.company_id,
+            "interest_pct": self.interest_pct,
+            "sdfi_pct": self.sdfi_pct,
+            "valid_from": _iso(self.valid_from),
+            "valid_to": _iso(self.valid_to),
+            "is_operator": self.is_operator,
+        }
 
 
 def _iso(value: Optional[date]) -> Optional[str]:
@@ -71,7 +77,9 @@ class OwnershipRecord:
         """Equity fractions by company, normalised by 100 (not by the total)."""
         out: Dict[str, float] = {}
         for stake in self.stakes:
-            out[stake.company] = out.get(stake.company, 0.0) + stake.interest_pct / 100.0
+            out[stake.company] = (
+                out.get(stake.company, 0.0) + stake.interest_pct / 100.0
+            )
         return out
 
     def find(self, company: str) -> Stake:
@@ -84,7 +92,8 @@ class OwnershipRecord:
         if len(names) != 1:
             raise OwnershipError(
                 f"'{company}' matches {names or 'no partner'} in {self.name}; partners: "
-                f"{sorted({s.company for s in self.stakes})}")
+                f"{sorted({s.company for s in self.stakes})}"
+            )
         return hits[0]
 
     def fraction_of(self, company: str) -> float:
@@ -101,12 +110,21 @@ class OwnershipRecord:
     def to_economics_handoff(self, company: Optional[str] = None) -> Dict[str, Any]:
         """Dict a field-economics or NPV step can consume (equity fractions plus caveats)."""
         data: Dict[str, Any] = {
-            "asset": self.name, "kind": self.kind, "as_of": self.as_of.isoformat(), "basis": self.basis,
-            "owner": {"kind": self.owner_kind, "name": self.owner_name}, "operator": self.operator,
-            "equity_fraction": self.fractions(), "total_pct": self.total_pct, "complete": self.is_complete,
-            "included_in_field": self.included_in_field, "warnings": list(self.warnings),
-            "scaling_note": ("Scale gross volumes, revenue, capex and opex by the equity fraction; "
-                             "tax is computed per company on its net cash flow, not scaled."),
+            "asset": self.name,
+            "kind": self.kind,
+            "as_of": self.as_of.isoformat(),
+            "basis": self.basis,
+            "owner": {"kind": self.owner_kind, "name": self.owner_name},
+            "operator": self.operator,
+            "equity_fraction": self.fractions(),
+            "total_pct": self.total_pct,
+            "complete": self.is_complete,
+            "included_in_field": self.included_in_field,
+            "warnings": list(self.warnings),
+            "scaling_note": (
+                "Scale gross volumes, revenue, capex and opex by the equity fraction; "
+                "tax is computed per company on its net cash flow, not scaled."
+            ),
         }
         if company:
             stake = self.find(company)
@@ -115,12 +133,23 @@ class OwnershipRecord:
         return data
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"kind": self.kind, "name": self.name, "npdid": self.npdid, "as_of": self.as_of.isoformat(),
-                "basis": self.basis, "owner_kind": self.owner_kind, "owner_name": self.owner_name,
-                "operator": self.operator, "included_in_field": self.included_in_field,
-                "last_updated": _iso(self.last_updated), "source": self.source,
-                "total_pct": self.total_pct, "complete": self.is_complete,
-                "stakes": [s.to_dict() for s in self.stakes], "warnings": list(self.warnings)}
+        return {
+            "kind": self.kind,
+            "name": self.name,
+            "npdid": self.npdid,
+            "as_of": self.as_of.isoformat(),
+            "basis": self.basis,
+            "owner_kind": self.owner_kind,
+            "owner_name": self.owner_name,
+            "operator": self.operator,
+            "included_in_field": self.included_in_field,
+            "last_updated": _iso(self.last_updated),
+            "source": self.source,
+            "total_pct": self.total_pct,
+            "complete": self.is_complete,
+            "stakes": [s.to_dict() for s in self.stakes],
+            "warnings": list(self.warnings),
+        }
 
 
 def scale(series: Series, factor: float) -> Series:
@@ -148,13 +177,17 @@ def portfolio_net(items: Sequence[tuple], company: str) -> Series:
                 raise OwnershipError("portfolio series must have equal length")
             total = [a + b for a, b in zip(total, part)]
         else:
-            raise OwnershipError("portfolio series must all be lists or all be mappings")
+            raise OwnershipError(
+                "portfolio series must all be lists or all be mappings"
+            )
     if total is None:
         raise OwnershipError("portfolio_net needs at least one asset")
     return total
 
 
-def check_prospect_stakes(stakes: Mapping[str, float], allow_partial: bool) -> List[str]:
+def check_prospect_stakes(
+    stakes: Mapping[str, float], allow_partial: bool
+) -> List[str]:
     """Validate user-supplied prospect interests and return warnings."""
     warnings: List[str] = []
     if not stakes:
@@ -164,6 +197,10 @@ def check_prospect_stakes(stakes: Mapping[str, float], allow_partial: bool) -> L
     total = sum(stakes.values())
     if abs(total - 100.0) > TOLERANCE_PCT:
         if not allow_partial:
-            raise OwnershipError(f"prospect interests add up to {total:.4f} %, not 100 %")
-        warnings.append(f"interests add up to {total:.4f} %, not 100 %; the rest is unallocated")
+            raise OwnershipError(
+                f"prospect interests add up to {total:.4f} %, not 100 %"
+            )
+        warnings.append(
+            f"interests add up to {total:.4f} %, not 100 %; the rest is unallocated"
+        )
     return warnings

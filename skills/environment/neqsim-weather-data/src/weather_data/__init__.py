@@ -7,9 +7,19 @@ resolver for the Norwegian Continental Shelf.
 
 from .metno import MetNorwayClient
 from .ncs_facilities import FacilityLocation, SodirFacilityLocator
-from .open_meteo import DEFAULT_HOURLY_VARS, DEFAULT_MARINE_VARS, GeocodeResult, OpenMeteoClient, WeatherSeries
+from .open_meteo import (
+    DEFAULT_HOURLY_VARS,
+    DEFAULT_MARINE_VARS,
+    GeocodeResult,
+    OpenMeteoClient,
+    WeatherSeries,
+)
 from .service import Location, LocationNotResolvedError, WeatherDataService
-from .site_conditions import SiteConditionsSummary, estimate_pasquill_stability_class, summarize_site_conditions
+from .site_conditions import (
+    SiteConditionsSummary,
+    estimate_pasquill_stability_class,
+    summarize_site_conditions,
+)
 
 __version__ = "0.1.0"
 

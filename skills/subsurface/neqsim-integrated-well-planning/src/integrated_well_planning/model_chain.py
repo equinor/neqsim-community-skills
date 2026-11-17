@@ -8,11 +8,10 @@ taken from the ``high`` end of their range in the ``low`` case.
 from __future__ import annotations
 
 import math
-from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
-from .basis import CASES, case_value, rng
+from .basis import case_value
 from .registers import get_path
 from .runtime import ensure_runtime, jclass
 
@@ -32,7 +31,11 @@ def require(*names: str) -> None:
     st = ensure_runtime()
     missing = [n for n in names if not st.has(n)]
     if missing:
-        raise ModelUnavailable("NeqSim classes not available: {} ({})".format(", ".join(missing), st.reason or "runtime not started"))
+        raise ModelUnavailable(
+            "NeqSim classes not available: {} ({})".format(
+                ", ".join(missing), st.reason or "runtime not started"
+            )
+        )
 
 
 def pick(value: Any, case: str, parameter: str) -> float:
@@ -52,11 +55,27 @@ def case_params(basis: Dict[str, Any], case: str) -> Dict[str, Any]:
     out["skin"] = pick(g("reservoir.skin"), case, "skin")
     out["re_m"] = float(g("reservoir.drainage_radius_m") or 400.0)
     out["rw_m"] = float(g("reservoir.wellbore_radius_m") or 0.108)
-    out["water_cut"] = pick(g("reservoir.water_cut") if g("reservoir.water_cut") is not None else 0.0, case, "water_cut")
-    out["wgr_sm3_per_msm3"] = pick(g("reservoir.wgr_sm3_per_msm3") if g("reservoir.wgr_sm3_per_msm3") is not None else 0.0, case, "wgr")
-    out["host_pressure_bara"] = pick(g("facility.host_pressure_bara"), case, "host_pressure_bara")
+    out["water_cut"] = pick(
+        g("reservoir.water_cut") if g("reservoir.water_cut") is not None else 0.0,
+        case,
+        "water_cut",
+    )
+    out["wgr_sm3_per_msm3"] = pick(
+        (
+            g("reservoir.wgr_sm3_per_msm3")
+            if g("reservoir.wgr_sm3_per_msm3") is not None
+            else 0.0
+        ),
+        case,
+        "wgr",
+    )
+    out["host_pressure_bara"] = pick(
+        g("facility.host_pressure_bara"), case, "host_pressure_bara"
+    )
     out["rate"] = case_value(g("targets.rate"), "base")
-    out["rate_low"], out["rate_high"] = case_value(g("targets.rate"), "low"), case_value(g("targets.rate"), "high")
+    out["rate_low"], out["rate_high"] = case_value(
+        g("targets.rate"), "low"
+    ), case_value(g("targets.rate"), "high")
     return out
 
 
@@ -71,8 +90,17 @@ def effective_tubing_depths(basis: Dict[str, Any]) -> Dict[str, float]:
     wd = float(get_path(basis, "datums.water_depth_m") or 0.0)
     offset = (wd + rkb) if env == "subsea" else 0.0
     tub_tvd, tub_md = tvd - offset, md - offset
-    incl = math.degrees(math.acos(max(-1.0, min(1.0, tub_tvd / tub_md)))) if tub_md > 0 and tub_tvd > 0 else 0.0
-    return {"tvd_m": tub_tvd, "md_m": tub_md, "inclination_deg": incl, "offset_m": offset}
+    incl = (
+        math.degrees(math.acos(max(-1.0, min(1.0, tub_tvd / tub_md))))
+        if tub_md > 0 and tub_tvd > 0
+        else 0.0
+    )
+    return {
+        "tvd_m": tub_tvd,
+        "md_m": tub_md,
+        "inclination_deg": incl,
+        "offset_m": offset,
+    }
 
 
 def surface_temperature_C(basis: Dict[str, Any]) -> float:
@@ -85,7 +113,19 @@ def surface_temperature_C(basis: Dict[str, Any]) -> float:
     return 10.0 if v is None else float(v)
 
 
-CPA_LIBRARY_NAMES = ("nitrogen", "CO2", "H2S", "methane", "ethane", "propane", "i-butane", "n-butane", "i-pentane", "n-pentane", "n-hexane")
+CPA_LIBRARY_NAMES = (
+    "nitrogen",
+    "CO2",
+    "H2S",
+    "methane",
+    "ethane",
+    "propane",
+    "i-butane",
+    "n-butane",
+    "i-pentane",
+    "n-pentane",
+    "n-hexane",
+)
 
 
 def e300_path(basis: Dict[str, Any]) -> Optional[str]:
@@ -105,7 +145,11 @@ def read_e300_fluid(path: str, water_moles_per_mole: float = 0.0):
     import jpype
 
     reader = jpype.JClass("neqsim.thermo.util.readwrite.EclipseFluidReadWrite")
-    f = reader.read(str(path), True) if water_moles_per_mole > 0 else reader.read(str(path))
+    f = (
+        reader.read(str(path), True)
+        if water_moles_per_mole > 0
+        else reader.read(str(path))
+    )
     if water_moles_per_mole > 0:
         f.addComponent("water", float(water_moles_per_mole))
     return f
@@ -116,7 +160,13 @@ def _soreide_density_g_cm3(mw_g_mol: float) -> float:
     return 0.2855 + 0.27 * (max(mw_g_mol, 70.0) - 66.0) ** 0.13
 
 
-def lump_to_cpa_fluid(source, temperature_C: float, pressure_bara: float, water_mole_fraction: float, plus_name: str = "C7+"):
+def lump_to_cpa_fluid(
+    source,
+    temperature_C: float,
+    pressure_bara: float,
+    water_mole_fraction: float,
+    plus_name: str = "C7+",
+):
     """CPA (mixing rule 10) fluid for hydrate/water work from a characterised source fluid.
 
     Library components are copied by name; every other (pseudo) component is lumped into one TBP fraction with the mole-weighted molar
@@ -146,8 +196,15 @@ def lump_to_cpa_fluid(source, temperature_C: float, pressure_bara: float, water_
     return f
 
 
-def build_fluid(basis: Dict[str, Any], temperature_C: float, pressure_bara: float, water_moles_per_mole: float = 0.0, extra: Optional[Dict[str, float]] = None,
-                eos: Optional[str] = None, e300_file: Optional[str] = None):
+def build_fluid(
+    basis: Dict[str, Any],
+    temperature_C: float,
+    pressure_bara: float,
+    water_moles_per_mole: float = 0.0,
+    extra: Optional[Dict[str, float]] = None,
+    eos: Optional[str] = None,
+    e300_file: Optional[str] = None,
+):
     """Create a NeqSim fluid from ``fluid.components`` or an E300 file (clone-safe, mixing rule always set).
 
     Args:
@@ -181,7 +238,9 @@ def build_fluid(basis: Dict[str, Any], temperature_C: float, pressure_bara: floa
         f = jclass("SystemSrkEos")(273.15 + temperature_C, pressure_bara)
     for c in comps:
         f.addComponent(c["name"], float(c["mole_fraction"]))
-    if water_moles_per_mole > 0 and not any(c["name"].lower() == "water" for c in comps):
+    if water_moles_per_mole > 0 and not any(
+        c["name"].lower() == "water" for c in comps
+    ):
         f.addComponent("water", water_moles_per_mole)
     for name, moles in (extra or {}).items():
         f.addComponent(name, moles)
@@ -220,17 +279,25 @@ def standard_factors(basis: Dict[str, Any]) -> Dict[str, float]:
     out = {
         "mw_kg_per_mol": mw,
         "stock_tank_liquid_m3_per_mol": liquid_vol,
-        "gas_sm3_per_mol": gas_vol if n_phases > 1 or gas_vol > 0 else SC_MOLAR_VOLUME_SM3_PER_KMOL / 1000.0,
+        "gas_sm3_per_mol": (
+            gas_vol
+            if n_phases > 1 or gas_vol > 0
+            else SC_MOLAR_VOLUME_SM3_PER_KMOL / 1000.0
+        ),
         "kg_per_sm3_gas_equivalent": mw / (SC_MOLAR_VOLUME_SM3_PER_KMOL / 1000.0),
     }
     if liquid_vol > 0:
         out["kg_per_sm3_stock_tank_liquid"] = mw / liquid_vol
         out["gor_sm3_per_sm3"] = out["gas_sm3_per_mol"] / liquid_vol
-        out["cgr_sm3_per_msm3"] = liquid_vol / (SC_MOLAR_VOLUME_SM3_PER_KMOL / 1000.0) * 1.0e6
+        out["cgr_sm3_per_msm3"] = (
+            liquid_vol / (SC_MOLAR_VOLUME_SM3_PER_KMOL / 1000.0) * 1.0e6
+        )
     return out
 
 
-def reservoir_properties(basis: Dict[str, Any], pressure_bara: float, temperature_C: float) -> Dict[str, float]:
+def reservoir_properties(
+    basis: Dict[str, Any], pressure_bara: float, temperature_C: float
+) -> Dict[str, float]:
     """Density, viscosity (cP) and bubble point (bara) of the dry reservoir fluid."""
     require("SystemSrkEos", "ThermodynamicOperations")
     f = build_fluid(basis, temperature_C, pressure_bara)
@@ -262,19 +329,31 @@ def water_moles_for_cut(basis: Dict[str, Any], water_cut: float) -> float:
     return vol_w * WATER_SC_DENSITY / WATER_MW_KG_PER_MOL
 
 
-def thermal_model(basis: Dict[str, Any], mass_kg_s: float, bottom_temperature_C: float, direction: str = "PRODUCTION", inlet_temperature_C: Optional[float] = None,
-                  flowing_days: float = 30.0):
+def thermal_model(
+    basis: Dict[str, Any],
+    mass_kg_s: float,
+    bottom_temperature_C: float,
+    direction: str = "PRODUCTION",
+    inlet_temperature_C: Optional[float] = None,
+    flowing_days: float = 30.0,
+):
     """Create a WellboreThermalModel for the effective tubing depth."""
     require("WellboreThermalModel")
     depths = effective_tubing_depths(basis)
     ts = surface_temperature_C(basis)
     tres = float(get_path(basis, "reservoir.temperature_C"))
     grad = max(1e-4, (tres - ts) / max(depths["tvd_m"], 1.0))
-    FlowDir = jclass("neqsim.process.fielddevelopment.wellplanning.WellboreThermalModel$FlowDirection")
+    FlowDir = jclass(
+        "neqsim.process.fielddevelopment.wellplanning.WellboreThermalModel$FlowDirection"
+    )
     tm = jclass("WellboreThermalModel")()
     tm.setFlowDirection(getattr(FlowDir, direction))
-    tm.setSurfaceTemperatureC(ts).setGeothermalGradient(grad).setTotalDepth(depths["tvd_m"]).setMassFlowRate(max(mass_kg_s, 0.05))
-    tm.setInletTemperatureC(bottom_temperature_C if inlet_temperature_C is None else inlet_temperature_C)
+    tm.setSurfaceTemperatureC(ts).setGeothermalGradient(grad).setTotalDepth(
+        depths["tvd_m"]
+    ).setMassFlowRate(max(mass_kg_s, 0.05))
+    tm.setInletTemperatureC(
+        bottom_temperature_C if inlet_temperature_C is None else inlet_temperature_C
+    )
     u = get_path(basis, "completion.overall_u_w_m2k")
     if u:
         tm.setOverallHeatTransferCoefficient(float(u))
@@ -282,7 +361,13 @@ def thermal_model(basis: Dict[str, Any], mass_kg_s: float, bottom_temperature_C:
     return tm
 
 
-def flowline_back_pressure(basis: Dict[str, Any], fluid_template, mass_kg_s: float, host_pressure_bara: float, wellhead_temperature_C: float) -> Dict[str, float]:
+def flowline_back_pressure(
+    basis: Dict[str, Any],
+    fluid_template,
+    mass_kg_s: float,
+    host_pressure_bara: float,
+    wellhead_temperature_C: float,
+) -> Dict[str, float]:
     """Wellhead pressure needed to deliver ``mass_kg_s`` to the host boundary.
 
     Uses the NeqSim Beggs and Brill pipe on the supplied flowline description plus a supplied choke/valve
@@ -291,7 +376,12 @@ def flowline_back_pressure(basis: Dict[str, Any], fluid_template, mass_kg_s: flo
     fl = get_path(basis, "facility.flowline") or {}
     choke = float(get_path(basis, "facility.choke_dp_bar") or 0.0)
     if not fl or not fl.get("length_m"):
-        return {"wellhead_pressure_bara": host_pressure_bara + choke, "flowline_dp_bar": 0.0, "choke_dp_bar": choke, "method": "host pressure + choke only"}
+        return {
+            "wellhead_pressure_bara": host_pressure_bara + choke,
+            "flowline_dp_bar": 0.0,
+            "choke_dp_bar": choke,
+            "method": "host pressure + choke only",
+        }
     require("PipeBeggsAndBrills")
     import jpype
 
@@ -313,12 +403,22 @@ def flowline_back_pressure(basis: Dict[str, Any], fluid_template, mass_kg_s: flo
         pipe.setElevation(float(fl.get("elevation_change_m", 0.0)))
         pipe.setPipeWallRoughness(float(fl.get("roughness_m", 4.5e-5)))
         pipe.setNumberOfIncrements(int(fl.get("increments", 10)))
-        pipe.setConstantSurfaceTemperature(float(fl.get("ambient_temperature_C", surface_temperature_C(basis))), "C")
+        pipe.setConstantSurfaceTemperature(
+            float(fl.get("ambient_temperature_C", surface_temperature_C(basis))), "C"
+        )
         try:
             pipe.run()
-        except Exception as exc:  # noqa: BLE001 - hydraulic domain errors mean the line cannot pass this rate
-            return {"wellhead_pressure_bara": 4.0 * host_pressure_bara + choke, "flowline_dp_bar": 3.0 * host_pressure_bara, "choke_dp_bar": choke,
-                    "method": "FLOWLINE_CANNOT_PASS_RATE (penalty applied): {}".format(str(exc)[:80])}
+        except (
+            Exception
+        ) as exc:  # noqa: BLE001 - hydraulic domain errors mean the line cannot pass this rate
+            return {
+                "wellhead_pressure_bara": 4.0 * host_pressure_bara + choke,
+                "flowline_dp_bar": 3.0 * host_pressure_bara,
+                "choke_dp_bar": choke,
+                "method": "FLOWLINE_CANNOT_PASS_RATE (penalty applied): {}".format(
+                    str(exc)[:80]
+                ),
+            }
         p_out = float(pipe.getOutletStream().getPressure("bara"))
         dp = p_in - p_out
         new_in = host_pressure_bara + dp
@@ -326,20 +426,49 @@ def flowline_back_pressure(basis: Dict[str, Any], fluid_template, mass_kg_s: flo
             p_in = new_in
             break
         p_in = new_in
-    return {"wellhead_pressure_bara": p_in + choke, "flowline_dp_bar": dp, "choke_dp_bar": choke,
-            "method": "PipeBeggsAndBrills (fixed-point on inlet pressure) + supplied choke drop"}
+    return {
+        "wellhead_pressure_bara": p_in + choke,
+        "flowline_dp_bar": dp,
+        "choke_dp_bar": choke,
+        "method": "PipeBeggsAndBrills (fixed-point on inlet pressure) + supplied choke drop",
+    }
 
 
-def darcy_oil_pi_sm3d_per_bar(k_md: float, h_m: float, mu_cp: float, re_m: float, rw_m: float, skin: float, reservoir_m3_per_sm3: float) -> float:
+def darcy_oil_pi_sm3d_per_bar(
+    k_md: float,
+    h_m: float,
+    mu_cp: float,
+    re_m: float,
+    rw_m: float,
+    skin: float,
+    reservoir_m3_per_sm3: float,
+) -> float:
     """Productivity index of a vertical well in pseudo-steady state (Sm3/d per bar, stock-tank basis)."""
     k = k_md * 9.869233e-16
-    pi_m3s_per_pa = 2.0 * math.pi * k * h_m / (mu_cp * 1e-3 * (math.log(re_m / rw_m) - 0.75 + skin))
+    pi_m3s_per_pa = (
+        2.0 * math.pi * k * h_m / (mu_cp * 1e-3 * (math.log(re_m / rw_m) - 0.75 + skin))
+    )
     return pi_m3s_per_pa * 1.0e5 * 86400.0 / reservoir_m3_per_sm3
 
 
-def gas_injectivity_coefficient(k_md: float, h_m: float, mu_cp: float, z: float, t_k: float, re_m: float, rw_m: float, skin: float) -> float:
+def gas_injectivity_coefficient(
+    k_md: float,
+    h_m: float,
+    mu_cp: float,
+    z: float,
+    t_k: float,
+    re_m: float,
+    rw_m: float,
+    skin: float,
+) -> float:
     """C in q_sc[Sm3/d] = C (pbh^2 - pres^2) with pressures in bar (radial, Darcy, pseudo-steady)."""
     k = k_md * 9.869233e-16
     t_sc, p_sc = 288.15, 101325.0
-    c = math.pi * k * h_m * t_sc / (mu_cp * 1e-3 * z * t_k * p_sc * (math.log(re_m / rw_m) - 0.75 + skin))
-    return c * (1.0e5 ** 2) * 86400.0
+    c = (
+        math.pi
+        * k
+        * h_m
+        * t_sc
+        / (mu_cp * 1e-3 * z * t_k * p_sc * (math.log(re_m / rw_m) - 0.75 + skin))
+    )
+    return c * (1.0e5**2) * 86400.0

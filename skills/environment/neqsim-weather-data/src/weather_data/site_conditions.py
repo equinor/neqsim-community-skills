@@ -53,7 +53,9 @@ class SiteConditionsSummary:
         return dict(self.__dict__)
 
 
-def summarize_site_conditions(series: WeatherSeries, *, location: Any = None) -> SiteConditionsSummary:
+def summarize_site_conditions(
+    series: WeatherSeries, *, location: Any = None
+) -> SiteConditionsSummary:
     """Reduce an hourly ``WeatherSeries`` to screening design statistics.
 
     This is a plain empirical summary of the retrieved window (min/mean/max,
@@ -78,7 +80,9 @@ def summarize_site_conditions(series: WeatherSeries, *, location: Any = None) ->
     if not wind_speed:
         warnings.append("No wind speed data returned; wind statistics are unavailable.")
     if not temperature:
-        warnings.append("No temperature data returned; temperature statistics are unavailable.")
+        warnings.append(
+            "No temperature data returned; temperature statistics are unavailable."
+        )
 
     return SiteConditionsSummary(
         location_name=getattr(location, "name", "") if location is not None else "",
@@ -88,13 +92,17 @@ def summarize_site_conditions(series: WeatherSeries, *, location: Any = None) ->
         period_end=series.hourly_time[-1] if series.hourly_time else None,
         n_hours=n_hours,
         min_temperature_c=min(temperature) if temperature else None,
-        mean_temperature_c=(sum(temperature) / len(temperature)) if temperature else None,
+        mean_temperature_c=(
+            (sum(temperature) / len(temperature)) if temperature else None
+        ),
         max_temperature_c=max(temperature) if temperature else None,
         mean_wind_speed_ms=(sum(wind_speed) / len(wind_speed)) if wind_speed else None,
         p99_wind_speed_ms=_percentile(wind_speed, 99.0),
         max_wind_speed_ms=max(wind_speed) if wind_speed else None,
         max_wind_gust_ms=max(wind_gust) if wind_gust else None,
-        mean_relative_humidity_pct=(sum(humidity) / len(humidity)) if humidity else None,
+        mean_relative_humidity_pct=(
+            (sum(humidity) / len(humidity)) if humidity else None
+        ),
         mean_surface_pressure_hpa=(sum(pressure) / len(pressure)) if pressure else None,
         source=series.source,
         warnings=warnings,
@@ -134,9 +142,15 @@ def estimate_pasquill_stability_class(
     exists. It ignores solar elevation, season and terrain, so treat the
     class as indicative, not a certified meteorological classification.
     """
-    cloud = 0.5 if cloud_cover_fraction is None else max(0.0, min(1.0, cloud_cover_fraction))
+    cloud = (
+        0.5
+        if cloud_cover_fraction is None
+        else max(0.0, min(1.0, cloud_cover_fraction))
+    )
     if is_daytime:
-        insolation = "strong" if cloud < 0.3 else ("moderate" if cloud < 0.7 else "slight")
+        insolation = (
+            "strong" if cloud < 0.3 else ("moderate" if cloud < 0.7 else "slight")
+        )
         table = _INSOLATION_DAY_TABLE
         key = insolation
     else:

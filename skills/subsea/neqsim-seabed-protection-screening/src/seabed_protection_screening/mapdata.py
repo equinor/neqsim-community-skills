@@ -158,16 +158,33 @@ def plan_protection_data_package(
         ValueError: If the bounding box is empty or outside valid coordinates.
     """
     if not (-180.0 <= west < east <= 180.0 and -90.0 <= south < north <= 90.0):
-        raise ValueError("bounding box must satisfy west < east and south < north in WGS84 degrees")
+        raise ValueError(
+            "bounding box must satisfy west < east and south < north in WGS84 degrees"
+        )
     requests: list[MapDataRequest] = []
     for key, service, purpose in (
-        ("emodnet_seabed_substrate", "WMS", "surface sediment class along the route for trenchability screening"),
-        ("emodnet_human_activities", "WFS", "vessel density, pipelines and cables for fishing exposure and crossings"),
+        (
+            "emodnet_seabed_substrate",
+            "WMS",
+            "surface sediment class along the route for trenchability screening",
+        ),
+        (
+            "emodnet_human_activities",
+            "WFS",
+            "vessel density, pipelines and cables for fishing exposure and crossings",
+        ),
     ):
         source = MAP_DATA_SOURCES[key]
         query = urlencode({"service": service, "request": "GetCapabilities"})
         requests.append(
-            MapDataRequest(key, "%s?%s" % (source.base_url, query), "GET", purpose, source.licence, source.attribution)
+            MapDataRequest(
+                key,
+                "%s?%s" % (source.base_url, query),
+                "GET",
+                purpose,
+                source.licence,
+                source.attribution,
+            )
         )
     if sodir_pipeline_layer_id is not None:
         source = MAP_DATA_SOURCES["sodir_factmaps"]
@@ -236,11 +253,16 @@ def haversine_m(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
     p1, p2 = math.radians(lat1), math.radians(lat2)
     dphi = p2 - p1
     dlmb = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2.0) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dlmb / 2.0) ** 2
+    a = (
+        math.sin(dphi / 2.0) ** 2
+        + math.cos(p1) * math.cos(p2) * math.sin(dlmb / 2.0) ** 2
+    )
     return 2.0 * EARTH_RADIUS_M * math.asin(min(1.0, math.sqrt(a)))
 
 
-def build_route(lonlat: Sequence[Sequence[float]], spacing_m: float = 100.0) -> list[RoutePoint]:
+def build_route(
+    lonlat: Sequence[Sequence[float]], spacing_m: float = 100.0
+) -> list[RoutePoint]:
     """Densify a route polyline into stations with chainage.
 
     Args:
@@ -294,7 +316,10 @@ def _as_collection(data: Mapping[str, Any]) -> dict[str, Any]:
     if kind == "Feature":
         return {"type": "FeatureCollection", "features": [dict(data)]}
     if kind in ("Polygon", "MultiPolygon", "LineString", "MultiLineString", "Point"):
-        return {"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": dict(data), "properties": {}}]}
+        return {
+            "type": "FeatureCollection",
+            "features": [{"type": "Feature", "geometry": dict(data), "properties": {}}],
+        }
     raise ValueError("not a GeoJSON object: type=%r" % (kind,))
 
 
@@ -364,17 +389,25 @@ def sample_polygon_layer(
         value = (feature.get("properties") or {}).get(attribute)
         polygons = []
         for rings in _polygons(feature.get("geometry") or {}):
-            polygons.append([[project(lon, lat) for lon, lat in ring] for ring in rings])
+            polygons.append(
+                [[project(lon, lat) for lon, lat in ring] for ring in rings]
+            )
         if polygons and value is not None:
             prepared.append((value, polygons))
-    rank = {value: index for index, value in enumerate(rank_order)} if rank_order else None
+    rank = (
+        {value: index for index, value in enumerate(rank_order)} if rank_order else None
+    )
     values: list[Any] = []
     for point in route:
         x, y = project(point.lon, point.lat)
         hits = []
         for value, polygons in prepared:
             for rings in polygons:
-                if rings and _ring_contains(x, y, rings[0]) and not any(_ring_contains(x, y, h) for h in rings[1:]):
+                if (
+                    rings
+                    and _ring_contains(x, y, rings[0])
+                    and not any(_ring_contains(x, y, h) for h in rings[1:])
+                ):
                     hits.append(value)
                     break
         if not hits:
@@ -435,7 +468,9 @@ def find_line_crossings(
     crossings: list[LineCrossing] = []
     for index, feature in enumerate(collection["features"]):
         props = feature.get("properties") or {}
-        feature_id = str(props.get(id_attribute) or feature.get("id") or "feature-%d" % index)
+        feature_id = str(
+            props.get(id_attribute) or feature.get("id") or "feature-%d" % index
+        )
         diameter = None
         if outer_diameter_attribute and props.get(outer_diameter_attribute) is not None:
             diameter = float(props[outer_diameter_attribute]) * outer_diameter_unit_m
@@ -443,12 +478,16 @@ def find_line_crossings(
             line_xy = [project(lon, lat) for lon, lat in line]
             for i in range(len(xy) - 1):
                 for j in range(len(line_xy) - 1):
-                    hit = _segment_intersection(xy[i], xy[i + 1], line_xy[j], line_xy[j + 1])
+                    hit = _segment_intersection(
+                        xy[i], xy[i + 1], line_xy[j], line_xy[j + 1]
+                    )
                     if hit is None:
                         continue
                     t, rx, ry, sx, sy = hit
                     kp = route[i].kp_m + t * (route[i + 1].kp_m - route[i].kp_m)
-                    cosang = abs(rx * sx + ry * sy) / (math.hypot(rx, ry) * math.hypot(sx, sy))
+                    cosang = abs(rx * sx + ry * sy) / (
+                        math.hypot(rx, ry) * math.hypot(sx, sy)
+                    )
                     angle = math.degrees(math.acos(min(1.0, cosang)))
                     crossings.append(
                         LineCrossing(
@@ -463,7 +502,11 @@ def find_line_crossings(
     crossings.sort(key=lambda c: c.kp_m)
     deduped: list[LineCrossing] = []
     for crossing in crossings:
-        if deduped and deduped[-1].feature_id == crossing.feature_id and abs(deduped[-1].kp_m - crossing.kp_m) < 1.0:
+        if (
+            deduped
+            and deduped[-1].feature_id == crossing.feature_id
+            and abs(deduped[-1].kp_m - crossing.kp_m) < 1.0
+        ):
             continue
         deduped.append(crossing)
     return deduped
@@ -490,14 +533,19 @@ def assemble_segments(
     """
     for name, values in series.items():
         if len(values) != len(route):
-            raise ValueError("series %r has %d values for %d stations" % (name, len(values), len(route)))
+            raise ValueError(
+                "series %r has %d values for %d stations"
+                % (name, len(values), len(route))
+            )
     bounds = [route[0].kp_m]
     bounds += [(route[i].kp_m + route[i + 1].kp_m) / 2.0 for i in range(len(route) - 1)]
     bounds.append(route[-1].kp_m)
     segments: list[RouteSegment] = []
     start = 0
     for index in range(1, len(route) + 1):
-        same = index < len(route) and all(values[index] == values[start] for values in series.values())
+        same = index < len(route) and all(
+            values[index] == values[start] for values in series.values()
+        )
         if same:
             continue
         attrs = {name: values[start] for name, values in series.items()}

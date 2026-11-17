@@ -1,4 +1,3 @@
-import io
 
 import pytest
 
@@ -92,8 +91,13 @@ def test_ingest_annual_rows_and_derive_oe() -> None:
     ds = load_dataset()
     added = ds.ingest_annual_production(
         [
-            {"year": 2000, "oil_mill_sm3": 181.2, "gas_bill_sm3": 49.7,
-             "ngl_mill_sm3_oe": 10.0, "condensate_mill_sm3": 5.0},
+            {
+                "year": 2000,
+                "oil_mill_sm3": 181.2,
+                "gas_bill_sm3": 49.7,
+                "ngl_mill_sm3_oe": 10.0,
+                "condensate_mill_sm3": 5.0,
+            },
         ]
     )
     assert added == 1

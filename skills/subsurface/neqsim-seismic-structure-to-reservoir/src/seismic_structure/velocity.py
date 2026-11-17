@@ -51,17 +51,26 @@ class VelocityModel:
 
     def as_dict(self) -> dict:
         """JSON-serialisable record."""
-        return {"v0_m_per_s": self.v0, "k_per_s": self.k, "datum_m": self.datum_m,
-                "ties": [list(t) for t in self.ties], "rms_error_m": self.rms_error_m,
-                "note": self.note}
+        return {
+            "v0_m_per_s": self.v0,
+            "k_per_s": self.k,
+            "datum_m": self.datum_m,
+            "ties": [list(t) for t in self.ties],
+            "rms_error_m": self.rms_error_m,
+            "note": self.note,
+        }
 
 
 def _g(t: np.ndarray, k: float) -> np.ndarray:
     return t if abs(k) < 1e-9 else np.expm1(k * t) / k
 
 
-def calibrate_velocity(ties: Sequence[Tuple[float, float]], k: Optional[float] = None,
-                       datum_m: float = 0.0, k_range: Tuple[float, float] = (0.0, 1.5)) -> VelocityModel:
+def calibrate_velocity(
+    ties: Sequence[Tuple[float, float]],
+    k: Optional[float] = None,
+    datum_m: float = 0.0,
+    k_range: Tuple[float, float] = (0.0, 1.5),
+) -> VelocityModel:
     """Fit ``v0`` (and ``k`` when not given and there are two or more ties) to well ties.
 
     Args:
@@ -93,11 +102,18 @@ def calibrate_velocity(ties: Sequence[Tuple[float, float]], k: Optional[float] =
         note = f"v0 and k fitted to {pairs.shape[0]} ties"
     else:
         k_fit = 0.0 if k is None else float(k)
-        note = (f"v0 fitted to {pairs.shape[0]} tie(s) with k fixed at {k_fit:g}"
-                + ("" if k is not None else " (one tie cannot resolve k)"))
+        note = f"v0 fitted to {pairs.shape[0]} tie(s) with k fixed at {k_fit:g}" + (
+            "" if k is not None else " (one tie cannot resolve k)"
+        )
     v0, rms = fit(k_fit)
-    return VelocityModel(v0=v0, k=k_fit, datum_m=datum_m, ties=[tuple(p) for p in pairs.tolist()],
-                         rms_error_m=rms, note=note)
+    return VelocityModel(
+        v0=v0,
+        k=k_fit,
+        datum_m=datum_m,
+        ties=[tuple(p) for p in pairs.tolist()],
+        rms_error_m=rms,
+        note=note,
+    )
 
 
 def time_to_depth(surface: Surface, model: VelocityModel) -> Surface:
@@ -108,9 +124,20 @@ def time_to_depth(surface: Surface, model: VelocityModel) -> Surface:
     """
     if surface.domain != "time":
         raise ValueError(f"surface {surface.name!r} is in {surface.domain}, not time")
-    depth = replace(surface, values=model.depth(surface.values), domain="depth", unit="m",
-                    name=f"{surface.name}_depth", notes=list(surface.notes))
+    depth = replace(
+        surface,
+        values=model.depth(surface.values),
+        domain="depth",
+        unit="m",
+        name=f"{surface.name}_depth",
+        notes=list(surface.notes),
+    )
     depth.notes.append(
         f"depth-converted with V(z) = {model.v0:.0f} + {model.k:.3f} z m/s, datum {model.datum_m:g} m"
-        + (f", tie RMS {model.rms_error_m:.1f} m" if model.rms_error_m is not None else ""))
+        + (
+            f", tie RMS {model.rms_error_m:.1f} m"
+            if model.rms_error_m is not None
+            else ""
+        )
+    )
     return depth

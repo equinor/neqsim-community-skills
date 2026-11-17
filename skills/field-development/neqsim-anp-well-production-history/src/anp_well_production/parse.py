@@ -252,7 +252,9 @@ _COMMON = {
     "state": _aliases("Estado"),
     "environment": _aliases("Ambiente"),
     "operator": _aliases("Operador"),
-    "installation": _aliases("Instalação Destino", "Instalação", "Instalao Destino", "Instalao"),
+    "installation": _aliases(
+        "Instalação Destino", "Instalação", "Instalao Destino", "Instalao"
+    ),
 }
 
 SCHEMAS: Dict[str, Dict[str, Tuple[str, ...]]] = {
@@ -263,11 +265,19 @@ SCHEMAS: Dict[str, Dict[str, Tuple[str, ...]]] = {
         oil_bbld=_aliases("Óleo (bbl/dia)", "leo bbl dia"),
         condensate_bbld=_aliases("Condensado (bbl/dia)"),
         liquid_bbld=_aliases("Petróleo (bbl/dia)", "Petrleo bbl dia"),
-        gas_assoc_km3d=_aliases("Gás Natural (Mm³/dia) Assoc", "Gs Natural Mm dia Assoc"),
-        gas_nonassoc_km3d=_aliases("Gás Natural (Mm³/dia) N Assoc", "Gs Natural Mm dia N Assoc"),
-        gas_total_km3d=_aliases("Gás Natural (Mm³/dia) Total", "Gs Natural Mm dia Total"),
+        gas_assoc_km3d=_aliases(
+            "Gás Natural (Mm³/dia) Assoc", "Gs Natural Mm dia Assoc"
+        ),
+        gas_nonassoc_km3d=_aliases(
+            "Gás Natural (Mm³/dia) N Assoc", "Gs Natural Mm dia N Assoc"
+        ),
+        gas_total_km3d=_aliases(
+            "Gás Natural (Mm³/dia) Total", "Gs Natural Mm dia Total"
+        ),
         water_bbld=_aliases("Água (bbl/dia)", "gua bbl dia"),
-        hours_on=_aliases("Tempo de Produção (hs por mês)", "Tempo de Produo hs por ms"),
+        hours_on=_aliases(
+            "Tempo de Produção (hs por mês)", "Tempo de Produo hs por ms"
+        ),
         api=_aliases("Grau API"),
         analysis_period=_aliases("Período da Carga", "Perodo da Carga"),
         installation_type=_aliases("Tipo Instalação", "Tipo Instalao"),
@@ -278,15 +288,24 @@ SCHEMAS: Dict[str, Dict[str, Tuple[str, ...]]] = {
         period=_aliases("Mês/Ano", "Ms/Ano"),
         oil_m3=_aliases("Produção de Óleo (m³)", "Produo de leo m"),
         condensate_m3=_aliases("Produção de Condensado (m³)", "Produo de Condensado m"),
-        gas_assoc_km3=_aliases("Produção de Gás Associado (Mm³)", "Produo de Gs Associado Mm"),
-        gas_nonassoc_km3=_aliases("Produção de Gás Não Associado (Mm³)", "Produo de Gs No Associado Mm"),
+        gas_assoc_km3=_aliases(
+            "Produção de Gás Associado (Mm³)", "Produo de Gs Associado Mm"
+        ),
+        gas_nonassoc_km3=_aliases(
+            "Produção de Gás Não Associado (Mm³)", "Produo de Gs No Associado Mm"
+        ),
         water_m3=_aliases("Produção de Água (m³)", "Produo de gua m"),
         gas_inj_km3=_aliases("Injeção de Gás (Mm³)", "Injeo de Gs Mm"),
         water_inj_secondary_m3=_aliases(
-            "Injeção de Água para Recuperação Secundária (m³)", "Injeo de gua para Recuperao Secundria m"
+            "Injeção de Água para Recuperação Secundária (m³)",
+            "Injeo de gua para Recuperao Secundria m",
         ),
-        water_inj_disposal_m3=_aliases("Injeção de Água para Descarte (m³)", "Injeo de gua para Descarte m"),
-        co2_inj_km3=_aliases("Injeção de Gás Carbônico (Mm³)", "Injeo de Gs Carbnico Mm"),
+        water_inj_disposal_m3=_aliases(
+            "Injeção de Água para Descarte (m³)", "Injeo de gua para Descarte m"
+        ),
+        co2_inj_km3=_aliases(
+            "Injeção de Gás Carbônico (Mm³)", "Injeo de Gs Carbnico Mm"
+        ),
     ),
     "zone_daily_rates": dict(
         _COMMON,
@@ -296,12 +315,17 @@ SCHEMAS: Dict[str, Dict[str, Tuple[str, ...]]] = {
         condensate_m3d=_aliases("Condensado (m³/d)"),
         liquid_m3d=_aliases("Petróleo (m³/d)", "Petrleo m d"),
         gas_assoc_km3d=_aliases("Gás associado (Mil m³/d)", "Gs associado Mil m d"),
-        gas_nonassoc_km3d=_aliases("Gás não associado (Mil m³/d)", "Gs no associado Mil m d"),
+        gas_nonassoc_km3d=_aliases(
+            "Gás não associado (Mil m³/d)", "Gs no associado Mil m d"
+        ),
         gas_total_km3d=_aliases("Gás total (Mil m³/d)", "Gs total Mil m d"),
         water_m3d=_aliases("Água (m³/d)", "gua m d"),
-        water_inj_disposal_m3d=_aliases("Água injetada para descarte (m³/d)", "gua injetada para descarte m d"),
+        water_inj_disposal_m3d=_aliases(
+            "Água injetada para descarte (m³/d)", "gua injetada para descarte m d"
+        ),
         water_inj_secondary_m3d=_aliases(
-            "Água injetada para rec. secundária (m³/d)", "gua injetada para rec secundria m d"
+            "Água injetada para rec. secundária (m³/d)",
+            "gua injetada para rec secundria m d",
         ),
         gas_inj_km3d=_aliases("Gás injetado (Mil m³/d)", "Gs injetado Mil m d"),
     ),
@@ -314,9 +338,15 @@ SCHEMAS: Dict[str, Dict[str, Tuple[str, ...]]] = {
         "environment": _aliases("Ambiente"),
         "spud_date": _aliases("Data_início_perfuração", "Data_incio_perfurao"),
         "completion_date": _aliases("Data_conclusão_poço", "Data_concluso_poo"),
-        "first_production": _aliases("Data_início_produção_(mês/ano)", "Data_incio_produo_ms_ano"),
-        "last_production": _aliases("Data_última_produçaõ_(mês/ano)", "Data_ltima_produao_ms_ano"),
-        "in_operation": _aliases("Em_operação_(produção_ou_injeção)", "Em_operao_produo_ou_injeo"),
+        "first_production": _aliases(
+            "Data_início_produção_(mês/ano)", "Data_incio_produo_ms_ano"
+        ),
+        "last_production": _aliases(
+            "Data_última_produçaõ_(mês/ano)", "Data_ltima_produao_ms_ano"
+        ),
+        "in_operation": _aliases(
+            "Em_operação_(produção_ou_injeção)", "Em_operao_produo_ou_injeo"
+        ),
         "latitude": _aliases("Latitude_da_base"),
         "longitude": _aliases("Longitude_da_base"),
         "status": _aliases("Situação_do_poço", "Situao_do_poo"),
@@ -366,14 +396,21 @@ def detect_schema(headers: Sequence[str]) -> str:
         ValueError: No family matches; the message lists some folded headers.
     """
     folded = {fold(h) for h in headers}
-    for family in ("zone_daily_rates", "well_monthly_volumes", "well_monthly_rates", "well_status"):
+    for family in (
+        "zone_daily_rates",
+        "well_monthly_volumes",
+        "well_monthly_rates",
+        "well_status",
+    ):
         spec = SCHEMAS[family]
         if all(any(a in folded for a in spec[k]) for k in _REQUIRED[family]):
             return family
     raise ValueError("Header matches no known ANP family: %s" % sorted(folded)[:12])
 
 
-def _column_index(headers: Sequence[str], spec: Mapping[str, Tuple[str, ...]]) -> Dict[str, int]:
+def _column_index(
+    headers: Sequence[str], spec: Mapping[str, Tuple[str, ...]]
+) -> Dict[str, int]:
     folded = [fold(h) for h in headers]
     idx: Dict[str, int] = {}
     for key, names in spec.items():
@@ -390,7 +427,7 @@ def _composition_index(headers: Sequence[str]) -> Dict[str, int]:
         f = fold(h)
         if not f.startswith("em volumes"):
             continue
-        tail = f[len("em volumes"):].strip()
+        tail = f[len("em volumes") :].strip()
         for key, name in _COMPOSITION_HEADERS.items():
             if tail == name:
                 idx[key] = i
@@ -449,14 +486,24 @@ def normalize(
     idx = _column_index(headers, spec)
     missing = [k for k in _REQUIRED[family] if k not in idx]
     if missing:
-        raise KeyError("ANP %s file lacks required column(s): %s" % (family, ", ".join(missing)))
+        raise KeyError(
+            "ANP %s file lacks required column(s): %s" % (family, ", ".join(missing))
+        )
     comp_idx = _composition_index(headers) if family == "well_monthly_rates" else {}
     out: List[Dict[str, Any]] = []
     for row in rows:
         rec: Dict[str, Any] = {"family": family}
         if source:
             rec["source"] = source
-        for key in ("well", "field", "basin", "state", "environment", "operator", "installation"):
+        for key in (
+            "well",
+            "field",
+            "basin",
+            "state",
+            "environment",
+            "operator",
+            "installation",
+        ):
             rec[key] = _cell(row, idx, key)
         if family == "well_status":
             for key in (
@@ -475,7 +522,14 @@ def normalize(
             continue
         year, month = parse_period(_cell(row, idx, "period"))
         days = days_in_month(year, month)
-        rec.update({"year": year, "month": month, "period": "%04d-%02d" % (year, month), "days": days})
+        rec.update(
+            {
+                "year": year,
+                "month": month,
+                "period": "%04d-%02d" % (year, month),
+                "days": days,
+            }
+        )
         if family == "well_monthly_rates":
             oil = _scale(_num(row, idx, "oil_bbld"), BBL_TO_M3)
             cond = _scale(_num(row, idx, "condensate_bbld"), BBL_TO_M3)
@@ -521,8 +575,12 @@ def normalize(
                 gas_total_km3d=_scale(gas, per_day),
                 water_m3d=_scale(wat, per_day),
                 gas_inj_km3d=_scale(_num(row, idx, "gas_inj_km3"), per_day),
-                water_inj_secondary_m3d=_scale(_num(row, idx, "water_inj_secondary_m3"), per_day),
-                water_inj_disposal_m3d=_scale(_num(row, idx, "water_inj_disposal_m3"), per_day),
+                water_inj_secondary_m3d=_scale(
+                    _num(row, idx, "water_inj_secondary_m3"), per_day
+                ),
+                water_inj_disposal_m3d=_scale(
+                    _num(row, idx, "water_inj_disposal_m3"), per_day
+                ),
                 co2_inj_km3d=_scale(_num(row, idx, "co2_inj_km3"), per_day),
                 hours_on=None,
                 api=None,

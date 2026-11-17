@@ -10,8 +10,20 @@ from subsea_layout_geometry import plot_subsea_layout
 def _layout():
     return [
         {"name": "HOST", "x": 0.0, "y": 0.0, "water_depth_m": 320.0, "kind": "host"},
-        {"name": "M1", "x": 6000.0, "y": 1500.0, "water_depth_m": 335.0, "kind": "manifold"},
-        {"name": "W1", "x": 8500.0, "y": 3200.0, "water_depth_m": 340.0, "kind": "well"},
+        {
+            "name": "M1",
+            "x": 6000.0,
+            "y": 1500.0,
+            "water_depth_m": 335.0,
+            "kind": "manifold",
+        },
+        {
+            "name": "W1",
+            "x": 8500.0,
+            "y": 3200.0,
+            "water_depth_m": 340.0,
+            "kind": "well",
+        },
     ]
 
 
@@ -54,9 +66,7 @@ def test_plot_missing_host_raises():
 
 def test_plot_unknown_flowline_endpoint_raises():
     with pytest.raises(ValueError):
-        plot_subsea_layout(
-            _layout(), host_name="HOST", flowlines=[("HOST", "GHOST")]
-        )
+        plot_subsea_layout(_layout(), host_name="HOST", flowlines=[("HOST", "GHOST")])
 
 
 def test_plot_geographic_uses_degree_axes():

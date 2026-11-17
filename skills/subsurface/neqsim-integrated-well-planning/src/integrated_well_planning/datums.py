@@ -10,9 +10,13 @@ from __future__ import annotations
 
 import math
 from dataclasses import asdict, dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence
 
-STANDARD_CONDITIONS = {"temperature_C": 15.0, "pressure_bara": 1.01325, "note": "15 C and 1.01325 bara, ideal-gas molar volume 23.645 Sm3/kmol"}
+STANDARD_CONDITIONS = {
+    "temperature_C": 15.0,
+    "pressure_bara": 1.01325,
+    "note": "15 C and 1.01325 bara, ideal-gas molar volume 23.645 Sm3/kmol",
+}
 BAR_PER_PSI = 0.0689475729
 SEA_LEVEL_PRESSURE_BARA = 1.01325
 
@@ -27,7 +31,9 @@ class DepthReference:
     environment: str = "platform"
     coordinate_system: str = "ED50-UTM31N (placeholder - synthetic)"
     pressure_reference: str = "bara (absolute)"
-    standard_conditions: Dict[str, object] = field(default_factory=lambda: dict(STANDARD_CONDITIONS))
+    standard_conditions: Dict[str, object] = field(
+        default_factory=lambda: dict(STANDARD_CONDITIONS)
+    )
 
     def tvdss(self, tvd_m: float) -> float:
         """Convert TVD below the reference to TVDSS (positive down, below mean sea level)."""
@@ -63,7 +69,9 @@ def psi_to_bar(psi: float) -> float:
     return psi * BAR_PER_PSI
 
 
-def minimum_curvature(md: Sequence[float], inc_deg: Sequence[float], azi_deg: Sequence[float]) -> Dict[str, List[float]]:
+def minimum_curvature(
+    md: Sequence[float], inc_deg: Sequence[float], azi_deg: Sequence[float]
+) -> Dict[str, List[float]]:
     """Minimum-curvature survey calculation.
 
     Args:
@@ -87,18 +95,46 @@ def minimum_curvature(md: Sequence[float], inc_deg: Sequence[float], azi_deg: Se
             raise ValueError("measured depth must increase (station {})".format(i))
         i1, i2 = math.radians(inc_deg[i - 1]), math.radians(inc_deg[i])
         a1, a2 = math.radians(azi_deg[i - 1]), math.radians(azi_deg[i])
-        cos_dl = math.cos(i2 - i1) - math.sin(i1) * math.sin(i2) * (1.0 - math.cos(a2 - a1))
+        cos_dl = math.cos(i2 - i1) - math.sin(i1) * math.sin(i2) * (
+            1.0 - math.cos(a2 - a1)
+        )
         dl = math.acos(max(-1.0, min(1.0, cos_dl)))
         rf = 1.0 if dl < 1e-9 else 2.0 / dl * math.tan(dl / 2.0)
         tvd.append(tvd[-1] + dmd / 2.0 * (math.cos(i1) + math.cos(i2)) * rf)
-        north.append(north[-1] + dmd / 2.0 * (math.sin(i1) * math.cos(a1) + math.sin(i2) * math.cos(a2)) * rf)
-        east.append(east[-1] + dmd / 2.0 * (math.sin(i1) * math.sin(a1) + math.sin(i2) * math.sin(a2)) * rf)
+        north.append(
+            north[-1]
+            + dmd
+            / 2.0
+            * (math.sin(i1) * math.cos(a1) + math.sin(i2) * math.cos(a2))
+            * rf
+        )
+        east.append(
+            east[-1]
+            + dmd
+            / 2.0
+            * (math.sin(i1) * math.sin(a1) + math.sin(i2) * math.sin(a2))
+            * rf
+        )
         dls.append(math.degrees(dl) / dmd * 30.0)
-    return {"md": list(md), "inc": list(inc_deg), "azi": list(azi_deg), "tvd": tvd, "north": north, "east": east, "dls": dls}
+    return {
+        "md": list(md),
+        "inc": list(inc_deg),
+        "azi": list(azi_deg),
+        "tvd": tvd,
+        "north": north,
+        "east": east,
+        "dls": dls,
+    }
 
 
-def build_and_hold(kop_md: float, build_rate_deg_per_30m: float, hold_inc_deg: float, td_md: float, azimuth_deg: float = 0.0,
-                   step_m: float = 25.0) -> Dict[str, List[float]]:
+def build_and_hold(
+    kop_md: float,
+    build_rate_deg_per_30m: float,
+    hold_inc_deg: float,
+    td_md: float,
+    azimuth_deg: float = 0.0,
+    step_m: float = 25.0,
+) -> Dict[str, List[float]]:
     """Synthetic build-and-hold well path (vertical, constant-rate build, tangent)."""
     md = [0.0]
     inc = [0.0]
@@ -114,7 +150,9 @@ def build_and_hold(kop_md: float, build_rate_deg_per_30m: float, hold_inc_deg: f
     return minimum_curvature(md, inc, [azimuth_deg] * len(md))
 
 
-def survey_summary(survey: Dict[str, List[float]], max_dls_limit: Optional[float] = None) -> Dict[str, object]:
+def survey_summary(
+    survey: Dict[str, List[float]], max_dls_limit: Optional[float] = None
+) -> Dict[str, object]:
     """Summarise a computed survey: TD, step-out, max inclination and max DLS."""
     horizontal = [math.hypot(n, e) for n, e in zip(survey["north"], survey["east"])]
     out = {
@@ -124,27 +162,46 @@ def survey_summary(survey: Dict[str, List[float]], max_dls_limit: Optional[float
         "max_inclination_deg": max(survey["inc"]),
         "max_dls_deg_per_30m": max(survey["dls"]),
         "dls_limit_deg_per_30m": max_dls_limit,
-        "dls_limit_status": "NOT_ASSESSED (no limit supplied)" if max_dls_limit is None else (
-            "PASS" if max(survey["dls"]) <= max_dls_limit else "FAIL"),
+        "dls_limit_status": (
+            "NOT_ASSESSED (no limit supplied)"
+            if max_dls_limit is None
+            else ("PASS" if max(survey["dls"]) <= max_dls_limit else "FAIL")
+        ),
     }
     return out
 
 
-def check_datum_consistency(md_m: Optional[float], tvd_m: Optional[float], inc_at_td_deg: Optional[float] = None,
-                            survey: Optional[Dict[str, List[float]]] = None, tol_m: float = 5.0) -> List[str]:
+def check_datum_consistency(
+    md_m: Optional[float],
+    tvd_m: Optional[float],
+    inc_at_td_deg: Optional[float] = None,
+    survey: Optional[Dict[str, List[float]]] = None,
+    tol_m: float = 5.0,
+) -> List[str]:
     """Return a list of consistency problems between supplied MD, TVD and survey (empty = consistent)."""
     problems: List[str] = []
     if md_m is not None and tvd_m is not None and tvd_m > md_m + 1e-6:
         problems.append("TVD ({:.1f}) exceeds MD ({:.1f})".format(tvd_m, md_m))
     if survey and tvd_m is not None:
         if abs(survey["tvd"][-1] - tvd_m) > tol_m:
-            problems.append("survey TVD at TD ({:.1f}) differs from basis TVD ({:.1f}) by more than {:.1f} m".format(
-                survey["tvd"][-1], tvd_m, tol_m))
+            problems.append(
+                "survey TVD at TD ({:.1f}) differs from basis TVD ({:.1f}) by more than {:.1f} m".format(
+                    survey["tvd"][-1], tvd_m, tol_m
+                )
+            )
         if md_m is not None and abs(survey["md"][-1] - md_m) > tol_m:
-            problems.append("survey MD at TD differs from basis MD by more than {:.1f} m".format(tol_m))
+            problems.append(
+                "survey MD at TD differs from basis MD by more than {:.1f} m".format(
+                    tol_m
+                )
+            )
     if inc_at_td_deg is not None and md_m is not None and tvd_m is not None:
         if inc_at_td_deg < 1.0 and abs(md_m - tvd_m) > tol_m:
-            problems.append("near-vertical well but MD and TVD differ by {:.1f} m".format(abs(md_m - tvd_m)))
+            problems.append(
+                "near-vertical well but MD and TVD differ by {:.1f} m".format(
+                    abs(md_m - tvd_m)
+                )
+            )
     return problems
 
 

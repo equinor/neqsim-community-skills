@@ -8,7 +8,7 @@ pressure, it is computed once per fluid and reused by the material-balance tank 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 import numpy as np
 
@@ -33,20 +33,31 @@ class FluidModel:
         volume_shift: optional (indices, offset) applied to the volume correction of those components.
     """
 
-    def __init__(self, base_fluid, names: Sequence[str], heavy_idx: Optional[Sequence[int]] = None):
+    def __init__(
+        self,
+        base_fluid,
+        names: Sequence[str],
+        heavy_idx: Optional[Sequence[int]] = None,
+    ):
         self.base = base_fluid
         self.names = list(names)
         self.heavy_idx = list(heavy_idx or [])
 
     @classmethod
-    def from_components(cls, light: Dict[str, float], tbp: Sequence[tuple] = (), eos: str = "PR"):
+    def from_components(
+        cls, light: Dict[str, float], tbp: Sequence[tuple] = (), eos: str = "PR"
+    ):
         """Build a PR/SRK fluid from database components and TBP pseudo components.
 
         ``light`` maps a NeqSim database name to a placeholder amount; ``tbp`` is a list of
         (name, molar mass g/mol, density g/cm3). Water is not included.
         """
         ns = _neqsim()
-        fluid = ns.thermo.system.SystemPrEos(288.15, 1.01325) if eos == "PR" else ns.thermo.system.SystemSrkEos(288.15, 1.01325)
+        fluid = (
+            ns.thermo.system.SystemPrEos(288.15, 1.01325)
+            if eos == "PR"
+            else ns.thermo.system.SystemSrkEos(288.15, 1.01325)
+        )
         names = []
         for nm in light:
             fluid.addComponent(nm, 1.0)
@@ -78,7 +89,9 @@ class FluidModel:
     def phases(self, z: Sequence[float], T_K: float, P_bara: float) -> dict:
         """Per mole of feed: gas/liquid moles and volumes (m3), gas and liquid compositions. A single phase counts as gas."""
         f = self.flash(z, T_K, P_bara)
-        out = dict(ng=0.0, nl=0.0, vg=0.0, vl=0.0, y=None, x=None, nph=f.getNumberOfPhases())
+        out = dict(
+            ng=0.0, nl=0.0, vg=0.0, vl=0.0, y=None, x=None, nph=f.getNumberOfPhases()
+        )
         ntot = f.getTotalNumberOfMoles()
         for i in range(f.getNumberOfPhases()):
             ph = f.getPhase(i)
@@ -101,7 +114,14 @@ class FluidModel:
         s = self.phases(z, STD_T_K, STD_P_BARA)
         return dict(gas_sm3=s["ng"] * SM3_PER_MOL, cond_sm3=s["vl"])
 
-    def dew_point(self, z: Sequence[float], T_K: float, p_lo: float = 100.0, p_hi: float = 900.0, tol: float = 0.5) -> float:
+    def dew_point(
+        self,
+        z: Sequence[float],
+        T_K: float,
+        p_lo: float = 100.0,
+        p_hi: float = 900.0,
+        tol: float = 0.5,
+    ) -> float:
         if self.phases(z, T_K, p_hi)["nph"] > 1:
             return float("nan")
         lo, hi = p_lo, p_hi
@@ -136,7 +156,15 @@ class StreamState:
 class DepletionPath:
     """CVD path of one reservoir fluid: moles left, liquid saturation, stream composition and surface yield versus pressure."""
 
-    def __init__(self, fluid: FluidModel, z0: Sequence[float], T_K: float, p_init: float, p_min: float = 60.0, dp: float = 10.0):
+    def __init__(
+        self,
+        fluid: FluidModel,
+        z0: Sequence[float],
+        T_K: float,
+        p_init: float,
+        p_min: float = 60.0,
+        dp: float = 10.0,
+    ):
         self.fluid, self.T_K, self.p_init = fluid, float(T_K), float(p_init)
         self.z0 = np.array(z0, float) / np.sum(z0)
         self.p = np.arange(p_init, p_min - 1e-9, -dp)
@@ -145,7 +173,9 @@ class DepletionPath:
     def _compute(self):
         fl, T = self.fluid, self.T_K
         s0 = fl.phases(self.z0, T, self.p_init)
-        self.v_cell = s0["vg"] + s0["vl"]  # m3 per mole in place at the initial pressure
+        self.v_cell = (
+            s0["vg"] + s0["vl"]
+        )  # m3 per mole in place at the initial pressure
         z, n = self.z0.copy(), 1.0
         n_rem, s_liq, ys, gas, cond, zc = [], [], [], [], [], []
         for p in self.p:
@@ -185,9 +215,15 @@ class DepletionPath:
     def stream(self, p: float) -> StreamState:
         order = np.argsort(self.p)
         pp = self.p[order]
-        y = np.array([np.interp(p, pp, self.y[order][:, j]) for j in range(self.y.shape[1])])
+        y = np.array(
+            [np.interp(p, pp, self.y[order][:, j]) for j in range(self.y.shape[1])]
+        )
         y = y / y.sum()
-        return StreamState(y, float(np.interp(p, pp, self.gas_sm3_per_mol[order])), float(np.interp(p, pp, self.cond_sm3_per_mol[order])))
+        return StreamState(
+            y,
+            float(np.interp(p, pp, self.gas_sm3_per_mol[order])),
+            float(np.interp(p, pp, self.cond_sm3_per_mol[order])),
+        )
 
     def composition_table(self, names: Optional[Sequence[str]] = None):
         import pandas as pd

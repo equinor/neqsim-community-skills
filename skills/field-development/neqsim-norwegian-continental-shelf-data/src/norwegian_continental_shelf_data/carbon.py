@@ -92,7 +92,9 @@ POWER_FROM_SHORE_UNDER_DEVELOPMENT: Tuple[str, ...] = (
 )
 
 
-def _latest_or_year(table: Dict[int, float], year: Optional[int], name: str) -> Tuple[int, float]:
+def _latest_or_year(
+    table: Dict[int, float], year: Optional[int], name: str
+) -> Tuple[int, float]:
     if not table:
         raise ValueError(f"No published values available for {name}.")
     if year is None:
@@ -135,7 +137,9 @@ def carbon_cost_basis(year: Optional[int] = None) -> CarbonCostBasis:
     tax_year, co2_tax_gas = _latest_or_year(
         _CO2_TAX_NOK_PER_SM3_GAS, year, "CO2 tax per Sm3 gas"
     )
-    _, co2_tax_oil = _latest_or_year(_CO2_TAX_NOK_PER_LITRE_OIL, year, "CO2 tax per litre oil")
+    _, co2_tax_oil = _latest_or_year(
+        _CO2_TAX_NOK_PER_LITRE_OIL, year, "CO2 tax per litre oil"
+    )
     _, co2_tax_tonne = _latest_or_year(
         _CO2_TAX_NOK_PER_TONNE_CO2, year, "CO2 tax per tonne"
     )
@@ -292,8 +296,12 @@ def abatement_screening(
     qualified commercial review are required before any decision.
     """
     _require_positive("capex_nok", capex_nok)
-    _require_non_negative("fuel_gas_avoided_sm3_per_year", fuel_gas_avoided_sm3_per_year)
-    _require_non_negative("added_energy_cost_nok_per_year", added_energy_cost_nok_per_year)
+    _require_non_negative(
+        "fuel_gas_avoided_sm3_per_year", fuel_gas_avoided_sm3_per_year
+    )
+    _require_non_negative(
+        "added_energy_cost_nok_per_year", added_energy_cost_nok_per_year
+    )
     _require_non_negative("gas_price_nok_per_sm3", gas_price_nok_per_sm3)
     _require_non_negative("nox_avoided_tonnes_per_year", nox_avoided_tonnes_per_year)
     _require_positive("horizon_years", horizon_years)
@@ -307,7 +315,9 @@ def abatement_screening(
             f"combustion factor {GAS_CO2_FACTOR_KG_PER_SM3} kg CO2/Sm3."
         )
     else:
-        _require_non_negative("co2_avoided_tonnes_per_year", co2_avoided_tonnes_per_year)
+        _require_non_negative(
+            "co2_avoided_tonnes_per_year", co2_avoided_tonnes_per_year
+        )
         co2_avoided = co2_avoided_tonnes_per_year
 
     carbon = annual_carbon_cost(
@@ -322,7 +332,9 @@ def abatement_screening(
         assumptions.append(
             "Avoided fuel gas valued at the supplied gas price; screening only."
         )
-    net_annual = avoided_carbon_cost + avoided_fuel_value - added_energy_cost_nok_per_year
+    net_annual = (
+        avoided_carbon_cost + avoided_fuel_value - added_energy_cost_nok_per_year
+    )
 
     if net_annual > 0.0:
         simple_payback = round(capex_nok / net_annual, 2)
@@ -338,9 +350,13 @@ def abatement_screening(
     # added energy cost fixed. Annuity factor over the horizon.
     breakeven: Optional[float] = None
     if co2_avoided > 0.0:
-        annuity = sum(1.0 / ((1.0 + discount_rate) ** t) for t in range(1, int(horizon_years) + 1))
+        annuity = sum(
+            1.0 / ((1.0 + discount_rate) ** t) for t in range(1, int(horizon_years) + 1)
+        )
         required_annual = capex_nok / annuity
-        needed_from_co2 = required_annual - avoided_fuel_value + added_energy_cost_nok_per_year
+        needed_from_co2 = (
+            required_annual - avoided_fuel_value + added_energy_cost_nok_per_year
+        )
         breakeven = round(max(needed_from_co2, 0.0) / co2_avoided, 2)
 
     verdict = _abatement_verdict(npv, simple_payback)

@@ -23,18 +23,44 @@ PROPS = {
     "SSHIFT": [-0.159, -0.086, -0.008232, -0.002275, 0.061067, -0.10, 0.084],
     "PARACHOR": [77.0, 150.3, 271.0, 370.561, 769.049, 80.0, 10.0],
 }
-BIC_ROWS = [[0.0], [0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.08, 0.08, 0.05, 0.0, 0.0], [0.5, 0.5, 0.5, 0.5, 0.5, 0.2]]
+BIC_ROWS = [
+    [0.0],
+    [0.0, 0.0],
+    [0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0, 0.0],
+    [0.08, 0.08, 0.05, 0.0, 0.0],
+    [0.5, 0.5, 0.5, 0.5, 0.5, 0.2],
+]
 
 
 def _write_e300(path, zi):
-    lines = ["METRIC", "NCOMPS", "7 /", "EOS", "PR /", "RTEMP", "100.0 /", "STCOND", "15.0 1.01325 /", "CNAMES"]
+    lines = [
+        "METRIC",
+        "NCOMPS",
+        "7 /",
+        "EOS",
+        "PR /",
+        "RTEMP",
+        "100.0 /",
+        "STCOND",
+        "15.0 1.01325 /",
+        "CNAMES",
+    ]
     lines += NAMES[:-1] + [NAMES[-1] + " /"]
     for key, vals in PROPS.items():
         lines.append("-- " + key)
         lines.append(key)
         lines += ["%.6f" % v for v in vals[:-1]] + ["%.6f /" % vals[-1]]
-    lines += ["-- Overall composition", "ZI"] + ["%.6f" % v for v in zi[:-1]] + ["%.6f /" % zi[-1]]
-    lines += ["-- BIC", "BIC"] + ["  ".join("%.4f" % v for v in row) for row in BIC_ROWS] + ["/"]
+    lines += (
+        ["-- Overall composition", "ZI"]
+        + ["%.6f" % v for v in zi[:-1]]
+        + ["%.6f /" % zi[-1]]
+    )
+    lines += (
+        ["-- BIC", "BIC"]
+        + ["  ".join("%.4f" % v for v in row) for row in BIC_ROWS]
+        + ["/"]
+    )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -65,7 +91,19 @@ def test_recombination_on_e300_model_keeps_the_eos(e300_files):
     apply_e300_composition(fluid, str(model), str(comp))
     gor, y = separator_gor_and_gas_h2s(fluid, stage)
     start = load_e300_fluid(str(model))
-    apply_e300_composition(start, str(model), {"C1": 0.60, "C3": 0.06, "C6": 0.04, "F3": 0.09, "F5": 0.08, "H2S": 1.0e-5, "H2O": 0.13})
+    apply_e300_composition(
+        start,
+        str(model),
+        {
+            "C1": 0.60,
+            "C3": 0.06,
+            "C6": 0.04,
+            "F3": 0.09,
+            "F5": 0.08,
+            "H2S": 1.0e-5,
+            "H2O": 0.13,
+        },
+    )
     res = recombine_to_gor_and_h2s(start, stage, gor, y)
     assert res.converged, res.warnings
     assert res.fluid.getClass().getSimpleName() == eos_class

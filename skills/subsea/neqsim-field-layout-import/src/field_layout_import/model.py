@@ -106,7 +106,9 @@ class FieldLayoutImporter:
             else:
                 if water_depth_m < 0.0:
                     water_depth_m = 0.0
-                    issues.append(f"record {name}: negative water_depth_m clamped to 0.0")
+                    issues.append(
+                        f"record {name}: negative water_depth_m clamped to 0.0"
+                    )
 
         kind = str(properties.get("kind", "well")).strip().lower()
         if kind not in KNOWN_KINDS:

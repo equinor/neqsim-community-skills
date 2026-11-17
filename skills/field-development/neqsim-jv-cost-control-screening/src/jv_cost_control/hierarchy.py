@@ -15,7 +15,6 @@ from typing import Any, Iterable, Mapping, Optional, Sequence
 
 import pandas as pd
 
-
 COUNT = "__detail_lines__"
 
 
@@ -115,7 +114,12 @@ def parse_hierarchical_rows(
     total_rows: list = []
 
     def width_needed() -> int:
-        return max(list(label_cols) + list(value_cols.values()) + list(extra_cols.values())) + 1
+        return (
+            max(
+                list(label_cols) + list(value_cols.values()) + list(extra_cols.values())
+            )
+            + 1
+        )
 
     need = width_needed()
     for offset, raw in enumerate(rows):
@@ -124,7 +128,11 @@ def parse_hierarchical_rows(
         values = {n: to_number(row[c]) for n, c in value_cols.items()}
         has_values = any(v is not None for v in values.values())
         total_level = next(
-            (i for i, lab in enumerate(labels) if lab and lab.lower().startswith(prefix)),
+            (
+                i
+                for i, lab in enumerate(labels)
+                if lab and lab.lower().startswith(prefix)
+            ),
             None,
         )
         for i, lab in enumerate(labels):
@@ -156,10 +164,7 @@ def parse_hierarchical_rows(
                 record[f"{n}_expected"] = acc[total_level][n]
             # A total with no detail lines since the previous total at its level
             # is a grand total of the sibling totals that preceded it.
-            is_grand = (
-                sibling_count[total_level] > 0
-                and acc[total_level][COUNT] == 0
-            )
+            is_grand = sibling_count[total_level] > 0 and acc[total_level][COUNT] == 0
             record["kind"] = "grand_total" if is_grand else "subtotal"
             if is_grand:
                 for n in names:

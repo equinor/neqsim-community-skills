@@ -21,7 +21,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 NAME_RE = re.compile(r"^name:\s*[\"']?([A-Za-z0-9_.-]+)[\"']?\s*$", re.MULTILINE)
-TEXT_SUFFIXES = {".md", ".yaml", ".yml", ".json", ".py", ".toml", ".txt", ".cfg", ".ini"}
+TEXT_SUFFIXES = {
+    ".md",
+    ".yaml",
+    ".yml",
+    ".json",
+    ".py",
+    ".toml",
+    ".txt",
+    ".cfg",
+    ".ini",
+}
 SKIP_DIRS = {".git", "__pycache__", ".pytest_cache", "node_modules", "data"}
 
 
@@ -71,7 +81,9 @@ def rewrite_references(renames, apply: bool) -> int:
         updated = text
         for old_rel, new_rel in pairs:
             updated = updated.replace(old_rel, new_rel)
-            updated = updated.replace(old_rel.replace("/", "\\"), new_rel.replace("/", "\\"))
+            updated = updated.replace(
+                old_rel.replace("/", "\\"), new_rel.replace("/", "\\")
+            )
         if updated != text:
             touched += 1
             print("rewrite {}".format(path.relative_to(ROOT).as_posix()))
@@ -82,7 +94,9 @@ def rewrite_references(renames, apply: bool) -> int:
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--apply", action="store_true", help="perform git mv and rewrite files")
+    parser.add_argument(
+        "--apply", action="store_true", help="perform git mv and rewrite files"
+    )
     args = parser.parse_args(argv)
 
     renames = collect_renames()
@@ -100,8 +114,11 @@ def main(argv=None) -> int:
 
     touched = rewrite_references(renames, args.apply)
     verb = "rewrote" if args.apply else "would rewrite"
-    print("{} {} directories; {} {} files".format(
-        "renamed" if args.apply else "would rename", len(renames), verb, touched))
+    print(
+        "{} {} directories; {} {} files".format(
+            "renamed" if args.apply else "would rename", len(renames), verb, touched
+        )
+    )
     if not args.apply:
         print("dry run - re-run with --apply")
     return 0

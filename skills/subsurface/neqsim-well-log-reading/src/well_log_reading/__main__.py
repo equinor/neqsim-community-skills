@@ -16,8 +16,12 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="well_log_reading", description=__doc__)
     parser.add_argument("path", help="DLIS, LIS or LAS file, or a folder to scan")
     parser.add_argument("--out", help="write the evidence JSON here instead of stdout")
-    parser.add_argument("--csv", help="also write the main frame of a single file as CSV here")
-    parser.add_argument("--no-recursive", action="store_true", help="do not scan sub-folders")
+    parser.add_argument(
+        "--csv", help="also write the main frame of a single file as CSV here"
+    )
+    parser.add_argument(
+        "--no-recursive", action="store_true", help="do not scan sub-folders"
+    )
     args = parser.parse_args(argv)
 
     target = Path(args.path)
@@ -31,7 +35,9 @@ def main(argv=None) -> int:
     if args.out:
         write_evidence(records, args.out)
         count = len(records) if isinstance(records, list) else 1
-        sys.stdout.write(f"wrote {count} well_log_evidence.v1 record(s) to {args.out}\n")
+        sys.stdout.write(
+            f"wrote {count} well_log_evidence.v1 record(s) to {args.out}\n"
+        )
     else:
         json.dump(records, sys.stdout, indent=2, default=str)
         sys.stdout.write("\n")

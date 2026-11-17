@@ -29,7 +29,9 @@ class SkillManifestSchemaTests(unittest.TestCase):
     def test_use_when_clause_is_required(self):
         self.assertTrue(validator.check_use_when({"description": "no trigger here"}))
         self.assertEqual(
-            validator.check_use_when({"description": "Screening. USE WHEN: a task needs it."}),
+            validator.check_use_when(
+                {"description": "Screening. USE WHEN: a task needs it."}
+            ),
             [],
         )
 

@@ -119,7 +119,9 @@ def test_insufficient_data_is_reported_not_guessed():
 def test_rejects_failure_time_outside_window():
     with pytest.raises(ValueError):
         _model().evaluate(
-            failure_times_years=[1.0, 25.0], observation_years=18.0, target_year_offset=11.0
+            failure_times_years=[1.0, 25.0],
+            observation_years=18.0,
+            target_year_offset=11.0,
         )
     with pytest.raises(ValueError):
         _model().evaluate(

@@ -19,7 +19,9 @@ class PlacedCircle:
     radius: float
 
 
-def _tangent_positions(a: PlacedCircle, b: PlacedCircle, r: float) -> List[Tuple[float, float]]:
+def _tangent_positions(
+    a: PlacedCircle, b: PlacedCircle, r: float
+) -> List[Tuple[float, float]]:
     """Centres of a circle of radius r that touches both a and b externally."""
     da = a.radius + r
     db = b.radius + r
@@ -36,11 +38,15 @@ def _tangent_positions(a: PlacedCircle, b: PlacedCircle, r: float) -> List[Tuple
     return [(mx + h * dy / d, my - h * dx / d), (mx - h * dy / d, my + h * dx / d)]
 
 
-def _free(x: float, y: float, r: float, placed: Sequence[PlacedCircle], tol: float = 1e-9) -> bool:
+def _free(
+    x: float, y: float, r: float, placed: Sequence[PlacedCircle], tol: float = 1e-9
+) -> bool:
     return all(math.hypot(x - p.x, y - p.y) >= r + p.radius - tol for p in placed)
 
 
-def pack_circles(diameters: Sequence[float]) -> Tuple[List[PlacedCircle], Tuple[float, float, float]]:
+def pack_circles(
+    diameters: Sequence[float],
+) -> Tuple[List[PlacedCircle], Tuple[float, float, float]]:
     """Greedy tangent packing, largest first, minimising the farthest extent from the centroid.
 
     Returns the placed circles (in input order) and the enclosing circle ``(cx, cy, R)``.
@@ -49,7 +55,9 @@ def pack_circles(diameters: Sequence[float]) -> Tuple[List[PlacedCircle], Tuple[
     if n == 0:
         return [], (0.0, 0.0, 0.0)
     order = sorted(range(n), key=lambda i: -diameters[i])
-    placed: List[PlacedCircle] = [PlacedCircle(order[0], 0.0, 0.0, diameters[order[0]] / 2.0)]
+    placed: List[PlacedCircle] = [
+        PlacedCircle(order[0], 0.0, 0.0, diameters[order[0]] / 2.0)
+    ]
     for idx in order[1:]:
         r = diameters[idx] / 2.0
         candidates: List[Tuple[float, float]] = []
@@ -104,8 +112,17 @@ def conductor_diameter_mm(area_mm2: float) -> float:
     return math.sqrt(4.0 * area_mm2 / (math.pi * STRANDING_FILL))
 
 
-def armor_wire_count(layer_diameter_mm: float, wire_diameter_mm: float, lay_angle_deg: float) -> int:
-    return int(math.floor(math.pi * layer_diameter_mm * math.cos(math.radians(lay_angle_deg)) / wire_diameter_mm))
+def armor_wire_count(
+    layer_diameter_mm: float, wire_diameter_mm: float, lay_angle_deg: float
+) -> int:
+    return int(
+        math.floor(
+            math.pi
+            * layer_diameter_mm
+            * math.cos(math.radians(lay_angle_deg))
+            / wire_diameter_mm
+        )
+    )
 
 
 def cross_section_layout(result: DesignResult) -> Dict[str, Any]:
@@ -140,7 +157,12 @@ def cross_section_layout(result: DesignResult) -> Dict[str, Any]:
             sub, _ = pack_circles([d_core] * n)
             # centre the cores in the cable circle
             item["cores"] = [
-                {"x": p.x + s.x, "y": p.y + s.y, "radius": d_core / 2.0, "conductor_radius": d_cond / 2.0}
+                {
+                    "x": p.x + s.x,
+                    "y": p.y + s.y,
+                    "radius": d_core / 2.0,
+                    "conductor_radius": d_cond / 2.0,
+                }
                 for s in sub
             ]
         drawn.append(item)
@@ -156,7 +178,12 @@ def cross_section_layout(result: DesignResult) -> Dict[str, Any]:
         for k in range(n):
             a = 2.0 * math.pi * k / max(n, 1) + (math.pi / max(n, 1) if i % 2 else 0.0)
             wires.append(
-                {"x": layer_d / 2.0 * math.cos(a), "y": layer_d / 2.0 * math.sin(a), "radius": wire_d / 2.0, "layer": i}
+                {
+                    "x": layer_d / 2.0 * math.cos(a),
+                    "y": layer_d / 2.0 * math.sin(a),
+                    "radius": wire_d / 2.0,
+                    "layer": i,
+                }
             )
     return {
         "elements": drawn,

@@ -37,7 +37,9 @@ class PipingFlexibilityModel:
         restrained_relief_factor: float = 0.5,
     ) -> None:
         self._require_positive("stress_range_factor", stress_range_factor)
-        self._require_fraction_inclusive("restrained_relief_factor", restrained_relief_factor)
+        self._require_fraction_inclusive(
+            "restrained_relief_factor", restrained_relief_factor
+        )
         self.stress_range_factor = stress_range_factor
         self.restrained_relief_factor = restrained_relief_factor
 
@@ -60,18 +62,24 @@ class PipingFlexibilityModel:
         self._require_positive("outside_diameter_mm", outside_diameter_mm)
         self._require_positive("wall_thickness_mm", wall_thickness_mm)
         if wall_thickness_mm >= outside_diameter_mm / 2.0:
-            raise ValueError("wall_thickness_mm must be less than half the outside diameter")
+            raise ValueError(
+                "wall_thickness_mm must be less than half the outside diameter"
+            )
         self._require_positive("design_pressure_bar", design_pressure_bar)
         self._require_finite("design_temperature_c", design_temperature_c)
         self._require_positive("pipe_length_m", pipe_length_m)
         self._require_finite("install_temperature_c", install_temperature_c)
         self._require_positive("youngs_modulus_mpa", youngs_modulus_mpa)
-        self._require_positive("thermal_expansion_coeff_per_k", thermal_expansion_coeff_per_k)
+        self._require_positive(
+            "thermal_expansion_coeff_per_k", thermal_expansion_coeff_per_k
+        )
         self._require_positive("allowable_stress_mpa", allowable_stress_mpa)
         if flange_rating_class is not None and flange_rating_class <= 0:
             raise ValueError("flange_rating_class must be positive")
         if flange_allowable_pressure_bar is not None:
-            self._require_positive("flange_allowable_pressure_bar", flange_allowable_pressure_bar)
+            self._require_positive(
+                "flange_allowable_pressure_bar", flange_allowable_pressure_bar
+            )
 
         # Hoop (sustained) stress via Barlow: S = P D / (2 t).
         pressure_mpa = design_pressure_bar * 0.1
@@ -99,7 +107,9 @@ class PipingFlexibilityModel:
         if flange_allowable_pressure_bar is not None:
             flange_pressure_ratio = design_pressure_bar / flange_allowable_pressure_bar
 
-        stress_warning = self._stress_warning(hoop_stress_ratio, displacement_stress_ratio)
+        stress_warning = self._stress_warning(
+            hoop_stress_ratio, displacement_stress_ratio
+        )
         flange_warning = self._flange_warning(
             design_pressure_bar, flange_allowable_pressure_bar
         )
@@ -113,7 +123,9 @@ class PipingFlexibilityModel:
             allowable_stress_range_mpa=round(allowable_stress_range, 3),
             displacement_stress_ratio=round(displacement_stress_ratio, 4),
             flange_pressure_ratio=(
-                None if flange_pressure_ratio is None else round(flange_pressure_ratio, 4)
+                None
+                if flange_pressure_ratio is None
+                else round(flange_pressure_ratio, 4)
             ),
             stress_warning=stress_warning,
             flange_warning=flange_warning,

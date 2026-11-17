@@ -56,8 +56,11 @@ class Closure:
         return mask.reshape(shape)
 
 
-def find_crest(surface: Surface, near_xy: Optional[Tuple[float, float]] = None,
-               footprint: Optional[np.ndarray] = None) -> Tuple[int, int]:
+def find_crest(
+    surface: Surface,
+    near_xy: Optional[Tuple[float, float]] = None,
+    footprint: Optional[np.ndarray] = None,
+) -> Tuple[int, int]:
     """Return the crest node: the shallowest node, or the local high reached by climbing from ``near_xy``.
 
     Raises:
@@ -82,18 +85,26 @@ def find_crest(surface: Surface, near_xy: Optional[Tuple[float, float]] = None,
         for di in (-1, 0, 1):
             for dj in (-1, 0, 1):
                 a, b = i + di, j + dj
-                if 0 <= a < z.shape[0] and 0 <= b < z.shape[1] and allowed[a, b] and z[a, b] < best[0]:
+                if (
+                    0 <= a < z.shape[0]
+                    and 0 <= b < z.shape[1]
+                    and allowed[a, b]
+                    and z[a, b] < best[0]
+                ):
                     best = (z[a, b], a, b)
         if best[1:] == (i, j):
             return i, j
         i, j = best[1], best[2]
 
 
-def analyse_closure(surface: Surface, crest: Optional[Tuple[int, int]] = None,
-                    near_xy: Optional[Tuple[float, float]] = None,
-                    footprint: Optional[np.ndarray] = None,
-                    undefined_nodes: str = "leak",
-                    min_neighbour_relief_m: float = 1.0) -> Closure:
+def analyse_closure(
+    surface: Surface,
+    crest: Optional[Tuple[int, int]] = None,
+    near_xy: Optional[Tuple[float, float]] = None,
+    footprint: Optional[np.ndarray] = None,
+    undefined_nodes: str = "leak",
+    min_neighbour_relief_m: float = 1.0,
+) -> Closure:
     """Flood the trap from its crest and locate the spill point.
 
     Args:
@@ -109,7 +120,9 @@ def analyse_closure(surface: Surface, crest: Optional[Tuple[int, int]] = None,
         ValueError: for a time surface or an unknown ``undefined_nodes`` option.
     """
     if surface.domain != "depth":
-        raise ValueError("closure needs a depth surface; convert time with a velocity model first")
+        raise ValueError(
+            "closure needs a depth surface; convert time with a velocity model first"
+        )
     if undefined_nodes not in ("leak", "barrier"):
         raise ValueError("undefined_nodes must be 'leak' or 'barrier'")
     z = surface.values
@@ -156,23 +169,40 @@ def analyse_closure(surface: Surface, crest: Optional[Tuple[int, int]] = None,
                 seen[a, b] = True
                 heapq.heappush(heap, (float(z[a, b]), a, b))
     if spill_index is None:
-        warnings.append("closure bounded only by undefined nodes or the footprint; spill set to the "
-                        "deepest node reached")
+        warnings.append(
+            "closure bounded only by undefined nodes or the footprint; spill set to the "
+            "deepest node reached"
+        )
     crest_m = float(z[ci, cj])
     closed = level > crest_m + 1e-9 and bool(order)
     if not closed:
         warnings.append(f"no closure: the surface leaks at the crest ({reason})")
     xy = surface.node_xy()
-    spill_xy = None if spill_index is None else (float(xy[0][spill_index]), float(xy[1][spill_index]))
-    return Closure(crest_m=crest_m, crest_index=(int(ci), int(cj)),
-                   crest_xy=(float(xy[0][ci, cj]), float(xy[1][ci, cj])),
-                   spill_m=float(level), spill_index=spill_index, spill_xy=spill_xy,
-                   spill_reason=reason, closed=closed, order=np.asarray(order, dtype=np.int64),
-                   levels=np.asarray(levels, dtype=float), cell_area_m2=surface.cell_area_m2,
-                   undefined_nodes=undefined_nodes, warnings=warnings)
+    spill_xy = (
+        None
+        if spill_index is None
+        else (float(xy[0][spill_index]), float(xy[1][spill_index]))
+    )
+    return Closure(
+        crest_m=crest_m,
+        crest_index=(int(ci), int(cj)),
+        crest_xy=(float(xy[0][ci, cj]), float(xy[1][ci, cj])),
+        spill_m=float(level),
+        spill_index=spill_index,
+        spill_xy=spill_xy,
+        spill_reason=reason,
+        closed=closed,
+        order=np.asarray(order, dtype=np.int64),
+        levels=np.asarray(levels, dtype=float),
+        cell_area_m2=surface.cell_area_m2,
+        undefined_nodes=undefined_nodes,
+        warnings=warnings,
+    )
 
 
-def _base_values(top: Surface, base: Optional[Surface], thickness_m: Optional[float]) -> np.ndarray:
+def _base_values(
+    top: Surface, base: Optional[Surface], thickness_m: Optional[float]
+) -> np.ndarray:
     if base is not None:
         if base.domain != "depth":
             raise ValueError("base surface must be in depth")
@@ -185,8 +215,13 @@ def _base_values(top: Surface, base: Optional[Surface], thickness_m: Optional[fl
     return np.full(top.values.shape, np.inf)  # reservoir as thick as the column
 
 
-def volumes_at_contact(top: Surface, closure: Closure, contact_m: float,
-                       base: Optional[Surface] = None, thickness_m: Optional[float] = None) -> Dict[str, float]:
+def volumes_at_contact(
+    top: Surface,
+    closure: Closure,
+    contact_m: float,
+    base: Optional[Surface] = None,
+    thickness_m: Optional[float] = None,
+) -> Dict[str, float]:
     """Area, gross rock volume and mean column depth above one contact.
 
     Gross rock volume is ``sum(max(0, min(base, contact) - top)) x cell area`` over the closure.
@@ -195,40 +230,80 @@ def volumes_at_contact(top: Surface, closure: Closure, contact_m: float,
     flat_top = top.values.ravel()
     base_flat = _base_values(top, base, thickness_m).ravel()
     nodes = closure.order[closure.levels < contact_m]
-    column = np.clip(np.minimum(base_flat[nodes], contact_m) - flat_top[nodes], 0.0, None)
+    column = np.clip(
+        np.minimum(base_flat[nodes], contact_m) - flat_top[nodes], 0.0, None
+    )
     column = np.where(np.isfinite(column), column, 0.0)
     grv = float(column.sum() * closure.cell_area_m2)
     mid = flat_top[nodes] + 0.5 * column
-    mean_depth = float((mid * column).sum() / column.sum()) if column.sum() > 0 else float("nan")
-    return {"contact_m": float(contact_m), "area_km2": nodes.size * closure.cell_area_m2 / 1e6,
-            "grv_mm3": grv / 1e6, "mean_column_m": float(column.mean()) if nodes.size else 0.0,
-            "equivalent_thickness_m": grv / (nodes.size * closure.cell_area_m2) if nodes.size else 0.0,
-            "hc_column_mean_depth_m": mean_depth, "nodes": int(nodes.size)}
+    mean_depth = (
+        float((mid * column).sum() / column.sum()) if column.sum() > 0 else float("nan")
+    )
+    return {
+        "contact_m": float(contact_m),
+        "area_km2": nodes.size * closure.cell_area_m2 / 1e6,
+        "grv_mm3": grv / 1e6,
+        "mean_column_m": float(column.mean()) if nodes.size else 0.0,
+        "equivalent_thickness_m": (
+            grv / (nodes.size * closure.cell_area_m2) if nodes.size else 0.0
+        ),
+        "hc_column_mean_depth_m": mean_depth,
+        "nodes": int(nodes.size),
+    }
 
 
-def contact_sweep(top: Surface, closure: Closure, step_m: float = 5.0,
-                  base: Optional[Surface] = None, thickness_m: Optional[float] = None) -> List[Dict[str, float]]:
+def contact_sweep(
+    top: Surface,
+    closure: Closure,
+    step_m: float = 5.0,
+    base: Optional[Surface] = None,
+    thickness_m: Optional[float] = None,
+) -> List[Dict[str, float]]:
     """Area and gross rock volume for contacts from the crest down to the spill."""
     if step_m <= 0:
         raise ValueError("step_m must be positive")
-    contacts = np.arange(closure.crest_m + step_m, closure.spill_m, step_m).tolist() + [closure.spill_m]
-    rows = [{"contact_m": closure.crest_m, "area_km2": 0.0, "grv_mm3": 0.0, "mean_column_m": 0.0,
-             "equivalent_thickness_m": 0.0, "hc_column_mean_depth_m": closure.crest_m, "nodes": 0}]
-    return rows + [volumes_at_contact(top, closure, c, base, thickness_m)
-                   for c in contacts if c > closure.crest_m]
+    contacts = np.arange(closure.crest_m + step_m, closure.spill_m, step_m).tolist() + [
+        closure.spill_m
+    ]
+    rows = [
+        {
+            "contact_m": closure.crest_m,
+            "area_km2": 0.0,
+            "grv_mm3": 0.0,
+            "mean_column_m": 0.0,
+            "equivalent_thickness_m": 0.0,
+            "hc_column_mean_depth_m": closure.crest_m,
+            "nodes": 0,
+        }
+    ]
+    return rows + [
+        volumes_at_contact(top, closure, c, base, thickness_m)
+        for c in contacts
+        if c > closure.crest_m
+    ]
 
 
-def contact_for_volume(rows: Sequence[Dict[str, float]], target_grv_mm3: float) -> Optional[Dict[str, float]]:
+def contact_for_volume(
+    rows: Sequence[Dict[str, float]], target_grv_mm3: float
+) -> Optional[Dict[str, float]]:
     """Interpolate the contact and area that give a target gross rock volume; None if it does not fit.
 
     ``rows`` come from :func:`contact_sweep` (first row is the crest with zero volume).
     """
-    if not rows or target_grv_mm3 > rows[-1]["grv_mm3"] or target_grv_mm3 < rows[0]["grv_mm3"]:
+    if (
+        not rows
+        or target_grv_mm3 > rows[-1]["grv_mm3"]
+        or target_grv_mm3 < rows[0]["grv_mm3"]
+    ):
         return None
     for previous, row in zip(rows, rows[1:]):
         if previous["grv_mm3"] <= target_grv_mm3 <= row["grv_mm3"]:
             span = row["grv_mm3"] - previous["grv_mm3"]
             t = 0.0 if span == 0 else (target_grv_mm3 - previous["grv_mm3"]) / span
-            return {"contact_m": previous["contact_m"] + t * (row["contact_m"] - previous["contact_m"]),
-                    "area_km2": previous["area_km2"] + t * (row["area_km2"] - previous["area_km2"])}
+            return {
+                "contact_m": previous["contact_m"]
+                + t * (row["contact_m"] - previous["contact_m"]),
+                "area_km2": previous["area_km2"]
+                + t * (row["area_km2"] - previous["area_km2"]),
+            }
     return {"contact_m": rows[0]["contact_m"], "area_km2": rows[0]["area_km2"]}

@@ -129,9 +129,13 @@ def risk_level(
     try:
         level = grid[probability_class][consequence_class - 1]
     except (KeyError, IndexError) as exc:
-        raise ValueError("risk matrix must cover probability and consequence classes 1-5") from exc
+        raise ValueError(
+            "risk matrix must cover probability and consequence classes 1-5"
+        ) from exc
     if level not in RISK_LEVELS:
-        raise ValueError("risk matrix entries must be one of {}".format(list(RISK_LEVELS)))
+        raise ValueError(
+            "risk matrix entries must be one of {}".format(list(RISK_LEVELS))
+        )
     if high_consequence_floor and consequence_class == 5 and level == "Low":
         return "Medium"
     return level
@@ -192,7 +196,9 @@ class FmirrRegister:
             raise ValueError("duplicate entry_id {!r}".format(entry.entry_id))
         for name in ("item", "failure_mode"):
             if not getattr(entry, name).strip():
-                raise ValueError("{} must be non-empty for entry {!r}".format(name, entry.entry_id))
+                raise ValueError(
+                    "{} must be non-empty for entry {!r}".format(name, entry.entry_id)
+                )
         _check_class("consequence_class", entry.consequence_class)
         _check_class("probability_class", entry.probability_class)
         self._entries[entry.entry_id] = entry
@@ -222,8 +228,16 @@ class FmirrRegister:
         old = self._entries[entry_id]
         new = replace(
             old,
-            consequence_class=old.consequence_class if consequence_class is None else consequence_class,
-            probability_class=old.probability_class if probability_class is None else probability_class,
+            consequence_class=(
+                old.consequence_class
+                if consequence_class is None
+                else consequence_class
+            ),
+            probability_class=(
+                old.probability_class
+                if probability_class is None
+                else probability_class
+            ),
         )
         _check_class("consequence_class", new.consequence_class)
         _check_class("probability_class", new.probability_class)
@@ -257,28 +271,69 @@ class FmirrRegister:
         for entry, row in zip(self._entries.values(), rows):
             eid = entry.entry_id
             if entry.failure_mode.strip().lower() == entry.item.strip().lower():
-                add("warning", eid, "Failure mode repeats the failed item; keep item and mode separate.")
+                add(
+                    "warning",
+                    eid,
+                    "Failure mode repeats the failed item; keep item and mode separate.",
+                )
             lowered = " " + entry.failure_mode.lower() + " "
             if any(marker in lowered for marker in _MIXED_TEXT_MARKERS):
-                add("warning", eid, "Failure mode text mixes in a mechanism or cause; use separate columns.")
+                add(
+                    "warning",
+                    eid,
+                    "Failure mode text mixes in a mechanism or cause; use separate columns.",
+                )
             if not entry.failure_mechanism.strip():
                 add("warning", eid, "Failure mechanism missing.")
-            elif entry.failure_mechanism_class and entry.failure_mechanism_class not in FAILURE_MECHANISM_CLASSES:
-                add("warning", eid, "Mechanism class {!r} is not a recognised class.".format(
-                    entry.failure_mechanism_class))
-            if entry.failure_cause_class and entry.failure_cause_class not in FAILURE_CAUSE_CLASSES:
-                add("warning", eid, "Cause class {!r} is not a recognised class.".format(
-                    entry.failure_cause_class))
+            elif (
+                entry.failure_mechanism_class
+                and entry.failure_mechanism_class not in FAILURE_MECHANISM_CLASSES
+            ):
+                add(
+                    "warning",
+                    eid,
+                    "Mechanism class {!r} is not a recognised class.".format(
+                        entry.failure_mechanism_class
+                    ),
+                )
+            if (
+                entry.failure_cause_class
+                and entry.failure_cause_class not in FAILURE_CAUSE_CLASSES
+            ):
+                add(
+                    "warning",
+                    eid,
+                    "Cause class {!r} is not a recognised class.".format(
+                        entry.failure_cause_class
+                    ),
+                )
             if entry.lifecycle_phase and entry.lifecycle_phase not in LIFECYCLE_PHASES:
-                add("info", eid, "Life-cycle phase {!r} is not in the standard list.".format(
-                    entry.lifecycle_phase))
+                add(
+                    "info",
+                    eid,
+                    "Life-cycle phase {!r} is not in the standard list.".format(
+                        entry.lifecycle_phase
+                    ),
+                )
             if row["critical"]:
                 if not entry.qualification_test.strip():
-                    add("gap", eid, "Critical failure mode has no qualification activity (TEST) linked.")
+                    add(
+                        "gap",
+                        eid,
+                        "Critical failure mode has no qualification activity (TEST) linked.",
+                    )
                 if not entry.detection.strip():
-                    add("gap", eid, "Critical failure mode has no detection method stated.")
+                    add(
+                        "gap",
+                        eid,
+                        "Critical failure mode has no detection method stated.",
+                    )
             if entry.novelty_category == "1" and row["critical"]:
-                add("info", eid, "Critical mode on a proven element: verify to the applicable standard.")
+                add(
+                    "info",
+                    eid,
+                    "Critical mode on a proven element: verify to the applicable standard.",
+                )
         return findings
 
     def evaluate(self) -> dict[str, Any]:
@@ -318,15 +373,26 @@ class FmirrRegister:
                     "novelty_category": entry.novelty_category,
                 }
             )
-        counts = {level: sum(1 for r in rows if r["risk"] == level) for level in RISK_LEVELS}
+        counts = {
+            level: sum(1 for r in rows if r["risk"] == level) for level in RISK_LEVELS
+        }
         order = {"High": 0, "Medium": 1, "Low": 2}
         critical = sorted(
             (r for r in rows if r["critical"]),
-            key=lambda r: (order[r["risk"]], -r["consequence_class"], -r["probability_class"], r["id"]),
+            key=lambda r: (
+                order[r["risk"]],
+                -r["consequence_class"],
+                -r["probability_class"],
+                r["id"],
+            ),
         )
         grid = {
             str(p): [
-                sum(1 for r in rows if r["probability_class"] == p and r["consequence_class"] == c)
+                sum(
+                    1
+                    for r in rows
+                    if r["probability_class"] == p and r["consequence_class"] == c
+                )
                 for c in range(1, 6)
             ]
             for p in range(5, 0, -1)
@@ -336,7 +402,13 @@ class FmirrRegister:
         for phase in LIFECYCLE_PHASES:
             if phase not in covered:
                 findings.append(
-                    {"level": "gap", "entry_id": "", "text": "No failure mode registered for life-cycle phase: {}.".format(phase)}
+                    {
+                        "level": "gap",
+                        "entry_id": "",
+                        "text": "No failure mode registered for life-cycle phase: {}.".format(
+                            phase
+                        ),
+                    }
                 )
         linked = [r for r in critical if r["test"].strip()]
         return {

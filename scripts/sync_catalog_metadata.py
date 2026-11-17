@@ -13,6 +13,7 @@ neqsim-enterprise-skills the catalogue deliberately carries a shorter house-styl
 summary rather than the SKILL.md "Use when:" text, so sync `version` ONLY there --
 rewriting descriptions would destroy an intentional editorial difference.
 """
+
 from __future__ import annotations
 
 import re

@@ -94,7 +94,9 @@ def fit_arps_decline(
     return fit_with_r2
 
 
-def _linear_regression(xs: Sequence[float], ys: Sequence[float]) -> Tuple[float, float, float]:
+def _linear_regression(
+    xs: Sequence[float], ys: Sequence[float]
+) -> Tuple[float, float, float]:
     """Ordinary least squares. Returns (slope, intercept, r_squared)."""
     n = len(xs)
     mean_x = sum(xs) / n
@@ -257,7 +259,9 @@ def forecast_production(
         years_to_limit=years_to_limit,
         profile=profile,
         remaining_volume=round(remaining, 6),
-        cumulative_to_date=None if cumulative_to_date is None else round(cumulative_to_date, 6),
+        cumulative_to_date=(
+            None if cumulative_to_date is None else round(cumulative_to_date, 6)
+        ),
         estimated_ultimate_recovery=eur,
         assumptions=assumptions,
     )

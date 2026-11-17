@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Callable, Dict, Mapping, Sequence, Tuple
+from typing import Callable, Dict, Mapping, Sequence
 
 
 @dataclass(frozen=True)
@@ -48,11 +48,15 @@ def weighted_ssr(
     total = 0.0
     for target in targets:
         if target.weight < 0.0 or not math.isfinite(target.weight):
-            raise ValueError(f"weight for {target.name} must be non-negative and finite")
+            raise ValueError(
+                f"weight for {target.name} must be non-negative and finite"
+            )
         if target.name not in predicted:
             raise ValueError(f"predicted value for target '{target.name}' is missing")
         if target.measured == 0.0:
-            raise ValueError(f"measured value for target '{target.name}' must be non-zero")
+            raise ValueError(
+                f"measured value for target '{target.name}' must be non-zero"
+            )
         rel = (float(predicted[target.name]) - target.measured) / target.measured
         total += target.weight * rel * rel
     return total

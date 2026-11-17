@@ -23,7 +23,9 @@ def test_gamma_split_sums_to_z_plus():
     masses = result.molar_masses
     assert all(masses[i] < masses[i + 1] for i in range(len(masses) - 1))
     # Overall molar mass average is close to m_plus.
-    avg = sum(z * m for z, m in zip(result.mole_fractions, masses)) / sum(result.mole_fractions)
+    avg = sum(z * m for z, m in zip(result.mole_fractions, masses)) / sum(
+        result.mole_fractions
+    )
     assert avg == pytest.approx(220.0, rel=0.15)
 
 
@@ -41,7 +43,9 @@ def test_split_factor_and_delump_roundtrip():
     sf = calculate_split_factor(full, scheme)
     # Factors within each lump sum to 1.
     assert sf.split_factors[1] + sf.split_factors[2] == pytest.approx(1.0)
-    assert sf.split_factors[3] + sf.split_factors[4] + sf.split_factors[5] == pytest.approx(1.0)
+    assert sf.split_factors[3] + sf.split_factors[4] + sf.split_factors[
+        5
+    ] == pytest.approx(1.0)
     lumped = list(sf.lump_totals)
     reconstructed = delump_composition(lumped, sf.split_factors, scheme)
     for original, back in zip(full, reconstructed):

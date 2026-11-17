@@ -19,10 +19,20 @@ PARAMETERS = [
     Triangular(name="GIP", unit="GSm3", low=105.0, base_value=135.0, high=169.0),
     Triangular(name="Recovery factor", unit="-", low=0.45, base_value=0.57, high=0.66),
     Triangular(
-        name="Gas price", unit="NOK/Sm3", low=0.8, base_value=1.5, high=2.5, kind="economic"
+        name="Gas price",
+        unit="NOK/Sm3",
+        low=0.8,
+        base_value=1.5,
+        high=2.5,
+        kind="economic",
     ),
     Triangular(
-        name="CAPEX multiplier", unit="-", low=0.85, base_value=1.0, high=1.4, kind="economic"
+        name="CAPEX multiplier",
+        unit="-",
+        low=0.85,
+        base_value=1.0,
+        high=1.4,
+        kind="economic",
     ),
 ]
 

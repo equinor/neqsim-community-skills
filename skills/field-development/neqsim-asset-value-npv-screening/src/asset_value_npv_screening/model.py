@@ -61,7 +61,9 @@ class AssetValueModel:
         net = []
         for r, o, c in zip(revenue, opex, capex):
             operating_profit = r - o
-            tax = tax_rate_fraction * operating_profit if operating_profit > 0.0 else 0.0
+            tax = (
+                tax_rate_fraction * operating_profit if operating_profit > 0.0 else 0.0
+            )
             net.append(operating_profit - tax - c)
 
         discounted = [
@@ -136,7 +138,9 @@ class AssetValueModel:
         return out
 
     @classmethod
-    def _irr(cls, net: Sequence[float], *, lower: float = -0.9, upper: float = 5.0) -> float | None:
+    def _irr(
+        cls, net: Sequence[float], *, lower: float = -0.9, upper: float = 5.0
+    ) -> float | None:
         def npv_at(rate: float) -> float:
             return sum(cf / ((1.0 + rate) ** (t + 1)) for t, cf in enumerate(net))
 
@@ -175,7 +179,9 @@ class AssetValueModel:
         return values
 
     @classmethod
-    def _broadcast(cls, name: str, value: Sequence[float] | float, years: int) -> list[float]:
+    def _broadcast(
+        cls, name: str, value: Sequence[float] | float, years: int
+    ) -> list[float]:
         if isinstance(value, (int, float)):
             cls._require_non_negative(name, float(value))
             return [float(value)] * years

@@ -75,7 +75,9 @@ class UncertaintyReport:
         summary = self.result.summary
         prefix = self.tornado_prefix()
         block: Dict[str, Any] = {
-            "method": "Monte Carlo, {} sampling".format(self.result.sampling_method.upper()),
+            "method": "Monte Carlo, {} sampling".format(
+                self.result.sampling_method.upper()
+            ),
             "sampling_method": self.result.sampling_method,
             "seed": self.result.seed,
             "simulation_engine": self.simulation_engine,
@@ -104,7 +106,9 @@ class UncertaintyReport:
         unit = " {}".format(self.output_unit) if self.output_unit else ""
         lines = [
             "**{}** — {} samples, {} sampling.".format(
-                self.output_parameter, summary.count, self.result.sampling_method.upper()
+                self.output_parameter,
+                summary.count,
+                self.result.sampling_method.upper(),
             ),
             "",
             "| Statistic | Value |",
@@ -115,7 +119,9 @@ class UncertaintyReport:
             "| Mean | {:.6g}{} |".format(summary.mean, unit),
             "| Std. dev. | {:.6g}{} |".format(summary.std, unit),
             "| P(negative) | {:.1f} % |".format(summary.prob_negative_pct),
-            "| Median drift (% of P10-P90 spread) | {:.2f} % |".format(summary.drift_pct),
+            "| Median drift (% of P10-P90 spread) | {:.2f} % |".format(
+                summary.drift_pct
+            ),
         ]
         if self.tornado:
             lines += [
@@ -126,7 +132,10 @@ class UncertaintyReport:
             for entry in self.tornado:
                 lines.append(
                     "| {} | {:.6g} | {:.6g} | {:.6g} |".format(
-                        entry.parameter, entry.output_low, entry.output_high, entry.swing
+                        entry.parameter,
+                        entry.output_low,
+                        entry.output_high,
+                        entry.swing,
                     )
                 )
         cache = self.result.cache_report

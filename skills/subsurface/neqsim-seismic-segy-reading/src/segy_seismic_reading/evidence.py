@@ -23,12 +23,17 @@ def to_evidence(geometry: SegyGeometry) -> dict:
     if geometry.inlines is not None and geometry.crosslines is not None:
         survey = {
             "inline_range": [int(geometry.inlines.min()), int(geometry.inlines.max())],
-            "crossline_range": [int(geometry.crosslines.min()), int(geometry.crosslines.max())],
+            "crossline_range": [
+                int(geometry.crosslines.min()),
+                int(geometry.crosslines.max()),
+            ],
             "inline_count": int(geometry.inlines.size),
             "crossline_count": int(geometry.crosslines.size),
             "sorting": geometry.sorting,
             "offsets": geometry.offsets,
-            "header_bytes": list(geometry.header_bytes) if geometry.header_bytes else None,
+            "header_bytes": (
+                list(geometry.header_bytes) if geometry.header_bytes else None
+            ),
             "bin_spacing": geometry.bin_spacing,
         }
     samples = geometry.samples
@@ -74,17 +79,32 @@ def scan_folder(folder, recursive: bool = True, max_files: int = 200) -> List[di
     """Inspect every SEG-Y file in a folder (read only); failures are reported, not raised."""
     root = Path(folder)
     pattern = "**/*" if recursive else "*"
-    files = sorted(p for p in root.glob(pattern) if p.is_file() and p.suffix.lower() in SEGY_SUFFIXES)
+    files = sorted(
+        p
+        for p in root.glob(pattern)
+        if p.is_file() and p.suffix.lower() in SEGY_SUFFIXES
+    )
     records = []
     for path in files[:max_files]:
         try:
             records.append(to_evidence(inspect_segy(path)))
         except Exception as exc:  # noqa: BLE001 - report every failure and continue
-            records.append({"schema": SCHEMA, "status": "error", "source": {"path": str(path)},
-                            "error": f"{type(exc).__name__}: {exc}"})
+            records.append(
+                {
+                    "schema": SCHEMA,
+                    "status": "error",
+                    "source": {"path": str(path)},
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+            )
     if len(files) > max_files:
-        records.append({"schema": SCHEMA, "status": "truncated",
-                        "note": f"{len(files) - max_files} more files not read (max_files={max_files})"})
+        records.append(
+            {
+                "schema": SCHEMA,
+                "status": "truncated",
+                "note": f"{len(files) - max_files} more files not read (max_files={max_files})",
+            }
+        )
     return records
 
 

@@ -47,7 +47,11 @@ def test_check_crs() -> None:
 def test_load_table_maps_columns_and_decimals(tmp_path) -> None:
     f = tmp_path / "prod.csv"
     f.write_text("CAMPO;MES;OLEO\nA;1;1.234,5\nB;2;10,25\n", encoding="utf-8")
-    rows = load_table(str(f), {"field": "CAMPO", "month": "MES", "oil": "OLEO"}, numeric=["month", "oil"])
+    rows = load_table(
+        str(f),
+        {"field": "CAMPO", "month": "MES", "oil": "OLEO"},
+        numeric=["month", "oil"],
+    )
     assert rows[0]["oil"] == pytest.approx(1234.5)
     assert rows[1]["oil"] == pytest.approx(10.25)
     assert rows[1]["field"] == "B"

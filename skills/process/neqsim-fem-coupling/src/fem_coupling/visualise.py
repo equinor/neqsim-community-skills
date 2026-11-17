@@ -201,7 +201,9 @@ def render_field(
             notes.append(f"{view}: {error}")
             continue
         if mesh is None or mesh.n_cells == 0:
-            notes.append(f"{view}: the cut produced nothing; check the normal and origin")
+            notes.append(
+                f"{view}: the cut produced nothing; check the normal and origin"
+            )
             continue
         if warp_factor is not None:
             mesh = mesh.warp_by_scalar(scalar, factor=warp_factor)

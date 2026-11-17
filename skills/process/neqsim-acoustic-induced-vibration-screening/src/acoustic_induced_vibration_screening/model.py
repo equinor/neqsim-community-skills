@@ -85,8 +85,8 @@ class AcousticInducedVibrationModel:
         # PWL = 10 log10[(dP/P1)^3.6 * mdot^2 * (T/MW)^1.2] + constant.
         if sound_power_level_db is None:
             inner = (
-                pressure_drop_ratio ** 3.6
-                * mass_flow_kg_s ** 2.0
+                pressure_drop_ratio**3.6
+                * mass_flow_kg_s**2.0
                 * (temperature_k / molecular_weight) ** 1.2
             )
             pwl = 10.0 * log10(inner) + self.pwl_constant_db

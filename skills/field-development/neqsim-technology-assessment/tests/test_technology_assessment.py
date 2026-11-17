@@ -12,7 +12,9 @@ from technology_assessment import (
     from_dict,
 )
 
-EXAMPLE = Path(__file__).resolve().parents[1] / "examples" / "example_novel_technology.json"
+EXAMPLE = (
+    Path(__file__).resolve().parents[1] / "examples" / "example_novel_technology.json"
+)
 
 
 @pytest.mark.parametrize(
@@ -55,8 +57,16 @@ def test_role_classification():
 
 def _basic():
     ta = TechnologyAssessment("Demo")
-    ta.add_element(TechnologyElement("A", "System", technology_novelty="new", trl=2, evidence=("x",)))
-    ta.add_element(TechnologyElement("B", "Part", parent_id="A", technology_novelty="proven", trl=7))
+    ta.add_element(
+        TechnologyElement(
+            "A", "System", technology_novelty="new", trl=2, evidence=("x",)
+        )
+    )
+    ta.add_element(
+        TechnologyElement(
+            "B", "Part", parent_id="A", technology_novelty="proven", trl=7
+        )
+    )
     return ta
 
 
@@ -66,12 +76,16 @@ def test_system_trl_is_minimum_of_elements():
 
 def test_interfaces_untested_lowers_system_trl():
     ta = TechnologyAssessment("Demo", interfaces_untested=True)
-    ta.add_element(TechnologyElement("A", "S", technology_novelty="new", trl=3, evidence=("x",)))
+    ta.add_element(
+        TechnologyElement("A", "S", technology_novelty="new", trl=3, evidence=("x",))
+    )
     assert ta.assess()["summary"]["system_trl"] == 2
 
 
 def test_system_trl_override_cannot_exceed_minimum():
-    ta = TechnologyAssessment("Demo", system_trl_override=5, system_trl_override_rationale="r")
+    ta = TechnologyAssessment(
+        "Demo", system_trl_override=5, system_trl_override_rationale="r"
+    )
     ta.add_element(TechnologyElement("A", "S", technology_novelty="new", trl=3))
     with pytest.raises(ValueError):
         ta.assess()
@@ -111,9 +125,17 @@ def test_empty_assessment_rejected():
 
 def test_consistency_flags():
     ta = TechnologyAssessment("Demo")
-    ta.add_element(TechnologyElement("P", "proven low trl", technology_novelty="proven", trl=3))
-    ta.add_element(TechnologyElement("N", "novel trl7", technology_novelty="new", trl=7, evidence=("e",)))
-    ta.add_element(TechnologyElement("E", "novel no evidence", technology_novelty="new", trl=1))
+    ta.add_element(
+        TechnologyElement("P", "proven low trl", technology_novelty="proven", trl=3)
+    )
+    ta.add_element(
+        TechnologyElement(
+            "N", "novel trl7", technology_novelty="new", trl=7, evidence=("e",)
+        )
+    )
+    ta.add_element(
+        TechnologyElement("E", "novel no evidence", technology_novelty="new", trl=1)
+    )
     flags = " ".join(ta.assess()["flags"])
     assert "P: Category 1 (proven) but TRL < 7" in flags
     assert "N: TRL 7 but novelty category >= 2" in flags
@@ -122,9 +144,16 @@ def test_consistency_flags():
 
 def test_step_out_max_and_min_directions():
     ta = _basic()
-    ta.add_step_out(StepOutItem("design", reference_value=10, proposed_value=20, unit="m"))
     ta.add_step_out(
-        StepOutItem("operating_conditions", reference_value=-5, proposed_value=-20, direction="min")
+        StepOutItem("design", reference_value=10, proposed_value=20, unit="m")
+    )
+    ta.add_step_out(
+        StepOutItem(
+            "operating_conditions",
+            reference_value=-5,
+            proposed_value=-20,
+            direction="min",
+        )
     )
     ta.add_step_out(StepOutItem("fluids", reference_value=100, proposed_value=80))
     ta.add_step_out(StepOutItem("lifetime", proposed="25 years"))
@@ -138,8 +167,14 @@ def test_step_out_max_and_min_directions():
 
 def test_step_out_without_documented_experience_is_a_data_gap():
     ta = _basic()
-    ta.add_step_out(StepOutItem("fluids", proposed="43 mol% CO2", experience_documented=False))
-    ta.add_step_out(StepOutItem("design", reference_value=10, proposed_value=5, experience_documented=False))
+    ta.add_step_out(
+        StepOutItem("fluids", proposed="43 mol% CO2", experience_documented=False)
+    )
+    ta.add_step_out(
+        StepOutItem(
+            "design", reference_value=10, proposed_value=5, experience_documented=False
+        )
+    )
     result = ta.assess()
     rows = {r["dimension"]: r for r in result["step_out"]}
     assert rows["fluids"]["status"] == "no documented experience basis"
@@ -156,7 +191,10 @@ def test_from_dict_reads_experience_documented():
         "step_out": [{"dimension": "lifetime", "experience_documented": False}],
     }
     row = from_dict(spec).assess()["step_out"][0]
-    assert row["experience_documented"] is False and row["status"] == "no documented experience basis"
+    assert (
+        row["experience_documented"] is False
+        and row["status"] == "no documented experience basis"
+    )
 
 
 def test_data_gaps_list_missing_step_out_dimensions_and_basis():

@@ -13,7 +13,9 @@ def bottlenecks(result: Dict[str, Any], top: int = 15) -> List[Dict[str, Any]]:
     (liquid) of capacity in that element, holding everything else fixed.
     """
     rate, base = result["discount_rate"], result["base_year"]
-    agg: Dict[str, Dict[str, Any]] = defaultdict(lambda: {"pv_mnok_per_unit": 0.0, "years": [], "max": 0.0})
+    agg: Dict[str, Dict[str, Any]] = defaultdict(
+        lambda: {"pv_mnok_per_unit": 0.0, "years": [], "max": 0.0}
+    )
     for yr in result["years"]:
         df = 1.0 / (1.0 + rate) ** (yr["year"] - base)
         for element, value in yr["shadow_price_mnok_per_unit_yr"].items():
@@ -23,13 +25,22 @@ def bottlenecks(result: Dict[str, Any], top: int = 15) -> List[Dict[str, Any]]:
             a["pv_mnok_per_unit"] += value * df
             a["years"].append(yr["year"])
             a["max"] = max(a["max"], value)
-    ranked = [{"element": k, "binding_years": v["years"], "pv_mnok_per_unit_capacity": round(v["pv_mnok_per_unit"], 2),
-               "max_shadow_mnok_per_unit_yr": round(v["max"], 3)} for k, v in agg.items()]
+    ranked = [
+        {
+            "element": k,
+            "binding_years": v["years"],
+            "pv_mnok_per_unit_capacity": round(v["pv_mnok_per_unit"], 2),
+            "max_shadow_mnok_per_unit_yr": round(v["max"], 3),
+        }
+        for k, v in agg.items()
+    ]
     ranked.sort(key=lambda r: -r["pv_mnok_per_unit_capacity"])
     return ranked[:top]
 
 
-def ullage_timeline(result: Dict[str, Any], elements: Optional[List[str]] = None) -> Dict[str, Dict[int, float]]:
+def ullage_timeline(
+    result: Dict[str, Any], elements: Optional[List[str]] = None
+) -> Dict[str, Dict[int, float]]:
     """Spare capacity per element and year (capacity - optimised flow), in element units."""
     out: Dict[str, Dict[int, float]] = defaultdict(dict)
     for yr in result["years"]:
@@ -54,11 +65,15 @@ def curtailment(result: Dict[str, Any]) -> List[Dict[str, Any]]:
     return rows
 
 
-def tiein_ranking(result: Dict[str, Any], *, gas_price: float, liquid_price: float) -> List[Dict[str, Any]]:
+def tiein_ranking(
+    result: Dict[str, Any], *, gas_price: float, liquid_price: float
+) -> List[Dict[str, Any]]:
     """Discoveries ranked by discounted gross revenue actually accepted by the network."""
     rate, base = result["discount_rate"], result["base_year"]
     value: Dict[str, float] = defaultdict(float)
-    volumes: Dict[str, Dict[str, float]] = defaultdict(lambda: {"gas_gsm3": 0.0, "liquid_msm3": 0.0})
+    volumes: Dict[str, Dict[str, float]] = defaultdict(
+        lambda: {"gas_gsm3": 0.0, "liquid_msm3": 0.0}
+    )
     first_year: Dict[str, int] = {}
     for yr in result["years"]:
         df = 1.0 / (1.0 + rate) ** (yr["year"] - base)
@@ -66,7 +81,9 @@ def tiein_ranking(result: Dict[str, Any], *, gas_price: float, liquid_price: flo
             if not ent.startswith("DSC_"):
                 continue
             gas, liq = prod["gas_msm3d"], prod["liquid_sm3d"]
-            value[ent] += (gas * gas_price * 365.0 + liq * liquid_price * 365.0 / 1.0e6) * df
+            value[ent] += (
+                gas * gas_price * 365.0 + liq * liquid_price * 365.0 / 1.0e6
+            ) * df
             volumes[ent]["gas_gsm3"] += gas * 365.0 / 1000.0
             volumes[ent]["liquid_msm3"] += liq * 365.0 / 1.0e6
             first_year.setdefault(ent, yr["year"])
@@ -74,11 +91,20 @@ def tiein_ranking(result: Dict[str, Any], *, gas_price: float, liquid_price: flo
     for ent, pv in value.items():
         host = result.get("tiebacks", {}).get(ent) or {}
         supply = result.get("supply", {}).get(ent, {})
-        rows.append({"discovery": ent, "host": host.get("name"), "host_field": host.get("field_id"),
-                     "distance_km": host.get("distance_km"), "first_year": first_year.get(ent),
-                     "status": supply.get("method", {}).get("status"), "rc": supply.get("method", {}).get("rc"),
-                     "pv_gross_revenue_mnok": round(pv, 1),
-                     "gas_gsm3": round(volumes[ent]["gas_gsm3"], 3), "liquid_msm3": round(volumes[ent]["liquid_msm3"], 3)})
+        rows.append(
+            {
+                "discovery": ent,
+                "host": host.get("name"),
+                "host_field": host.get("field_id"),
+                "distance_km": host.get("distance_km"),
+                "first_year": first_year.get(ent),
+                "status": supply.get("method", {}).get("status"),
+                "rc": supply.get("method", {}).get("rc"),
+                "pv_gross_revenue_mnok": round(pv, 1),
+                "gas_gsm3": round(volumes[ent]["gas_gsm3"], 3),
+                "liquid_msm3": round(volumes[ent]["liquid_msm3"], 3),
+            }
+        )
     rows.sort(key=lambda r: -r["pv_gross_revenue_mnok"])
     return rows
 
@@ -91,7 +117,9 @@ def stranded_discoveries(result: Dict[str, Any]) -> List[str]:
     return sorted(seen)
 
 
-def production_uplift(optimizer: Any, result: Dict[str, Any], year: int, top: int = 15) -> List[Dict[str, Any]]:
+def production_uplift(
+    optimizer: Any, result: Dict[str, Any], year: int, top: int = 15
+) -> List[Dict[str, Any]]:
     """Extra rate each producing field could ship in ``year``.
 
     Uplift = min(route headroom, demonstrated capability gap). Route headroom
@@ -114,7 +142,9 @@ def production_uplift(optimizer: Any, result: Dict[str, Any], year: int, top: in
                 continue
             series = prof.gas_msm3d if medium == "gas" else prof.liquid_sm3d
             history = [v for y, v in series.items() if y < result["base_year"]]
-            current = produced["gas_msm3d"] if medium == "gas" else produced["liquid_sm3d"]
+            current = (
+                produced["gas_msm3d"] if medium == "gas" else produced["liquid_sm3d"]
+            )
             capability_gap = max(max(history, default=0.0) - current, 0.0)
             if capability_gap <= 1e-6 or current <= 0:
                 continue
@@ -132,12 +162,28 @@ def production_uplift(optimizer: Any, result: Dict[str, Any], year: int, top: in
             uplift = min(best, capability_gap)
             if uplift <= 1e-6:
                 continue
-            unit_value = prices["gas_nok_per_sm3"] * 365.0 if medium == "gas" else prices["liquid_nok_per_sm3"] * 365.0 / 1e6
-            rows.append({"entity": ent, "medium": medium, "year": year, "current": round(current, 3),
-                         "uplift": round(uplift, 3), "unit": "MSm3/d" if medium == "gas" else "Sm3/d",
-                         "route_headroom": None if best == float("inf") else round(best, 3),
-                         "capability_gap": round(capability_gap, 3),
-                         "limited_by": "field capability (historical peak)" if capability_gap <= best else limiting,
-                         "value_of_uplift_mnok_yr": round(uplift * unit_value, 1)})
+            unit_value = (
+                prices["gas_nok_per_sm3"] * 365.0
+                if medium == "gas"
+                else prices["liquid_nok_per_sm3"] * 365.0 / 1e6
+            )
+            rows.append(
+                {
+                    "entity": ent,
+                    "medium": medium,
+                    "year": year,
+                    "current": round(current, 3),
+                    "uplift": round(uplift, 3),
+                    "unit": "MSm3/d" if medium == "gas" else "Sm3/d",
+                    "route_headroom": None if best == float("inf") else round(best, 3),
+                    "capability_gap": round(capability_gap, 3),
+                    "limited_by": (
+                        "field capability (historical peak)"
+                        if capability_gap <= best
+                        else limiting
+                    ),
+                    "value_of_uplift_mnok_yr": round(uplift * unit_value, 1),
+                }
+            )
     rows.sort(key=lambda r: -r["value_of_uplift_mnok_yr"])
     return rows[:top]

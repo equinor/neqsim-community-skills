@@ -16,8 +16,12 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="segy_seismic_reading", description=__doc__)
     parser.add_argument("path", help="SEG-Y file or folder to scan")
     parser.add_argument("--out", help="write the evidence JSON here instead of stdout")
-    parser.add_argument("--coordinates", default="cdp", choices=["cdp", "source", "group"],
-                        help="trace-header coordinate pair to use")
+    parser.add_argument(
+        "--coordinates",
+        default="cdp",
+        choices=["cdp", "source", "group"],
+        help="trace-header coordinate pair to use",
+    )
     args = parser.parse_args(argv)
 
     target = Path(args.path)
@@ -28,7 +32,9 @@ def main(argv=None) -> int:
     if args.out:
         write_evidence(records, args.out)
         count = len(records) if isinstance(records, list) else 1
-        sys.stdout.write(f"wrote {count} seismic_dataset_evidence.v1 record(s) to {args.out}\n")
+        sys.stdout.write(
+            f"wrote {count} seismic_dataset_evidence.v1 record(s) to {args.out}\n"
+        )
     else:
         json.dump(records, sys.stdout, indent=2, default=str)
         sys.stdout.write("\n")

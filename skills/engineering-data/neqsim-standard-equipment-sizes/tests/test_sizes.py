@@ -62,7 +62,9 @@ def test_motor_rating_rounds_up_with_margin():
         next_motor_kw(5000.0)
 
 
-@pytest.mark.parametrize("pressure,flange_class", [(15.0, 150), (40.0, 300), (100.0, 600), (200.0, 1500)])
+@pytest.mark.parametrize(
+    "pressure,flange_class", [(15.0, 150), (40.0, 300), (100.0, 600), (200.0, 1500)]
+)
 def test_b165_class_ambient(pressure, flange_class):
     assert lowest_b165_class_ambient(pressure) == flange_class
 

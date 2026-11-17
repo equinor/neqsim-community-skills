@@ -96,7 +96,9 @@ class UncertaintyStudy:
         names = [p.name for p in self.parameters]
         duplicates = {n for n in names if names.count(n) > 1}
         if duplicates:
-            raise StudyError("duplicate parameter names: {}".format(", ".join(sorted(duplicates))))
+            raise StudyError(
+                "duplicate parameter names: {}".format(", ".join(sorted(duplicates)))
+            )
         self._model = build_model(self.model, self.technical, self.economic)
 
     @property

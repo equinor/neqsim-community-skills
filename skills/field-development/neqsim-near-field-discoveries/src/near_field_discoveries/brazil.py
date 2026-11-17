@@ -20,7 +20,7 @@ from __future__ import annotations
 import datetime as _dt
 import re
 import unicodedata
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Mapping
 
 from .geo import (
     bbox_around,
@@ -40,9 +40,26 @@ EXPLORATORY_CATEGORIES = {
     "JAZIDA MAIS PROFUNDA",
     "JAZIDA MAIS RASA",
 }
-RESULT_RANK = {"discovery": 0, "commercial": 1, "subcommercial": 2, "bearing": 3, "extension": 4, "shows": 5}
-HYDROCARBON_RESULTS = ("discovery", "commercial", "subcommercial", "bearing", "extension")
-FIELD_STAGES = {"PRODUCAO": "producing", "DESENVOLVIMENTO": "in_development", "EM DEVOLUCAO": "unlikely"}
+RESULT_RANK = {
+    "discovery": 0,
+    "commercial": 1,
+    "subcommercial": 2,
+    "bearing": 3,
+    "extension": 4,
+    "shows": 5,
+}
+HYDROCARBON_RESULTS = (
+    "discovery",
+    "commercial",
+    "subcommercial",
+    "bearing",
+    "extension",
+)
+FIELD_STAGES = {
+    "PRODUCAO": "producing",
+    "DESENVOLVIMENTO": "in_development",
+    "EM DEVOLUCAO": "unlikely",
+}
 ANP_EXTRA_LAYERS = {
     "evaluation_plans": "geoanp:pad",
     "relinquished_blocks": "geoanp:blocos_exploratorios_devolvidos",
@@ -192,7 +209,9 @@ def field_records(fields: Any) -> list[Discovery]:
                 position_basis="polygon-centroid",
                 rings=rings,
                 water_depth_m=_num(p.get("med_lamina")),
-                plan_note=("production start " + started.isoformat()) if started else None,
+                plan_note=(
+                    ("production start " + started.isoformat()) if started else None
+                ),
                 linked={"basin": p.get("nome_bacia"), "round": p.get("num_rodada")},
                 source="ANP GeoServer sisroc:campos_gishub_db",
                 gaps=[GAP_NO_VOLUMES],
@@ -226,10 +245,21 @@ def evaluation_area_records(plans: Any, as_of: _dt.date) -> list[Discovery]:
                 position_basis="polygon-centroid",
                 rings=rings_from_geometry(f.get("geometry")),
                 plan_note="Discovery evaluation plan %s to %s (%s)"
-                % (start.isoformat() if start else "?", end.isoformat() if end else "?", "running" if active else "ended or no end date"),
-                linked={"block": p.get("COD_BLOCO"), "basin": p.get("NOM_BACIA"), "area_km2": _num(p.get("AREA"))},
+                % (
+                    start.isoformat() if start else "?",
+                    end.isoformat() if end else "?",
+                    "running" if active else "ended or no end date",
+                ),
+                linked={
+                    "block": p.get("COD_BLOCO"),
+                    "basin": p.get("NOM_BACIA"),
+                    "area_km2": _num(p.get("AREA")),
+                },
                 source="ANP GeoServer geoanp:pad",
-                gaps=["The meaning of the plan status code is not documented in the layer; confirm with ANP.", GAP_NO_VOLUMES],
+                gaps=[
+                    "The meaning of the plan status code is not documented in the layer; confirm with ANP.",
+                    GAP_NO_VOLUMES,
+                ],
             )
         )
     return out
@@ -272,16 +302,29 @@ def discovery_candidates(
     as_of = as_of or _dt.date.today()
     aliases = {fold(k): v for k, v in (aliases or {}).items()}
     known = {fold(k): dict(v) for k, v in (known_volumes or {}).items()}
-    field_rings = [(str(_props(f).get("name") or ""), rings_from_geometry(f.get("geometry"))) for f in _features(fields)]
-    plan_feats = [(f, rings_from_geometry(f.get("geometry"))) for f in _features(evaluation_plans)]
-    block_feats = [(f, rings_from_geometry(f.get("geometry"))) for f in _features(blocks)]
-    ret_feats = [(f, rings_from_geometry(f.get("geometry"))) for f in _features(relinquished_blocks)]
+    field_rings = [
+        (str(_props(f).get("name") or ""), rings_from_geometry(f.get("geometry")))
+        for f in _features(fields)
+    ]
+    plan_feats = [
+        (f, rings_from_geometry(f.get("geometry"))) for f in _features(evaluation_plans)
+    ]
+    block_feats = [
+        (f, rings_from_geometry(f.get("geometry"))) for f in _features(blocks)
+    ]
+    ret_feats = [
+        (f, rings_from_geometry(f.get("geometry")))
+        for f in _features(relinquished_blocks)
+    ]
 
     classes = HYDROCARBON_RESULTS + (("shows",) if include_shows else ())
     evidence: list[dict[str, Any]] = []
     for f in _features(wells):
         p = _props(f)
-        exploratory = fold(p.get("tipo")).startswith("EXPLORAT") or fold(p.get("categoria")) in EXPLORATORY_CATEGORIES
+        exploratory = (
+            fold(p.get("tipo")).startswith("EXPLORAT")
+            or fold(p.get("categoria")) in EXPLORATORY_CATEGORIES
+        )
         cls, fluid = classify_well_result(p.get("reclassificacao"))
         pt = _well_point(f)
         if not exploratory or cls not in classes or pt is None:
@@ -302,7 +345,12 @@ def discovery_candidates(
     out: list[Discovery] = []
     for g in groups:
         members = [evidence[i] for i in g]
-        members.sort(key=lambda e: (RESULT_RANK[e["cls"]], parse_date(e["props"].get("dat_conclusao")) or _dt.date.max))
+        members.sort(
+            key=lambda e: (
+                RESULT_RANK[e["cls"]],
+                parse_date(e["props"].get("dat_conclusao")) or _dt.date.max,
+            )
+        )
         lead = members[0]
         lon = median([m["pt"][0] for m in members])
         lat = median([m["pt"][1] for m in members])
@@ -312,16 +360,31 @@ def discovery_candidates(
         fluids = sorted({m["fluid"] for m in members if m["fluid"]})
         if "oil+gas" in fluids:
             fluids = [f for f in fluids if f not in ("oil", "gas")]
-        years = [d.year for d in (parse_date(m["props"].get("dat_conclusao")) for m in members) if d]
-        depths = [v for v in (_num(m["props"].get("lamina_dagua")) for m in members) if v]
+        years = [
+            d.year
+            for d in (parse_date(m["props"].get("dat_conclusao")) for m in members)
+            if d
+        ]
+        depths = [
+            v for v in (_num(m["props"].get("lamina_dagua")) for m in members) if v
+        ]
         counts: dict[str, int] = {}
         for m in members:
             counts[m["cls"]] = counts.get(m["cls"], 0) + 1
 
-        stage, note = "not_evaluated", "No public evaluation plan, field or returned block contains the wells."
-        linked: dict[str, Any] = {"discovery_wells": names, "well_results": counts, "operator_of_lead_well": lead["props"].get("operador")}
+        stage, note = (
+            "not_evaluated",
+            "No public evaluation plan, field or returned block contains the wells.",
+        )
+        linked: dict[str, Any] = {
+            "discovery_wells": names,
+            "well_results": counts,
+            "operator_of_lead_well": lead["props"].get("operador"),
+        }
         gaps = [GAP_NO_NAME, GAP_NO_VOLUMES]
-        plan = next(((f, r) for f, r in plan_feats if point_in_rings(lon, lat, r)), None)
+        plan = next(
+            ((f, r) for f, r in plan_feats if point_in_rings(lon, lat, r)), None
+        )
         if plan is not None:
             pp = _props(plan[0])
             end = parse_date(pp.get("DAT_TERM"))
@@ -329,12 +392,20 @@ def discovery_candidates(
             linked["evaluation_plan"] = pp.get("NOME_PAD")
             linked["evaluation_plan_end"] = end.isoformat() if end else None
             if running:
-                stage, note = "in_clarification", "Inside discovery-evaluation plan %s running to %s." % (pp.get("NOME_PAD"), end.isoformat())
+                stage, note = (
+                    "in_clarification",
+                    "Inside discovery-evaluation plan %s running to %s."
+                    % (pp.get("NOME_PAD"), end.isoformat()),
+                )
             else:
                 stage = "unknown"
-                note = "Inside evaluation plan %s that ended %s; the outcome is not in the public layers." % (
-                    pp.get("NOME_PAD"), end.isoformat() if end else "(no end date)")
-        blk = next(((f, r) for f, r in block_feats if point_in_rings(lon, lat, r)), None)
+                note = (
+                    "Inside evaluation plan %s that ended %s; the outcome is not in the public layers."
+                    % (pp.get("NOME_PAD"), end.isoformat() if end else "(no end date)")
+                )
+        blk = next(
+            ((f, r) for f, r in block_feats if point_in_rings(lon, lat, r)), None
+        )
         if blk is not None:
             bp = _props(blk[0])
             linked["block"] = bp.get("NOM_BLOCO") or bp.get("COD_BLOCO")
@@ -356,7 +427,11 @@ def discovery_candidates(
             operator=linked["operator_of_lead_well"] or linked.get("block_operator"),
             lat=lat,
             lon=lon,
-            position_basis="wellhead" if len(members) == 1 else "approximate-derived-from-ANP-wells",
+            position_basis=(
+                "wellhead"
+                if len(members) == 1
+                else "approximate-derived-from-ANP-wells"
+            ),
             plan_note=note,
             linked=linked,
             water_depth_m=median(depths) if depths else None,
@@ -376,8 +451,14 @@ def discovery_candidates(
     return out
 
 
-def brazil_records(layers: Mapping[str, Any], *, as_of: _dt.date | None = None, include_fields: bool = True,
-                   include_evaluation_areas: bool = True, **kwargs: Any) -> list[Discovery]:
+def brazil_records(
+    layers: Mapping[str, Any],
+    *,
+    as_of: _dt.date | None = None,
+    include_fields: bool = True,
+    include_evaluation_areas: bool = True,
+    **kwargs: Any,
+) -> list[Discovery]:
     """All Brazilian records from a layer dict: candidates, fields and evaluation areas.
 
     Args:
@@ -393,8 +474,14 @@ def brazil_records(layers: Mapping[str, Any], *, as_of: _dt.date | None = None, 
     """
     as_of = as_of or _dt.date.today()
     recs = discovery_candidates(
-        layers.get("wells"), layers.get("fields"), layers.get("evaluation_plans"), layers.get("blocks"),
-        layers.get("relinquished_blocks"), as_of=as_of, **kwargs)
+        layers.get("wells"),
+        layers.get("fields"),
+        layers.get("evaluation_plans"),
+        layers.get("blocks"),
+        layers.get("relinquished_blocks"),
+        as_of=as_of,
+        **kwargs,
+    )
     if include_fields:
         recs += field_records(layers.get("fields"))
     if include_evaluation_areas:
@@ -417,16 +504,18 @@ def hosts_from_production_units(units: Any) -> list[dict[str, Any]]:
         pt = point_from_geometry(f.get("geometry"))
         if pt is None or not p.get("NOM_INSTALACAO"):
             continue
-        out.append({
-            "name": str(p["NOM_INSTALACAO"]).strip(),
-            "lon": pt[0],
-            "lat": pt[1],
-            "kind": p.get("DESC_TIPO_UEP"),
-            "operator": p.get("NOM_PROPRIETARIO"),
-            "water_depth_m": _num(p.get("MED_DISTANCIA_LAMINA")),
-            "serves": p.get("DESC_ATENDIMENTOS"),
-            "source": "ANP GeoServer geoanp:unidade_de_producao",
-        })
+        out.append(
+            {
+                "name": str(p["NOM_INSTALACAO"]).strip(),
+                "lon": pt[0],
+                "lat": pt[1],
+                "kind": p.get("DESC_TIPO_UEP"),
+                "operator": p.get("NOM_PROPRIETARIO"),
+                "water_depth_m": _num(p.get("MED_DISTANCIA_LAMINA")),
+                "serves": p.get("DESC_ATENDIMENTOS"),
+                "source": "ANP GeoServer geoanp:unidade_de_producao",
+            }
+        )
     return out
 
 
@@ -461,7 +550,9 @@ def fetch_anp_layers(
     try:
         from anp_open_data import fetch_layer
     except ImportError as exc:  # pragma: no cover - depends on the environment
-        raise ImportError("install neqsim-anp-open-data to read ANP layers: pip install -e skills/field-development/neqsim-anp-open-data") from exc
+        raise ImportError(
+            "install neqsim-anp-open-data to read ANP layers: pip install -e skills/field-development/neqsim-anp-open-data"
+        ) from exc
     box = bbox_around(point[0], point[1], radius_km + extra_margin_km)
     plan = {
         "wells": "wells",
@@ -474,7 +565,14 @@ def fetch_anp_layers(
     layers: dict[str, Any] = {}
     logs: list[dict[str, Any]] = []
     for key, layer in plan.items():
-        data, log = fetch_layer(layer, cache_dir, bbox=box, max_features=max_features, offline=offline, getter=getter)
+        data, log = fetch_layer(
+            layer,
+            cache_dir,
+            bbox=box,
+            max_features=max_features,
+            offline=offline,
+            getter=getter,
+        )
         layers[key] = data.get("features", [])
         logs.append(log)
     return layers, logs

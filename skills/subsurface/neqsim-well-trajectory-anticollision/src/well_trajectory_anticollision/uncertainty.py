@@ -7,6 +7,7 @@ Prefer the operator's definitive-survey covariances for offsets and use this mod
 or offsets without covariances, after checking it against a reference covariance (see
 :func:`compare_growth`).
 """
+
 from __future__ import annotations
 
 import math
@@ -45,10 +46,16 @@ class ErrorModel:
     dip_deg: float = 76.0
     terms: Optional[Dict[str, Tuple[str, float]]] = None
     name: str = "reduced-MWD (illustrative)"
-    _resolved: Dict[str, Tuple[str, float]] = field(default_factory=dict, init=False, repr=False)
+    _resolved: Dict[str, Tuple[str, float]] = field(
+        default_factory=dict, init=False, repr=False
+    )
 
     def __post_init__(self):
-        self._resolved = dict(self.terms) if self.terms else _default_terms(self.b_total_nt, self.dip_deg)
+        self._resolved = (
+            dict(self.terms)
+            if self.terms
+            else _default_terms(self.b_total_nt, self.dip_deg)
+        )
 
     def covariance(self, md, inc_rad, az_rad) -> np.ndarray:
         """Covariance growth (n, 3, 3) from the first station (zero at station 0)."""
@@ -62,7 +69,12 @@ class ErrorModel:
         for i in range(1, n):
             dmd = md[i] - md[i - 1]
             for j in (i - 1, i):
-                ci, si, ca, sa = math.cos(inc[j]), math.sin(inc[j]), math.cos(az[j]), math.sin(az[j])
+                ci, si, ca, sa = (
+                    math.cos(inc[j]),
+                    math.sin(inc[j]),
+                    math.cos(az[j]),
+                    math.sin(az[j]),
+                )
                 d_inc = np.array([ci * sa, ci * ca, -si])
                 d_az = np.array([si * ca, -si * sa, 0.0])
                 for k, (kind, sig) in self._resolved.items():
@@ -84,7 +96,9 @@ class ErrorModel:
         return cov
 
 
-def add_model_covariance(wp: Wellpath, model: Optional[ErrorModel] = None, from_md: Optional[float] = None) -> Wellpath:
+def add_model_covariance(
+    wp: Wellpath, model: Optional[ErrorModel] = None, from_md: Optional[float] = None
+) -> Wellpath:
     """Add model covariance growth from ``from_md`` (default: the tie-in, else the first station).
 
     Existing covariance at ``from_md`` is carried forward as a constant base, so the tie-in uncertainty
@@ -102,8 +116,12 @@ def add_model_covariance(wp: Wellpath, model: Optional[ErrorModel] = None, from_
     return wp
 
 
-def compare_growth(reference: Wellpath, model: Optional[ErrorModel] = None, from_md: Optional[float] = None,
-                   samples: int = 6) -> list:
+def compare_growth(
+    reference: Wellpath,
+    model: Optional[ErrorModel] = None,
+    from_md: Optional[float] = None,
+    samples: int = 6,
+) -> list:
     """Compare model sqrt(trace) growth with the reference wellbore's own covariance growth below ``from_md``.
 
     Ratio > 1 means the model is more conservative than the reference survey program.
@@ -111,15 +129,25 @@ def compare_growth(reference: Wellpath, model: Optional[ErrorModel] = None, from
     if reference.cov is None:
         raise ValueError("reference wellbore has no covariance")
     model = model or ErrorModel()
-    i0 = reference.station_index(from_md if from_md is not None else float(reference.md[0]))
+    i0 = reference.station_index(
+        from_md if from_md is not None else float(reference.md[0])
+    )
     mc = model.covariance(reference.md[i0:], reference.inc[i0:], reference.az[i0:])
     rows = []
     step = max(1, len(mc) // samples)
     for k in range(step, len(mc), step):
-        ref = math.sqrt(max(float(np.trace(reference.cov[i0 + k] - reference.cov[i0])), 0.0))
+        ref = math.sqrt(
+            max(float(np.trace(reference.cov[i0 + k] - reference.cov[i0])), 0.0)
+        )
         mod = math.sqrt(float(np.trace(mc[k])))
-        rows.append({"md": float(reference.md[i0 + k]), "reference_sqrt_trace_m": round(ref, 2),
-                     "model_sqrt_trace_m": round(mod, 2), "ratio": round(mod / ref, 2) if ref > 0 else None})
+        rows.append(
+            {
+                "md": float(reference.md[i0 + k]),
+                "reference_sqrt_trace_m": round(ref, 2),
+                "model_sqrt_trace_m": round(mod, 2),
+                "ratio": round(mod / ref, 2) if ref > 0 else None,
+            }
+        )
     return rows
 
 

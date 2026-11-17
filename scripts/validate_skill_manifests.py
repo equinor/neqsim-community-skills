@@ -86,7 +86,9 @@ def minimal_structural_check(manifest, schema):
         errors.append("version '{}' is not semver".format(version))
     for skill in manifest.get("required_skills") or []:
         if not isinstance(skill, str) or not NAME_RE.match(skill):
-            errors.append("required_skills entry '{}' is not a canonical id".format(skill))
+            errors.append(
+                "required_skills entry '{}' is not a canonical id".format(skill)
+            )
     return errors
 
 
@@ -95,7 +97,9 @@ def validate_against_schema(manifest, schema):
         validator = jsonschema.Draft7Validator(schema)
         return [
             "{}: {}".format("/".join(str(p) for p in err.path) or "<root>", err.message)
-            for err in sorted(validator.iter_errors(manifest), key=lambda e: list(e.path))
+            for err in sorted(
+                validator.iter_errors(manifest), key=lambda e: list(e.path)
+            )
         ]
     return minimal_structural_check(manifest, schema)
 
@@ -117,7 +121,9 @@ def check_description_length(manifest):
     if isinstance(description, str) and len(description) > MAX_CATALOG_DESCRIPTION:
         return [
             "description is {} chars; keep it <= {} (resent on every chat request) and "
-            "move detail into the SKILL.md body".format(len(description), MAX_CATALOG_DESCRIPTION)
+            "move detail into the SKILL.md body".format(
+                len(description), MAX_CATALOG_DESCRIPTION
+            )
         ]
     return []
 

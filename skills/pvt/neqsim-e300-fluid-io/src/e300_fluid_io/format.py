@@ -110,9 +110,7 @@ class E300Fluid:
         for keyword in _VECTOR_KEYWORDS:
             values = self._vector(keyword)
             if values and len(values) != n:
-                problems.append(
-                    f"{keyword} has {len(values)} values but expected {n}"
-                )
+                problems.append(f"{keyword} has {len(values)} values but expected {n}")
         if self.bic:
             if len(self.bic) != n or any(len(row) != n for row in self.bic):
                 problems.append("BIC matrix is not square with one row per component")
@@ -355,9 +353,13 @@ def serialize_e300(fluid: E300Fluid) -> str:
     _write_vector(out, "-- OmegaB", "OMEGAB", fluid.omegab, "{:.5f}")
     _write_vector(out, "-- Molecular weights", "MW", fluid.mw, "{:.4f}")
     _write_vector(out, "-- Boiling points (K)", "TBOIL", fluid.tboil, "{:.3f}")
-    _write_vector(out, "-- Critical volumes (m3/kg-mole)", "VCRIT", fluid.vcrit, "{:.6f}")
+    _write_vector(
+        out, "-- Critical volumes (m3/kg-mole)", "VCRIT", fluid.vcrit, "{:.6f}"
+    )
     _write_vector(out, "-- Critical Z-factors", "ZCRIT", fluid.zcrit, "{:.5f}")
-    _write_vector(out, "-- Volume translation/co-volume", "SSHIFT", fluid.sshift, "{:.6f}")
+    _write_vector(
+        out, "-- Volume translation/co-volume", "SSHIFT", fluid.sshift, "{:.6f}"
+    )
     _write_vector(out, "-- Parachors (dyn/cm)", "PARACHOR", fluid.parachor, "{:.4f}")
     _write_vector(out, "-- Overall composition", "ZI", fluid.zi, "{:.10f}")
 
@@ -385,7 +387,9 @@ def serialize_e300(fluid: E300Fluid) -> str:
     return "\n".join(out) + "\n"
 
 
-def _write_vector(out: List[str], comment: str, keyword: str, values: List[float], fmt: str) -> None:
+def _write_vector(
+    out: List[str], comment: str, keyword: str, values: List[float], fmt: str
+) -> None:
     if not values:
         return
     out.append(comment)

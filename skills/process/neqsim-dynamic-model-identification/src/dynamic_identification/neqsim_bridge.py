@@ -25,7 +25,9 @@ import numpy as np
 Evaluate = Callable[[Mapping[str, float]], Dict[str, float]]
 
 
-def automation_evaluator(process, inputs: Mapping[str, str], outputs: Mapping[str, str]) -> Evaluate:
+def automation_evaluator(
+    process, inputs: Mapping[str, str], outputs: Mapping[str, str]
+) -> Evaluate:
     """Wrap a NeqSim process as ``evaluate({input: value}) -> {output: value}``.
 
     ``inputs`` and ``outputs`` map a name to ``"address|unit"``, for example
@@ -53,8 +55,12 @@ def automation_evaluator(process, inputs: Mapping[str, str], outputs: Mapping[st
     return evaluate
 
 
-def steady_gains(evaluate: Evaluate, base: Mapping[str, float], steps: Mapping[str, float],
-                 outputs: Optional[Sequence[str]] = None) -> Dict[str, object]:
+def steady_gains(
+    evaluate: Evaluate,
+    base: Mapping[str, float],
+    steps: Mapping[str, float],
+    outputs: Optional[Sequence[str]] = None,
+) -> Dict[str, object]:
     """Central-difference steady-state gains d(output)/d(input) at ``base``, with a half-step convergence check.
 
     The base point is restored at the end. ``relative_step_error`` above about 0.03 means the response is not
@@ -74,13 +80,24 @@ def steady_gains(evaluate: Evaluate, base: Mapping[str, float], steps: Mapping[s
 
     full, half = gains(1.0), gains(0.5)
     evaluate(dict(base))
-    errors = [abs(full[o][i] - half[o][i]) / max(abs(half[o][i]), 1e-9) for o in half for i in half[o]]
-    return {"gains": half, "relative_step_error": max(errors) if errors else 0.0, "base": dict(base),
-            "steps": dict(steps)}
+    errors = [
+        abs(full[o][i] - half[o][i]) / max(abs(half[o][i]), 1e-9)
+        for o in half
+        for i in half[o]
+    ]
+    return {
+        "gains": half,
+        "relative_step_error": max(errors) if errors else 0.0,
+        "base": dict(base),
+        "steps": dict(steps),
+    }
 
 
-def compare_gains(identified: Mapping[str, float], physics: Mapping[str, float],
-                  tolerance: float = 0.3) -> Dict[str, object]:
+def compare_gains(
+    identified: Mapping[str, float],
+    physics: Mapping[str, float],
+    tolerance: float = 0.3,
+) -> Dict[str, object]:
     """Compare identified gains of one output with NeqSim gains (same input names and units).
 
     A gain is ``consistent`` when the sign agrees and the ratio is within ``1 +/- tolerance``. A sign error or a
@@ -93,14 +110,25 @@ def compare_gains(identified: Mapping[str, float], physics: Mapping[str, float],
             continue
         ref = physics[name]
         ratio = value / ref if ref else math.inf
-        rows[name] = {"identified": value, "neqsim": ref, "ratio": ratio,
-                      "consistent": (value * ref > 0) and abs(ratio - 1.0) <= tolerance}
-    return {"inputs": rows, "all_consistent": bool(rows) and all(r["consistent"] for r in rows.values())}
+        rows[name] = {
+            "identified": value,
+            "neqsim": ref,
+            "ratio": ratio,
+            "consistent": (value * ref > 0) and abs(ratio - 1.0) <= tolerance,
+        }
+    return {
+        "inputs": rows,
+        "all_consistent": bool(rows) and all(r["consistent"] for r in rows.values()),
+    }
 
 
-def physics_residuals(measured: Mapping[str, Sequence[float]], expected: Mapping[str, Sequence[float]],
-                      calibration: slice, smoothing_samples: float = 1.5,
-                      threshold: float = 4.0) -> Dict[str, Dict[str, object]]:
+def physics_residuals(
+    measured: Mapping[str, Sequence[float]],
+    expected: Mapping[str, Sequence[float]],
+    calibration: slice,
+    smoothing_samples: float = 1.5,
+    threshold: float = 4.0,
+) -> Dict[str, Dict[str, object]]:
     """Measured minus NeqSim-expected values, standardised on a healthy calibration window and low-pass filtered.
 
     Standardising on the calibration window removes a steady model offset and scales by the normal scatter. The
@@ -115,23 +143,35 @@ def physics_residuals(measured: Mapping[str, Sequence[float]], expected: Mapping
         base = r[calibration]
         base = base[np.isfinite(base)]
         if len(base) < 3:
-            raise ValueError(f"{name}: the calibration window has fewer than three valid residuals")
+            raise ValueError(
+                f"{name}: the calibration window has fewer than three valid residuals"
+            )
         z = (r - base.mean()) / (base.std(ddof=1) or 1.0)
         filtered = np.empty_like(z)
         state = 0.0
         for i, v in enumerate(z):
             state = state if not np.isfinite(v) else state + alpha * (v - state)
             filtered[i] = state
-        result[name] = {"residual": r, "standardised": z, "filtered": filtered,
-                        "flag": np.abs(filtered) > threshold, "calibration_mean": float(base.mean()),
-                        "calibration_std": float(base.std(ddof=1))}
+        result[name] = {
+            "residual": r,
+            "standardised": z,
+            "filtered": filtered,
+            "flag": np.abs(filtered) > threshold,
+            "calibration_mean": float(base.mean()),
+            "calibration_std": float(base.std(ddof=1)),
+        }
     return result
 
 
-def two_residual_diagnosis(primary_flag: Sequence[bool], secondary_flag: Sequence[bool],
-                           labels: Tuple[str, str, str] = ("physical change candidate",
-                                                           "measurement or model candidate (primary only)",
-                                                           "within baseline")) -> List[str]:
+def two_residual_diagnosis(
+    primary_flag: Sequence[bool],
+    secondary_flag: Sequence[bool],
+    labels: Tuple[str, str, str] = (
+        "physical change candidate",
+        "measurement or model candidate (primary only)",
+        "within baseline",
+    ),
+) -> List[str]:
     """Label each sample: both residuals flagged, only the primary flagged, or neither.
 
     Example: compressor power (primary) and discharge temperature (secondary). Lower efficiency raises both; a
@@ -143,8 +183,11 @@ def two_residual_diagnosis(primary_flag: Sequence[bool], secondary_flag: Sequenc
     return out
 
 
-def simulate_unit(model: Mapping[str, object], inputs: Mapping[str, Sequence[float]],
-                  timebase_s: float) -> np.ndarray:
+def simulate_unit(
+    model: Mapping[str, object],
+    inputs: Mapping[str, Sequence[float]],
+    timebase_s: float,
+) -> np.ndarray:
     """Run an identified unit model forward on new inputs (TimeSeriesAnalysis ``UnitModel.Iterate``).
 
     ``model`` is the dict returned by ``identify_unit`` or the closed-loop process model (gains and ``u0`` keyed by

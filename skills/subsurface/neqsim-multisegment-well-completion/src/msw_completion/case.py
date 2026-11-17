@@ -8,11 +8,42 @@ ANNULUS = {"GP", "OA", "PA"}
 DEVICE_TYPES = {"PERF", "AICD", "ICD", "VALVE", "DENSITY"}
 DEVICE_KEYWORD = {"AICD": "aicd", "ICD": "icd", "VALVE": "valve", "DENSITY": "density"}
 
-_AICD_COLUMNS = ("strength", "x", "y", "a", "b", "c", "d", "e", "f", "rho_cal", "mu_cal", "z")
+_AICD_COLUMNS = (
+    "strength",
+    "x",
+    "y",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "rho_cal",
+    "mu_cal",
+    "z",
+)
 _ICD_COLUMNS = ("strength", "rho_cal", "mu_cal", "critical_value")
-_DENSITY_COLUMNS = ("cv", "ac_oil", "ac_gas", "ac_water", "wvf_low", "wvf_high", "gvf_low", "gvf_high")
-_AICD_DEFAULTS = {"a": 1.0, "b": 1.0, "c": 1.0, "d": 1.0, "e": 1.0, "f": 1.0, "rho_cal": 1000.25, "mu_cal": 1.45,
-                  "z": 1.0}
+_DENSITY_COLUMNS = (
+    "cv",
+    "ac_oil",
+    "ac_gas",
+    "ac_water",
+    "wvf_low",
+    "wvf_high",
+    "gvf_low",
+    "gvf_high",
+)
+_AICD_DEFAULTS = {
+    "a": 1.0,
+    "b": 1.0,
+    "c": 1.0,
+    "d": 1.0,
+    "e": 1.0,
+    "f": 1.0,
+    "rho_cal": 1000.25,
+    "mu_cal": 1.45,
+    "z": 1.0,
+}
 _ICD_DEFAULTS = {"rho_cal": 1000.25, "mu_cal": 1.45, "critical_value": 0.5}
 
 
@@ -31,23 +62,40 @@ def validate_design(design: Dict[str, Any]) -> List[str]:
             problems.append(f"{where}: annulus must be one of GP, OA, PA")
         kind = str(row.get("device_type", "")).upper()
         if kind not in DEVICE_TYPES:
-            problems.append(f"{where}: device_type must be one of {sorted(DEVICE_TYPES)}")
+            problems.append(
+                f"{where}: device_type must be one of {sorted(DEVICE_TYPES)}"
+            )
         start, end = float(row.get("start_md", 0)), float(row.get("end_md", 0))
         if end < start or (end == start and row.get("annulus") != "PA"):
-            problems.append(f"{where}: end_md must exceed start_md (only packers, annulus PA, have zero length)")
+            problems.append(
+                f"{where}: end_md must exceed start_md (only packers, annulus PA, have zero length)"
+            )
         if kind in DEVICE_KEYWORD:
             number = int(row.get("device_number", 0))
             table = design.get(DEVICE_KEYWORD[kind]) or []
             if number not in {int(d.get("number", -1)) for d in table}:
-                problems.append(f"{where}: {kind} device {number} is not defined under '{DEVICE_KEYWORD[kind]}'")
-            if float(row.get("devices_per_joint", 0)) <= 0 and row.get("annulus") != "PA":
-                problems.append(f"{where}: devices_per_joint must be positive for {kind}")
-    for key, columns in (("aicd", ("strength", "x", "y")), ("icd", ("strength",)), ("valve", ("cv", "ac")),
-                         ("density", _DENSITY_COLUMNS)):
+                problems.append(
+                    f"{where}: {kind} device {number} is not defined under '{DEVICE_KEYWORD[kind]}'"
+                )
+            if (
+                float(row.get("devices_per_joint", 0)) <= 0
+                and row.get("annulus") != "PA"
+            ):
+                problems.append(
+                    f"{where}: devices_per_joint must be positive for {kind}"
+                )
+    for key, columns in (
+        ("aicd", ("strength", "x", "y")),
+        ("icd", ("strength",)),
+        ("valve", ("cv", "ac")),
+        ("density", _DENSITY_COLUMNS),
+    ):
         for d in design.get(key) or []:
             missing = [c for c in ("number",) + columns if c not in d]
             if missing:
-                problems.append(f"{key} device {d.get('number')}: missing {', '.join(missing)}")
+                problems.append(
+                    f"{key} device {d.get('number')}: missing {', '.join(missing)}"
+                )
     return problems
 
 
@@ -68,15 +116,30 @@ def build_case(design: Dict[str, Any]) -> str:
     problems = validate_design(design)
     if problems:
         raise ValueError("completion design is not valid:\n- " + "\n- ".join(problems))
-    lines = ["-- Completor case file written by msw_completion (neqsim-multisegment-well-completion)", "",
-             "COMPLETION",
-             "-- Well Branch StartMD EndMD Screen Casing Roughness Annulus Nvalve/Joint ValveType DeviceNumber"]
+    lines = [
+        "-- Completor case file written by msw_completion (neqsim-multisegment-well-completion)",
+        "",
+        "COMPLETION",
+        "-- Well Branch StartMD EndMD Screen Casing Roughness Annulus Nvalve/Joint ValveType DeviceNumber",
+    ]
     for row in design["completion"]:
-        lines.append("  ".join([
-            f"'{row['well']}'", str(int(row.get("branch", 1))), _fmt(row["start_md"]), _fmt(row["end_md"]),
-            _fmt(row.get("screen_diameter_m", 0.15)), _fmt(row.get("casing_diameter_m", 0.216)),
-            _fmt(row.get("roughness_m", 1.0e-4)), row["annulus"], _fmt(row.get("devices_per_joint", 0)),
-            str(row["device_type"]).upper(), str(int(row.get("device_number", 0)))]))
+        lines.append(
+            "  ".join(
+                [
+                    f"'{row['well']}'",
+                    str(int(row.get("branch", 1))),
+                    _fmt(row["start_md"]),
+                    _fmt(row["end_md"]),
+                    _fmt(row.get("screen_diameter_m", 0.15)),
+                    _fmt(row.get("casing_diameter_m", 0.216)),
+                    _fmt(row.get("roughness_m", 1.0e-4)),
+                    row["annulus"],
+                    _fmt(row.get("devices_per_joint", 0)),
+                    str(row["device_type"]).upper(),
+                    str(int(row.get("device_number", 0))),
+                ]
+            )
+        )
     lines += ["/", ""]
     lines += ["JOINTLENGTH", _fmt(design.get("joint_length_m", 12.0)), "/", ""]
     if "segment_length" in design:
@@ -89,22 +152,33 @@ def build_case(design: Dict[str, Any]) -> str:
         lines += ["WSEGAICD", "-- Number " + " ".join(_AICD_COLUMNS)]
         for d in design["aicd"]:
             values = dict(_AICD_DEFAULTS, **d)
-            lines.append(f"  {int(d['number'])} " + " ".join(_fmt(values[c]) for c in _AICD_COLUMNS))
+            lines.append(
+                f"  {int(d['number'])} "
+                + " ".join(_fmt(values[c]) for c in _AICD_COLUMNS)
+            )
         lines += ["/", ""]
     if design.get("icd"):
         lines += ["WSEGSICD", "-- Number " + " ".join(_ICD_COLUMNS)]
         for d in design["icd"]:
             values = dict(_ICD_DEFAULTS, **d)
-            lines.append(f"  {int(d['number'])} " + " ".join(_fmt(values[c]) for c in _ICD_COLUMNS))
+            lines.append(
+                f"  {int(d['number'])} "
+                + " ".join(_fmt(values[c]) for c in _ICD_COLUMNS)
+            )
         lines += ["/", ""]
     if design.get("valve"):
         lines += ["WSEGVALV", "-- Number Cv Ac Defaults Ac_max"]
         for d in design["valve"]:
-            lines.append(f"  {int(d['number'])} {_fmt(d['cv'])} {_fmt(d['ac'])} 5* {_fmt(d.get('ac_max', d['ac']))}")
+            lines.append(
+                f"  {int(d['number'])} {_fmt(d['cv'])} {_fmt(d['ac'])} 5* {_fmt(d.get('ac_max', d['ac']))}"
+            )
         lines += ["/", ""]
     if design.get("density"):
         lines += ["WSEGDENSITY", "-- Number " + " ".join(_DENSITY_COLUMNS)]
         for d in design["density"]:
-            lines.append(f"  {int(d['number'])} " + " ".join(_fmt(d[c]) for c in _DENSITY_COLUMNS))
+            lines.append(
+                f"  {int(d['number'])} "
+                + " ".join(_fmt(d[c]) for c in _DENSITY_COLUMNS)
+            )
         lines += ["/", ""]
     return "\n".join(lines) + "\n"

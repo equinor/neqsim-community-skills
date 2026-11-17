@@ -8,7 +8,12 @@ from .analysis import (
     what_you_need_to_believe,
 )
 from .model import PscBidModel, PscBidResult, net_cost_oil_cap
-from .profit_oil_table import ProfitOilTable, adjustment_pp, effective_share, load_annex_xx
+from .profit_oil_table import (
+    ProfitOilTable,
+    adjustment_pp,
+    effective_share,
+    load_annex_xx,
+)
 
 __version__ = "0.2.0"
 

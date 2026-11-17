@@ -115,7 +115,10 @@ class ReservoirInputs:
     def __post_init__(self) -> None:
         if self.fluid_type not in FLUID_TYPES:
             raise ValueError(f"fluid_type must be one of {FLUID_TYPES}")
-        if self.aquifer_strength is not None and self.aquifer_strength not in AQUIFER_STRENGTHS:
+        if (
+            self.aquifer_strength is not None
+            and self.aquifer_strength not in AQUIFER_STRENGTHS
+        ):
             raise ValueError(f"aquifer_strength must be one of {AQUIFER_STRENGTHS}")
 
 
@@ -182,7 +185,9 @@ class ReservoirModel:
     ) -> "ReservoirModel":
         """Return a new model rebuilt with ``updates`` applied to the inputs."""
         if self._inputs is None:
-            raise RuntimeError("this model was not built from ReservoirInputs and cannot be refined")
+            raise RuntimeError(
+                "this model was not built from ReservoirInputs and cannot be refined"
+            )
         unknown = [key for key in updates if not hasattr(self._inputs, key)]
         if unknown:
             raise ValueError(f"unknown input field(s): {', '.join(sorted(unknown))}")
@@ -214,12 +219,16 @@ class ReservoirModel:
                         "parameter": name,
                         "before": None if before is None else before.value,
                         "after": None if after is None else after.value,
-                        "provenance_before": None if before is None else before.provenance,
+                        "provenance_before": (
+                            None if before is None else before.provenance
+                        ),
                         "provenance_after": None if after is None else after.provenance,
                     }
                 )
                 continue
-            value_changed = not math.isclose(before.value, after.value, rel_tol=1e-9, abs_tol=0.0)
+            value_changed = not math.isclose(
+                before.value, after.value, rel_tol=1e-9, abs_tol=0.0
+            )
             if value_changed or before.provenance != after.provenance:
                 changes.append(
                     {
@@ -240,7 +249,9 @@ class ReservoirModel:
             "drive_mechanism": self.drive_mechanism,
             "data_tier": self.data_tier,
             "completeness": self.completeness,
-            "parameters": {name: p.to_dict() for name, p in sorted(self.parameters.items())},
+            "parameters": {
+                name: p.to_dict() for name, p in sorted(self.parameters.items())
+            },
             "volumetrics": self.volumetrics.to_dict(),
             "derivations": list(self.derivations),
             "warnings": list(self.warnings),
@@ -262,7 +273,9 @@ class ReservoirModelBuilder:
         self._resolve_rock(inputs, parameters, warnings)
         self._resolve_fluid(inputs, parameters, derivations)
         drive = self._resolve_drive(inputs, parameters, warnings)
-        volumetrics = self._resolve_volumes(inputs, parameters, derivations, warnings, drive)
+        volumetrics = self._resolve_volumes(
+            inputs, parameters, derivations, warnings, drive
+        )
         self._resolve_wells(inputs, parameters, derivations, warnings, volumetrics)
         self._resolve_aquifer(inputs, parameters, volumetrics)
 
@@ -340,17 +353,23 @@ class ReservoirModelBuilder:
         derivations: list[str],
         warnings: list[str],
     ) -> None:
-        depth = self._given(inputs, "datum_depth_m_tvdmsl", inputs.datum_depth_m_tvdmsl, "m TVDMSL")
+        depth = self._given(
+            inputs, "datum_depth_m_tvdmsl", inputs.datum_depth_m_tvdmsl, "m TVDMSL"
+        )
         if depth is not None:
             parameters["datum_depth_m_tvdmsl"] = depth
 
-        pressure = self._given(inputs, "initial_pressure_bara", inputs.initial_pressure_bara, "bara")
+        pressure = self._given(
+            inputs, "initial_pressure_bara", inputs.initial_pressure_bara, "bara"
+        )
         if pressure is None:
             if depth is None:
                 raise ValueError(
                     "either initial_pressure_bara or datum_depth_m_tvdmsl must be supplied"
                 )
-            value = STANDARD_PRESSURE_BARA + HYDROSTATIC_GRADIENT_BAR_PER_M * depth.value
+            value = (
+                STANDARD_PRESSURE_BARA + HYDROSTATIC_GRADIENT_BAR_PER_M * depth.value
+            )
             pressure = derived(
                 "initial_pressure_bara",
                 round(value, 2),
@@ -382,7 +401,9 @@ class ReservoirModelBuilder:
                 raise ValueError(
                     "either reservoir_temperature_C or datum_depth_m_tvdmsl must be supplied"
                 )
-            seabed = SEABED_TEMPERATURE_C.get(inputs.sea_area, SEABED_TEMPERATURE_C["generic"])
+            seabed = SEABED_TEMPERATURE_C.get(
+                inputs.sea_area, SEABED_TEMPERATURE_C["generic"]
+            )
             gradient = GEOTHERMAL_GRADIENT_C_PER_KM.get(
                 inputs.sea_area, GEOTHERMAL_GRADIENT_C_PER_KM["generic"]
             )
@@ -408,7 +429,10 @@ class ReservoirModelBuilder:
         parameters["reservoir_temperature_C"] = temperature
 
         abandonment = self._given(
-            inputs, "abandonment_pressure_bara", inputs.abandonment_pressure_bara, "bara"
+            inputs,
+            "abandonment_pressure_bara",
+            inputs.abandonment_pressure_bara,
+            "bara",
         )
         if abandonment is None:
             value = max(0.25 * pressure.value, 15.0)
@@ -455,13 +479,19 @@ class ReservoirModelBuilder:
         derivations: list[str],
     ) -> None:
         self._resolve(
-            inputs, parameters, "oil_formation_volume_factor", inputs.oil_formation_volume_factor
+            inputs,
+            parameters,
+            "oil_formation_volume_factor",
+            inputs.oil_formation_volume_factor,
         )
         self._resolve(inputs, parameters, "water_formation_volume_factor", None)
         self._resolve(inputs, parameters, "oil_viscosity_cP", inputs.oil_viscosity_cP)
         self._resolve(inputs, parameters, "gas_viscosity_cP", inputs.gas_viscosity_cP)
         z_factor = self._resolve(
-            inputs, parameters, "gas_compressibility_factor", inputs.gas_compressibility_factor
+            inputs,
+            parameters,
+            "gas_compressibility_factor",
+            inputs.gas_compressibility_factor,
         )
 
         if inputs.solution_gas_oil_ratio_Sm3_per_Sm3 is not None:
@@ -517,7 +547,9 @@ class ReservoirModelBuilder:
         )
 
         if inputs.drive_mechanism is not None:
-            drive = DRIVE_ALIASES.get(inputs.drive_mechanism.strip().lower(), inputs.drive_mechanism)
+            drive = DRIVE_ALIASES.get(
+                inputs.drive_mechanism.strip().lower(), inputs.drive_mechanism
+            )
         elif inputs.injection_plan in ("water_injection", "gas_injection"):
             drive = inputs.injection_plan
         elif aquifer in ("moderate", "strong"):
@@ -722,7 +754,12 @@ class ReservoirModelBuilder:
         porosity = parameters["porosity"].value
         water_saturation = parameters["water_saturation"].value
         hcpv = (
-            inputs.area_km2 * 1.0e6 * thickness * ntg * porosity * (1.0 - water_saturation)
+            inputs.area_km2
+            * 1.0e6
+            * thickness
+            * ntg
+            * porosity
+            * (1.0 - water_saturation)
         )
         derivations.append(
             f"HCPV = {inputs.area_km2:g} km2 x 1e6 x {thickness:g} m x {ntg:g} x "
@@ -755,7 +792,9 @@ class ReservoirModelBuilder:
             reference="design drawdown = drawdown fraction x initial pressure",
         )
 
-        productivity_index = self._productivity_index(inputs, parameters, derivations, warnings)
+        productivity_index = self._productivity_index(
+            inputs, parameters, derivations, warnings
+        )
         per_well_rate = productivity_index.value * drawdown
         parameters["per_well_rate_Sm3_per_day"] = derived(
             "per_well_rate_Sm3_per_day",
@@ -768,7 +807,11 @@ class ReservoirModelBuilder:
         plateau = inputs.target_plateau_rate_Sm3_per_day
         if plateau is None:
             offtake = inputs.plateau_offtake_fraction_per_year or 0.07
-            recoverable = volumetrics.recoverable_gas_Sm3 or volumetrics.recoverable_oil_Sm3 or 0.0
+            recoverable = (
+                volumetrics.recoverable_gas_Sm3
+                or volumetrics.recoverable_oil_Sm3
+                or 0.0
+            )
             plateau = recoverable * offtake / 365.0
             derivations.append(
                 f"target plateau = {offtake:g} x recoverable {recoverable:.4g} Sm3 / 365 = "
@@ -798,7 +841,9 @@ class ReservoirModelBuilder:
         elif per_well_rate > 0.0:
             producers = max(1, math.ceil(plateau / per_well_rate))
             provenance = "derived"
-            reference = "producers = ceil(plateau rate / per-well rate at design drawdown)"
+            reference = (
+                "producers = ceil(plateau rate / per-well rate at design drawdown)"
+            )
             derivations.append(
                 f"producer_count = ceil({plateau:.4g} / {per_well_rate:.4g}) = {producers}"
             )
@@ -876,8 +921,15 @@ class ReservoirModelBuilder:
             viscosity = parameters["gas_viscosity_cP"].value
             fvf = parameters["gas_formation_volume_factor"].value
 
-        re_over_rw = parameters["drainage_radius_m"].value / parameters["wellbore_radius_m"].value
-        denominator = viscosity * fvf * (math.log(re_over_rw) - 0.75 + parameters["skin_factor"].value)
+        re_over_rw = (
+            parameters["drainage_radius_m"].value
+            / parameters["wellbore_radius_m"].value
+        )
+        denominator = (
+            viscosity
+            * fvf
+            * (math.log(re_over_rw) - 0.75 + parameters["skin_factor"].value)
+        )
         if thickness <= 0.0 or denominator <= 0.0:
             parameter = Parameter(
                 name=name,
@@ -963,7 +1015,13 @@ class ReservoirModelBuilder:
             tier = 3
         elif has_geometry and (has_pvt or has_flow):
             tier = 2
-        elif has_geometry or inputs.stoiip_Sm3 or inputs.giip_Sm3 or inputs.recoverable_oil_Sm3 or inputs.recoverable_gas_Sm3:
+        elif (
+            has_geometry
+            or inputs.stoiip_Sm3
+            or inputs.giip_Sm3
+            or inputs.recoverable_oil_Sm3
+            or inputs.recoverable_gas_Sm3
+        ):
             tier = 1
         else:
             tier = 0
@@ -997,7 +1055,9 @@ class ReservoirModelBuilder:
                 "control the recovery factor."
             )
         if depth is not None:
-            hydrostatic = STANDARD_PRESSURE_BARA + HYDROSTATIC_GRADIENT_BAR_PER_M * depth.value
+            hydrostatic = (
+                STANDARD_PRESSURE_BARA + HYDROSTATIC_GRADIENT_BAR_PER_M * depth.value
+            )
             ratio = pressure / hydrostatic
             if ratio > 1.15:
                 warnings.append(
@@ -1014,7 +1074,10 @@ class ReservoirModelBuilder:
                 "Water saturation above 0.5 leaves little hydrocarbon pore volume; confirm the "
                 "saturation-height model and the contacts."
             )
-        if inputs.fluid_type == "gas" and parameters["aquifer_volume_multiple"].value >= 12.0:
+        if (
+            inputs.fluid_type == "gas"
+            and parameters["aquifer_volume_multiple"].value >= 12.0
+        ):
             warnings.append(
                 "A moderate-to-strong aquifer under a gas reservoir traps gas behind the advancing "
                 "water and typically lowers the recovery factor; water handling must be sized."
@@ -1050,7 +1113,9 @@ class ReservoirModelBuilder:
                         weight=weight,
                         relative_uncertainty=1.0,
                         priority_score=round(weight, 3),
-                        acquisition_route=ACQUISITION_ROUTE.get(name, "field-specific data"),
+                        acquisition_route=ACQUISITION_ROUTE.get(
+                            name, "field-specific data"
+                        ),
                     )
                 )
                 continue
@@ -1065,7 +1130,9 @@ class ReservoirModelBuilder:
                     weight=weight,
                     relative_uncertainty=round(relative, 3),
                     priority_score=round(weight * relative, 3),
-                    acquisition_route=ACQUISITION_ROUTE.get(name, "field-specific data"),
+                    acquisition_route=ACQUISITION_ROUTE.get(
+                        name, "field-specific data"
+                    ),
                 )
             )
         items.sort(key=lambda item: (-item.priority_score, item.parameter))
@@ -1101,7 +1168,9 @@ class ReservoirModelBuilder:
             if squared_drawdown > 0.0:
                 quadratic_pi = (per_well_rate / 1.0e6) / squared_drawdown
 
-        composition = dict(inputs.fluid_composition) if inputs.fluid_composition else None
+        composition = (
+            dict(inputs.fluid_composition) if inputs.fluid_composition else None
+        )
 
         return {
             "schemaVersion": "1.0",
@@ -1110,7 +1179,9 @@ class ReservoirModelBuilder:
             "reservoirConditions": {
                 "temperature_C": parameters["reservoir_temperature_C"].value,
                 "pressure_bara": pressure,
-                "abandonmentPressure_bara": parameters["abandonment_pressure_bara"].value,
+                "abandonmentPressure_bara": parameters[
+                    "abandonment_pressure_bara"
+                ].value,
             },
             # SimpleReservoir.setReservoirFluid takes IN-SITU reservoir volumes at the
             # fluid's temperature and pressure, even though the MCP keys are named _Sm3.
@@ -1131,7 +1202,9 @@ class ReservoirModelBuilder:
             "injectors": int(parameters["injector_count"].value),
             "wellModel": {
                 "inflowModel": "PRODUCTION_INDEX",
-                "productivityIndex_Sm3_per_day_bar": per_well_rate / drawdown if drawdown else 0.0,
+                "productivityIndex_Sm3_per_day_bar": (
+                    per_well_rate / drawdown if drawdown else 0.0
+                ),
                 "neqsimWellProductionIndex_MSm3_per_day_bar2": quadratic_pi,
                 "reservoirPressure_bara": pressure,
                 "designBottomHolePressure_bara": bottomhole,
@@ -1165,7 +1238,9 @@ def summarize(model: ReservoirModel, top_refinements: int = 5) -> str:
     if model.refinement_plan:
         lines.append("  next data to acquire:")
         for item in model.refinement_plan[:top_refinements]:
-            lines.append(f"    - {item.parameter} ({item.current_provenance}) -> {item.acquisition_route}")
+            lines.append(
+                f"    - {item.parameter} ({item.current_provenance}) -> {item.acquisition_route}"
+            )
     for warning in model.warnings:
         lines.append(f"  ! {warning}")
     return "\n".join(lines)

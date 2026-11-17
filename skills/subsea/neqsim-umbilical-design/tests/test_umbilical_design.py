@@ -44,7 +44,7 @@ def test_pack_circles_has_no_overlap_and_encloses(result):
     placed, (cx, cy, radius) = pack_circles(diameters)
     for i, a in enumerate(placed):
         assert math.hypot(a.x - cx, a.y - cy) + a.radius <= radius + 1e-6
-        for b in placed[i + 1:]:
+        for b in placed[i + 1 :]:
             assert math.hypot(a.x - b.x, a.y - b.y) >= a.radius + b.radius - 1e-6
     area = sum(math.pi * (d / 2) ** 2 for d in diameters)
     assert math.pi * radius**2 >= area
@@ -59,7 +59,9 @@ def test_three_equal_circles_pack_like_the_theory():
 def test_layout_agrees_with_neqsim_bundle_estimate(result):
     layout = cross_section_layout(result)
     assert 0.8 < layout["packing_ratio"] < 1.15
-    assert layout["overall_radius"] * 2 == pytest.approx(result.result("calculatedOuterDiameterMm"))
+    assert layout["overall_radius"] * 2 == pytest.approx(
+        result.result("calculatedOuterDiameterMm")
+    )
     assert len(layout["armor_wires"]) > 20
 
 
@@ -74,8 +76,12 @@ def test_functional_checks_reach_key_numbers_and_findings(result):
     numbers = key_numbers(result)
     assert numbers["umbilical_weight_ratio"]["value"] > 1.5
     assert numbers["umbilical_optical_budget_db"]["unit"] == "dB"
-    assert numbers["umbilical_meg_fill_volume_l"]["value"] == pytest.approx(7600.0, rel=0.01)
-    assert numbers["umbilical_meg_displacement_time_h"]["value"] == pytest.approx(15.2, rel=0.01)
+    assert numbers["umbilical_meg_fill_volume_l"]["value"] == pytest.approx(
+        7600.0, rel=0.01
+    )
+    assert numbers["umbilical_meg_displacement_time_h"]["value"] == pytest.approx(
+        15.2, rel=0.01
+    )
     data = json.loads(FIXTURE.read_text(encoding="utf-8"))
     for line in data["elementResults"]:
         if line["name"] == "Scale inhibitor":
@@ -109,12 +115,30 @@ def test_render_all_writes_figures_and_handoff(result, tmp_path):
             "name": "Synthetic",
             "length_km": 15.0,
             "water_depth_m": 100.0,
-            "lines": [{"name": "MEG", "kind": "chemical", "inner_diameter_mm": 25.4, "design_pressure_bar": 345.0}],
+            "lines": [
+                {
+                    "name": "MEG",
+                    "kind": "chemical",
+                    "inner_diameter_mm": 25.4,
+                    "design_pressure_bar": 345.0,
+                }
+            ],
             "evidence": {"water_depth": "screening default"},
         }
     )
-    paths = write_handoff(result, tmp_path, spec, FigureMeta("Synthetic umbilical", "test basis"))
-    for key in ("cross_section", "hydraulics", "mechanical", "checks", "on_a_page", "electrical", "handoff", "key_numbers"):
+    paths = write_handoff(
+        result, tmp_path, spec, FigureMeta("Synthetic umbilical", "test basis")
+    )
+    for key in (
+        "cross_section",
+        "hydraulics",
+        "mechanical",
+        "checks",
+        "on_a_page",
+        "electrical",
+        "handoff",
+        "key_numbers",
+    ):
         assert paths[key].is_file() and paths[key].stat().st_size > 0
     handoff = paths["handoff"].read_text(encoding="utf-8")
     assert "Basis version used = test basis" in handoff
@@ -139,7 +163,14 @@ def test_spec_from_common_basis_reads_block():
         "umbilical": {
             "length_km": 15.0,
             "water_depth_m": 95.0,
-            "lines": [{"name": "LP", "kind": "hydraulic", "inner_diameter_mm": 9.5, "design_pressure_bar": 345}],
+            "lines": [
+                {
+                    "name": "LP",
+                    "kind": "hydraulic",
+                    "inner_diameter_mm": 9.5,
+                    "design_pressure_bar": 345,
+                }
+            ],
             "cables": [{"name": "Power", "cores": 3, "voltage_v": 3300}],
         },
     }

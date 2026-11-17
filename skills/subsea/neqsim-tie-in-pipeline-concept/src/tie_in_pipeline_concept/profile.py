@@ -15,7 +15,9 @@ EARTH_RADIUS_KM = 6371.0088
 EMODNET_URL = "https://rest.emodnet-bathymetry.eu/depth_sample?geom="
 
 
-def great_circle_points(a: Tuple[float, float], b: Tuple[float, float], spacing_km: float) -> Tuple[float, List[Tuple[float, float, float]]]:
+def great_circle_points(
+    a: Tuple[float, float], b: Tuple[float, float], spacing_km: float
+) -> Tuple[float, List[Tuple[float, float, float]]]:
     """Points along the great circle from ``a`` to ``b`` (both ``(lon, lat)`` in degrees).
 
     Args:
@@ -27,8 +29,16 @@ def great_circle_points(a: Tuple[float, float], b: Tuple[float, float], spacing_
         ``(total_length_km, [(kp_km, lon, lat), ...])`` including both end points.
     """
     lon1, lat1, lon2, lat2 = map(math.radians, (a[0], a[1], b[0], b[1]))
-    v1 = (math.cos(lat1) * math.cos(lon1), math.cos(lat1) * math.sin(lon1), math.sin(lat1))
-    v2 = (math.cos(lat2) * math.cos(lon2), math.cos(lat2) * math.sin(lon2), math.sin(lat2))
+    v1 = (
+        math.cos(lat1) * math.cos(lon1),
+        math.cos(lat1) * math.sin(lon1),
+        math.sin(lat1),
+    )
+    v2 = (
+        math.cos(lat2) * math.cos(lon2),
+        math.cos(lat2) * math.sin(lon2),
+        math.sin(lat2),
+    )
     omega = math.acos(max(-1.0, min(1.0, sum(x * y for x, y in zip(v1, v2)))))
     total = omega * EARTH_RADIUS_KM
     n = max(1, round(total / spacing_km))
@@ -47,7 +57,12 @@ def great_circle_points(a: Tuple[float, float], b: Tuple[float, float], spacing_
     return total, pts
 
 
-def fetch_emodnet_depth(lon: float, lat: float, fetch: Optional[Callable[[str], dict]] = None, retries: int = 4) -> Optional[float]:
+def fetch_emodnet_depth(
+    lon: float,
+    lat: float,
+    fetch: Optional[Callable[[str], dict]] = None,
+    retries: int = 4,
+) -> Optional[float]:
     """Water depth in metres (positive down) at a point, or ``None`` on land or outside the DTM.
 
     Args:
@@ -62,7 +77,9 @@ def fetch_emodnet_depth(lon: float, lat: float, fetch: Optional[Callable[[str], 
     url = EMODNET_URL + urllib.parse.quote(f"POINT({lon:.6f} {lat:.6f})")
 
     def _default(u: str) -> dict:
-        with urllib.request.urlopen(u, timeout=30) as resp:  # noqa: S310 - fixed public https endpoint
+        with urllib.request.urlopen(
+            u, timeout=30
+        ) as resp:  # noqa: S310 - fixed public https endpoint
             return json.loads(resp.read().decode("utf-8"))
 
     getter = fetch or _default
@@ -130,7 +147,9 @@ def build_profile(
         Path(cache_path).write_text(json.dumps(cache), encoding="utf-8")
     gaps = [i for i, d in enumerate(depths) if d is None]
     filled = _fill_gaps(depths)
-    return RouteProfile([p[0] for p in pts], [p[1] for p in pts], [p[2] for p in pts], filled, gaps)
+    return RouteProfile(
+        [p[0] for p in pts], [p[1] for p in pts], [p[2] for p in pts], filled, gaps
+    )
 
 
 def _fill_gaps(values: Sequence[Optional[float]]) -> List[float]:
@@ -154,7 +173,9 @@ def _fill_gaps(values: Sequence[Optional[float]]) -> List[float]:
     return out
 
 
-def profile_statistics(profile: RouteProfile, steep_deg: float = 3.0) -> Dict[str, object]:
+def profile_statistics(
+    profile: RouteProfile, steep_deg: float = 3.0
+) -> Dict[str, object]:
     """Depth range, slopes, 3D length and steep intervals of a profile."""
     slopes: List[float] = []
     steep: List[Dict[str, float]] = []
@@ -166,7 +187,13 @@ def profile_statistics(profile: RouteProfile, steep_deg: float = 3.0) -> Dict[st
         slopes.append(s)
         length3d += math.hypot(dh, dz)
         if abs(s) >= steep_deg:
-            steep.append({"kp_from": profile.kp_km[i - 1], "kp_to": profile.kp_km[i], "slope_deg": s})
+            steep.append(
+                {
+                    "kp_from": profile.kp_km[i - 1],
+                    "kp_to": profile.kp_km[i],
+                    "slope_deg": s,
+                }
+            )
     n = max(len(slopes), 1)
     return {
         "length_km": profile.length_km,

@@ -154,7 +154,9 @@ def build_teg_plant(
     if stripping_mode not in ("gas", "drizo"):
         raise ValueError("stripping_mode must be 'gas' or 'drizo'")
     if drizo and recirculate_stripping_gas:
-        raise ValueError("recirculate_stripping_gas applies to stripping_mode='gas' only")
+        raise ValueError(
+            "recirculate_stripping_gas applies to stripping_mode='gas' only"
+        )
     still_P = float(still_pressure_bara)
     ThreePhaseSeparator = jneqsim.process.equipment.separator.ThreePhaseSeparator
 
@@ -260,7 +262,9 @@ def build_teg_plant(
     p.add(flashSep)
     flashGas = Stream("gas from degassing separator", flashSep.getGasOutStream())
     p.add(flashGas)
-    flashLiquid = Stream("liquid from degassing separator", flashSep.getLiquidOutStream())
+    flashLiquid = Stream(
+        "liquid from degassing separator", flashSep.getLiquidOutStream()
+    )
     p.add(flashLiquid)
 
     fineFilter = Filter("TEG fine filter", flashLiquid)
@@ -359,9 +363,13 @@ def build_teg_plant(
     solventExcess = None
     solventHeater = None
     if drizo:
-        sepRegenGas = ThreePhaseSeparator("regen gas separator", coolerRegenGas.getOutletStream())
+        sepRegenGas = ThreePhaseSeparator(
+            "regen gas separator", coolerRegenGas.getOutletStream()
+        )
         p.add(sepRegenGas)
-        waterToTreatment = Stream("water to process or drain", sepRegenGas.getWaterOutStream())
+        waterToTreatment = Stream(
+            "water to process or drain", sepRegenGas.getWaterOutStream()
+        )
         p.add(waterToTreatment)
         recoveredSolvent = Stream("recovered solvent", sepRegenGas.getOilOutStream())
         p.add(recoveredSolvent)
@@ -369,7 +377,9 @@ def build_teg_plant(
         solventSplit.setSplitNumber(2)
         solventSplit.setFlowRates([float(drizo_solvent_kg_hr), -1.0], "kg/hr")
         p.add(solventSplit)
-        solventExcess = Stream("excess solvent to closed drain", solventSplit.getSplitStream(1))
+        solventExcess = Stream(
+            "excess solvent to closed drain", solventSplit.getSplitStream(1)
+        )
         p.add(solventExcess)
         solventHeater = Heater("solvent superheater", solventSplit.getSplitStream(0))
         solventHeater.setOutPressure(still_P + 0.3, "bara")
@@ -391,7 +401,9 @@ def build_teg_plant(
     if drizo:
         pass
     elif recirculate_stripping_gas:
-        recircSplit = Splitter("stripping gas recirc split", sepRegenGas.getGasOutStream())
+        recircSplit = Splitter(
+            "stripping gas recirc split", sepRegenGas.getGasOutStream()
+        )
         recircSplit.setFlowRates([float(stripping_gas_Sm3_hr), -1.0], "Sm3/hr")
         p.add(recircSplit)
         stillVent = Stream(
@@ -404,7 +416,9 @@ def build_teg_plant(
         recircBlower.setOutletPressure(recycle_blower_discharge_bara)
         recircBlower.setIsentropicEfficiency(0.75)
         p.add(recircBlower)
-        recircHeater = Heater("stripping gas recirc heater", recircBlower.getOutletStream())
+        recircHeater = Heater(
+            "stripping gas recirc heater", recircBlower.getOutletStream()
+        )
         recircHeater.setOutTemperature(273.15 + 78.3)
         p.add(recircHeater)
     else:

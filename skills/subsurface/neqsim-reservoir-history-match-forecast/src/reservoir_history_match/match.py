@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
-from typing import Dict, List, Optional, Sequence, Tuple
+from dataclasses import dataclass, replace
+from typing import Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -48,8 +48,15 @@ class Matcher:
     cgr values are Sm3 per MSm3 and compare with the allocated condensate, so cgr_scale is usually matched too.
     """
 
-    def __init__(self, specs: Sequence[TankSpec], wells: Dict[str, Well], rates: pd.DataFrame, obs: pd.DataFrame,
-                 params: Sequence[Param], connections: Sequence[Tuple[str, str, float]] = ()):
+    def __init__(
+        self,
+        specs: Sequence[TankSpec],
+        wells: Dict[str, Well],
+        rates: pd.DataFrame,
+        obs: pd.DataFrame,
+        params: Sequence[Param],
+        connections: Sequence[Tuple[str, str, float]] = (),
+    ):
         self.specs = {s.name: s for s in specs}
         self.wells, self.rates, self.obs = wells, rates, obs.copy()
         self.obs["date"] = pd.to_datetime(self.obs["date"])
@@ -65,7 +72,9 @@ class Matcher:
         key = (spec.name, round(spec.heavy_scale, 4))
         if key not in self._paths:
             z = spec.fluid.scaled(spec.z0, spec.heavy_scale)
-            self._paths[key] = DepletionPath(spec.fluid, z, spec.T_K, spec.p_init, spec.p_min, spec.dp)
+            self._paths[key] = DepletionPath(
+                spec.fluid, z, spec.T_K, spec.p_init, spec.p_min, spec.dp
+            )
         return self._paths[key]
 
     def build(self, x: Optional[Sequence[float]] = None) -> Field:
@@ -73,7 +82,10 @@ class Matcher:
         if x is not None:
             for p, v in zip(self.params, x):
                 setattr(specs[p.tank], p.name, float(v))
-        tanks = {k: Tank(k, self.path(s), s.giip_gsm3, s.aquifer_c, s.cgr_scale) for k, s in specs.items()}
+        tanks = {
+            k: Tank(k, self.path(s), s.giip_gsm3, s.aquifer_c, s.cgr_scale)
+            for k, s in specs.items()
+        }
         return Field(tanks, self.wells, list(self.connections))
 
     def _model_values(self, sim: SimResult) -> np.ndarray:
@@ -92,7 +104,9 @@ class Matcher:
                     d = tab[tab.tank == o.tank]
                     k = d.date.searchsorted(o.date, side="right") - 1
                     r = d.iloc[max(k, 0)]
-                    out.append(1e6 * r.cond_sm3d / r.gas_sm3d if r.gas_sm3d > 0 else np.nan)
+                    out.append(
+                        1e6 * r.cond_sm3d / r.gas_sm3d if r.gas_sm3d > 0 else np.nan
+                    )
             else:
                 raise ValueError(o.kind)
         return np.array(out)
@@ -100,7 +114,11 @@ class Matcher:
     def residuals(self, x) -> np.ndarray:
         sim = self.build(x).simulate(self.rates)
         r = (self._model_values(sim) - self.obs.value.values) / self.obs.sigma.values
-        pri = [np.log(max(v, 1e-12) / max(p.x0, 1e-12)) / p.prior_sigma for p, v in zip(self.params, x) if p.prior_sigma]
+        pri = [
+            np.log(max(v, 1e-12) / max(p.x0, 1e-12)) / p.prior_sigma
+            for p, v in zip(self.params, x)
+            if p.prior_sigma
+        ]
         return np.concatenate([np.nan_to_num(r, nan=0.0), np.array(pri, float)])
 
     def run(self, max_nfev: int = 40) -> "MatchResult":
@@ -110,7 +128,14 @@ class Matcher:
         hi = [p.hi for p in self.params]
         x0 = np.clip([p.x0 for p in self.params], lo, hi)
         scale = np.maximum(np.abs(x0), 1e-3)
-        sol = least_squares(self.residuals, x0, bounds=(lo, hi), x_scale=scale, diff_step=0.02, max_nfev=max_nfev)
+        sol = least_squares(
+            self.residuals,
+            x0,
+            bounds=(lo, hi),
+            x_scale=scale,
+            diff_step=0.02,
+            max_nfev=max_nfev,
+        )
         field_ = self.build(sol.x)
         sim = field_.simulate(self.rates)
         obs = self.obs.assign(model=self._model_values(sim))
@@ -123,9 +148,25 @@ class Matcher:
             cov, std = None, np.full(len(sol.x), np.nan)
         rows = []
         for p, v, s in zip(self.params, sol.x, std):
-            at_bound = bool(abs(v - p.lo) < 1e-3 * (p.hi - p.lo) or abs(v - p.hi) < 1e-3 * (p.hi - p.lo))
-            rows.append(dict(tank=p.tank, name=p.name, initial=p.x0, tuned=float(v), lower=p.lo, upper=p.hi, std=float(s), at_bound=at_bound))
-        return MatchResult(pd.DataFrame(rows), field_, sim, obs, sol.cost, sol.nfev, cov)
+            at_bound = bool(
+                abs(v - p.lo) < 1e-3 * (p.hi - p.lo)
+                or abs(v - p.hi) < 1e-3 * (p.hi - p.lo)
+            )
+            rows.append(
+                dict(
+                    tank=p.tank,
+                    name=p.name,
+                    initial=p.x0,
+                    tuned=float(v),
+                    lower=p.lo,
+                    upper=p.hi,
+                    std=float(s),
+                    at_bound=at_bound,
+                )
+            )
+        return MatchResult(
+            pd.DataFrame(rows), field_, sim, obs, sol.cost, sol.nfev, cov
+        )
 
 
 @dataclass
@@ -141,20 +182,37 @@ class MatchResult:
     def quality(self) -> pd.DataFrame:
         """RMSE, bias and mean relative error per observation kind and tank."""
         g = self.obs.groupby(["kind", "tank"])
-        q = g[["value", "residual"]].apply(lambda d: pd.Series(dict(n=len(d), bias=d.residual.mean(), rmse=float(np.sqrt((d.residual**2).mean())),
-                                              rel_err_pct=100 * float((d.residual.abs() / d.value.abs()).mean())))).reset_index()
+        q = (
+            g[["value", "residual"]]
+            .apply(
+                lambda d: pd.Series(
+                    dict(
+                        n=len(d),
+                        bias=d.residual.mean(),
+                        rmse=float(np.sqrt((d.residual**2).mean())),
+                        rel_err_pct=100
+                        * float((d.residual.abs() / d.value.abs()).mean()),
+                    )
+                )
+            )
+            .reset_index()
+        )
         return q
 
     def sample_parameters(self, n: int, seed: int = 1) -> np.ndarray:
         """Draws from the Gaussian posterior (for ensemble forecasts); clipped to the bounds."""
         if self.cov is None:
-            raise ValueError("no covariance (singular Jacobian): parameters are not identifiable")
+            raise ValueError(
+                "no covariance (singular Jacobian): parameters are not identifiable"
+            )
         rng = np.random.default_rng(seed)
         x = rng.multivariate_normal(self.parameters.tuned.values, self.cov, size=n)
         return np.clip(x, self.parameters.lower.values, self.parameters.upper.values)
 
 
-def fit_deliverability(sim: SimResult, wells_hist: pd.DataFrame, trim: float = 0.1) -> Dict[str, dict]:
+def fit_deliverability(
+    sim: SimResult, wells_hist: pd.DataFrame, trim: float = 0.1
+) -> Dict[str, dict]:
     """Fit P_res^2 - WHP^2 = a*q + c*q^2 per well from daily history and the matched tank pressure.
 
     ``wells_hist`` columns: date, well, q_ksm3d, whp (bara) and optionally water_sm3d for the water-gas ratio.
@@ -174,7 +232,11 @@ def fit_deliverability(sim: SimResult, wells_hist: pd.DataFrame, trim: float = 0
         pres = np.zeros(len(g))
         for t, share in wt.items():
             d = tab[tab.tank == t]
-            k = np.clip(d.date.searchsorted(pd.to_datetime(g.date), side="right") - 1, 0, len(d) - 1)
+            k = np.clip(
+                d.date.searchsorted(pd.to_datetime(g.date), side="right") - 1,
+                0,
+                len(d) - 1,
+            )
             pres += share / tot * d.p_res.values[k]
         g["y"] = (pres**2 - g.whp**2) / g.q_ksm3d
         g = g[g.y > 0]
@@ -187,7 +249,9 @@ def fit_deliverability(sim: SimResult, wells_hist: pd.DataFrame, trim: float = 0
             res = np.abs(g.y - (a + c * g.q_ksm3d))
             g = g[res <= np.quantile(res, 1 - trim)]
         if g.q_ksm3d.std() < 1e-3 * g.q_ksm3d.mean():
-            c, a = 0.0, float(g.y.mean())  # no rate variation: only a single point on the deliverability curve
+            c, a = 0.0, float(
+                g.y.mean()
+            )  # no rate variation: only a single point on the deliverability curve
         else:
             c, a = np.polyfit(g.q_ksm3d, g.y, 1)
         if c < 0:
@@ -198,6 +262,10 @@ def fit_deliverability(sim: SimResult, wells_hist: pd.DataFrame, trim: float = 0
         wgr = float("nan")
         if "water_sm3d" in wells_hist:
             gg = wells_hist[(wells_hist.well == w) & (wells_hist.q_ksm3d > 0)].tail(180)
-            wgr = float(gg.water_sm3d.sum() / (1e3 * gg.q_ksm3d.sum())) if len(gg) else float("nan")
+            wgr = (
+                float(gg.water_sm3d.sum() / (1e3 * gg.q_ksm3d.sum()))
+                if len(gg)
+                else float("nan")
+            )
         out[w] = dict(a=float(a), c=float(c), wgr=wgr, n=int(len(g)), r2=float(r2))
     return out

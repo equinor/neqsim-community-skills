@@ -24,27 +24,39 @@ class Zone:
     water_fraction: float
     gas_fraction: float
     devices: float = 0.0  # number of devices in the zone; 0 = open hole / perforation
-    reservoir_pressure_offset_bar: float = 0.0  # zone pressure minus the reference reservoir pressure
+    reservoir_pressure_offset_bar: float = (
+        0.0  # zone pressure minus the reference reservoir pressure
+    )
 
     @property
     def fractions(self):
         oil = 1.0 - self.water_fraction - self.gas_fraction
         if oil < -1e-9 or self.water_fraction < 0 or self.gas_fraction < 0:
-            raise ValueError(f"zone {self.name}: fractions must be non-negative and sum to at most 1")
+            raise ValueError(
+                f"zone {self.name}: fractions must be non-negative and sum to at most 1"
+            )
         return max(oil, 0.0), self.water_fraction, self.gas_fraction
 
 
-def zone_rate(zone: Zone, drawdown_bar: float, device: Optional[Device], props: PhaseProperties) -> Dict[str, float]:
+def zone_rate(
+    zone: Zone, drawdown_bar: float, device: Optional[Device], props: PhaseProperties
+) -> Dict[str, float]:
     """Reservoir rate of one zone and the split of its drawdown between reservoir and device."""
     dd = drawdown_bar + zone.reservoir_pressure_offset_bar
     if dd <= 0.0:
         return {"rate": 0.0, "device_dp": 0.0, "reservoir_dp": 0.0}
     if device is None or zone.devices <= 0:
-        return {"rate": zone.productivity_index * dd, "device_dp": 0.0, "reservoir_dp": dd}
+        return {
+            "rate": zone.productivity_index * dd,
+            "device_dp": 0.0,
+            "reservoir_dp": dd,
+        }
     lo, hi = 0.0, zone.productivity_index * dd
     for _ in range(200):
         mid = 0.5 * (lo + hi)
-        total = mid / zone.productivity_index + pressure_drop_bar(device, mid / zone.devices, zone.fractions, props)
+        total = mid / zone.productivity_index + pressure_drop_bar(
+            device, mid / zone.devices, zone.fractions, props
+        )
         if total < dd:
             lo = mid
         else:
@@ -53,28 +65,46 @@ def zone_rate(zone: Zone, drawdown_bar: float, device: Optional[Device], props: 
             break
     rate = 0.5 * (lo + hi)
     device_dp = pressure_drop_bar(device, rate / zone.devices, zone.fractions, props)
-    return {"rate": rate, "device_dp": device_dp, "reservoir_dp": rate / zone.productivity_index}
+    return {
+        "rate": rate,
+        "device_dp": device_dp,
+        "reservoir_dp": rate / zone.productivity_index,
+    }
 
 
-def well_inflow(zones: Sequence[Zone], drawdown_bar: float, device: Optional[Device],
-                props: PhaseProperties) -> Dict[str, object]:
+def well_inflow(
+    zones: Sequence[Zone],
+    drawdown_bar: float,
+    device: Optional[Device],
+    props: PhaseProperties,
+) -> Dict[str, object]:
     """Oil, water and gas reservoir rates per zone and in total for one drawdown."""
     rows: List[Dict[str, object]] = []
     totals = {"oil": 0.0, "water": 0.0, "gas": 0.0}
     for zone in zones:
         result = zone_rate(zone, drawdown_bar, device, props)
         fo, fw, fg = zone.fractions
-        row = {"zone": zone.name, "rate_rm3_day": result["rate"], "oil_rm3_day": result["rate"] * fo,
-               "water_rm3_day": result["rate"] * fw, "gas_rm3_day": result["rate"] * fg,
-               "device_dp_bar": result["device_dp"]}
+        row = {
+            "zone": zone.name,
+            "rate_rm3_day": result["rate"],
+            "oil_rm3_day": result["rate"] * fo,
+            "water_rm3_day": result["rate"] * fw,
+            "gas_rm3_day": result["rate"] * fg,
+            "device_dp_bar": result["device_dp"],
+        }
         rows.append(row)
         for phase in totals:
             totals[phase] += row[f"{phase}_rm3_day"]
     return {"drawdown_bar": drawdown_bar, "zones": rows, "totals_rm3_day": totals}
 
 
-def compare_at_same_oil(zones: Sequence[Zone], device: Device, props: PhaseProperties, bare_drawdown_bar: float,
-                        max_drawdown_bar: float) -> Dict[str, object]:
+def compare_at_same_oil(
+    zones: Sequence[Zone],
+    device: Device,
+    props: PhaseProperties,
+    bare_drawdown_bar: float,
+    max_drawdown_bar: float,
+) -> Dict[str, object]:
     """Water and gas reduction with devices at the oil rate of the bare completion.
 
     The drawdown with devices is raised until the oil rate matches the bare completion, up to
@@ -105,11 +135,16 @@ def compare_at_same_oil(zones: Sequence[Zone], device: Device, props: PhasePrope
         return (d[phase] - b[phase]) / b[phase] if b[phase] > 0 else None
 
     return {
-        "bare": bare, "with_devices": with_devices, "oil_rate_reached": reached,
+        "bare": bare,
+        "with_devices": with_devices,
+        "oil_rate_reached": reached,
         "extra_drawdown_bar": dd - bare_drawdown_bar,
-        "oil_change_fraction": change("oil"), "water_change_fraction": change("water"),
+        "oil_change_fraction": change("oil"),
+        "water_change_fraction": change("water"),
         "gas_change_fraction": change("gas"),
-        "note": ("Fixed phase split per zone: this is the immediate re-allocation of inflow, without delayed "
-                 "breakthrough. Confirm the long-term benefit with a multi-segment simulation of the completor "
-                 "deck."),
+        "note": (
+            "Fixed phase split per zone: this is the immediate re-allocation of inflow, without delayed "
+            "breakthrough. Confirm the long-term benefit with a multi-segment simulation of the completor "
+            "deck."
+        ),
     }

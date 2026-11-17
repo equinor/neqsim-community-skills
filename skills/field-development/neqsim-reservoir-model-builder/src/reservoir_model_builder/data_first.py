@@ -25,16 +25,23 @@ from typing import Any, Iterable, Mapping, Optional, Sequence
 #: rung without saying so.
 DATA_LADDER: dict[str, tuple[dict[str, Any], ...]] = {
     "geometry": (
-        {"rank": 1, "source": "published_grid",
-         "loses": "faults, lateral heterogeneity, true layering and extent"},
-        {"rank": 2, "source": "horizons_and_faults",
-         "loses": "property distribution"},
-        {"rank": 3, "source": "structure_map",
-         "loses": "compartmentalisation"},
-        {"rank": 4, "source": "well_tops",
-         "loses": "areal extent, which must then be solved for"},
-        {"rank": 5, "source": "assumed_block",
-         "loses": "every structural control on sweep"},
+        {
+            "rank": 1,
+            "source": "published_grid",
+            "loses": "faults, lateral heterogeneity, true layering and extent",
+        },
+        {"rank": 2, "source": "horizons_and_faults", "loses": "property distribution"},
+        {"rank": 3, "source": "structure_map", "loses": "compartmentalisation"},
+        {
+            "rank": 4,
+            "source": "well_tops",
+            "loses": "areal extent, which must then be solved for",
+        },
+        {
+            "rank": 5,
+            "source": "assumed_block",
+            "loses": "every structural control on sweep",
+        },
     ),
     "petrophysics": (
         {"rank": 1, "source": "grid_property_arrays", "loses": "heterogeneity"},
@@ -46,16 +53,22 @@ DATA_LADDER: dict[str, tuple[dict[str, Any], ...]] = {
     "fluid": (
         {"rank": 1, "source": "pvt_report", "loses": "the measured bubble point"},
         {"rank": 2, "source": "separator_test", "loses": "reservoir-condition data"},
-        {"rank": 3, "source": "operator_document_values",
-         "loses": "the full composition"},
+        {
+            "rank": 3,
+            "source": "operator_document_values",
+            "loses": "the full composition",
+        },
         {"rank": 4, "source": "analogue_depth_trend", "loses": "field specificity"},
         {"rank": 5, "source": "correlation", "loses": "validity outside its range"},
     ),
     "scal": (
         {"rank": 1, "source": "scal_report", "loses": "measured endpoints"},
         {"rank": 2, "source": "analogue_scal", "loses": "rock specificity"},
-        {"rank": 3, "source": "corey_assumed",
-         "loses": "the displacement efficiency that sets recovery factor"},
+        {
+            "rank": 3,
+            "source": "corey_assumed",
+            "loses": "the displacement efficiency that sets recovery factor",
+        },
     ),
     "contacts": (
         {"rank": 1, "source": "pressure_gradient_intersection", "loses": "nothing"},
@@ -79,7 +92,8 @@ def _ladder(ingredient: str) -> tuple[dict[str, Any], ...]:
     except KeyError as error:
         raise KeyError(
             f"unknown ingredient {ingredient!r}; expected one of "
-            f"{sorted(DATA_LADDER)}") from error
+            f"{sorted(DATA_LADDER)}"
+        ) from error
 
 
 def rank_of(ingredient: str, source: str) -> Optional[int]:
@@ -109,16 +123,19 @@ def best_available(
         if outcome == "used":
             used = rung
             break
-        skipped.append({
-            "source": rung["source"],
-            "rank": rung["rank"],
-            "outcome": outcome or "not_attempted",
-            "detail": (record or {}).get("detail", ""),
-            "loses": rung["loses"],
-        })
+        skipped.append(
+            {
+                "source": rung["source"],
+                "rank": rung["rank"],
+                "outcome": outcome or "not_attempted",
+                "detail": (record or {}).get("detail", ""),
+                "loses": rung["loses"],
+            }
+        )
 
-    unattempted = [item["source"] for item in skipped
-                   if item["outcome"] == "not_attempted"]
+    unattempted = [
+        item["source"] for item in skipped if item["outcome"] == "not_attempted"
+    ]
     return {
         "ingredient": ingredient,
         "used": used["source"] if used else None,
@@ -140,8 +157,10 @@ def data_first_gate(
     unattempted rung and an absent one give the same model and opposite
     recommendations, so they must not be allowed to look alike.
     """
-    summaries = {name: best_available(name, attempts)
-                 for name, attempts in attempts_by_ingredient.items()}
+    summaries = {
+        name: best_available(name, attempts)
+        for name, attempts in attempts_by_ingredient.items()
+    }
 
     blockers: list[str] = []
     disclosures: list[str] = []
@@ -149,14 +168,16 @@ def data_first_gate(
         for source in summary["unattempted"]:
             blockers.append(
                 f"{name}: '{source}' was never attempted; try it and record "
-                f"'used', 'blocked' or 'absent' before settling for a lower rung")
+                f"'used', 'blocked' or 'absent' before settling for a lower rung"
+            )
         if summary["used"] is None:
             blockers.append(f"{name}: no source was marked 'used'")
         elif summary["isDowngraded"]:
             disclosures.append(
                 f"{name}: built from '{summary['used']}' rather than "
                 f"'{_ladder(name)[0]['source']}', which gives up "
-                + "; ".join(summary["lost"]))
+                + "; ".join(summary["lost"])
+            )
 
     missing = [name for name in DATA_LADDER if name not in summaries]
     for name in missing:
@@ -181,20 +202,22 @@ def acquisition_plan(gate: Mapping[str, Any]) -> list[dict[str, Any]]:
     for name, summary in (gate.get("ingredients") or {}).items():
         if not summary.get("isDowngraded"):
             continue
-        blocked = [item for item in summary["skipped"]
-                   if item["outcome"] == "blocked"]
-        absent = [item for item in summary["skipped"]
-                  if item["outcome"] == "absent"]
+        blocked = [item for item in summary["skipped"] if item["outcome"] == "blocked"]
+        absent = [item for item in summary["skipped"] if item["outcome"] == "absent"]
         target = (blocked or absent or summary["skipped"])[0]
-        plan.append({
-            "ingredient": name,
-            "obtain": target["source"],
-            "route": ("access request -- the data exists and is catalogued"
-                      if blocked else
-                      "acquisition -- nothing of this kind was found"),
-            "recovers": target["loses"],
-            "gap": summary["rank"] - summary["bestPossibleRank"],
-        })
+        plan.append(
+            {
+                "ingredient": name,
+                "obtain": target["source"],
+                "route": (
+                    "access request -- the data exists and is catalogued"
+                    if blocked
+                    else "acquisition -- nothing of this kind was found"
+                ),
+                "recovers": target["loses"],
+                "gap": summary["rank"] - summary["bestPossibleRank"],
+            }
+        )
     plan.sort(key=lambda item: -item["gap"])
     for index, item in enumerate(plan, start=1):
         item["priority"] = index

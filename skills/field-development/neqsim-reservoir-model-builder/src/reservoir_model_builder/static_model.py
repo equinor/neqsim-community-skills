@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Mapping, Optional, Sequence
+from typing import Any, Optional, Sequence
 
 #: Written into the GRID section.
 GRID_KEYWORDS = ("PORO", "PERMX", "PERMY", "PERMZ", "NTG", "ACTNUM", "MULTNUM")
@@ -107,8 +107,13 @@ class GridDimensions:
         return int(self.nx) * int(self.ny) * int(self.nz)
 
     def as_dict(self) -> dict[str, Any]:
-        return {"nx": self.nx, "ny": self.ny, "nz": self.nz,
-                "cell_count": self.cell_count, "source": self.source}
+        return {
+            "nx": self.nx,
+            "ny": self.ny,
+            "nz": self.nz,
+            "cell_count": self.cell_count,
+            "source": self.source,
+        }
 
 
 @dataclass
@@ -120,8 +125,14 @@ class StaticModelArrays:
     units: dict[str, str] = field(default_factory=dict)
     provenance: dict[str, str] = field(default_factory=dict)
 
-    def add(self, keyword: str, values: Sequence[float], *,
-            unit: Optional[str] = None, source: Optional[str] = None) -> "StaticModelArrays":
+    def add(
+        self,
+        keyword: str,
+        values: Sequence[float],
+        *,
+        unit: Optional[str] = None,
+        source: Optional[str] = None,
+    ) -> "StaticModelArrays":
         key = str(keyword).strip().upper()
         self.arrays[key] = list(values)
         if unit:
@@ -148,61 +159,76 @@ def validate_array(
     issues: list[dict[str, str]] = []
 
     if len(data) != grid.cell_count:
-        issues.append({
-            "severity": "blocking",
-            "detail": (
-                f"{key} has {len(data)} values but the grid has "
-                f"{grid.cell_count} cells ({grid.nx}x{grid.ny}x{grid.nz}). A "
-                "length mismatch misaligns every subsequent cell."
-            ),
-        })
+        issues.append(
+            {
+                "severity": "blocking",
+                "detail": (
+                    f"{key} has {len(data)} values but the grid has "
+                    f"{grid.cell_count} cells ({grid.nx}x{grid.ny}x{grid.nz}). A "
+                    "length mismatch misaligns every subsequent cell."
+                ),
+            }
+        )
 
     finite = [v for v in data if isinstance(v, (int, float)) and math.isfinite(v)]
     non_finite = len(data) - len(finite)
     if non_finite:
-        issues.append({
-            "severity": "blocking",
-            "detail": f"{key} contains {non_finite} non-finite value(s).",
-        })
+        issues.append(
+            {
+                "severity": "blocking",
+                "detail": f"{key} contains {non_finite} non-finite value(s).",
+            }
+        )
 
     sentinels = sum(1 for v in finite if _sentinel_like(float(v)))
     if sentinels:
-        issues.append({
-            "severity": "warning",
-            "detail": (
-                f"{key} contains {sentinels} value(s) that look like undefined "
-                "sentinels. Confirm they sit only in inactive cells."
-            ),
-        })
+        issues.append(
+            {
+                "severity": "warning",
+                "detail": (
+                    f"{key} contains {sentinels} value(s) that look like undefined "
+                    "sentinels. Confirm they sit only in inactive cells."
+                ),
+            }
+        )
 
     bounds = KEYWORD_BOUNDS.get(key)
     low = min(finite) if finite else None
     high = max(finite) if finite else None
     if bounds and finite:
         if bounds["low"] is not None and low < bounds["low"]:
-            issues.append({
-                "severity": "blocking",
-                "detail": (
-                    f"{key} minimum {low} is below the physical floor "
-                    f"{bounds['low']} ({bounds['unit']})."
-                    + (" Eclipse region indices are one-based; a 0 is not a region."
-                       if key in REGION_KEYWORDS else "")
-                ),
-            })
+            issues.append(
+                {
+                    "severity": "blocking",
+                    "detail": (
+                        f"{key} minimum {low} is below the physical floor "
+                        f"{bounds['low']} ({bounds['unit']})."
+                        + (
+                            " Eclipse region indices are one-based; a 0 is not a region."
+                            if key in REGION_KEYWORDS
+                            else ""
+                        )
+                    ),
+                }
+            )
         if bounds["high"] is not None and high > bounds["high"]:
-            issues.append({
-                "severity": "blocking",
-                "detail": (
-                    f"{key} maximum {high} exceeds {bounds['high']} "
-                    f"({bounds['unit']}). A fraction stored in percent "
-                    "initialises without error and is wrong by ~100x."
-                ),
-            })
+            issues.append(
+                {
+                    "severity": "blocking",
+                    "detail": (
+                        f"{key} maximum {high} exceeds {bounds['high']} "
+                        f"({bounds['unit']}). A fraction stored in percent "
+                        "initialises without error and is wrong by ~100x."
+                    ),
+                }
+            )
         if bounds["integer"] and any(float(v) != int(v) for v in finite):
-            issues.append({
-                "severity": "blocking",
-                "detail": f"{key} is an integer keyword but holds non-integer values.",
-            })
+            issues.append(
+                {
+                    "severity": "blocking",
+                    "detail": f"{key} is an integer keyword but holds non-integer values.",
+                }
+            )
 
     return {
         "keyword": key,
@@ -232,7 +258,8 @@ def rebase_regions(values: Sequence[int]) -> dict[str, Any]:
         "shift": shift,
         "note": (
             "Rebased from zero-based to one-based region indices."
-            if shift else "Already one-based; unchanged."
+            if shift
+            else "Already one-based; unchanged."
         ),
     }
 
@@ -261,7 +288,9 @@ def derive_permz(
     }
 
 
-def _format_values(values: Sequence[float], *, integer: bool, per_line: int = 8) -> list[str]:
+def _format_values(
+    values: Sequence[float], *, integer: bool, per_line: int = 8
+) -> list[str]:
     lines: list[str] = []
     row: list[str] = []
     for value in values:
@@ -313,21 +342,32 @@ def build_static_model_deck_input(
                 rebased = rebase_regions(arrays[key])
                 if rebased["shift"]:
                     arrays[key] = rebased["values"]
-                    adjustments.append({"keyword": key, "action": "rebase_regions",
-                                        **{k: rebased[k] for k in ("shift", "note")}})
+                    adjustments.append(
+                        {
+                            "keyword": key,
+                            "action": "rebase_regions",
+                            **{k: rebased[k] for k in ("shift", "note")},
+                        }
+                    )
 
     if "PERMZ" not in arrays and "PERMX" in arrays and kv_kh is not None:
         derived = derive_permz(arrays["PERMX"], kv_kh=kv_kh)
         arrays["PERMZ"] = derived["values"]
         model.provenance["PERMZ"] = derived["provenance"]
-        adjustments.append({"keyword": "PERMZ", "action": "derive_permz",
-                            "kv_kh": derived["kv_kh"]})
+        adjustments.append(
+            {"keyword": "PERMZ", "action": "derive_permz", "kv_kh": derived["kv_kh"]}
+        )
 
     if "PERMY" not in arrays and "PERMX" in arrays:
         arrays["PERMY"] = list(arrays["PERMX"])
         model.provenance.setdefault("PERMY", "copied from PERMX (isotropic in plan)")
-        adjustments.append({"keyword": "PERMY", "action": "copy_from_permx",
-                            "note": "Areal isotropy assumed."})
+        adjustments.append(
+            {
+                "keyword": "PERMY",
+                "action": "copy_from_permx",
+                "note": "Areal isotropy assumed.",
+            }
+        )
 
     for key in sorted(arrays):
         validations.append(
@@ -358,8 +398,7 @@ def build_static_model_deck_input(
                 key, arrays[key], comment=model.provenance.get(key)
             )
         includes["specgrid.inc"] = (
-            "-- SPECGRID\nSPECGRID\n"
-            f"  {grid.nx} {grid.ny} {grid.nz} 1 F /\n"
+            "-- SPECGRID\nSPECGRID\n" f"  {grid.nx} {grid.ny} {grid.nz} 1 F /\n"
         )
 
     return {
@@ -428,25 +467,39 @@ def reconcile_volume(
 def static_model_checklist() -> list[dict[str, str]]:
     """The checks to run before a retrieved model is trusted in a deck."""
     return [
-        {"check": "grid identity",
-         "detail": "Every array belongs to ONE grid. Arrays from a geo grid and a "
-                   "simulation grid have different cell counts and orderings."},
-        {"check": "array length",
-         "detail": "len(array) == nx*ny*nz for every keyword."},
-        {"check": "units",
-         "detail": "Fractions in [0,1], permeability in mD, and a declared unit "
-                   "for each. A dimensionless label on a physical quantity is a "
-                   "defect, not a default."},
-        {"check": "region base",
-         "detail": "Region indices are one-based. A zero-based array is a "
-                   "different model."},
-        {"check": "vertical permeability",
-         "detail": "PERMZ supplied, or kv/kh stated. Never left equal to PERMX "
-                   "by omission."},
-        {"check": "geometry",
-         "detail": "COORD and ZCORN come from the source grid; SPECGRID alone "
-                   "is not a geometry."},
-        {"check": "volume reconciliation",
-         "detail": "Rebuilt in-place volume compared against the reported P50, "
-                   "and inside P90-P10 where those are published."},
+        {
+            "check": "grid identity",
+            "detail": "Every array belongs to ONE grid. Arrays from a geo grid and a "
+            "simulation grid have different cell counts and orderings.",
+        },
+        {
+            "check": "array length",
+            "detail": "len(array) == nx*ny*nz for every keyword.",
+        },
+        {
+            "check": "units",
+            "detail": "Fractions in [0,1], permeability in mD, and a declared unit "
+            "for each. A dimensionless label on a physical quantity is a "
+            "defect, not a default.",
+        },
+        {
+            "check": "region base",
+            "detail": "Region indices are one-based. A zero-based array is a "
+            "different model.",
+        },
+        {
+            "check": "vertical permeability",
+            "detail": "PERMZ supplied, or kv/kh stated. Never left equal to PERMX "
+            "by omission.",
+        },
+        {
+            "check": "geometry",
+            "detail": "COORD and ZCORN come from the source grid; SPECGRID alone "
+            "is not a geometry.",
+        },
+        {
+            "check": "volume reconciliation",
+            "detail": "Rebuilt in-place volume compared against the reported P50, "
+            "and inside P90-P10 where those are published.",
+        },
     ]

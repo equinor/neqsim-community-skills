@@ -53,7 +53,9 @@ class SurfCooldownModel:
             ("overall_u_value", overall_u_value),
         ):
             SurfCooldownModel._require_positive(name, value)
-        tau_seconds = fluid_density * specific_heat * internal_diameter / (4.0 * overall_u_value)
+        tau_seconds = (
+            fluid_density * specific_heat * internal_diameter / (4.0 * overall_u_value)
+        )
         return tau_seconds / 3600.0
 
     def evaluate(

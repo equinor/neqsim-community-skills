@@ -42,7 +42,9 @@ class FiredHeaterDutyModel:
         self._require_positive("inlet_temperature", inlet_temperature)
         self._require_positive("outlet_temperature", outlet_temperature)
         if outlet_temperature <= inlet_temperature:
-            raise ValueError("outlet_temperature must be greater than inlet_temperature")
+            raise ValueError(
+                "outlet_temperature must be greater than inlet_temperature"
+            )
         self._require_positive("radiant_area", radiant_area)
         self._require_fraction("thermal_efficiency", thermal_efficiency)
         self._require_positive("fuel_heating_value", fuel_heating_value)

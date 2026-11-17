@@ -90,7 +90,9 @@ class BenchmarkResult:
             parts.append(
                 "at "
                 + ", ".join(
-                    "{}={}".format(k, "{:g}".format(v) if isinstance(v, (int, float)) else v)
+                    "{}={}".format(
+                        k, "{:g}".format(v) if isinstance(v, (int, float)) else v
+                    )
                     for k, v in sorted(self.state.items())
                 )
             )

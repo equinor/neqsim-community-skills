@@ -55,15 +55,74 @@ def depth_factor_to_m(unit: str) -> Optional[float]:
 # the upper-case file mnemonic; vendor-specific suffixes are handled by prefix rules.
 _ALIASES = {
     "DEPT": ("DEPT", "DEPTH", "MD", "TDEP", "DEP", "INDEX"),
-    "GR": ("GR", "GRC", "SGR", "CGR", "GR_EDTC", "HSGR", "HCGR", "ECGR", "GRD", "GAM", "GAMMA"),
+    "GR": (
+        "GR",
+        "GRC",
+        "SGR",
+        "CGR",
+        "GR_EDTC",
+        "HSGR",
+        "HCGR",
+        "ECGR",
+        "GRD",
+        "GAM",
+        "GAMMA",
+    ),
     "RHOB": ("RHOB", "RHOZ", "DEN", "DENS", "ZDEN", "RHO8", "HROM", "BDCFM"),
     "NPHI": ("NPHI", "TNPH", "NPOR", "CNC", "NPHI_LS", "APLC", "NEU", "CN", "HTNP"),
     "DT": ("DT", "DTC", "DTCO", "AC", "DT4P", "DTP", "SONIC"),
     "DTS": ("DTS", "DTSM", "DT4S", "DTSH", "DT2"),
-    "RDEP": ("RDEP", "RD", "RT", "LLD", "ILD", "RLA5", "AT90", "AHT90", "RILD", "HDRS", "M2R9", "RES_DEEP"),
-    "RMED": ("RMED", "RM", "LLS", "ILM", "RLA3", "AT60", "AHT60", "HMRS", "M2R6", "RES_MED"),
-    "RSHAL": ("RSHAL", "RS", "MSFL", "RXO", "RXOZ", "SFL", "RLA1", "AT10", "AHT10", "RES_SHAL"),
-    "CALI": ("CALI", "CAL", "HCAL", "C1", "C2", "CALS", "CALX", "CALY", "HDAR", "LCAL", "BS_CALI"),
+    "RDEP": (
+        "RDEP",
+        "RD",
+        "RT",
+        "LLD",
+        "ILD",
+        "RLA5",
+        "AT90",
+        "AHT90",
+        "RILD",
+        "HDRS",
+        "M2R9",
+        "RES_DEEP",
+    ),
+    "RMED": (
+        "RMED",
+        "RM",
+        "LLS",
+        "ILM",
+        "RLA3",
+        "AT60",
+        "AHT60",
+        "HMRS",
+        "M2R6",
+        "RES_MED",
+    ),
+    "RSHAL": (
+        "RSHAL",
+        "RS",
+        "MSFL",
+        "RXO",
+        "RXOZ",
+        "SFL",
+        "RLA1",
+        "AT10",
+        "AHT10",
+        "RES_SHAL",
+    ),
+    "CALI": (
+        "CALI",
+        "CAL",
+        "HCAL",
+        "C1",
+        "C2",
+        "CALS",
+        "CALX",
+        "CALY",
+        "HDAR",
+        "LCAL",
+        "BS_CALI",
+    ),
     "BS": ("BS", "BIT", "BITSIZE"),
     "SP": ("SP", "SPBR", "SSP"),
     "PEF": ("PEF", "PEFZ", "PE", "PEF8", "HPEF"),
@@ -74,14 +133,20 @@ _ALIASES = {
     "WOB": ("WOB", "WOBA", "SWOB"),
 }
 
-_ALIAS_LOOKUP = {alias: canonical for canonical, aliases in _ALIASES.items() for alias in aliases}
+_ALIAS_LOOKUP = {
+    alias: canonical for canonical, aliases in _ALIASES.items() for alias in aliases
+}
 
 # Unit + description fallback when the mnemonic is unknown. A unit alone is never
 # enough: mud density shares g/cm3 with bulk density, spectral GR components share gAPI.
 _DESCRIPTION_RULES = (
     ("RHOB", ("g/cm3", "g/cc", "gm/cc", "g/c3", "kg/m3", "k/m3"), ("bulk density",)),
     ("GR", ("gapi", "api"), ("gamma ray", "gamma-ray")),
-    ("DT", ("us/ft", "us/m"), ("compressional", "sonic slowness", "delta-t compressional")),
+    (
+        "DT",
+        ("us/ft", "us/m"),
+        ("compressional", "sonic slowness", "delta-t compressional"),
+    ),
     ("DTS", ("us/ft", "us/m"), ("shear",)),
     ("RDEP", ("ohmm", "ohm.m", "ohm-m"), ("deep",)),
     ("RMED", ("ohmm", "ohm.m", "ohm-m"), ("medium", "intermediate")),

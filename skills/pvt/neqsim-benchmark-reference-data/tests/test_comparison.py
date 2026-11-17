@@ -104,9 +104,7 @@ def test_result_dict_carries_provenance_and_status():
 
 
 def test_description_includes_state_when_present():
-    point = find_anchor(
-        "water", "density", temperature_K=298.15, pressure_Pa=101325.0
-    )
+    point = find_anchor("water", "density", temperature_K=298.15, pressure_Pa=101325.0)
     result = compare("water density", 997.0, point)
     assert "temperature_K=298.15" in result.description()
 

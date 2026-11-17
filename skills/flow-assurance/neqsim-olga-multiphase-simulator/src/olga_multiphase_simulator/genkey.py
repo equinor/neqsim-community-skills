@@ -114,7 +114,9 @@ def _find_statement(text: str, keyword: str, occurrence: int) -> GenkeyStatement
 
 def _value_span(statement_text: str, parameter: str) -> Tuple[int, int]:
     """Return ``(start, end)`` of a parameter's value within a statement."""
-    pattern = re.compile(r"(?<![A-Za-z0-9_])" + re.escape(parameter.upper()) + r"\s*=\s*", re.IGNORECASE)
+    pattern = re.compile(
+        r"(?<![A-Za-z0-9_])" + re.escape(parameter.upper()) + r"\s*=\s*", re.IGNORECASE
+    )
     match = pattern.search(statement_text)
     if match is None:
         raise KeyError(f"Parameter {parameter!r} not found in statement")
@@ -269,7 +271,9 @@ def parameter_overview(text: str, keyword: str, occurrence: int = 0) -> Dict[str
     """Return every ``NAME=value`` pair of one statement as a dictionary."""
     statement = _find_statement(text, keyword, occurrence)
     overview: Dict[str, str] = {}
-    for match in re.finditer(r"(?<![A-Za-z0-9_])([A-Za-z][A-Za-z0-9_]*)\s*=", statement.text):
+    for match in re.finditer(
+        r"(?<![A-Za-z0-9_])([A-Za-z][A-Za-z0-9_]*)\s*=", statement.text
+    ):
         name = match.group(1)
         start, end = _value_span(statement.text, name)
         overview[name.upper()] = _clean_value(statement.text[start:end])

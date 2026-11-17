@@ -12,10 +12,14 @@ from dataclasses import asdict, dataclass, field
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 H2S_PER_SULFATE = 34.081 / 96.06  # mg H2S per mg SO4
-H2S_PER_ACETATE = 34.081 / 59.04  # mg H2S per mg acetate (1 acetate : 1 sulfate : 1 H2S)
+H2S_PER_ACETATE = (
+    34.081 / 59.04
+)  # mg H2S per mg acetate (1 acetate : 1 sulfate : 1 H2S)
 
 
-def seawater_fraction_from_tracer(c_measured: float, c_formation: float, c_seawater: float, clip: bool = True) -> float:
+def seawater_fraction_from_tracer(
+    c_measured: float, c_formation: float, c_seawater: float, clip: bool = True
+) -> float:
     """Injected-water fraction of produced water from one conservative tracer (Cl, Mg, Br, ...).
 
     Linear two end-member mixing: c = f * c_sw + (1 - f) * c_fw. Do not use sulfate or barium:
@@ -35,11 +39,21 @@ def seawater_fraction_multi_tracer(
     Returns (fraction, rms residual in fraction units); a large residual flags a tracer that
     is not conservative or an end member that is wrong.
     """
-    names = [n for n in measured if n in formation and n in seawater and not math.isclose(formation[n], seawater[n])]
+    names = [
+        n
+        for n in measured
+        if n in formation
+        and n in seawater
+        and not math.isclose(formation[n], seawater[n])
+    ]
     if not names:
         raise ValueError("no usable tracer common to measured, formation and seawater")
     fs = [(measured[n] - formation[n]) / (seawater[n] - formation[n]) for n in names]
-    weights = [abs(seawater[n] - formation[n]) / max(abs(formation[n]), abs(seawater[n]), 1e-12) for n in names]
+    weights = [
+        abs(seawater[n] - formation[n])
+        / max(abs(formation[n]), abs(seawater[n]), 1e-12)
+        for n in names
+    ]
     wsum = sum(weights)
     f = sum(w * v for w, v in zip(weights, fs)) / wsum
     rms = math.sqrt(sum(w * (v - f) ** 2 for w, v in zip(weights, fs)) / wsum)
@@ -89,7 +103,11 @@ def _threshold(f: float, p: Dict[str, float]) -> float:
 
 def _mixing_zone(f: float, p: Dict[str, float]) -> float:
     # substrate limited: sulfate rises with f, donor falls with f; peak where they balance
-    return p["a"] * min(f / p["f_star"], (1.0 - f) / (1.0 - p["f_star"])) if 0.0 <= f <= 1.0 else 0.0
+    return (
+        p["a"] * min(f / p["f_star"], (1.0 - f) / (1.0 - p["f_star"]))
+        if 0.0 <= f <= 1.0
+        else 0.0
+    )
 
 
 _MODELS: Dict[str, Tuple[Callable[[float, Dict[str, float]], float], int]] = {
@@ -101,24 +119,40 @@ _MODELS: Dict[str, Tuple[Callable[[float, Dict[str, float]], float], int]] = {
 }
 
 
-def _lstsq_1d(x: Sequence[float], y: Sequence[float], w: Sequence[float], intercept: bool) -> Tuple[float, float]:
+def _lstsq_1d(
+    x: Sequence[float], y: Sequence[float], w: Sequence[float], intercept: bool
+) -> Tuple[float, float]:
     sw = sum(w)
     if intercept:
         mx = sum(wi * xi for wi, xi in zip(w, x)) / sw
         my = sum(wi * yi for wi, yi in zip(w, y)) / sw
         sxx = sum(wi * (xi - mx) ** 2 for wi, xi in zip(w, x))
-        a = sum(wi * (xi - mx) * (yi - my) for wi, xi, yi in zip(w, x, y)) / sxx if sxx > 0 else 0.0
+        a = (
+            sum(wi * (xi - mx) * (yi - my) for wi, xi, yi in zip(w, x, y)) / sxx
+            if sxx > 0
+            else 0.0
+        )
         return a, my - a * mx
     sxx = sum(wi * xi * xi for wi, xi in zip(w, x))
-    return (sum(wi * xi * yi for wi, xi, yi in zip(w, x, y)) / sxx if sxx > 0 else 0.0), 0.0
+    return (
+        sum(wi * xi * yi for wi, xi, yi in zip(w, x, y)) / sxx if sxx > 0 else 0.0
+    ), 0.0
 
 
-def _sse(model: str, params: Dict[str, float], f: Sequence[float], y: Sequence[float], w: Sequence[float]) -> float:
+def _sse(
+    model: str,
+    params: Dict[str, float],
+    f: Sequence[float],
+    y: Sequence[float],
+    w: Sequence[float],
+) -> float:
     fn = _MODELS[model][0]
     return sum(wi * (yi - max(0.0, fn(fi, params))) ** 2 for wi, fi, yi in zip(w, f, y))
 
 
-def _fit_model(model: str, f: Sequence[float], y: Sequence[float], w: Sequence[float]) -> Tuple[Dict[str, float], float]:
+def _fit_model(
+    model: str, f: Sequence[float], y: Sequence[float], w: Sequence[float]
+) -> Tuple[Dict[str, float], float]:
     if model == "linear":
         a, b = _lstsq_1d(f, y, w, True)
         params = {"a": a, "b": b}
@@ -160,7 +194,10 @@ def _fit_model(model: str, f: Sequence[float], y: Sequence[float], w: Sequence[f
         best = None
         for i in range(2, 99):
             fs = i * 0.01
-            xs = [min(fi / fs, (1.0 - fi) / (1.0 - fs)) if 0 <= fi <= 1 else 0.0 for fi in f]
+            xs = [
+                min(fi / fs, (1.0 - fi) / (1.0 - fs)) if 0 <= fi <= 1 else 0.0
+                for fi in f
+            ]
             a, _ = _lstsq_1d(xs, y, w, False)
             p = {"a": a, "f_star": fs}
             s = _sse(model, p, f, y, w)
@@ -186,12 +223,20 @@ def fit_well_correlation(
     """
     if len(f_sw) != len(h2s):
         raise ValueError("f_sw and h2s must have equal length")
-    pairs = [(float(a), float(b)) for a, b in zip(f_sw, h2s) if a is not None and b is not None and math.isfinite(a) and math.isfinite(b)]
+    pairs = [
+        (float(a), float(b))
+        for a, b in zip(f_sw, h2s)
+        if a is not None and b is not None and math.isfinite(a) and math.isfinite(b)
+    ]
     if len(pairs) < 5:
         raise ValueError("need at least 5 valid (f_sw, H2S) points for %s" % well)
     f = [a for a, _ in pairs]
     y = [b for _, b in pairs]
-    w = [1.0] * len(pairs) if weights is None else [float(v) for v in weights][: len(pairs)]
+    w = (
+        [1.0] * len(pairs)
+        if weights is None
+        else [float(v) for v in weights][: len(pairs)]
+    )
     names = list(models) if models else list(_MODELS)
     n = len(pairs)
     sw = sum(w)
@@ -205,7 +250,11 @@ def fit_well_correlation(
             continue
         k = _MODELS[m][1]
         eff_n = max(n, k + 2)
-        aicc = eff_n * math.log(max(sse / sw, 1e-300)) + 2 * k + (2 * k * (k + 1)) / max(eff_n - k - 1, 1)
+        aicc = (
+            eff_n * math.log(max(sse / sw, 1e-300))
+            + 2 * k
+            + (2 * k * (k + 1)) / max(eff_n - k - 1, 1)
+        )
         cand = Correlation(
             well=well,
             model=m,
@@ -223,9 +272,14 @@ def fit_well_correlation(
     if best is None:
         raise ValueError("no model could be fitted for %s" % well)
     if best.f_max < 0.5:
-        best.warnings.append("data span f_sw up to %.2f only; extrapolation to higher seawater fraction is unreliable" % best.f_max)
+        best.warnings.append(
+            "data span f_sw up to %.2f only; extrapolation to higher seawater fraction is unreliable"
+            % best.f_max
+        )
     if best.r2 < 0.5:
-        best.warnings.append("R2 %.2f: seawater fraction explains little of the H2S variance" % best.r2)
+        best.warnings.append(
+            "R2 %.2f: seawater fraction explains little of the H2S variance" % best.r2
+        )
     return best
 
 
@@ -251,9 +305,14 @@ def update_correlation(
         f_ref = new.f_max
         a, b = previous.predict(f_ref), new.predict(f_ref)
         if previous.model != new.model:
-            new.warnings.append("model changed from %s to %s" % (previous.model, new.model))
+            new.warnings.append(
+                "model changed from %s to %s" % (previous.model, new.model)
+            )
         if a > 0 and abs(b - a) / a > 0.25:
-            new.warnings.append("prediction at f_sw=%.2f moved %.0f percent" % (f_ref, 100 * (b - a) / a))
+            new.warnings.append(
+                "prediction at f_sw=%.2f moved %.0f percent"
+                % (f_ref, 100 * (b - a) / a)
+            )
     return new
 
 
@@ -291,15 +350,27 @@ def mixing_zone_h2s_mg_l(
     """
     if not 0.0 <= f_sw <= 1.0:
         raise ValueError("f_sw must be in [0, 1]")
-    for name, v in (("efficiency", efficiency), ("sink_fraction", sink_fraction), ("mitigation_factor", mitigation_factor)):
+    for name, v in (
+        ("efficiency", efficiency),
+        ("sink_fraction", sink_fraction),
+        ("mitigation_factor", mitigation_factor),
+    ):
         if not 0.0 <= v <= 1.0:
             raise ValueError("%s must be in [0, 1]" % name)
     so4 = f_sw * sulfate_sw_mg_l
     donor = (1.0 - f_sw) * donor_fw_mg_l
     thermal = 1.0
     if temperature_c is not None:
-        thermal = 1.0 / (1.0 + math.exp((temperature_c - t_cutoff_c) / max(t_width_c / 4.0, 1e-9)))
-    return min(H2S_PER_SULFATE * so4, H2S_PER_ACETATE * donor) * efficiency * (1.0 - sink_fraction) * mitigation_factor * thermal
+        thermal = 1.0 / (
+            1.0 + math.exp((temperature_c - t_cutoff_c) / max(t_width_c / 4.0, 1e-9))
+        )
+    return (
+        min(H2S_PER_SULFATE * so4, H2S_PER_ACETATE * donor)
+        * efficiency
+        * (1.0 - sink_fraction)
+        * mitigation_factor
+        * thermal
+    )
 
 
 def sulfate_balance_h2s_mg_l(sulfate_in_mg_l: float, sulfate_out_mg_l: float) -> float:
@@ -314,7 +385,9 @@ def water_h2s_to_well_stream_rate(h2s_mg_l: float, water_sm3_d: float) -> float:
     return h2s_mg_l * water_sm3_d / 1000.0
 
 
-def h2s_ppmv_in_gas_from_mass_rate(h2s_kg_d: float, gas_sm3_d: float, gas_fraction_of_h2s: float = 1.0) -> float:
+def h2s_ppmv_in_gas_from_mass_rate(
+    h2s_kg_d: float, gas_sm3_d: float, gas_fraction_of_h2s: float = 1.0
+) -> float:
     """Approximate gas H2S ppmv (standard conditions) from an H2S mass rate and the share in gas.
 
     Uses 23.64 Sm3/kmol (15 C, 1 atm). For accuracy use the partitioning skill.

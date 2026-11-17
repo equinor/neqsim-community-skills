@@ -64,7 +64,9 @@ def zone_statistics(
     for zone in zones:
         top, base = float(zone["top_m"]), float(zone["base_m"])
         if base < top:
-            raise ValueError(f"zone {zone.get('name')!r}: base {base} is above top {top}")
+            raise ValueError(
+                f"zone {zone.get('name')!r}: base {base} is above top {top}"
+            )
         below_top = depth >= top
         inside = below_top & ((depth < base) | ((depth <= base) & (base >= deepest)))
         for curve in selected:
@@ -77,7 +79,9 @@ def zone_statistics(
                 "canonical": curve.canonical,
                 "unit": curve.unit,
                 "samples_in_zone": int(inside.sum()),
-                "valid_fraction": float(np.isfinite(values).mean()) if values.size else 0.0,
+                "valid_fraction": (
+                    float(np.isfinite(values).mean()) if values.size else 0.0
+                ),
             }
             row.update(_stats(values))
             rows.append(row)
@@ -111,8 +115,12 @@ def depth_window_contrast(
     """
     depth = frame.depth_m()
     window = (depth >= depth_m - half_width_m) & (depth <= depth_m + half_width_m)
-    above = (depth >= depth_m - half_width_m - background_m) & (depth < depth_m - half_width_m)
-    below = (depth > depth_m + half_width_m) & (depth <= depth_m + half_width_m + background_m)
+    above = (depth >= depth_m - half_width_m - background_m) & (
+        depth < depth_m - half_width_m
+    )
+    below = (depth > depth_m + half_width_m) & (
+        depth <= depth_m + half_width_m + background_m
+    )
     rows = []
     for curve in _scalar_curves(frame, curves):
         values = np.asarray(curve.values, dtype=float)
@@ -140,7 +148,9 @@ def depth_window_contrast(
     return rows
 
 
-def resample(frame: LogFrame, step_m: float, curves: Optional[Iterable[str]] = None) -> LogFrame:
+def resample(
+    frame: LogFrame, step_m: float, curves: Optional[Iterable[str]] = None
+) -> LogFrame:
     """Return a new frame on a regular depth grid in metres (linear interpolation).
 
     NaN gaps are not bridged: an output sample is NaN when either neighbour is NaN.
@@ -166,5 +176,7 @@ def resample(frame: LogFrame, step_m: float, curves: Optional[Iterable[str]] = N
         interpolated = np.interp(grid, depth_sorted, np.nan_to_num(values, nan=0.0))
         gap = np.interp(grid, depth_sorted, np.isnan(values).astype(float)) > 0
         interpolated[gap] = np.nan
-        out.curves[curve.name] = LogCurve(curve.name, curve.unit, interpolated, curve.long_name)
+        out.curves[curve.name] = LogCurve(
+            curve.name, curve.unit, interpolated, curve.long_name
+        )
     return out

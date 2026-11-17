@@ -1,10 +1,21 @@
-import copy
 
 import pytest
 
 from integrated_well_planning import datums, examples_data as ed
-from integrated_well_planning.basis import (CASES, basis_to_registers, case_value, load_basis, rng, save_basis, template_basis, validate_basis)
-from integrated_well_planning.registers import Registers, RegisterItem, get_path, registers_from_basis
+from integrated_well_planning.basis import (
+    basis_to_registers,
+    case_value,
+    load_basis,
+    rng,
+    save_basis,
+    template_basis,
+    validate_basis,
+)
+from integrated_well_planning.registers import (
+    Registers,
+    RegisterItem,
+    get_path,
+)
 
 
 def _cases():
@@ -20,8 +31,17 @@ def test_worked_cases_validate_without_errors(name):
 
 def test_four_cases_cover_types_and_environments():
     cs = _cases().values()
-    assert {get_path(c, "well.type") for c in cs} == {"oil_producer", "gas_condensate_producer", "water_injector", "gas_injector"}
-    assert {get_path(c, "well.environment") for c in cs} == {"platform", "subsea", "onshore"}
+    assert {get_path(c, "well.type") for c in cs} == {
+        "oil_producer",
+        "gas_condensate_producer",
+        "water_injector",
+        "gas_injector",
+    }
+    assert {get_path(c, "well.environment") for c in cs} == {
+        "platform",
+        "subsea",
+        "onshore",
+    }
 
 
 def test_synthetic_cases_are_flagged_and_never_measured():
@@ -72,7 +92,9 @@ def test_strict_provenance_turns_warnings_into_errors():
     b = _cases()["oil_producer_platform"]
     b["provenance"].pop("reservoir.skin", None)
     assert validate_basis(b).errors == []
-    assert any("no provenance" in e for e in validate_basis(b, strict_provenance=True).errors)
+    assert any(
+        "no provenance" in e for e in validate_basis(b, strict_provenance=True).errors
+    )
 
 
 def test_range_helper_orders_and_rejects_bad_ranges():
@@ -84,7 +106,13 @@ def test_range_helper_orders_and_rejects_bad_ranges():
 
 
 def test_template_basis_for_every_well_type_and_environment():
-    for wt in ("oil_producer", "gas_producer", "gas_condensate_producer", "water_injector", "gas_injector"):
+    for wt in (
+        "oil_producer",
+        "gas_producer",
+        "gas_condensate_producer",
+        "water_injector",
+        "gas_injector",
+    ):
         for env in ("onshore", "platform", "subsea"):
             b = template_basis(wt, env)
             assert b["well"]["type"] == wt and b["well"]["environment"] == env
@@ -119,12 +147,18 @@ def test_registers_gaps_decisions_actions_and_persistence(out_dir):
     reg.save(out_dir)
     again = Registers.load(out_dir)
     assert len(again.decisions) == 1 and again.items.keys() == reg.items.keys()
-    assert (out_dir / "source_register.csv").exists() and (out_dir / "data_gaps.csv").exists()
+    assert (out_dir / "source_register.csv").exists() and (
+        out_dir / "data_gaps.csv"
+    ).exists()
 
 
 def test_register_item_rules():
-    assert RegisterItem("x", 1, provenance="MEASURED", source="", synthetic=False).validate()
-    assert RegisterItem("x", 1, provenance="MEASURED", source="lab", synthetic=True).validate()
+    assert RegisterItem(
+        "x", 1, provenance="MEASURED", source="", synthetic=False
+    ).validate()
+    assert RegisterItem(
+        "x", 1, provenance="MEASURED", source="lab", synthetic=True
+    ).validate()
     assert not RegisterItem("x", 1, provenance="ASSUMED").validate()
 
 
@@ -137,12 +171,16 @@ def test_minimum_curvature_vertical_and_build():
     s = datums.minimum_curvature([0, 500, 1000], [0, 0, 0], [0, 0, 0])
     assert s["tvd"][-1] == pytest.approx(1000.0) and max(s["dls"]) == 0.0
     b = datums.build_and_hold(500.0, 3.0, 30.0, 2000.0, 90.0)
-    assert b["inc"][-1] == pytest.approx(30.0) and max(b["dls"]) == pytest.approx(3.0, rel=0.05)
+    assert b["inc"][-1] == pytest.approx(30.0) and max(b["dls"]) == pytest.approx(
+        3.0, rel=0.05
+    )
     assert b["tvd"][-1] < 2000.0 and b["east"][-1] > 300.0
 
 
 def test_datum_conversion_and_consistency():
-    ref = datums.DepthReference(reference_elevation_msl_m=25.0, water_depth_m=300.0, environment="subsea")
+    ref = datums.DepthReference(
+        reference_elevation_msl_m=25.0, water_depth_m=300.0, environment="subsea"
+    )
     assert ref.tvdss(1025.0) == 1000.0 and ref.seabed_tvd_m() == 325.0
     assert datums.check_datum_consistency(1000.0, 1200.0)
     s = datums.build_and_hold(300.0, 2.0, 20.0, 1500.0)

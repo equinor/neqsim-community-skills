@@ -94,7 +94,9 @@ class ControlAuthorityModel:
                 "lost_saturation_fraction < 1"
             )
         self._require_positive("saturation_trend_threshold", saturation_trend_threshold)
-        self._require_positive("disturbance_trend_threshold", disturbance_trend_threshold)
+        self._require_positive(
+            "disturbance_trend_threshold", disturbance_trend_threshold
+        )
         self.marginal_saturation_fraction = marginal_saturation_fraction
         self.lost_saturation_fraction = lost_saturation_fraction
         self.saturation_trend_threshold = saturation_trend_threshold
@@ -130,7 +132,9 @@ class ControlAuthorityModel:
         if disturbance is not None:
             disturbance_series = self._as_series("disturbance", disturbance, minimum=2)
             if len(disturbance_series) != len(output):
-                raise ValueError("disturbance must have the same length as controller_output")
+                raise ValueError(
+                    "disturbance must have the same length as controller_output"
+                )
         if output_max <= output_min:
             raise ValueError("output_max must exceed output_min")
         self._require_non_negative("saturation_band", saturation_band)
@@ -173,7 +177,9 @@ class ControlAuthorityModel:
         if set_point is not None:
             self._require_finite("set_point", set_point)
             outside = sum(
-                1 for value in process_value if abs(value - set_point) > set_point_tolerance
+                1
+                for value in process_value
+                if abs(value - set_point) > set_point_tolerance
             )
             off_set_point_fraction = outside / count
 
@@ -200,9 +206,15 @@ class ControlAuthorityModel:
         if status != "authority-retained":
             warnings.append(
                 "controller output is on a stop for {:.0%} of the period; the loop "
-                "cannot reject a disturbance while saturated".format(saturation_fraction)
+                "cannot reject a disturbance while saturated".format(
+                    saturation_fraction
+                )
             )
-        if isfinite(variance_ratio) and variance_ratio > 1.0 and saturated.sample_count >= 2:
+        if (
+            isfinite(variance_ratio)
+            and variance_ratio > 1.0
+            and saturated.sample_count >= 2
+        ):
             warnings.append(
                 "controlled-variable variance is {:.1f}x higher while saturated; "
                 "disturbance rejection has been lost, not gained".format(variance_ratio)
@@ -285,18 +297,23 @@ class ControlAuthorityModel:
                 )
             if period.disturbance_std is not None:
                 self._require_non_negative(
-                    f"disturbance_std of period '{period.label}'", period.disturbance_std
+                    f"disturbance_std of period '{period.label}'",
+                    period.disturbance_std,
                 )
 
         warnings: list[str] = []
-        saturation_change = ordered[-1].saturation_fraction - ordered[0].saturation_fraction
+        saturation_change = (
+            ordered[-1].saturation_fraction - ordered[0].saturation_fraction
+        )
         saturation_relative = self._relative_change(
             ordered[0].saturation_fraction, ordered[-1].saturation_fraction
         )
 
         have_disturbance = all(period.disturbance_std is not None for period in ordered)
         if have_disturbance:
-            disturbance_change = ordered[-1].disturbance_std - ordered[0].disturbance_std
+            disturbance_change = (
+                ordered[-1].disturbance_std - ordered[0].disturbance_std
+            )
             disturbance_relative = self._relative_change(
                 ordered[0].disturbance_std, ordered[-1].disturbance_std
             )
@@ -310,10 +327,12 @@ class ControlAuthorityModel:
 
         saturation_rising = saturation_change >= self.saturation_trend_threshold
         disturbance_rising = (
-            have_disturbance and disturbance_relative >= self.disturbance_trend_threshold
+            have_disturbance
+            and disturbance_relative >= self.disturbance_trend_threshold
         )
         disturbance_flat = (
-            have_disturbance and abs(disturbance_relative) < self.disturbance_trend_threshold
+            have_disturbance
+            and abs(disturbance_relative) < self.disturbance_trend_threshold
         )
 
         if not have_disturbance:
@@ -370,9 +389,7 @@ class ControlAuthorityModel:
         std = cls._sample_std(values)
         gain, r_squared = nan, nan
         if disturbance is not None and len(index) >= 3:
-            gain, r_squared = cls._linear_fit(
-                [disturbance[i] for i in index], values
-            )
+            gain, r_squared = cls._linear_fit([disturbance[i] for i in index], values)
         return RegimeStatistics(
             sample_count=len(index),
             fraction_of_period=round(len(index) / total, 4),
@@ -457,7 +474,9 @@ class ControlAuthorityModel:
         return value if not isfinite(value) else round(value, digits)
 
     @classmethod
-    def _as_series(cls, name: str, values: Sequence[float], *, minimum: int) -> list[float]:
+    def _as_series(
+        cls, name: str, values: Sequence[float], *, minimum: int
+    ) -> list[float]:
         series = [float(value) for value in values]
         if len(series) < minimum:
             raise ValueError(f"{name} must contain at least {minimum} samples")

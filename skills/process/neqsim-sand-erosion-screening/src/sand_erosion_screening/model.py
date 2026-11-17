@@ -113,9 +113,7 @@ class SandErosionModel:
             usable_wall_mm=round(usable_wall, 3),
             remaining_wall_mm=round(remaining_wall, 3),
             remaining_life_years=(
-                None
-                if remaining_life_years is None
-                else round(remaining_life_years, 2)
+                None if remaining_life_years is None else round(remaining_life_years, 2)
             ),
             erosion_warning=erosion_warning,
             neqsim_available=find_spec("neqsim") is not None,
@@ -139,9 +137,14 @@ class SandErosionModel:
     ) -> str:
         if remaining_life_years is None:
             life_band = "ok"
-        elif remaining_life_years < self.high_remaining_life_fraction * design_life_years:
+        elif (
+            remaining_life_years < self.high_remaining_life_fraction * design_life_years
+        ):
             life_band = "high"
-        elif remaining_life_years < self.watch_remaining_life_fraction * design_life_years:
+        elif (
+            remaining_life_years
+            < self.watch_remaining_life_fraction * design_life_years
+        ):
             life_band = "watch"
         else:
             life_band = "ok"

@@ -45,10 +45,14 @@ class ReliefLoadModel:
         self._require_positive("environment_factor", environment_factor)
 
         fire_heat_input_kw = (
-            environment_factor * self.fire_coefficient_kw * wetted_area ** self.area_exponent
+            environment_factor
+            * self.fire_coefficient_kw
+            * wetted_area**self.area_exponent
         )
         relief_mass_rate_kg_per_h = fire_heat_input_kw / latent_heat * 3600.0
-        relief_load_indicator = relief_mass_rate_kg_per_h / self.relief_mass_basis_kg_per_h
+        relief_load_indicator = (
+            relief_mass_rate_kg_per_h / self.relief_mass_basis_kg_per_h
+        )
         relief_warning = self._relief_warning(relief_load_indicator)
 
         return ReliefLoadResult(

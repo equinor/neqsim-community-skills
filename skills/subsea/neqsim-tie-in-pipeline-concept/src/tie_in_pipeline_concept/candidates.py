@@ -69,13 +69,24 @@ def rank_candidates(
     out: List[TieInCandidate] = []
     for host in hosts:
         name = str(host["name"])
-        dist = haversine_km(float(source["lat"]), float(source["lon"]), float(host["lat"]), float(host["lon"]))
+        dist = haversine_km(
+            float(source["lat"]),
+            float(source["lon"]),
+            float(host["lat"]),
+            float(host["lon"]),
+        )
         if dist > max_km or dist < 0.05:
             continue
-        cand = TieInCandidate(name=name, lat=float(host["lat"]), lon=float(host["lon"]),
-                              kind=str(host.get("kind", "host")), distance_km=round(dist, 1),
-                              feeders=feeder_count.get(name, 0), reaches_terminal=name in terminals,
-                              spare_capacity_fraction=spare.get(name))
+        cand = TieInCandidate(
+            name=name,
+            lat=float(host["lat"]),
+            lon=float(host["lon"]),
+            kind=str(host.get("kind", "host")),
+            distance_km=round(dist, 1),
+            feeders=feeder_count.get(name, 0),
+            reaches_terminal=name in terminals,
+            spare_capacity_fraction=spare.get(name),
+        )
         d_term = 3.0 * (1.0 - dist / max_km)
         score = d_term
         cand.rationale.append(f"distance {dist:.1f} km -> {d_term:.2f}")

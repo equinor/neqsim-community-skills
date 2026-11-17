@@ -2,7 +2,14 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from tie_in_pid_sketch import Element, TieInEndSketch, landing_end_oil_header, pair_sketch, render_svg, source_end_oil_export
+from tie_in_pid_sketch import (
+    Element,
+    TieInEndSketch,
+    landing_end_oil_header,
+    pair_sketch,
+    render_svg,
+    source_end_oil_export,
+)
 
 
 def test_templates_are_complete():

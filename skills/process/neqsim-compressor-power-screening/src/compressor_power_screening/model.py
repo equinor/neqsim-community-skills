@@ -64,9 +64,9 @@ class CompressorPowerModel:
             * specific_r
             * suction_temperature
             * (1.0 / exponent)
-            * (pressure_ratio ** exponent - 1.0)
+            * (pressure_ratio**exponent - 1.0)
         )
-        discharge_temperature = suction_temperature * pressure_ratio ** exponent
+        discharge_temperature = suction_temperature * pressure_ratio**exponent
         gas_power_kw = mass_flow * head_j_kg / polytropic_efficiency / 1000.0
 
         if rated_power is not None:

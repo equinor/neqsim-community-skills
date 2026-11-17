@@ -76,7 +76,13 @@ def test_non_point_feature_skipped() -> None:
 
 def test_from_rows_with_lon_lat() -> None:
     rows = [
-        {"name": "Host", "longitude": 2.0, "latitude": 60.0, "water_depth_m": 120.0, "kind": "host"},
+        {
+            "name": "Host",
+            "longitude": 2.0,
+            "latitude": 60.0,
+            "water_depth_m": 120.0,
+            "kind": "host",
+        },
         {"name": "W1", "longitude": 2.1, "latitude": 60.1, "water_depth_m": 340.0},
     ]
     result = FieldLayoutImporter().from_rows(rows)

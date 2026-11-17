@@ -14,7 +14,14 @@ from .vfm import rate_from_gauge
 from .workflow import calibrate_well
 
 __all__ = [
-    "FitResult", "fit_with_priors", "accept_calibration", "window_mean", "quality_flags",
-    "recombine_separator_volumes", "stock_tank_rates", "rate_from_gauge", "calibrate_well",
+    "FitResult",
+    "fit_with_priors",
+    "accept_calibration",
+    "window_mean",
+    "quality_flags",
+    "recombine_separator_volumes",
+    "stock_tank_rates",
+    "rate_from_gauge",
+    "calibrate_well",
 ]
 __version__ = "0.1.0"

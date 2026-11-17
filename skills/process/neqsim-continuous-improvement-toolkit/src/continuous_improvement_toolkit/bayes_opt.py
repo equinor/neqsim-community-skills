@@ -59,5 +59,10 @@ def propose_next(x, y, bounds, maximize=True, n_candidates=2000, seed=0, length=
     best = float(np.max(y) if maximize else np.min(y))
     ei = expected_improvement(mu, sigma, best, maximize)
     i = int(np.argmax(ei))
-    return {"x": candidates[i].tolist(), "expected_improvement": float(ei[i]),
-            "predicted": float(mu[i]), "predicted_std": float(sigma[i]), "best_so_far": best}
+    return {
+        "x": candidates[i].tolist(),
+        "expected_improvement": float(ei[i]),
+        "predicted": float(mu[i]),
+        "predicted_std": float(sigma[i]),
+        "best_so_far": best,
+    }

@@ -16,10 +16,10 @@ from typing import Dict, Iterable, List, Optional, Tuple
 # strictly above the model basis it is used to test.
 TIER_ORDER: Tuple[str, ...] = (
     "primary_standard",  # internationally adopted standard reference formulation
-    "reference_eos",     # high-accuracy multiparameter EOS for a specific fluid
-    "measured_data",     # peer-reviewed experimental data with stated uncertainty
-    "published_case",    # textbook or standard worked example with published answer
-    "correlation",       # engineering correlation of the same class as the model
+    "reference_eos",  # high-accuracy multiparameter EOS for a specific fluid
+    "measured_data",  # peer-reviewed experimental data with stated uncertainty
+    "published_case",  # textbook or standard worked example with published answer
+    "correlation",  # engineering correlation of the same class as the model
 )
 
 _TIER_RANK: Dict[str, int] = {tier: rank for rank, tier in enumerate(TIER_ORDER)}

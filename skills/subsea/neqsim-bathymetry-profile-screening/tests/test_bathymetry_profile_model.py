@@ -63,7 +63,9 @@ def test_min_and_max_depth() -> None:
 
 def test_rejects_single_sounding() -> None:
     with pytest.raises(ValueError, match="at least two soundings"):
-        BathymetryProfileModel().evaluate(soundings=[{"distance_m": 0.0, "depth_m": 1.0}])
+        BathymetryProfileModel().evaluate(
+            soundings=[{"distance_m": 0.0, "depth_m": 1.0}]
+        )
 
 
 def test_rejects_duplicate_distance() -> None:

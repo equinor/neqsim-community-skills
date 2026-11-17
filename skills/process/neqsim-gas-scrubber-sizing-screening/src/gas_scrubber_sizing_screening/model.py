@@ -89,7 +89,7 @@ class GasScrubberSizingModel:
         demister_utilisation: Optional[float] = None
 
         if vessel_inside_diameter_m is not None:
-            actual_area = pi / 4.0 * vessel_inside_diameter_m ** 2.0
+            actual_area = pi / 4.0 * vessel_inside_diameter_m**2.0
             actual_velocity = q_gas / actual_area
             velocity_utilisation = actual_velocity / v_max
             # Effective K-factor from the actual velocity.

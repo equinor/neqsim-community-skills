@@ -45,7 +45,9 @@ def test_pressure_drop_model_laminar_friction_factor() -> None:
 
     assert result.reynolds_number < 2000.0
     # Laminar friction factor f = 64 / Re
-    assert result.friction_factor == pytest.approx(64.0 / result.reynolds_number, rel=1e-3)
+    assert result.friction_factor == pytest.approx(
+        64.0 / result.reynolds_number, rel=1e-3
+    )
 
 
 def test_pressure_drop_model_rejects_negative_viscosity() -> None:

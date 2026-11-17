@@ -30,11 +30,18 @@ ROW = (
 
 
 def main() -> None:
-    headers, rows, meta = read_table_bytes((HEADER + "\n" + ROW + "\n").encode("cp1252"))
+    headers, rows, meta = read_table_bytes(
+        (HEADER + "\n" + ROW + "\n").encode("cp1252")
+    )
     records = normalize(headers, rows)
     field = aggregate(records, by=("field",))[0]
-    print("field", field["field"], "liquid m3/d %.0f" % field["liquid_m3d"],
-          "GOR sm3/sm3 %.1f" % field["gor_sm3_sm3"], "water cut %.2f" % field["water_cut"])
+    print(
+        "field",
+        field["field"],
+        "liquid m3/d %.0f" % field["liquid_m3d"],
+        "GOR sm3/sm3 %.1f" % field["gor_sm3_sm3"],
+        "water cut %.2f" % field["water_cut"],
+    )
     history = well_history(records, "7-PPT-50HP-RJS")
     basis = fluid_basis(history[0])
     print("methane mole fraction %.3f" % basis["gas"]["mole_fraction"]["methane"])

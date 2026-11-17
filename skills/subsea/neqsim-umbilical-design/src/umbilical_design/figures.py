@@ -6,7 +6,7 @@ import math
 import textwrap
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import matplotlib
 
@@ -82,32 +82,104 @@ def draw_cross_section(ax, result: DesignResult) -> Dict[str, Any]:
     ax.set_aspect("equal")
     r_out = lay["overall_radius"]
     ax.add_patch(Circle((0, 0), r_out, facecolor="#404040", edgecolor="black", lw=0.8))
-    ax.add_patch(Circle((0, 0), lay["armor_outer_radius"], facecolor="#c8c8c8", edgecolor="#6e6e6e", lw=0.5))
+    ax.add_patch(
+        Circle(
+            (0, 0),
+            lay["armor_outer_radius"],
+            facecolor="#c8c8c8",
+            edgecolor="#6e6e6e",
+            lw=0.5,
+        )
+    )
     for w in lay["armor_wires"]:
-        ax.add_patch(Circle((w["x"], w["y"]), w["radius"], facecolor="#8c8c8c", edgecolor="#505050", lw=0.3))
-    ax.add_patch(Circle((0, 0), lay["core_radius"], facecolor="#e6e6e6", edgecolor="#6e6e6e", lw=0.5))
-    ax.add_patch(Circle((0, 0), lay["bundle_radius"], facecolor="#f7f1d9", edgecolor="#9a9a9a", lw=0.4))
+        ax.add_patch(
+            Circle(
+                (w["x"], w["y"]),
+                w["radius"],
+                facecolor="#8c8c8c",
+                edgecolor="#505050",
+                lw=0.3,
+            )
+        )
+    ax.add_patch(
+        Circle(
+            (0, 0), lay["core_radius"], facecolor="#e6e6e6", edgecolor="#6e6e6e", lw=0.5
+        )
+    )
+    ax.add_patch(
+        Circle(
+            (0, 0),
+            lay["bundle_radius"],
+            facecolor="#f7f1d9",
+            edgecolor="#9a9a9a",
+            lw=0.4,
+        )
+    )
     for number, el in enumerate(lay["elements"], start=1):
         colour = TYPE_COLOURS.get(el["type"], "#888888")
-        ax.add_patch(Circle((el["x"], el["y"]), el["radius"], facecolor=colour, edgecolor="black", lw=0.5, alpha=0.9))
+        ax.add_patch(
+            Circle(
+                (el["x"], el["y"]),
+                el["radius"],
+                facecolor=colour,
+                edgecolor="black",
+                lw=0.5,
+                alpha=0.9,
+            )
+        )
         for core in el["cores"]:
-            ax.add_patch(Circle((core["x"], core["y"]), core["radius"], facecolor="white", edgecolor="black", lw=0.3))
-            ax.add_patch(Circle((core["x"], core["y"]), core["conductor_radius"], facecolor=COPPER, edgecolor="none"))
+            ax.add_patch(
+                Circle(
+                    (core["x"], core["y"]),
+                    core["radius"],
+                    facecolor="white",
+                    edgecolor="black",
+                    lw=0.3,
+                )
+            )
+            ax.add_patch(
+                Circle(
+                    (core["x"], core["y"]),
+                    core["conductor_radius"],
+                    facecolor=COPPER,
+                    edgecolor="none",
+                )
+            )
         if not el["cores"]:
             ax.text(
-                el["x"], el["y"], str(number), ha="center", va="center", fontsize=7 if el["radius"] > 4 else 5.5,
-                color="white", fontweight="bold",
+                el["x"],
+                el["y"],
+                str(number),
+                ha="center",
+                va="center",
+                fontsize=7 if el["radius"] > 4 else 5.5,
+                color="white",
+                fontweight="bold",
             )
         else:
-            ax.text(el["x"], el["y"] + el["radius"] * 1.0 + 1.0, str(number), ha="center", va="bottom", fontsize=7,
-                    color="black", fontweight="bold")
+            ax.text(
+                el["x"],
+                el["y"] + el["radius"] * 1.0 + 1.0,
+                str(number),
+                ha="center",
+                va="bottom",
+                fontsize=7,
+                color="black",
+                fontweight="bold",
+            )
     lim = r_out * 1.18
     ax.set_xlim(-lim, lim)
     ax.set_ylim(-lim * 1.12, lim)
     ax.axis("off")
-    ax.annotate("", xy=(-r_out, -r_out * 1.1), xytext=(r_out, -r_out * 1.1),
-                arrowprops=dict(arrowstyle="<->", lw=0.8))
-    ax.text(0, -r_out * 1.2, "OD %.1f mm" % (2 * r_out), ha="center", va="top", fontsize=8)
+    ax.annotate(
+        "",
+        xy=(-r_out, -r_out * 1.1),
+        xytext=(r_out, -r_out * 1.1),
+        arrowprops=dict(arrowstyle="<->", lw=0.8),
+    )
+    ax.text(
+        0, -r_out * 1.2, "OD %.1f mm" % (2 * r_out), ha="center", va="top", fontsize=8
+    )
     return lay
 
 
@@ -118,10 +190,21 @@ def draw_element_schedule(ax, result: DesignResult) -> None:
     for i, e in enumerate(result.elements, start=1):
         kind = e["type"]
         if kind in ("hydraulic", "chemical"):
-            dims = "ID %.2f / wall %.2f / OD %.2f" % (e["innerDiameterMm"], e["wallThicknessMm"], e["outerDiameterMm"])
-            extra = "%.0f bar, %s" % (e["designPressureBar"], textwrap.shorten(str(e.get("fluid", "")), width=18, placeholder="."))
+            dims = "ID %.2f / wall %.2f / OD %.2f" % (
+                e["innerDiameterMm"],
+                e["wallThicknessMm"],
+                e["outerDiameterMm"],
+            )
+            extra = "%.0f bar, %s" % (
+                e["designPressureBar"],
+                textwrap.shorten(str(e.get("fluid", "")), width=18, placeholder="."),
+            )
         elif kind == "electrical":
-            dims = "%d x %.1f mm2, OD %.1f" % (e["cores"], e["conductorAreaMm2"], e["outerDiameterMm"])
+            dims = "%d x %.1f mm2, OD %.1f" % (
+                e["cores"],
+                e["conductorAreaMm2"],
+                e["outerDiameterMm"],
+            )
             extra = "%.0f V" % e["voltageV"]
         else:
             dims = "OD %.1f" % e["outerDiameterMm"]
@@ -160,12 +243,17 @@ def draw_hydraulics(ax_curve, ax_resp, result: DesignResult) -> None:
         (line,) = ax_curve.plot(flows, drops, lw=1.4, label=c["name"])
         if c["designFlowM3PerHr"] > 0:
             half = len(flows) // 2
-            ax_curve.plot([flows[half]], [drops[half]], "o", color=line.get_color(), ms=5)
+            ax_curve.plot(
+                [flows[half]], [drops[half]], "o", color=line.get_color(), ms=5
+            )
     ax_curve.set_xscale("log")
     ax_curve.set_yscale("log")
     ax_curve.set_xlabel("Flow (m3/h)")
     ax_curve.set_ylabel("Friction pressure drop (bar)")
-    ax_curve.set_title("Line friction drop, %.1f km (dot = design flow)" % (result.length_m / 1000.0), fontsize=9)
+    ax_curve.set_title(
+        "Line friction drop, %.1f km (dot = design flow)" % (result.length_m / 1000.0),
+        fontsize=9,
+    )
     ax_curve.grid(alpha=0.3, which="both")
     if curves:
         ax_curve.legend(fontsize=6.5, loc="upper left")
@@ -174,8 +262,20 @@ def draw_hydraulics(ax_curve, ax_resp, result: DesignResult) -> None:
     y = list(range(len(lines)))
     t90 = [l["time90PercentS"] / 60.0 for l in lines]
     transit = [l["acousticTransitTimeS"] / 60.0 for l in lines]
-    ax_resp.barh([v + 0.2 for v in y], t90, height=0.38, color="#1f77b4", label="90 % pressure response")
-    ax_resp.barh([v - 0.2 for v in y], transit, height=0.38, color="#ff7f0e", label="acoustic transit (lower bound)")
+    ax_resp.barh(
+        [v + 0.2 for v in y],
+        t90,
+        height=0.38,
+        color="#1f77b4",
+        label="90 % pressure response",
+    )
+    ax_resp.barh(
+        [v - 0.2 for v in y],
+        transit,
+        height=0.38,
+        color="#ff7f0e",
+        label="acoustic transit (lower bound)",
+    )
     ax_resp.set_yticks(y)
     ax_resp.set_yticklabels(names, fontsize=7)
     ax_resp.set_xscale("log")
@@ -204,17 +304,36 @@ def draw_mechanical(ax_cat, ax_util, result: DesignResult) -> None:
         cb.set_label("Tension (kN)", fontsize=7)
         cb.ax.tick_params(labelsize=6)
         ax_cat.annotate(
-            "top %.1f kN (design %.1f kN)\n%.0f deg from vertical" % (
-                res["staticTopTensionKN"], res["designTopTensionKN"], res["topAngleFromVerticalDeg"]),
-            xy=(x[-1], z[-1]), xytext=(0.35 * max(x), 0.9 * max(z)), fontsize=7,
+            "top %.1f kN (design %.1f kN)\n%.0f deg from vertical"
+            % (
+                res["staticTopTensionKN"],
+                res["designTopTensionKN"],
+                res["topAngleFromVerticalDeg"],
+            ),
+            xy=(x[-1], z[-1]),
+            xytext=(0.35 * max(x), 0.9 * max(z)),
+            fontsize=7,
             arrowprops=dict(arrowstyle="->", lw=0.6),
         )
-        ax_cat.text(0.02 * max(x), 0.06 * max(z), "touchdown radius %.0f m" % res["touchdownBendRadiusM"], fontsize=7)
+        ax_cat.text(
+            0.02 * max(x),
+            0.06 * max(z),
+            "touchdown radius %.0f m" % res["touchdownBendRadiusM"],
+            fontsize=7,
+        )
     else:
-        ax_cat.text(0.5, 0.5, "No catenary (umbilical is buoyant)", ha="center", transform=ax_cat.transAxes)
+        ax_cat.text(
+            0.5,
+            0.5,
+            "No catenary (umbilical is buoyant)",
+            ha="center",
+            transform=ax_cat.transAxes,
+        )
     ax_cat.set_xlabel("Horizontal distance from touchdown (m)")
     ax_cat.set_ylabel("Height above seabed (m)")
-    ax_cat.set_title("Free-hanging catenary, %.0f m water depth" % result.water_depth_m, fontsize=9)
+    ax_cat.set_title(
+        "Free-hanging catenary, %.0f m water depth" % result.water_depth_m, fontsize=9
+    )
     ax_cat.grid(alpha=0.3)
 
     cap = res["armorCapacityKN"]
@@ -224,7 +343,10 @@ def draw_mechanical(ax_cat, ax_util, result: DesignResult) -> None:
         ("Armour tension", res["designTopTensionKN"] / cap if cap > 0 else 0.0),
         ("Tube collapse", res["maxCollapseUtilization"]),
         ("Tube hoop stress", res["maxBurstUtilization"]),
-        ("Bend radius (MBR / touchdown)", mbr / td if td and math.isfinite(td) else 0.0),
+        (
+            "Bend radius (MBR / touchdown)",
+            mbr / td if td and math.isfinite(td) else 0.0,
+        ),
     ]
     names = [u[0] for u in util]
     vals = [u[1] for u in util]
@@ -245,27 +367,64 @@ def draw_electrical(ax, result: DesignResult) -> bool:
     sweep = result.data.get("powerSweep")
     if not sweep:
         ax.axis("off")
-        ax.text(0.5, 0.5, "No power load defined", ha="center", va="center", transform=ax.transAxes, fontsize=8)
+        ax.text(
+            0.5,
+            0.5,
+            "No power load defined",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+            fontsize=8,
+        )
         return False
     ln = sweep["lengthKm"]
-    ax.plot(ln, sweep["voltageDropPercent"], color="#d62728", lw=1.5, label="Voltage drop (%)")
+    ax.plot(
+        ln,
+        sweep["voltageDropPercent"],
+        color="#d62728",
+        lw=1.5,
+        label="Voltage drop (%)",
+    )
     ax.axhline(0, color="black", lw=0.5)
     ax.set_xlabel("Cable length (km)")
     ax.set_ylabel("Voltage drop (% of receiving voltage)", color="#d62728")
     ax2 = ax.twinx()
-    ax2.plot(ln, sweep["chargingCurrentA"], color="#1f77b4", lw=1.5, ls="--", label="Charging current (A)")
+    ax2.plot(
+        ln,
+        sweep["chargingCurrentA"],
+        color="#1f77b4",
+        lw=1.5,
+        ls="--",
+        label="Charging current (A)",
+    )
     ax2.set_ylabel("Cable charging current (A)", color="#1f77b4")
     ax.axvline(result.length_m / 1000.0, color="grey", ls=":", lw=1.2)
-    ax.text(result.length_m / 1000.0, ax.get_ylim()[1], " design length", fontsize=7, va="top", color="grey")
+    ax.text(
+        result.length_m / 1000.0,
+        ax.get_ylim()[1],
+        " design length",
+        fontsize=7,
+        va="top",
+        color="grey",
+    )
     ax.set_title("Power cable against step-out distance", fontsize=9)
     ax.grid(alpha=0.3)
     pt = result.data.get("powerTransmission", {})
     if pt:
         ax.text(
-            0.03, 0.97,
-            "%.2f MW load at design length:\nloss %.3f MW, voltage drop %.2f %%,\ncharging current %.1f A" % (
-                pt["loadMW"], pt["lossMW"], pt["voltageDropPercent"], pt["chargingCurrentA"]),
-            transform=ax.transAxes, fontsize=7, va="top", bbox=dict(boxstyle="round", fc="white", ec="#aaaaaa"),
+            0.03,
+            0.97,
+            "%.2f MW load at design length:\nloss %.3f MW, voltage drop %.2f %%,\ncharging current %.1f A"
+            % (
+                pt["loadMW"],
+                pt["lossMW"],
+                pt["voltageDropPercent"],
+                pt["chargingCurrentA"],
+            ),
+            transform=ax.transAxes,
+            fontsize=7,
+            va="top",
+            bbox=dict(boxstyle="round", fc="white", ec="#aaaaaa"),
         )
     return True
 
@@ -281,10 +440,24 @@ def draw_checks(ax, result: DesignResult) -> None:
     headline = [
         ("Overall diameter", "%.1f mm" % res["calculatedOuterDiameterMm"]),
         ("Armour layers", "%d" % res["requiredArmorLayers"]),
-        ("Weight in air, empty / filled", "%.1f / %.1f kg/m" % (w["dryWeightPerMeterKgM"], w["filledWeightPerMeterKgM"])),
+        (
+            "Weight in air, empty / filled",
+            "%.1f / %.1f kg/m"
+            % (w["dryWeightPerMeterKgM"], w["filledWeightPerMeterKgM"]),
+        ),
         ("Weight in seawater, filled", "%.1f kg/m" % w["submergedWeightPerMeterKgM"]),
-        ("Weight ratio (air / displaced seawater)", "%.2f" % res["weightRatio"] if "weightRatio" in res else "n/a"),
-        ("Optical budget", "%.1f dB" % res["opticalBudgetDb"] if "opticalBudgetDb" in res else "no fibre"),
+        (
+            "Weight ratio (air / displaced seawater)",
+            "%.2f" % res["weightRatio"] if "weightRatio" in res else "n/a",
+        ),
+        (
+            "Optical budget",
+            (
+                "%.1f dB" % res["opticalBudgetDb"]
+                if "opticalBudgetDb" in res
+                else "no fibre"
+            ),
+        ),
         ("Total dry weight", "%.0f t" % w["totalDryWeightTonnes"]),
     ]
     n_rows = len(checks) + len(headline) + 2
@@ -293,10 +466,28 @@ def draw_checks(ax, result: DesignResult) -> None:
     ax.text(0.0, y, "Design checks", fontsize=8.5, fontweight="bold", va="center")
     for key, ok in checks:
         y -= step
-        ax.text(0.0, y, "PASS" if ok else "FAIL", fontsize=7, fontweight="bold", color="white", va="center",
-                ha="left", bbox=dict(boxstyle="round,pad=0.25", fc=PASS_COLOUR if ok else FAIL_COLOUR, ec="none"))
-        ax.text(0.17, y, textwrap.shorten(CHECK_LABELS.get(key, key), width=64, placeholder="..."), fontsize=7,
-                va="center")
+        ax.text(
+            0.0,
+            y,
+            "PASS" if ok else "FAIL",
+            fontsize=7,
+            fontweight="bold",
+            color="white",
+            va="center",
+            ha="left",
+            bbox=dict(
+                boxstyle="round,pad=0.25",
+                fc=PASS_COLOUR if ok else FAIL_COLOUR,
+                ec="none",
+            ),
+        )
+        ax.text(
+            0.17,
+            y,
+            textwrap.shorten(CHECK_LABELS.get(key, key), width=64, placeholder="..."),
+            fontsize=7,
+            va="center",
+        )
     y -= step * 1.2
     ax.text(0.0, y, "Headline numbers", fontsize=8.5, fontweight="bold", va="center")
     for label, value in headline:
@@ -327,7 +518,9 @@ def figure_mechanical(result: DesignResult, meta: FigureMeta, path: Path) -> Pat
     return _finish(fig, meta, path)
 
 
-def figure_electrical(result: DesignResult, meta: FigureMeta, path: Path) -> Optional[Path]:
+def figure_electrical(
+    result: DesignResult, meta: FigureMeta, path: Path
+) -> Optional[Path]:
     if not result.data.get("powerSweep"):
         return None
     fig = _new_figure(figsize=(9, 5))
@@ -357,21 +550,47 @@ def figure_on_a_page(result: DesignResult, meta: FigureMeta, path: Path) -> Path
     return _finish(fig, meta, path, pdf=True)
 
 
-def render_all(result: DesignResult, out_dir: Path, meta: FigureMeta) -> Dict[str, Path]:
+def render_all(
+    result: DesignResult, out_dir: Path, meta: FigureMeta
+) -> Dict[str, Path]:
     """Render every figure into ``out_dir`` and return name -> path (electrical only if a load exists)."""
     out_dir = Path(out_dir)
 
     def sub(title: str) -> FigureMeta:
-        return FigureMeta(title=title, basis_version=meta.basis_version, source=meta.source)
+        return FigureMeta(
+            title=title, basis_version=meta.basis_version, source=meta.source
+        )
 
     figs: Dict[str, Path] = {
-        "cross_section": figure_cross_section(result, sub(meta.title + ": cross-section"), out_dir / "fig1_cross_section.png"),
-        "hydraulics": figure_hydraulics(result, sub(meta.title + ": line hydraulics"), out_dir / "fig2_hydraulics.png"),
-        "mechanical": figure_mechanical(result, sub(meta.title + ": tension and bending"), out_dir / "fig3_mechanical.png"),
-        "checks": figure_checks(result, sub(meta.title + ": design checks"), out_dir / "fig5_design_checks.png"),
-        "on_a_page": figure_on_a_page(result, sub(meta.title + ": umbilical on a page"), out_dir / "fig6_umbilical_on_a_page.png"),
+        "cross_section": figure_cross_section(
+            result,
+            sub(meta.title + ": cross-section"),
+            out_dir / "fig1_cross_section.png",
+        ),
+        "hydraulics": figure_hydraulics(
+            result,
+            sub(meta.title + ": line hydraulics"),
+            out_dir / "fig2_hydraulics.png",
+        ),
+        "mechanical": figure_mechanical(
+            result,
+            sub(meta.title + ": tension and bending"),
+            out_dir / "fig3_mechanical.png",
+        ),
+        "checks": figure_checks(
+            result,
+            sub(meta.title + ": design checks"),
+            out_dir / "fig5_design_checks.png",
+        ),
+        "on_a_page": figure_on_a_page(
+            result,
+            sub(meta.title + ": umbilical on a page"),
+            out_dir / "fig6_umbilical_on_a_page.png",
+        ),
     }
-    electrical = figure_electrical(result, sub(meta.title + ": power cable"), out_dir / "fig4_electrical.png")
+    electrical = figure_electrical(
+        result, sub(meta.title + ": power cable"), out_dir / "fig4_electrical.png"
+    )
     if electrical is not None:
         figs["electrical"] = electrical
     return figs

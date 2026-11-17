@@ -78,7 +78,9 @@ except Exception as error:  # NeqSim missing, or a single-phase result
         continuous_volume_fraction=0.42 / 0.53,
         dispersed_volume_fraction=0.11 / 0.53,
     )
-    print(f"NeqSim unavailable ({type(error).__name__}); using a stated two-phase state.")
+    print(
+        f"NeqSim unavailable ({type(error).__name__}); using a stated two-phase state."
+    )
 
 print(
     f"  continuous {state.continuous.phase} "

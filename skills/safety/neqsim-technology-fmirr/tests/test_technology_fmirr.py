@@ -146,7 +146,9 @@ def test_next_iteration_recorded():
 def test_lifecycle_gaps_listed():
     reg = FmirrRegister("Demo")
     reg.add(_entry("1", lifecycle_phase="design"))
-    gaps = [f["text"] for f in reg.evaluate()["findings"] if "life-cycle phase" in f["text"]]
+    gaps = [
+        f["text"] for f in reg.evaluate()["findings"] if "life-cycle phase" in f["text"]
+    ]
     assert len(gaps) == 6
 
 

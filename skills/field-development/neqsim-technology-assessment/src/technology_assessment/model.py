@@ -13,7 +13,7 @@ judgement; it does not replace an expert-panel assessment.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Sequence
 
 SCHEMA_VERSION = "technology_assessment.v1"
@@ -58,13 +58,34 @@ CATEGORY_DESCRIPTIONS = {
 
 TRL_SCALE = {
     0: ("Unproven idea", "Paper concept; no analysis or testing."),
-    1: ("Concept demonstrated", "Basic functionality shown by analysis, analogy or sub-component tests."),
-    2: ("Concept validated", "Novel features validated by models or small-scale laboratory tests."),
-    3: ("New technology tested", "First version built and tested over a limited range of conditions."),
-    4: ("Qualified for first use", "Large-scale version tested in the intended environment; scale effects understood."),
-    5: ("Integration tested", "Full-scale unit integrated in its environment with interface and function tests."),
-    6: ("In operation", "Operated to predefined performance criteria for a limited period."),
-    7: ("Proven", "Operated to performance and reliability criteria long enough to reveal time effects."),
+    1: (
+        "Concept demonstrated",
+        "Basic functionality shown by analysis, analogy or sub-component tests.",
+    ),
+    2: (
+        "Concept validated",
+        "Novel features validated by models or small-scale laboratory tests.",
+    ),
+    3: (
+        "New technology tested",
+        "First version built and tested over a limited range of conditions.",
+    ),
+    4: (
+        "Qualified for first use",
+        "Large-scale version tested in the intended environment; scale effects understood.",
+    ),
+    5: (
+        "Integration tested",
+        "Full-scale unit integrated in its environment with interface and function tests.",
+    ),
+    6: (
+        "In operation",
+        "Operated to predefined performance criteria for a limited period.",
+    ),
+    7: (
+        "Proven",
+        "Operated to performance and reliability criteria long enough to reveal time effects.",
+    ),
 }
 
 _QUALIFICATION_ACTIVITIES = {
@@ -105,7 +126,9 @@ _QUALIFICATION_RISK = {
     "4": "high",
 }
 
-_REQUIRED_STEP_OUT_NOTE = "No step-out defined for {}; state whether it is within existing experience."
+_REQUIRED_STEP_OUT_NOTE = (
+    "No step-out defined for {}; state whether it is within existing experience."
+)
 
 
 @dataclass(frozen=True)
@@ -163,7 +186,9 @@ class BenefitRisk:
 
 def _require_choice(name: str, value: str, choices: Sequence[str]) -> None:
     if value not in choices:
-        raise ValueError("{} must be one of {}, got {!r}".format(name, list(choices), value))
+        raise ValueError(
+            "{} must be one of {}, got {!r}".format(name, list(choices), value)
+        )
 
 
 def categorize(
@@ -199,7 +224,9 @@ def categorize(
     )
 
 
-def classify_role(critical_to_business_case: bool, qualified_fallback_available: bool) -> dict[str, Any]:
+def classify_role(
+    critical_to_business_case: bool, qualified_fallback_available: bool
+) -> dict[str, Any]:
     """Classify a technology as enabling or enhancing.
 
     Args:
@@ -296,11 +323,19 @@ class TechnologyAssessment:
             raise ValueError("element_id must be non-empty")
         if element.element_id in self._elements:
             raise ValueError("duplicate element_id {!r}".format(element.element_id))
-        _require_choice("technology_novelty", element.technology_novelty, TECHNOLOGY_NOVELTY)
+        _require_choice(
+            "technology_novelty", element.technology_novelty, TECHNOLOGY_NOVELTY
+        )
         _require_choice("application_area", element.application_area, APPLICATION_AREA)
         _require_choice("qualified_by", element.qualified_by, QUALIFIED_BY)
-        if not isinstance(element.trl, int) or isinstance(element.trl, bool) or not 0 <= element.trl <= 7:
-            raise ValueError("trl of {!r} must be an integer 0-7".format(element.element_id))
+        if (
+            not isinstance(element.trl, int)
+            or isinstance(element.trl, bool)
+            or not 0 <= element.trl <= 7
+        ):
+            raise ValueError(
+                "trl of {!r} must be an integer 0-7".format(element.element_id)
+            )
         self._elements[element.element_id] = element
 
     def add_step_out(self, item: StepOutItem) -> None:
@@ -346,7 +381,9 @@ class TechnologyAssessment:
                 continue
             if parent not in self._elements:
                 raise ValueError(
-                    "element {!r} has unknown parent {!r}".format(element.element_id, parent)
+                    "element {!r} has unknown parent {!r}".format(
+                        element.element_id, parent
+                    )
                 )
             seen = {element.element_id}
             while parent is not None:
@@ -356,16 +393,26 @@ class TechnologyAssessment:
                 parent = self._elements[parent].parent_id
 
     def _element_result(self, element: TechnologyElement) -> dict[str, Any]:
-        cat = categorize(element.technology_novelty, element.application_area, element.qualified_by)
+        cat = categorize(
+            element.technology_novelty, element.application_area, element.qualified_by
+        )
         flags: list[str] = []
         if cat.label == "1" and element.trl < 7:
-            flags.append("Category 1 (proven) but TRL < 7: proven status requires TRL 7 evidence.")
+            flags.append(
+                "Category 1 (proven) but TRL < 7: proven status requires TRL 7 evidence."
+            )
         if cat.category >= 2 and element.trl == 7:
-            flags.append("TRL 7 but novelty category >= 2: reconcile the claimed maturity.")
+            flags.append(
+                "TRL 7 but novelty category >= 2: reconcile the claimed maturity."
+            )
         if cat.qualification_required and not element.evidence:
-            flags.append("Novel element without documented evidence; record the supporting sources.")
+            flags.append(
+                "Novel element without documented evidence; record the supporting sources."
+            )
         if cat.label == "2b" and element.trl < 4:
-            flags.append("Qualified by others (2b) but TRL < 4: third-party qualification is not verified.")
+            flags.append(
+                "Qualified by others (2b) but TRL < 4: third-party qualification is not verified."
+            )
         return {
             "id": element.element_id,
             "name": element.name,
@@ -423,14 +470,22 @@ class TechnologyAssessment:
                 }
             )
         covered = {item.dimension for item in self._step_out}
-        gaps = [_REQUIRED_STEP_OUT_NOTE.format(dim) for dim in STEP_OUT_DIMENSIONS if dim not in covered]
+        gaps = [
+            _REQUIRED_STEP_OUT_NOTE.format(dim)
+            for dim in STEP_OUT_DIMENSIONS
+            if dim not in covered
+        ]
         gaps += [
-            "Step-out {}: no documented experience basis; collect reference experience before relying on it.".format(dim)
+            "Step-out {}: no documented experience basis; collect reference experience before relying on it.".format(
+                dim
+            )
             for dim in undocumented
         ]
         return rows, gaps
 
-    def _qualification_outline(self, results: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _qualification_outline(
+        self, results: Iterable[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         outline = []
         for res in results:
             label = res["category_label"]
@@ -473,28 +528,37 @@ class TechnologyAssessment:
             )
         if self.system_trl_override is not None:
             if self.system_trl_override > min_trl:
-                raise ValueError("system_trl_override may not exceed the lowest element TRL")
+                raise ValueError(
+                    "system_trl_override may not exceed the lowest element TRL"
+                )
             system_trl = self.system_trl_override
             system_note = "Override: " + self.system_trl_override_rationale
         novel = [r for r in results if r["qualification_required"]]
         highest = max(r["category"] for r in results)
         step_out, step_gaps = self._step_out_result()
-        role = classify_role(self.critical_to_business_case, self.qualified_fallback_available)
-        flags = [
-            "{}: {}".format(r["id"], flag) for r in results for flag in r["flags"]
-        ]
+        role = classify_role(
+            self.critical_to_business_case, self.qualified_fallback_available
+        )
+        flags = ["{}: {}".format(r["id"], flag) for r in results for flag in r["flags"]]
         for row in step_out:
             if row["status"] == "step-out beyond experience":
-                flags.append("Step-out in {}: {} (reference {} {}).".format(
-                    row["dimension"], row["proposed"] or row["proposed_value"],
-                    row["reference_value"], row["unit"]).strip())
+                flags.append(
+                    "Step-out in {}: {} (reference {} {}).".format(
+                        row["dimension"],
+                        row["proposed"] or row["proposed_value"],
+                        row["reference_value"],
+                        row["unit"],
+                    ).strip()
+                )
         data_gaps = list(step_gaps)
         if not self._benefits:
             data_gaps.append("No benefits recorded.")
         if not self._risks:
             data_gaps.append("No risks recorded.")
         if not self.standardisation and not self.multi_implementation:
-            data_gaps.append("Standardisation / multi-implementation potential not assessed.")
+            data_gaps.append(
+                "Standardisation / multi-implementation potential not assessed."
+            )
         for field_name, value in (
             ("technology description", self.description),
             ("intended use", self.intended_use),
@@ -507,7 +571,9 @@ class TechnologyAssessment:
         if not self.performance_expectations:
             data_gaps.append("Qualification basis: performance expectations missing.")
         if not self.regulatory_requirements:
-            data_gaps.append("Qualification basis: applicable regulatory requirements not stated.")
+            data_gaps.append(
+                "Qualification basis: applicable regulatory requirements not stated."
+            )
         return {
             "schema_version": SCHEMA_VERSION,
             "technology": self.technology_name,
@@ -585,7 +651,9 @@ def from_dict(spec: Mapping[str, Any]) -> TechnologyAssessment:
         performance_expectations=_tuple(basis.get("performance_expectations")),
         regulatory_requirements=_tuple(basis.get("regulatory_requirements")),
         critical_to_business_case=bool(role.get("critical_to_business_case", False)),
-        qualified_fallback_available=bool(role.get("qualified_fallback_available", True)),
+        qualified_fallback_available=bool(
+            role.get("qualified_fallback_available", True)
+        ),
         interfaces_untested=bool(spec.get("interfaces_untested", False)),
         system_trl_override=spec.get("system_trl_override"),
         system_trl_override_rationale=spec.get("system_trl_override_rationale", ""),

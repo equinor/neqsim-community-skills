@@ -61,15 +61,31 @@ BULK_DATASETS: Dict[str, str] = {
 }
 
 OTHER_DATA: List[Dict[str, str]] = [
-    {"topic": "CO2", "name": "CO2 storage atlas surfaces (FGDB)", "url": FGDB_CCS_ATLAS},
-    {"topic": "CO2", "name": "CO2 surfaces (zmap, 2019)",
-     "url": "https://www.sodir.no/4a612b/globalassets/1-sodir/fakta/co-to/20190906_co2_surfaces.zip"},
-    {"topic": "Deep sea", "name": "Seabed-minerals deep-sea data: order from Sodir",
-     "url": "https://www.sodir.no/fakta/havbunnsmineraler/bestill-dyphavsdata/"},
-    {"topic": "Status reports", "name": "Licence status / relinquishment reports (shape, irregular update)",
-     "url": "https://www.sodir.no/4a1cb3/globalassets/1-sodir/om-oss/informasjonstjenester/karttjenester/licence_relinquishment_reports.zip"},
-    {"topic": "Structural elements", "name": "Main structural elements (shape)",
-     "url": "https://www.sodir.no/4ae6d9/globalassets/1-sodir/fakta/geologi-eng/structural_elements.zip"},
+    {
+        "topic": "CO2",
+        "name": "CO2 storage atlas surfaces (FGDB)",
+        "url": FGDB_CCS_ATLAS,
+    },
+    {
+        "topic": "CO2",
+        "name": "CO2 surfaces (zmap, 2019)",
+        "url": "https://www.sodir.no/4a612b/globalassets/1-sodir/fakta/co-to/20190906_co2_surfaces.zip",
+    },
+    {
+        "topic": "Deep sea",
+        "name": "Seabed-minerals deep-sea data: order from Sodir",
+        "url": "https://www.sodir.no/fakta/havbunnsmineraler/bestill-dyphavsdata/",
+    },
+    {
+        "topic": "Status reports",
+        "name": "Licence status / relinquishment reports (shape, irregular update)",
+        "url": "https://www.sodir.no/4a1cb3/globalassets/1-sodir/om-oss/informasjonstjenester/karttjenester/licence_relinquishment_reports.zip",
+    },
+    {
+        "topic": "Structural elements",
+        "name": "Main structural elements (shape)",
+        "url": "https://www.sodir.no/4ae6d9/globalassets/1-sodir/fakta/geologi-eng/structural_elements.zip",
+    },
 ]
 
 # PDFs worth reading before building complex joins.

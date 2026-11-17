@@ -58,15 +58,24 @@ def build_mesh_spec(basis, refinement: int = 1) -> FemMeshSpec:
         kind="axisymmetric_section",
         inner_radius_m=basis.value("inside_diameter_m") / 2.0,
         layers=[
-            MeshLayer("steel", "carbon-steel", basis.value("wall_thickness_m"),
-                      6 * refinement),
-            MeshLayer("insulation", "insulation",
-                      basis.value("insulation_thickness_m"), 20 * refinement),
+            MeshLayer(
+                "steel", "carbon-steel", basis.value("wall_thickness_m"), 6 * refinement
+            ),
+            MeshLayer(
+                "insulation",
+                "insulation",
+                basis.value("insulation_thickness_m"),
+                20 * refinement,
+            ),
         ],
         segments=[
             MeshSegment("upstream", 1.5, 60 * refinement),
-            MeshSegment("defect", basis.value("defect_length_m"), 32 * refinement,
-                        {"insulation": "flooded-insulation"}),
+            MeshSegment(
+                "defect",
+                basis.value("defect_length_m"),
+                32 * refinement,
+                {"insulation": "flooded-insulation"},
+            ),
             MeshSegment("downstream", 1.5, 60 * refinement),
         ],
         name=f"{basis.tag}-L{refinement}",
@@ -116,21 +125,28 @@ def main() -> None:
             {
                 "source": "tag_register",
                 "reference": "tag register line 20-P-001",
-                "values": {"inside_diameter_m": 0.254, "wall_thickness_m": 0.0127,
-                           "wall_material": "carbon-steel"},
+                "values": {
+                    "inside_diameter_m": 0.254,
+                    "wall_thickness_m": 0.0127,
+                    "wall_material": "carbon-steel",
+                },
             },
             {
                 "source": "insulation_specification",
                 "reference": "SPEC-INS-004 rev 1",
-                "values": {"insulation_thickness_m": 0.05,
-                           "insulation_material": "polyurethane-insulation"},
+                "values": {
+                    "insulation_thickness_m": 0.05,
+                    "insulation_material": "polyurethane-insulation",
+                },
             },
             {
                 "source": "process_datasheet",
                 "reference": "20-DS-014 rev 2",
-                "values": {"internal_temperature_c": 45.0,
-                           "external_temperature_c": 4.0,
-                           "external_film_coefficient_w_per_m2k": 300.0},
+                "values": {
+                    "internal_temperature_c": 45.0,
+                    "external_temperature_c": 4.0,
+                    "external_film_coefficient_w_per_m2k": 300.0,
+                },
             },
             {
                 "source": "inspection_report",
@@ -143,9 +159,11 @@ def main() -> None:
     if basis.missing_fields:
         print("  missing:", ", ".join(basis.missing_fields))
     for conflict in basis.conflicts:
-        print(f"  conflict on {conflict.field}: {conflict.accepted_value} "
-              f"({conflict.accepted_source}) vs {conflict.rejected_value} "
-              f"({conflict.rejected_source})")
+        print(
+            f"  conflict on {conflict.field}: {conflict.accepted_value} "
+            f"({conflict.accepted_source}) vs {conflict.rejected_value} "
+            f"({conflict.rejected_source})"
+        )
     if not basis.ready_for_meshing:
         raise SystemExit("resolve the design basis before meshing")
 
@@ -164,8 +182,10 @@ def main() -> None:
     # 2. Fluid side from NeqSim, then the film coefficient and the mesh targets.
     gas = fluid_state()
     film = film_coefficient(gas, hydraulic_diameter_m=basis.value("inside_diameter_m"))
-    print(f"\nRe = {film.reynolds:,.0f}   Pr = {film.prandtl:.2f}   "
-          f"h_i = {film.h_w_per_m2k:.0f} W/m2K   ({film.correlation})")
+    print(
+        f"\nRe = {film.reynolds:,.0f}   Pr = {film.prandtl:.2f}   "
+        f"h_i = {film.h_w_per_m2k:.0f} W/m2K   ({film.correlation})"
+    )
 
     conditions = derive_thermal_conditions(
         wall_thickness_m=basis.value("wall_thickness_m")
@@ -180,16 +200,20 @@ def main() -> None:
         outer_bulk_temperature_c=basis.value("external_temperature_c"),
         transient_duration_s=12.0 * 3600.0,
     )
-    print(f"Biot = {conditions.biot:.2f}   penetration depth = "
-          f"{conditions.penetration_depth_m * 1000.0:.1f} mm   "
-          f"element size target = {conditions.max_element_size_m * 1000.0:.1f} mm")
+    print(
+        f"Biot = {conditions.biot:.2f}   penetration depth = "
+        f"{conditions.penetration_depth_m * 1000.0:.1f} mm   "
+        f"element size target = {conditions.max_element_size_m * 1000.0:.1f} mm"
+    )
     for warning in conditions.warnings:
         print("  !", warning)
 
     # 3. The intact section, one-dimensional and checkable against the closed form.
     layers = [
         ConductionLayer("steel", steel, basis.value("wall_thickness_m"), 8),
-        ConductionLayer("insulation", insulation, basis.value("insulation_thickness_m"), 20),
+        ConductionLayer(
+            "insulation", insulation, basis.value("insulation_thickness_m"), 20
+        ),
     ]
     intact = RadialConductionModel(layers, inner_radius_m=inner_radius).solve_steady(
         inner_film_coefficient_w_per_m2k=film.h_w_per_m2k,
@@ -199,10 +223,12 @@ def main() -> None:
         ),
         outer_bulk_temperature_c=basis.value("external_temperature_c"),
     )
-    print(f"\nintact section: {intact.heat_flow_per_length_w_per_m:.1f} W/m, "
-          f"U = {intact.overall_u_inner_w_per_m2k:.2f} W/m2K, "
-          f"bore metal {intact.inner_surface_temperature_c:.2f} degC, "
-          f"deviation from the closed form {intact.analytic_deviation_percent:.3f} %")
+    print(
+        f"\nintact section: {intact.heat_flow_per_length_w_per_m:.1f} W/m, "
+        f"U = {intact.overall_u_inner_w_per_m2k:.2f} W/m2K, "
+        f"bore metal {intact.inner_surface_temperature_c:.2f} degC, "
+        f"deviation from the closed form {intact.analytic_deviation_percent:.3f} %"
+    )
 
     # 4. The defect needs two dimensions: heat spreads axially around it.
     recommendation = recommend_backend(dimension=2, physics="conduction")
@@ -212,8 +238,10 @@ def main() -> None:
     for warning in spec.mesh_warnings(max_element_size_m=conditions.max_element_size_m):
         print("  !", warning)
 
-    print(f"\ngmsh: {detect_gmsh() or 'not installed'}   "
-          f"scikit-fem: {'yes' if detect_backends()['scikit-fem'] else 'no'}")
+    print(
+        f"\ngmsh: {detect_gmsh() or 'not installed'}   "
+        f"scikit-fem: {'yes' if detect_backends()['scikit-fem'] else 'no'}"
+    )
 
     def solve(mesh_spec: FemMeshSpec, directory: Path):
         """Mesh, write, run and read one refinement level."""
@@ -223,19 +251,35 @@ def main() -> None:
             name=f"{basis.tag} with insulation defect",
             mesh_file=str(mesh_outcome.mesh_path or (directory / "mesh" / "mesh.msh")),
             materials=[
-                MaterialAssignment("carbon-steel", steel.conductivity_w_per_mk,
-                                   steel.volumetric_heat_capacity_j_per_m3k()),
-                MaterialAssignment("insulation", insulation.conductivity_w_per_mk,
-                                   insulation.volumetric_heat_capacity_j_per_m3k()),
-                MaterialAssignment("flooded-insulation", flooded.conductivity_w_per_mk,
-                                   flooded.volumetric_heat_capacity_j_per_m3k()),
+                MaterialAssignment(
+                    "carbon-steel",
+                    steel.conductivity_w_per_mk,
+                    steel.volumetric_heat_capacity_j_per_m3k(),
+                ),
+                MaterialAssignment(
+                    "insulation",
+                    insulation.conductivity_w_per_mk,
+                    insulation.volumetric_heat_capacity_j_per_m3k(),
+                ),
+                MaterialAssignment(
+                    "flooded-insulation",
+                    flooded.conductivity_w_per_mk,
+                    flooded.volumetric_heat_capacity_j_per_m3k(),
+                ),
             ],
             boundaries=[
-                BoundaryCondition("inner", "robin", film.h_w_per_m2k,
-                                  basis.value("internal_temperature_c")),
-                BoundaryCondition("outer", "robin",
-                                  basis.value("external_film_coefficient_w_per_m2k"),
-                                  basis.value("external_temperature_c")),
+                BoundaryCondition(
+                    "inner",
+                    "robin",
+                    film.h_w_per_m2k,
+                    basis.value("internal_temperature_c"),
+                ),
+                BoundaryCondition(
+                    "outer",
+                    "robin",
+                    basis.value("external_film_coefficient_w_per_m2k"),
+                    basis.value("external_temperature_c"),
+                ),
                 # The modelled length is cut out of a long line, so the cut faces
                 # are symmetry planes rather than real boundaries.
                 BoundaryCondition("west", "adiabatic"),
@@ -247,7 +291,9 @@ def main() -> None:
         outcome = case.run(directory)
         print(f"  {mesh_spec.name}: mesh {mesh_outcome.status}, solve {outcome.status}")
         if not outcome.executed:
-            print(f"  run '{case.command()}' in {directory} where scikit-fem is installed")
+            print(
+                f"  run '{case.command()}' in {directory} where scikit-fem is installed"
+            )
             return None
         return read_case_results(directory)
 
@@ -257,18 +303,22 @@ def main() -> None:
         return
 
     # Mesh independence is cheap for conduction, so there is no excuse for one mesh.
-    refined = solve(build_mesh_spec(basis, refinement=2), CASE_DIR.with_name(
-        CASE_DIR.name + "-refined"))
+    refined = solve(
+        build_mesh_spec(basis, refinement=2),
+        CASE_DIR.with_name(CASE_DIR.name + "-refined"),
+    )
     convergence = None
     if refined is not None:
         base_flow = results.boundary_heat_flow_w["inner"]
-        convergence = 100.0 * (
-            refined.boundary_heat_flow_w["inner"] - base_flow
-        ) / base_flow
+        convergence = (
+            100.0 * (refined.boundary_heat_flow_w["inner"] - base_flow) / base_flow
+        )
 
-    print(f"\nheat flow over {spec.total_length_m:.1f} m: "
-          f"{results.boundary_heat_flow_w['inner']:.1f} W   "
-          f"(energy balance {results.energy_balance_error_percent:.4f} %)")
+    print(
+        f"\nheat flow over {spec.total_length_m:.1f} m: "
+        f"{results.boundary_heat_flow_w['inner']:.1f} W   "
+        f"(energy balance {results.energy_balance_error_percent:.4f} %)"
+    )
     if convergence is not None:
         print(f"change on refinement: {convergence:+.2f} %")
 
@@ -311,8 +361,10 @@ def main() -> None:
         outer_radius_m=inner_radius + basis.value("wall_thickness_m"),
         internal_pressure_pa=75.0e5,
     )
-    print(f"\nwall stress: {stress.combined_von_mises_pa / 1e6:.1f} MPa von Mises, "
-          f"utilisation {stress.utilisation}, verdict {stress.verdict}")
+    print(
+        f"\nwall stress: {stress.combined_von_mises_pa / 1e6:.1f} MPa von Mises, "
+        f"utilisation {stress.utilisation}, verdict {stress.verdict}"
+    )
     for warning in stress.warnings:
         print("  !", warning)
 

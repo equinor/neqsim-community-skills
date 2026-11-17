@@ -235,9 +235,7 @@ class ScaleScreener:
         return tuple(flags)
 
     @staticmethod
-    def _sulfate_scale(
-        salt: str, water: ProducedWater, gamma2: float
-    ) -> ScaleResult:
+    def _sulfate_scale(salt: str, water: ProducedWater, gamma2: float) -> ScaleResult:
         """Compute the saturation index for a divalent sulfate scale.
 
         Args:

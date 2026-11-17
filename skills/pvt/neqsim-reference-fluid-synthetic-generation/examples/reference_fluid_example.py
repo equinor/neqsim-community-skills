@@ -18,7 +18,9 @@ def main() -> None:
         return rel * rel
 
     match = match_split_factor(objective, low=0.5, high=2.5)
-    print(f"Calibrated split factor: {match.factor:.4f} (objective {match.objective:.2e})")
+    print(
+        f"Calibrated split factor: {match.factor:.4f} (objective {match.objective:.2e})"
+    )
 
     def build(alpha):
         heavy = 0.05 / alpha

@@ -106,7 +106,9 @@ class PscBidModel:
             raise ValueError("production, capex and opex must have the same length")
         rates = self._rates(rate_per_producer_bbld, len(production_mmbbl))
         if len(volume_scales) != len(volume_weights) or not volume_scales:
-            raise ValueError("volume_scales and volume_weights must have the same non-zero length")
+            raise ValueError(
+                "volume_scales and volume_weights must have the same non-zero length"
+            )
         total_w = sum(volume_weights)
         if total_w <= 0.0:
             raise ValueError("volume_weights must sum to a positive number")
@@ -119,7 +121,14 @@ class PscBidModel:
             base = None
             for scale, w in zip(volume_scales, weights):
                 pv_c, pv_s, sums = self._waterfall(
-                    production_mmbbl, capex_musd, opex_musd, share, scale, exploration_program_musd, delay, rates
+                    production_mmbbl,
+                    capex_musd,
+                    opex_musd,
+                    share,
+                    scale,
+                    exploration_program_musd,
+                    delay,
+                    rates,
                 )
                 pv_dev += w * pv_c
                 pv_state += w * pv_s
@@ -144,7 +153,9 @@ class PscBidModel:
             verdict = "thin_headroom"
         else:
             verdict = "value_creating"
-        shares = self.effective_share_profile(profit_oil_share_offered, production_mmbbl, rate_per_producer_bbld)
+        shares = self.effective_share_profile(
+            profit_oil_share_offered, production_mmbbl, rate_per_producer_bbld
+        )
         weight_sum = sum(p for p in production_mmbbl if p > 0.0)
         effective = (
             sum(s * p for s, p in zip(shares, production_mmbbl) if p > 0.0) / weight_sum
@@ -183,15 +194,21 @@ class PscBidModel:
         if self.share_table is None:
             return None
         if rate is None:
-            raise ValueError("rate_per_producer_bbld is required when a share_table is set")
+            raise ValueError(
+                "rate_per_producer_bbld is required when a share_table is set"
+            )
         if isinstance(rate, (int, float)):
             return [float(rate)] * n_years
         rates = [float(r) for r in rate]
         if len(rates) != n_years:
-            raise ValueError("rate_per_producer_bbld must be a number or have one value per year")
+            raise ValueError(
+                "rate_per_producer_bbld must be a number or have one value per year"
+            )
         return rates
 
-    def effective_share_profile(self, offer, production_mmbbl, rate_per_producer_bbld=None) -> List[float]:
+    def effective_share_profile(
+        self, offer, production_mmbbl, rate_per_producer_bbld=None
+    ) -> List[float]:
         """State profit-oil share per year at the offered share (constant without a share table)."""
         if self.share_table is None:
             return [self._constant_state_share(offer)] * len(production_mmbbl)
@@ -209,7 +226,9 @@ class PscBidModel:
                 step_add = added
         return min(
             MAX_SHARE,
-            share + self.share_per_usd * max(0.0, self.oil_price - self.reference_price) + step_add,
+            share
+            + self.share_per_usd * max(0.0, self.oil_price - self.reference_price)
+            + step_add,
         )
 
     def tornado(self, relative_swing: float, **evaluate_kwargs) -> dict:
@@ -275,7 +294,9 @@ class PscBidModel:
         for t in range(len(production)):
             if rates is not None:
                 state_share = (
-                    self.share_table.effective_share(share, brent, rates[t]) if production[t] > 0.0 else share
+                    self.share_table.effective_share(share, brent, rates[t])
+                    if production[t] > 0.0
+                    else share
                 )
             revenue = production[t] * scale * self.oil_price
             royalty = self.royalty_rate * revenue

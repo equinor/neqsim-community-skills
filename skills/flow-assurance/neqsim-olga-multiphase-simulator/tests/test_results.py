@@ -12,7 +12,9 @@ def test_tpl_header_and_branches(tpl_file: Path) -> None:
     assert trend.metadata["engine"] == "OLGA 2025.1.0.24773"
     assert trend.metadata["kind"] == "TIME PLOT"
     assert trend.metadata["input_file"] == "demo.genkey"
-    assert [(b.name, b.nsections, b.nboundaries) for b in trend.branches] == [("PIPELINE", 2, 3)]
+    assert [(b.name, b.nsections, b.nboundaries) for b in trend.branches] == [
+        ("PIPELINE", 2, 3)
+    ]
     assert trend.time_unit == "S"
 
 
@@ -84,7 +86,9 @@ def test_ppl_profile_values(ppl_file: Path) -> None:
 
 def test_ppl_incomplete_time_block_raises(tmp_path: Path, ppl_file: Path) -> None:
     broken = tmp_path / "broken.ppl"
-    broken.write_text(ppl_file.read_text(encoding="utf-8") + "2.0e+01\n1.0e+07\n", encoding="utf-8")
+    broken.write_text(
+        ppl_file.read_text(encoding="utf-8") + "2.0e+01\n1.0e+07\n", encoding="utf-8"
+    )
     with pytest.raises(OlgaResultError):
         read_ppl(broken)
 

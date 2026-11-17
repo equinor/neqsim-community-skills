@@ -50,4 +50,11 @@ def test_rejects_bad_inputs():
     with pytest.raises(ValueError):
         gas_flow_sm3h(100.0, 50.0, 60.0, T, M)
     with pytest.raises(ValueError):
-        verify_stop_capacity([], cv_max=1.0, stop_fraction=0.5, temperature_k=T, molar_mass=M, characteristic="eq%")
+        verify_stop_capacity(
+            [],
+            cv_max=1.0,
+            stop_fraction=0.5,
+            temperature_k=T,
+            molar_mass=M,
+            characteristic="eq%",
+        )

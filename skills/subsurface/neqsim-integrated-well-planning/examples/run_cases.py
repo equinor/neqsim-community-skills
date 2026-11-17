@@ -20,7 +20,12 @@ from integrated_well_planning.drawings_run import make_drawings  # noqa: E402
 from integrated_well_planning.report import build_report  # noqa: E402
 from integrated_well_planning.runtime import ensure_runtime  # noqa: E402
 
-CASES = ["oil_producer_platform", "gas_condensate_producer_subsea", "water_injector_onshore", "gas_injector_platform"]
+CASES = [
+    "oil_producer_platform",
+    "gas_condensate_producer_subsea",
+    "water_injector_onshore",
+    "gas_injector_platform",
+]
 
 
 def run_case(name: str, out: Path) -> dict:

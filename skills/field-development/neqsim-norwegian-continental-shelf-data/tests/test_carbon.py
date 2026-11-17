@@ -105,7 +105,12 @@ def test_abatement_screening_with_explicit_co2_and_added_energy_cost():
     assert result.co2_avoided_tonnes_per_year == pytest.approx(200_000.0)
     assert result.added_energy_cost_nok_per_year == pytest.approx(150_000_000.0)
     assert isinstance(result.npv_nok, float)
-    assert result.verdict in {"attractive", "marginal_positive", "review", "unattractive"}
+    assert result.verdict in {
+        "attractive",
+        "marginal_positive",
+        "review",
+        "unattractive",
+    }
 
 
 def test_abatement_screening_requires_positive_capex():

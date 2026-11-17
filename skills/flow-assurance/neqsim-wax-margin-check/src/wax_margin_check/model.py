@@ -28,9 +28,7 @@ class WaxMarginModel:
         wax_appearance_temperature: float,
     ) -> WaxMarginResult:
         self._require_finite("operating_temperature", operating_temperature)
-        self._require_finite(
-            "wax_appearance_temperature", wax_appearance_temperature
-        )
+        self._require_finite("wax_appearance_temperature", wax_appearance_temperature)
 
         wax_margin = operating_temperature - wax_appearance_temperature
         below_wax_appearance = wax_margin <= 0.0

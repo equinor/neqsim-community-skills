@@ -57,15 +57,21 @@ class UtilityBalanceModel:
         instrument_air_capacity_nm3_h: Optional[float] = None,
         cooling_water_capacity_m3_h: Optional[float] = None,
     ) -> UtilityBalanceResult:
-        self._require_non_negative_int("instrument_air_consumers", instrument_air_consumers)
+        self._require_non_negative_int(
+            "instrument_air_consumers", instrument_air_consumers
+        )
         self._require_positive("air_per_consumer_nm3_h", air_per_consumer_nm3_h)
         self._require_non_negative("cooling_duty_kw", cooling_duty_kw)
         self._require_positive("cooling_water_delta_t_c", cooling_water_delta_t_c)
         self._require_wobbe_band(wobbe_min, wobbe_max)
         if instrument_air_capacity_nm3_h is not None:
-            self._require_positive("instrument_air_capacity_nm3_h", instrument_air_capacity_nm3_h)
+            self._require_positive(
+                "instrument_air_capacity_nm3_h", instrument_air_capacity_nm3_h
+            )
         if cooling_water_capacity_m3_h is not None:
-            self._require_positive("cooling_water_capacity_m3_h", cooling_water_capacity_m3_h)
+            self._require_positive(
+                "cooling_water_capacity_m3_h", cooling_water_capacity_m3_h
+            )
 
         # Fuel gas inputs must be supplied as a pair.
         if (fuel_gas_lhv_mj_sm3 is None) != (fuel_gas_relative_density is None):
@@ -74,7 +80,9 @@ class UtilityBalanceModel:
             )
 
         # Instrument air demand with a fixed design margin.
-        air_demand = instrument_air_consumers * air_per_consumer_nm3_h * _AIR_DESIGN_MARGIN
+        air_demand = (
+            instrument_air_consumers * air_per_consumer_nm3_h * _AIR_DESIGN_MARGIN
+        )
 
         # Cooling water flow in m3/h from the duty and the temperature rise.
         cooling_flow = (
@@ -88,7 +96,9 @@ class UtilityBalanceModel:
         wobbe_in_band: Optional[bool] = None
         if fuel_gas_lhv_mj_sm3 is not None and fuel_gas_relative_density is not None:
             self._require_positive("fuel_gas_lhv_mj_sm3", fuel_gas_lhv_mj_sm3)
-            self._require_positive("fuel_gas_relative_density", fuel_gas_relative_density)
+            self._require_positive(
+                "fuel_gas_relative_density", fuel_gas_relative_density
+            )
             wobbe_index = fuel_gas_lhv_mj_sm3 / sqrt(fuel_gas_relative_density)
             wobbe_in_band = wobbe_min <= wobbe_index <= wobbe_max
 
@@ -108,7 +118,9 @@ class UtilityBalanceModel:
             cooling_water_flow_m3_h=round(cooling_flow, 3),
             wobbe_index_mj_sm3=(None if wobbe_index is None else round(wobbe_index, 3)),
             wobbe_in_band=wobbe_in_band,
-            air_utilisation=(None if air_utilisation is None else round(air_utilisation, 4)),
+            air_utilisation=(
+                None if air_utilisation is None else round(air_utilisation, 4)
+            ),
             cooling_utilisation=(
                 None if cooling_utilisation is None else round(cooling_utilisation, 4)
             ),
@@ -134,7 +146,9 @@ class UtilityBalanceModel:
             return "air-undersized"
         if cooling_utilisation is not None and cooling_utilisation > 1.0:
             return "cooling-undersized"
-        utilisations = [u for u in (air_utilisation, cooling_utilisation) if u is not None]
+        utilisations = [
+            u for u in (air_utilisation, cooling_utilisation) if u is not None
+        ]
         if any(u > self.watch_utilisation for u in utilisations):
             return "watch"
         return "ok"

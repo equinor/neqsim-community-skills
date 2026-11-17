@@ -172,9 +172,7 @@ def test_regulate_flow_solves_rates_from_inlet_pressure() -> None:
     assert well_a.rate_sm3_per_day == pytest.approx(7.7e6)
     assert well_a.flow_warning == "ok"
     assert result.flowing_well_count == 2
-    assert result.total_rate_sm3_per_day == pytest.approx(
-        7.7e6 + 0.9e5 * (295 - 223)
-    )
+    assert result.total_rate_sm3_per_day == pytest.approx(7.7e6 + 0.9e5 * (295 - 223))
 
 
 def test_regulate_flow_flags_wells_that_cannot_flow() -> None:

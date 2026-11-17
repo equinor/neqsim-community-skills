@@ -359,9 +359,11 @@ def vme_stress_ratio(
 
 
 def check_string(
-    pipe: Pipe, basis: StringBasis, df: DesignFactors = DesignFactors(), n: int = 41
+    pipe: Pipe, basis: StringBasis, df: DesignFactors | None = None, n: int = 41
 ) -> dict[str, object]:
     """Design factors of one pipe for a string basis. Returns the minimum factor of each check and the governing case."""
+    if df is None:
+        df = DesignFactors()
     r = pipe.ratings(basis.max_temp_c)
     cases = load_cases(basis, n)
     out: dict[str, object] = {"pipe": pipe.label(), "ratings": r}
@@ -440,13 +442,15 @@ def check_string(
 def select_string(
     basis: StringBasis,
     grades: Sequence[str],
-    df: DesignFactors = DesignFactors(),
+    df: DesignFactors | None = None,
     n: int = 41,
 ) -> dict[str, object]:
     """Lightest catalogue pipe of ``basis.od_in`` and the listed grades that passes all design factors.
 
     Returns the selection and the full ranked candidate table for traceability.
     """
+    if df is None:
+        df = DesignFactors()
     table: list[dict[str, object]] = []
     chosen: dict[str, object] | None = None
     for pipe in candidates(basis.od_in, grades):
@@ -474,7 +478,7 @@ def check_tubing(
     annulus_head_bar: float = 0.0,
     max_temp_c: float = 20.0,
     overpull_kn: float = 200.0,
-    df: DesignFactors = DesignFactors(),
+    df: DesignFactors | None = None,
     sea_sg: float = 1.03,
     n: int = 41,
 ) -> dict[str, object]:
@@ -488,6 +492,8 @@ def check_tubing(
     Returns:
         Dict with ``burst_df``, ``collapse_df``, ``tension_df``, ``triaxial_df``, the governing cases, ratings and ``passes``.
     """
+    if df is None:
+        df = DesignFactors()
     g = BAR_PER_SG_M
     z = np.linspace(mudline_tvd_m, packer_tvd_m, n)
     p_sea = sea_sg * g * water_depth_m
@@ -576,7 +582,7 @@ def collapse_basis_comparison(
     pipe: Pipe,
     basis: StringBasis,
     bases: Sequence[str] = ("mud_or_pore", "set_cement", "cement_slurry"),
-    df: DesignFactors = DesignFactors(),
+    df: DesignFactors | None = None,
     n: int = 41,
 ) -> list[dict[str, object]]:
     """Collapse design factor of one pipe under several external-load bases of the evacuation (loss of returns) case.
@@ -594,6 +600,8 @@ def collapse_basis_comparison(
     Returns:
         One dict per basis with ``basis``, ``collapse_df``, ``collapse_case``, ``passes_collapse``.
     """
+    if df is None:
+        df = DesignFactors()
     from dataclasses import replace
 
     rows = []
@@ -611,7 +619,7 @@ def collapse_basis_comparison(
 
 
 def max_evacuation_level_for_collapse(
-    pipe: Pipe, basis: StringBasis, df: DesignFactors = DesignFactors(), n: int = 41
+    pipe: Pipe, basis: StringBasis, df: DesignFactors | None = None, n: int = 41
 ) -> dict[str, float]:
     """Deepest well fluid level (TVD below RKB, m) at which the collapse design factor is still at least the minimum, with the basis as given.
 
@@ -630,6 +638,8 @@ def max_evacuation_level_for_collapse(
         allowed), ``allowed_evacuated_length_m`` (empty length below the mudline that is still acceptable) and ``collapse_df_full_evacuation``
         (factor with an empty string).
     """
+    if df is None:
+        df = DesignFactors()
     from dataclasses import replace
 
     ml = basis.water_depth_m + basis.air_gap_m
@@ -676,7 +686,7 @@ def max_evacuation_level_for_collapse(
 def alternative_pipes(
     basis: StringBasis,
     grades: Sequence[str],
-    df: DesignFactors = DesignFactors(),
+    df: DesignFactors | None = None,
     bit_od_in: float | None = None,
     drift_allowance_in: float = 0.125,
     grade_cost_factor: dict[str, float] | None = None,
@@ -706,6 +716,8 @@ def alternative_pipes(
         ``collapse_df_conservative``, ``collapse_df_realistic``, ``passes_all_conservative`` (all design factors, conservative basis),
         ``passes_all_realistic``, ``weight_kg_per_m``, ``string_weight_t``, ``cost_index``.
     """
+    if df is None:
+        df = DesignFactors()
     from dataclasses import replace
 
     gcf = grade_cost_factor or {}

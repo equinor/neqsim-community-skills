@@ -7,6 +7,7 @@ traverse with a Ramey thermal profile. Every number carries the label of the led
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import numpy as np
@@ -136,7 +137,9 @@ class ProducerModel:
                 pi = float(pi_override)
                 pi_source = "supplied productivity index (reservoir.productivity_index_sm3d_per_bar)"
             pb = props.get("bubble_point_bara", float("nan"))
-            c = composite_oil_ipr(p["pressure_bara"], pb if pb == pb else 0.0, pi)
+            c = composite_oil_ipr(
+                p["pressure_bara"], pb if not math.isnan(pb) else 0.0, pi
+            )
             out = {
                 "kind": "oil_composite",
                 "pwf": c["pwf"],
@@ -551,7 +554,7 @@ class ProducerModel:
 def _f(x: Any) -> float | None:
     try:
         v = float(x)
-        return v if v == v else None
+        return v if not math.isnan(v) else None
     except (TypeError, ValueError):
         return None
 

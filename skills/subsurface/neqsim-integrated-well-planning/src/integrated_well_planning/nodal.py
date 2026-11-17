@@ -8,6 +8,7 @@ positive to negative with increasing rate; the reverse crossing is the unstable 
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
@@ -124,7 +125,7 @@ def composite_oil_ipr(
     Returns:
         ``{"rate": f(pwf), "pwf": f(q), "aof": value}``.
     """
-    pb = min(max(p_bubble, 0.0), p_res) if p_bubble == p_bubble else 0.0
+    pb = min(max(p_bubble, 0.0), p_res) if not math.isnan(p_bubble) else 0.0
     qb = pi_sm3d_per_bar * (p_res - pb)
     qv = pi_sm3d_per_bar * pb / 1.8
 

@@ -9,6 +9,7 @@ are still open so the report can name the document or decision that closes each 
 from __future__ import annotations
 
 import json
+import math
 import os
 from collections.abc import Iterable, Mapping
 
@@ -186,7 +187,7 @@ def load_limits(source: str | os.PathLike | Mapping) -> dict[str, Limit]:
         if value is not None and (
             isinstance(value, bool)
             or not isinstance(value, (int, float))
-            or value != value
+            or (isinstance(value, float) and math.isnan(value))
             or abs(value) == float("inf")
         ):
             problems.append("%s: value must be a finite number or null" % key)

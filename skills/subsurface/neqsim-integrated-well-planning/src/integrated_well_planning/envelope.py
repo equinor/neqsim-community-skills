@@ -13,6 +13,7 @@ The ``warn_utilisation`` threshold is a presentation convention (default 0.9 of 
 
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -86,7 +87,7 @@ def evaluate_row(
     margin: float | None = None
     util: float | None = None
     ind = "NOT_ASSESSED"
-    if predicted is not None and predicted == predicted:
+    if predicted is not None and not math.isnan(predicted):
         margins = []
         if eff_max is not None:
             margins.append(eff_max - predicted)
@@ -105,7 +106,7 @@ def evaluate_row(
                 ind = "PASS"
         else:
             ind = "NOT_ASSESSED"
-    if predicted is None or predicted != predicted:
+    if predicted is None or math.isnan(predicted):
         status, action = "NOT_ASSESSED", "calculate or supply the predicted value"
     elif (
         not limit_source

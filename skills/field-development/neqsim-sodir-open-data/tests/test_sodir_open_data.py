@@ -3,7 +3,6 @@ import re
 from urllib.parse import parse_qs, urlparse
 
 import pytest
-
 from sodir_open_data import (
     BULK_DATASETS,
     USE_CASES,

@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from ncs_infrastructure_network.build import build_snapshot, parse_capacity
 from ncs_infrastructure_network.network import NcsNetwork
 from ncs_infrastructure_network.open_api import (

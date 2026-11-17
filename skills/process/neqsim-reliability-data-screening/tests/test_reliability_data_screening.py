@@ -1,5 +1,4 @@
 import pytest
-
 from reliability_data_screening import ReliabilityDataModel
 
 

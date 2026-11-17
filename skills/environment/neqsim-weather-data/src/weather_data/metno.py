@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import urllib.parse
 import urllib.request
-from typing import Callable, Dict, List, Optional
+from collections.abc import Callable
 
 from .open_meteo import WeatherSeries
 
@@ -57,9 +57,7 @@ def make_fetch(user_agent: str = DEFAULT_USER_AGENT) -> Fetch:
         request = urllib.request.Request(
             url, headers={"User-Agent": user_agent, "Accept": "application/json"}
         )
-        with urllib.request.urlopen(
-            request, timeout=timeout
-        ) as response:  # noqa: S310 - fixed https host
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             return response.read()
 
     return _fetch
@@ -70,7 +68,7 @@ class MetNorwayClient:
 
     def __init__(
         self,
-        fetch: Optional[Fetch] = None,
+        fetch: Fetch | None = None,
         *,
         user_agent: str = DEFAULT_USER_AGENT,
         timeout: float = 30.0,
@@ -83,11 +81,11 @@ class MetNorwayClient:
         latitude: float,
         longitude: float,
         *,
-        altitude: Optional[int] = None,
+        altitude: int | None = None,
         method: str = "complete",
     ) -> WeatherSeries:
         """Up to ~9-day forecast at MET Nordic resolution (Norway/Sweden/Denmark)."""
-        params: Dict[str, object] = {
+        params: dict[str, object] = {
             "lat": round(latitude, 4),
             "lon": round(longitude, 4),
         }
@@ -106,8 +104,8 @@ def _parse_locationforecast(payload: dict, url: str) -> WeatherSeries:
     elevation_m = coords[2] if len(coords) > 2 else None
     timeseries = payload.get("properties", {}).get("timeseries", [])
 
-    hourly_time: List[str] = []
-    columns: Dict[str, List[Optional[float]]] = {name: [] for name in _HOURLY_COLUMNS}
+    hourly_time: list[str] = []
+    columns: dict[str, list[float | None]] = {name: [] for name in _HOURLY_COLUMNS}
     for entry in timeseries:
         data = entry.get("data", {})
         instant = data.get("instant", {}).get("details", {})

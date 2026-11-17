@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from uncertainty_quantification.summary_stats import (
     StatisticsError,
     mean_standard_error,

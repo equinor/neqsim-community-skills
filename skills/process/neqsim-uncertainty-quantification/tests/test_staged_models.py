@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from uncertainty_quantification.models import (
     ModelError,
     SingleStageModel,

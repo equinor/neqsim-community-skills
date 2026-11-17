@@ -2,7 +2,6 @@ import math
 import random
 
 import pytest
-
 from reservoir_souring import (
     fit_well_correlation,
     h2s_ppmv_in_gas_from_mass_rate,

@@ -19,7 +19,6 @@ qualified commercial evaluation. Human review is required before any decision.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
 
 _SOURCE_URL = (
     "https://www.norskpetroleum.no/en/environment-and-technology/emissions-to-air/"
@@ -38,21 +37,21 @@ GAS_CO2_FACTOR_KG_PER_SM3 = 2.34
 
 # Published carbon-cost rates by year. Each value is a public figure from the
 # norskpetroleum.no "Emissions to air" page (see _SOURCE_URL).
-_CO2_TAX_NOK_PER_SM3_GAS: Dict[int, float] = {2025: 2.21, 2026: 2.57}
-_CO2_TAX_NOK_PER_LITRE_OIL: Dict[int, float] = {2025: 2.51, 2026: 2.92}
-_CO2_TAX_NOK_PER_TONNE_CO2: Dict[int, float] = {2025: 944.0, 2026: 1098.0}
-_GAS_VENTING_TAX_NOK_PER_SM3: Dict[int, float] = {2025: 20.17, 2026: 23.53}
+_CO2_TAX_NOK_PER_SM3_GAS: dict[int, float] = {2025: 2.21, 2026: 2.57}
+_CO2_TAX_NOK_PER_LITRE_OIL: dict[int, float] = {2025: 2.51, 2026: 2.92}
+_CO2_TAX_NOK_PER_TONNE_CO2: dict[int, float] = {2025: 944.0, 2026: 1098.0}
+_GAS_VENTING_TAX_NOK_PER_SM3: dict[int, float] = {2025: 20.17, 2026: 23.53}
 # EU ETS allowance cost (approximate annual average, converted to NOK).
-_EU_ETS_NOK_PER_TONNE_CO2: Dict[int, float] = {2025: 880.0}
+_EU_ETS_NOK_PER_TONNE_CO2: dict[int, float] = {2025: 880.0}
 # Combined effective CO2 cost (tax + ETS) as reported by norskpetroleum.no.
-_COMBINED_CO2_NOK_PER_TONNE: Dict[int, float] = {2025: 1825.0}
+_COMBINED_CO2_NOK_PER_TONNE: dict[int, float] = {2025: 1825.0}
 # NOx Fund contribution for petroleum-sector participants.
-_NOX_FUND_NOK_PER_KG: Dict[int, float] = {2025: 18.0}
+_NOX_FUND_NOK_PER_KG: dict[int, float] = {2025: 18.0}
 
 # CO2 emissions from NCS petroleum activities in 2024 by source (share of total).
 # Source: norskpetroleum.no, "CO2 emissions from petroleum activities in 2024,
 # by source" (Norwegian Offshore Directorate).
-CO2_SOURCE_SPLIT_2024: Dict[str, float] = {
+CO2_SOURCE_SPLIT_2024: dict[str, float] = {
     "turbines": 0.8355,
     "engines": 0.0652,
     "boilers": 0.0482,
@@ -62,10 +61,10 @@ CO2_SOURCE_SPLIT_2024: Dict[str, float] = {
 }
 
 # Sector greenhouse-gas total (CO2 equivalent), for context only.
-SECTOR_GHG_MILL_TONNES_CO2E: Dict[int, float] = {2024: 10.9}
+SECTOR_GHG_MILL_TONNES_CO2E: dict[int, float] = {2024: 10.9}
 
 # Fields supplied with power from shore (fully electrified) as reported in 2025.
-POWER_FROM_SHORE_FIELDS: Tuple[str, ...] = (
+POWER_FROM_SHORE_FIELDS: tuple[str, ...] = (
     "Johan Sverdrup",
     "Edvard Grieg",
     "Ivar Aasen",
@@ -78,11 +77,11 @@ POWER_FROM_SHORE_FIELDS: Tuple[str, ...] = (
     "Martin Linge",
 )
 # Fields partially electrified / with combined-cycle gas turbines / offshore wind.
-PARTIALLY_ELECTRIFIED_FIELDS: Tuple[str, ...] = ("Sleipner", "Gjoa")
-CCGT_FIELDS: Tuple[str, ...] = ("Oseberg", "Snorre", "Eldfisk")
-OFFSHORE_WIND_SUPPLIED_FIELDS: Tuple[str, ...] = ("Gullfaks", "Snorre")
+PARTIALLY_ELECTRIFIED_FIELDS: tuple[str, ...] = ("Sleipner", "Gjoa")
+CCGT_FIELDS: tuple[str, ...] = ("Oseberg", "Snorre", "Eldfisk")
+OFFSHORE_WIND_SUPPLIED_FIELDS: tuple[str, ...] = ("Gullfaks", "Snorre")
 # Power-from-shore projects under development (reported 2025).
-POWER_FROM_SHORE_UNDER_DEVELOPMENT: Tuple[str, ...] = (
+POWER_FROM_SHORE_UNDER_DEVELOPMENT: tuple[str, ...] = (
     "Draugen",
     "Njord",
     "Troll B",
@@ -93,8 +92,8 @@ POWER_FROM_SHORE_UNDER_DEVELOPMENT: Tuple[str, ...] = (
 
 
 def _latest_or_year(
-    table: Dict[int, float], year: Optional[int], name: str
-) -> Tuple[int, float]:
+    table: dict[int, float], year: int | None, name: str
+) -> tuple[int, float]:
     if not table:
         raise ValueError(f"No published values available for {name}.")
     if year is None:
@@ -118,16 +117,16 @@ class CarbonCostBasis:
     co2_tax_nok_per_litre_oil: float
     co2_tax_nok_per_tonne_co2: float
     gas_venting_tax_nok_per_sm3: float
-    eu_ets_nok_per_tonne_co2: Optional[float]
-    combined_co2_nok_per_tonne: Optional[float]
-    nox_fund_nok_per_kg: Optional[float]
+    eu_ets_nok_per_tonne_co2: float | None
+    combined_co2_nok_per_tonne: float | None
+    nox_fund_nok_per_kg: float | None
     gas_co2_factor_kg_per_sm3: float
     source_url: str
     attribution: str
     note: str
 
 
-def carbon_cost_basis(year: Optional[int] = None) -> CarbonCostBasis:
+def carbon_cost_basis(year: int | None = None) -> CarbonCostBasis:
     """Return the public carbon-cost basis for ``year`` (default: latest known).
 
     Values are public figures from norskpetroleum.no (Emissions to air). When a
@@ -189,9 +188,9 @@ class CarbonCost:
     year: int
     co2_tonnes_per_year: float
     co2_tax_nok_per_year: float
-    eu_ets_nok_per_year: Optional[float]
-    combined_co2_nok_per_year: Optional[float]
-    nox_cost_nok_per_year: Optional[float]
+    eu_ets_nok_per_year: float | None
+    combined_co2_nok_per_year: float | None
+    nox_cost_nok_per_year: float | None
     total_nok_per_year: float
     source_url: str
     attribution: str
@@ -201,7 +200,7 @@ def annual_carbon_cost(
     *,
     co2_tonnes_per_year: float,
     nox_tonnes_per_year: float = 0.0,
-    year: Optional[int] = None,
+    year: int | None = None,
     use_combined_co2_cost: bool = True,
 ) -> CarbonCost:
     """Screening annual carbon cost (NOK/year) for an emission stream.
@@ -259,11 +258,11 @@ class AbatementScreening:
     added_energy_cost_nok_per_year: float
     net_annual_saving_nok_per_year: float
     capex_nok: float
-    simple_payback_years: Optional[float]
+    simple_payback_years: float | None
     npv_nok: float
-    breakeven_co2_price_nok_per_tonne: Optional[float]
+    breakeven_co2_price_nok_per_tonne: float | None
     verdict: str
-    assumptions: List[str] = field(default_factory=list)
+    assumptions: list[str] = field(default_factory=list)
     source_url: str = _SOURCE_URL
     attribution: str = _ATTRIBUTION
 
@@ -272,14 +271,14 @@ def abatement_screening(
     *,
     measure: str,
     fuel_gas_avoided_sm3_per_year: float = 0.0,
-    co2_avoided_tonnes_per_year: Optional[float] = None,
+    co2_avoided_tonnes_per_year: float | None = None,
     nox_avoided_tonnes_per_year: float = 0.0,
     capex_nok: float,
     added_energy_cost_nok_per_year: float = 0.0,
     gas_price_nok_per_sm3: float = 0.0,
     horizon_years: int = 15,
     discount_rate: float = 0.08,
-    year: Optional[int] = None,
+    year: int | None = None,
     use_combined_co2_cost: bool = True,
 ) -> AbatementScreening:
     """Screen the economics of an emission-abatement measure on the NCS.
@@ -307,7 +306,7 @@ def abatement_screening(
     _require_positive("horizon_years", horizon_years)
     _require_fraction("discount_rate", discount_rate)
 
-    assumptions: List[str] = []
+    assumptions: list[str] = []
     if co2_avoided_tonnes_per_year is None:
         co2_avoided = combustion_co2_tonnes(fuel_gas_avoided_sm3_per_year)
         assumptions.append(
@@ -348,7 +347,7 @@ def abatement_screening(
 
     # Breakeven CO2 price (NOK/tonne) that makes NPV = 0, holding fuel value and
     # added energy cost fixed. Annuity factor over the horizon.
-    breakeven: Optional[float] = None
+    breakeven: float | None = None
     if co2_avoided > 0.0:
         annuity = sum(
             1.0 / ((1.0 + discount_rate) ** t) for t in range(1, int(horizon_years) + 1)
@@ -378,7 +377,7 @@ def abatement_screening(
     )
 
 
-def _abatement_verdict(npv: float, simple_payback: Optional[float]) -> str:
+def _abatement_verdict(npv: float, simple_payback: float | None) -> str:
     """Classify a screening abatement measure by NPV and payback."""
     if npv > 0.0 and simple_payback is not None and simple_payback <= 5.0:
         return "attractive"
@@ -389,7 +388,7 @@ def _abatement_verdict(npv: float, simple_payback: Optional[float]) -> str:
     return "unattractive"
 
 
-def emission_source_split(year: int = 2024) -> Dict[str, float]:
+def emission_source_split(year: int = 2024) -> dict[str, float]:
     """Return the published CO2-by-source split (share of total) for ``year``.
 
     Only 2024 is bundled; refresh from norskpetroleum.no for other years.

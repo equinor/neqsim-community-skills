@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 from .checks import (
     area_of_use_check,
@@ -34,9 +34,9 @@ from .transform import CrsError, engine_name, transform
 SCHEMA = "crs_check_evidence.v1"
 
 
-def run_crs_check(config: Dict[str, Any]) -> Dict[str, Any]:
+def run_crs_check(config: dict[str, Any]) -> dict[str, Any]:
     """Run the configured checks. Status is ``ok``, ``attention`` (findings to resolve) or ``blocked``."""
-    evidence: Dict[str, Any] = {
+    evidence: dict[str, Any] = {
         "schema": SCHEMA,
         "status": "ok",
         "verification": "unverified",

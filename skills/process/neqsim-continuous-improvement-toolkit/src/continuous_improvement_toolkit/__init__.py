@@ -33,11 +33,11 @@ def __getattr__(name):
 
 
 __all__ = [
-    "TagreaderAdapter",
     "SourceResult",
-    "fit_gp",
-    "expected_improvement",
-    "propose_next",
+    "TagreaderAdapter",
     "enkf_update",
+    "expected_improvement",
+    "fit_gp",
     "identifiability",
+    "propose_next",
 ]

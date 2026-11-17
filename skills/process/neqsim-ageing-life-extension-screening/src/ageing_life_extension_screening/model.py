@@ -14,9 +14,9 @@ of failures (ROCOF).
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from math import isfinite, log, sqrt
-from typing import Sequence, Tuple
 
 _DAYS_PER_YEAR = 365.25
 
@@ -43,7 +43,7 @@ class AgeingScreeningResult:
     ageing_verdict: str
     life_extension_verdict: str
     replacement_crossover_year: float | None
-    assumptions: Tuple[str, ...] = field(default_factory=tuple)
+    assumptions: tuple[str, ...] = field(default_factory=tuple)
 
 
 class AgeingLifeExtensionModel:
@@ -206,7 +206,7 @@ class AgeingLifeExtensionModel:
     @staticmethod
     def crow_amsaa_fit(
         times: Sequence[float], observation_years: float
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Maximum-likelihood power-law (Crow-AMSAA / NHPP) fit, time-truncated.
 
         Returns ``(beta, lambda)`` for the mean cumulative function
@@ -232,7 +232,7 @@ class AgeingLifeExtensionModel:
             return 0.0
         return lam * beta * (t ** (beta - 1.0))
 
-    def _beta_confidence(self, beta: float, n: int) -> Tuple[float, float]:
+    def _beta_confidence(self, beta: float, n: int) -> tuple[float, float]:
         """Approximate two-sided interval on beta from the MLE standard error.
 
         The MLE of ``beta`` has asymptotic standard error ``beta / sqrt(n)``.
@@ -334,7 +334,7 @@ class AgeingLifeExtensionModel:
     @staticmethod
     def _clean_times(
         times: Sequence[float], observation_years: float
-    ) -> Tuple[float, ...]:
+    ) -> tuple[float, ...]:
         cleaned = []
         for t in times:
             value = float(t)
@@ -364,7 +364,7 @@ class AgeingLifeExtensionModel:
             raise ValueError(f"{name} must be an integer >= 1")
 
     @staticmethod
-    def _assumptions(n: int, population_size: int) -> Tuple[str, ...]:
+    def _assumptions(n: int, population_size: int) -> tuple[str, ...]:
         return (
             "Failures are treated as a non-homogeneous Poisson process (repair "
             "returns the item to the condition just before failure).",

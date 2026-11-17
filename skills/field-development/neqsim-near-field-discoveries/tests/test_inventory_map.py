@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from near_field_discoveries import Discovery, area_clusters, near_field, plot_near_field
 from near_field_discoveries.geo import (
     cluster_points,

@@ -9,15 +9,15 @@ from __future__ import annotations
 
 import math
 import textwrap
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
 
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-from matplotlib.patches import FancyBboxPatch, Polygon, Rectangle  # noqa: E402
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import FancyBboxPatch, Polygon, Rectangle
 
 A3_MM = (420.0, 297.0)
 DPI = 200
@@ -35,9 +35,9 @@ STATUS_FILL = {
 def dodge(
     values: Sequence[float],
     min_gap: float,
-    lo: Optional[float] = None,
-    hi: Optional[float] = None,
-) -> List[float]:
+    lo: float | None = None,
+    hi: float | None = None,
+) -> list[float]:
     """Spread sorted label positions so that neighbours are at least ``min_gap`` apart (order preserved).
 
     Args:
@@ -119,7 +119,7 @@ class A3Sheet:
 
     def title_block(
         self,
-        fields: Dict[str, str],
+        fields: dict[str, str],
         x: float = 262.0,
         y: float = 10.0,
         w: float = 148.0,
@@ -256,7 +256,7 @@ def _casing_half_width(od_in: float, scale: float, min_od: float = 7.0) -> float
     return scale * (max(od_in, min_od) ** 0.8) / 2.0
 
 
-def well_schematic_sheet(spec: Dict[str, object], path: Path) -> Path:
+def well_schematic_sheet(spec: dict[str, object], path: Path) -> Path:
     """A3 well schematic sheet: depth scales (MD / TVD RKB / TVDSS), formation column, nested casing with cement, side tracks and section table.
 
     ``spec`` keys:
@@ -750,7 +750,7 @@ def well_schematic_sheet(spec: Dict[str, object], path: Path) -> Path:
     return sh.save(path)
 
 
-def bop_stack_sketch(spec: Dict[str, object], path: Path) -> Path:
+def bop_stack_sketch(spec: dict[str, object], path: Path) -> Path:
     """Block sketch of a subsea BOP stack and riser: elements are drawn bottom-up with their pressure ratings.
 
     ``spec`` keys: ``title``, ``subtitle``, ``elements``: list (bottom to top) of dicts with ``label``, ``kind`` (one of ``wellhead``, ``connector``,
@@ -864,7 +864,7 @@ def bop_stack_sketch(spec: Dict[str, object], path: Path) -> Path:
     return _save(fig, path)
 
 
-def barrier_schematic(spec: Dict[str, object], path: Path) -> Path:
+def barrier_schematic(spec: dict[str, object], path: Path) -> Path:
     """Concept sketch of a permanent abandonment barrier arrangement (NORSOK D-010 style principle: primary and secondary barrier envelopes).
 
     ``spec`` keys: ``title``, ``water_depth_m``, ``air_gap_m``, ``td_m``, ``strings``: list of dicts (``label``, ``od_in``, ``top_m``, ``shoe_m``);
@@ -1010,13 +1010,13 @@ def barrier_schematic(spec: Dict[str, object], path: Path) -> Path:
 
 
 def trajectory_plan_section(
-    paths: Dict[str, Dict[str, Sequence[float]]],
+    paths: dict[str, dict[str, Sequence[float]]],
     path: Path,
-    offsets: Optional[Sequence[Dict[str, object]]] = None,
+    offsets: Sequence[dict[str, object]] | None = None,
     title: str = "Trajectory: plan view and vertical section",
-    section_azimuth_deg: Optional[float] = None,
+    section_azimuth_deg: float | None = None,
     rings_m: Sequence[float] = (),
-    plan_extent_m: Optional[float] = None,
+    plan_extent_m: float | None = None,
 ) -> Path:
     """Plan view (east/north) and vertical section (departure versus TVD) of one or more planned paths with offset-well markers.
 

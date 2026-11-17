@@ -1,6 +1,4 @@
-
 import pytest
-
 from pseudocomponent_split import (
     C7PLUS_INTERCEPT,
     C7PLUS_SLOPE,

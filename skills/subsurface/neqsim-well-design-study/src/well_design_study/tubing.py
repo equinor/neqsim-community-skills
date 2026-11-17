@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Sequence
-
+from collections.abc import Sequence
 
 P_STD_BAR = 1.01325
 T_STD_K = 288.15
@@ -47,7 +46,7 @@ def tubing_table(
     rho_liq_kg_m3: float = 700.0,
     sigma_n_m: float = 0.02,
     c_factor: float = 100.0,
-) -> List[Dict[str, float]]:
+) -> list[dict[str, float]]:
     """Velocity, erosional ratio and Turner ratio for each (rate, tubing ID) at one pressure and temperature."""
     ve = erosional_velocity_ms(rho_mix_kg_m3, c_factor)
     vt = turner_critical_velocity_ms(rho_gas_kg_m3, rho_liq_kg_m3, sigma_n_m)

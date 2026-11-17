@@ -1,7 +1,6 @@
 """Value-chain optimiser tests: synthetic network (exact LP answers) + bundled NCS snapshot."""
 
 import pytest
-
 from ncs_infrastructure_network import NcsNetwork
 from ncs_value_chain_optimization import (
     NcsValueChainOptimizer,

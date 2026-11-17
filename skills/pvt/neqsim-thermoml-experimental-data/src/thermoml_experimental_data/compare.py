@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from typing import Callable, Iterable, List, Optional
 
 from .parser import DataPoint
 
@@ -20,8 +20,8 @@ class PointResult:
 
     point: DataPoint
     model_value: float
-    deviation_pct: Optional[float]
-    within_uncertainty: Optional[bool]
+    deviation_pct: float | None
+    within_uncertainty: bool | None
 
 
 @dataclass
@@ -32,14 +32,14 @@ class ComparisonSummary:
     unit: str
     n_points: int
     n_skipped: int
-    aad_pct: Optional[float]
-    bias_pct: Optional[float]
-    max_abs_pct: Optional[float]
-    fraction_within_uncertainty: Optional[float]
+    aad_pct: float | None
+    bias_pct: float | None
+    max_abs_pct: float | None
+    fraction_within_uncertainty: float | None
     tolerance_pct: float
     status: str
     doi: str = ""
-    results: List[PointResult] = field(default_factory=list)
+    results: list[PointResult] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Return a JSON-ready dict without the per-point objects."""
@@ -71,9 +71,9 @@ def compare_points(
     never silently counts as agreement. Status is PASS when AAD <= tolerance, WARN up to twice the tolerance, else FAIL
     (also FAIL when no point could be evaluated).
     """
-    results: List[PointResult] = []
+    results: list[PointResult] = []
     skipped = 0
-    first: Optional[DataPoint] = None
+    first: DataPoint | None = None
     for point in points:
         first = first or point
         try:

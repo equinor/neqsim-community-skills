@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 from produced_water_scale_screening import ProducedWaterBuilder
 
 

@@ -1,7 +1,6 @@
 import os
 
 import pytest
-
 from opm_open_decks import (
     CASES,
     OpmDataClient,

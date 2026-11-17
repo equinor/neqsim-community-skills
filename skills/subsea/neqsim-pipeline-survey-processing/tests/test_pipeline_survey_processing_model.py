@@ -1,5 +1,4 @@
 import pytest
-
 from pipeline_survey_processing import PipelineSurveyProcessor
 
 

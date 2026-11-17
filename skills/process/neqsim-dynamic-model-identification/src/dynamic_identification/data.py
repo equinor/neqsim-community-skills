@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -12,8 +12,8 @@ BAD_DATA_ID = -9999.0
 
 
 def load_series(
-    path: Union[str, Path],
-    value_column: Optional[str] = None,
+    path: str | Path,
+    value_column: str | None = None,
     time_column: str = "time",
     sentinels: Iterable[float] = (),
 ) -> pd.Series:
@@ -51,14 +51,14 @@ def frozen_mask(values: np.ndarray, min_run: int) -> np.ndarray:
 
 
 def align(
-    series: Dict[str, pd.Series],
-    timebase_s: Optional[float] = None,
-    start: Optional[str] = None,
-    end: Optional[str] = None,
-    max_gap_s: Optional[float] = None,
+    series: dict[str, pd.Series],
+    timebase_s: float | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    max_gap_s: float | None = None,
     frozen_samples: int = 0,
     hold: Iterable[str] = (),
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Resample all series onto one uniform grid.
 
     The time base defaults to the largest median sample interval of the inputs. A grid point takes the latest
@@ -93,8 +93,8 @@ def align(
         raise ValueError("the series do not overlap in time")
     grid = pd.date_range(t0, t1, freq=pd.to_timedelta(timebase_s, unit="s"))
     tolerance = pd.to_timedelta(max_gap_s or timebase_s, unit="s")
-    values: Dict[str, np.ndarray] = {}
-    bad: Dict[str, float] = {}
+    values: dict[str, np.ndarray] = {}
+    bad: dict[str, float] = {}
     for name, s in cleaned.items():
         s = s[~s.index.duplicated(keep="last")]
         if name in hold:
@@ -129,7 +129,7 @@ def to_tsa(values: Sequence[float]) -> list:
 
 def saturation(
     u: np.ndarray, u_min: float, u_max: float, tolerance: float = 0.5
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Share of valid samples at or near each stop of a controller output (control authority)."""
     valid = u[np.isfinite(u)]
     if len(valid) == 0:
@@ -144,5 +144,5 @@ def saturation(
         "p01": float(np.percentile(valid, 1)),
         "p50": float(np.percentile(valid, 50)),
         "p99": float(np.percentile(valid, 99)),
-        "valid_samples": int(len(valid)),
+        "valid_samples": len(valid),
     }

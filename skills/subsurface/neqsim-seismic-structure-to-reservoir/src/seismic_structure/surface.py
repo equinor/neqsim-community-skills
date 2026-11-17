@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field, replace
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -35,7 +34,7 @@ class Surface:
     domain: str = "depth"  # "depth" (m, positive down) or "time" (two-way time, ms)
     unit: str = "m"
     source: str = ""
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.values = np.asarray(self.values, dtype=float)
@@ -68,7 +67,7 @@ class Surface:
         """Boolean mask of defined nodes."""
         return np.isfinite(self.values)
 
-    def node_xy(self) -> Tuple[np.ndarray, np.ndarray]:
+    def node_xy(self) -> tuple[np.ndarray, np.ndarray]:
         """Return x and y of every node, each of shape ``(ncol, nrow)``."""
         i, j = np.meshgrid(np.arange(self.ncol), np.arange(self.nrow), indexing="ij")
         return self._to_world(i.astype(float), j.astype(float))
@@ -82,7 +81,7 @@ class Surface:
             self.yori + u * math.sin(r) + v * math.cos(r),
         )
 
-    def to_index(self, x, y) -> Tuple[np.ndarray, np.ndarray]:
+    def to_index(self, x, y) -> tuple[np.ndarray, np.ndarray]:
         """Return fractional node indices ``(i, j)`` of world coordinates."""
         r = math.radians(self.rotation)
         dx = np.asarray(x, dtype=float) - self.xori
@@ -112,7 +111,7 @@ class Surface:
         out[inside] = value[inside]
         return out
 
-    def resample_to(self, target: "Surface") -> "Surface":
+    def resample_to(self, target: Surface) -> Surface:
         """Return this surface sampled on the nodes of ``target`` (bilinear)."""
         x, y = target.node_xy()
         values = self.sample(x.ravel(), y.ravel()).reshape(target.values.shape)
@@ -126,7 +125,7 @@ class Surface:
             notes=list(self.notes),
         )
 
-    def same_geometry(self, other: "Surface", tol: float = 1e-6) -> bool:
+    def same_geometry(self, other: Surface, tol: float = 1e-6) -> bool:
         """True when both surfaces share nodes (origin, increments, rotation, size)."""
         return (
             self.values.shape == other.values.shape
@@ -143,7 +142,7 @@ class Surface:
             )
         )
 
-    def normalized(self) -> "Surface":
+    def normalized(self) -> Surface:
         """Return an equivalent surface with ``yflip = 1`` (rows reversed, origin moved)."""
         if self.yflip == 1:
             return self
@@ -157,7 +156,7 @@ class Surface:
             notes=list(self.notes),
         )
 
-    def coarsen(self, factor: int) -> "Surface":
+    def coarsen(self, factor: int) -> Surface:
         """Average blocks of ``factor x factor`` nodes (NaN-aware); use for very large grids."""
         if factor <= 1:
             return self
@@ -184,11 +183,11 @@ class Surface:
             notes=list(self.notes) + [f"coarsened by {factor}"],
         )
 
-    def smooth(self, cells: int = 1) -> "Surface":
+    def smooth(self, cells: int = 1) -> Surface:
         """NaN-aware moving average over ``(2 cells + 1)`` squared nodes; undefined nodes stay undefined."""
         if cells <= 0:
             return self
-        from scipy.ndimage import uniform_filter  # noqa: PLC0415
+        from scipy.ndimage import uniform_filter
 
         size = 2 * int(cells) + 1
         defined = np.isfinite(self.values)
@@ -204,7 +203,7 @@ class Surface:
             notes=list(self.notes) + [f"smoothed {size} x {size} nodes"],
         )
 
-    def stats(self) -> Dict[str, Optional[float]]:
+    def stats(self) -> dict[str, float | None]:
         """Min, max, mean and defined fraction of the values."""
         finite = self.values[np.isfinite(self.values)]
         if finite.size == 0:

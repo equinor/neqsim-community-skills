@@ -1,5 +1,4 @@
 import pytest
-
 from bathymetry_profile_screening import BathymetryProfileModel
 
 

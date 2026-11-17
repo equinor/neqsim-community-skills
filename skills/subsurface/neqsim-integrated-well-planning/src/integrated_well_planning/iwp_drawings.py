@@ -9,8 +9,9 @@ stamp when the basis is synthetic.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,16 +43,10 @@ FRACTIONS = {
 def _fmt_in(od: float) -> str:
     whole = int(od)
     frac = round(od - whole, 3)
-    return (
-        '{} {}"'.format(whole, FRACTIONS[frac])
-        if frac in FRACTIONS
-        else '{:g}"'.format(od)
-    )
+    return f'{whole} {FRACTIONS[frac]}"' if frac in FRACTIONS else f'{od:g}"'
 
 
-def _md_to_tvd(
-    survey: Optional[Dict[str, Sequence[float]]], md_td: float, tvd_td: float
-):
+def _md_to_tvd(survey: dict[str, Sequence[float]] | None, md_td: float, tvd_td: float):
     if survey:
         return lambda md: float(np.interp(md, survey["md"], survey["tvd"]))
     return lambda md: float(md) * tvd_td / md_td
@@ -112,11 +107,11 @@ def _tree(ax, y_top: float, subsea: bool, width: float = 0.22) -> None:
 
 
 def well_schematic_sheet(
-    basis: Dict[str, Any],
-    survey: Optional[Dict[str, Sequence[float]]] = None,
+    basis: dict[str, Any],
+    survey: dict[str, Sequence[float]] | None = None,
     drawing_no: str = "IWP-DWG-001",
     revision: str = "A",
-    revisions: Optional[List[Tuple[str, str, str]]] = None,
+    revisions: list[tuple[str, str, str]] | None = None,
 ) -> plt.Figure:
     """Draw the well schematic on an A3 sheet from the planning basis (and the survey for MD/TVD and deviation tracks)."""
     comp = get_path(basis, "completion") or {}
@@ -186,7 +181,7 @@ def well_schematic_sheet(
         ax_s.text(
             0.1,
             z,
-            "{:.0f}".format(md_of_tvd(z)),
+            f"{md_of_tvd(z):.0f}",
             fontsize=6.5,
             ha="center",
             va="center",
@@ -196,7 +191,7 @@ def well_schematic_sheet(
         ax_s.text(
             0.5,
             z,
-            "{:.0f}".format(z),
+            f"{z:.0f}",
             fontsize=6.8,
             ha="center",
             va="center",
@@ -206,7 +201,7 @@ def well_schematic_sheet(
         ax_s.text(
             0.9,
             z,
-            "{:.0f}".format(z - rkb),
+            f"{z - rkb:.0f}",
             fontsize=6.5,
             ha="center",
             va="center",
@@ -220,7 +215,7 @@ def well_schematic_sheet(
     for s in ("left", "bottom", "top", "right"):
         ax_w.spines[s].set_visible(False)
     forms = comp.get("formations") or []
-    right_labels: List[Tuple[float, str, str, str]] = []
+    right_labels: list[tuple[float, str, str, str]] = []
     for k, f in enumerate(forms):
         if f.get("kind") == "contact":
             ax_w.plot(
@@ -286,7 +281,7 @@ def well_schematic_sheet(
         ax_w.text(
             -0.98,
             sb,
-            "seabed  {:g} m MSL".format(-wd),
+            f"seabed  {-wd:g} m MSL",
             fontsize=7,
             va="bottom",
             color="#1B4F72",
@@ -307,7 +302,7 @@ def well_schematic_sheet(
         top_y = 0.0
     casings = sorted(comp.get("casing") or [], key=lambda c: -c["od_in"])
     max_od = max([c["od_in"] for c in casings] + [20.0])
-    hw = lambda od: 0.82 * od / max_od  # noqa: E731
+    hw = lambda od: 0.82 * od / max_od
     tub = comp.get("tubing") or {}
     for k, c in enumerate(casings):
         top = m2t(c.get("top_md_m", 0.0))
@@ -401,7 +396,7 @@ def well_schematic_sheet(
         ax_w.text(
             0,
             tvd_td + 8,
-            "TD {:.0f} m MD / {:.0f} m TVD".format(md_td, tvd_td),
+            f"TD {md_td:.0f} m MD / {tvd_td:.0f} m TVD",
             ha="center",
             va="top",
             fontsize=7,
@@ -536,7 +531,7 @@ def well_schematic_sheet(
         ax_w.text(
             th + 0.1,
             my,
-            "GLM {:.0f}".format(md_m),
+            f"GLM {md_m:.0f}",
             fontsize=6.0,
             va="center",
             color=PALETTE["gas"],
@@ -661,9 +656,7 @@ def well_schematic_sheet(
         ax_p.set_title("Pressure window [sg EMW]", fontsize=7.5, pad=2)
     if pw:
         z = np.array([p["tvd_m"] for p in pw])
-        emw = lambda key: np.array(
-            [p[key] / (0.0980665 * p["tvd_m"]) for p in pw]
-        )  # noqa: E731
+        emw = lambda key: np.array([p[key] / (0.0980665 * p["tvd_m"]) for p in pw])
         pore, frac, mud = emw("pore_bara"), emw("frac_bara"), emw("mud_bara")
         ax_p.fill_betweenx(
             z, pore, frac, color=PALETTE["band_low_high"], alpha=0.35, lw=0
@@ -772,11 +765,11 @@ def well_schematic_sheet(
 
 
 def barrier_schematic_sheet(
-    states: List[BarrierState],
-    basis: Dict[str, Any],
+    states: list[BarrierState],
+    basis: dict[str, Any],
     drawing_no: str = "IWP-DWG-002",
     revision: str = "A",
-    revisions: Optional[List[Tuple[str, str, str]]] = None,
+    revisions: list[tuple[str, str, str]] | None = None,
 ) -> plt.Figure:
     """Barrier schematics per well state on an A3 sheet.
 
@@ -957,13 +950,13 @@ def barrier_schematic_sheet(
                 if e.envelope == "primary"
                 else PALETTE["secondary_barrier"]
             )
-            head = "{}  {}".format(e.id, e.name)
+            head = f"{e.id}  {e.name}"
             for j, line in enumerate(textwrap.wrap(head, 60)[:2]):
                 ax2.text(
                     0, y, line, fontsize=6.9, fontweight="bold", va="top", color=col
                 )
                 y -= 0.03
-            body = "{} | {}".format(e.function, e.verification_status)
+            body = f"{e.function} | {e.verification_status}"
             for line in textwrap.wrap(body, 66)[:2]:
                 ax2.text(0.02, y, line, fontsize=6.3, va="top", color=PALETTE["text"])
                 y -= 0.027
@@ -1010,9 +1003,9 @@ def render_sheet(
     drawing_no: str,
     caption: str,
     synthetic: bool = True,
-    ledger_refs: Optional[List[str]] = None,
+    ledger_refs: list[str] | None = None,
     formats: Sequence[str] = ("png", "pdf", "svg"),
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Save a drawing sheet as 300 dpi PNG plus vector PDF and SVG with a provenance sidecar."""
     prov = provenance_record(
         Path(out_stem).name,

@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from typing import Dict, List
 
 GASSCO = "https://gassco.eu/en/prosessanlegg/"
 NP_GAS = "https://www.norskpetroleum.no/en/production-and-exports/the-oil-and-gas-pipeline-system/"
@@ -53,7 +52,7 @@ def node_id(text: str) -> str:
 # kind: hub (offshore riser/processing platform on the trunk system),
 # plant (onshore processing / LNG / methanol / refinery), terminal (receiving
 # terminal or downstream-system entry), market (sink), sink (non-sales sink).
-CURATED_NODES: List[Dict] = [
+CURATED_NODES: list[dict] = [
     # --- onshore processing plants -------------------------------------------
     {
         "id": "KOLLSNES",
@@ -321,7 +320,7 @@ CURATED_NODES: List[Dict] = [
 ]
 
 # Free-text and table aliases -> node id.  Longest alias wins in the parser.
-ALIASES: Dict[str, str] = {
+ALIASES: dict[str, str] = {
     "Åsgard Transport System": "ASGARD",
     "Åsgard Transport": "ASGARD",
     "ÅTS": "ASGARD",
@@ -434,7 +433,7 @@ ALIASES: Dict[str, str] = {
 }
 
 # Arcs that no capacity table lists but are physically required.
-CURATED_ARCS: List[Dict] = [
+CURATED_ARCS: list[dict] = [
     {
         "id": "TROLL_A_KOLLSNES",
         "name": "Troll A gas lines",
@@ -494,7 +493,7 @@ CURATED_ARCS: List[Dict] = [
 ]
 
 # terminal/plant -> market arcs (uncapacitated; capacity sits upstream)
-MARKET_LINKS: List[Dict] = [
+MARKET_LINKS: list[dict] = [
     {"from": "EMDEN", "to": "MARKET_DE", "medium": "gas"},
     {"from": "DORNUM", "to": "MARKET_DE", "medium": "gas"},
     {"from": "ZEEBRUGGE", "to": "MARKET_BE", "medium": "gas"},
@@ -524,7 +523,7 @@ MARKET_LINKS: List[Dict] = [
 ]
 
 # Table rows whose endpoint must be redirected (e.g. to split a shared trunk).
-ARC_OVERRIDES: Dict[str, Dict] = {
+ARC_OVERRIDES: dict[str, dict] = {
     # Europipe II carries Baltic Pipe volumes up to the tie-in, then continues to Dornum.
     "Europipe II": {"to": "EUROPIPE_II_BALTIC_TIE_IN", "continue_to": "DORNUM"},
     # Statfjord -> junction (Statfjord's own share) -> Karsto (shared by all tie-ins).

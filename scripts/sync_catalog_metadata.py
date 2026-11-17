@@ -27,12 +27,12 @@ ALL_FIELDS = ("version", "description")
 
 def front_matter(path: Path) -> dict[str, str]:
     text = path.read_text(encoding="utf-8")
-    m = re.match(r"^---\n(.*?)\n---", text, re.S)
+    m = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
     if not m:
         return {}
     out: dict[str, str] = {}
     for key in ("name", "version", "description"):
-        km = re.search(rf'^{key}:\s*"?(.*?)"?\s*$', m.group(1), re.M)
+        km = re.search(rf'^{key}:\s*"?(.*?)"?\s*$', m.group(1), re.MULTILINE)
         if km:
             out[key] = km.group(1)
     return out

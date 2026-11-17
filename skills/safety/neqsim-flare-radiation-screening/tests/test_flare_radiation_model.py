@@ -1,5 +1,4 @@
 import pytest
-
 from flare_radiation_screening import FlareRadiationModel
 
 

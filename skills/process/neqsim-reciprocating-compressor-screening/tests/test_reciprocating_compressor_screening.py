@@ -1,5 +1,4 @@
 import pytest
-
 from reciprocating_compressor_screening import ReciprocatingCompressorModel
 
 

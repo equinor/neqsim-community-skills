@@ -12,10 +12,10 @@ looking for a new external cause that does not exist.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite, nan, sqrt
-from typing import Sequence
 
 
 @dataclass(frozen=True)
@@ -205,10 +205,8 @@ class ControlAuthorityModel:
         status = self._authority_status(saturation_fraction)
         if status != "authority-retained":
             warnings.append(
-                "controller output is on a stop for {:.0%} of the period; the loop "
-                "cannot reject a disturbance while saturated".format(
-                    saturation_fraction
-                )
+                f"controller output is on a stop for {saturation_fraction:.0%} of the period; the loop "
+                "cannot reject a disturbance while saturated"
             )
         if (
             isfinite(variance_ratio)
@@ -216,8 +214,8 @@ class ControlAuthorityModel:
             and saturated.sample_count >= 2
         ):
             warnings.append(
-                "controlled-variable variance is {:.1f}x higher while saturated; "
-                "disturbance rejection has been lost, not gained".format(variance_ratio)
+                f"controlled-variable variance is {variance_ratio:.1f}x higher while saturated; "
+                "disturbance rejection has been lost, not gained"
             )
         # A large gain on a poor fit says nothing, so the fit must carry it.
         if (
@@ -227,10 +225,8 @@ class ControlAuthorityModel:
             and saturated.disturbance_r_squared >= 0.5
         ):
             warnings.append(
-                "disturbance-to-process gain is {:.2f} while saturated at r-squared "
-                "{:.2f}; the disturbance is passing through undamped".format(
-                    saturated.disturbance_gain, saturated.disturbance_r_squared
-                )
+                f"disturbance-to-process gain is {saturated.disturbance_gain:.2f} while saturated at r-squared "
+                f"{saturated.disturbance_r_squared:.2f}; the disturbance is passing through undamped"
             )
         if (
             isfinite(saturated.disturbance_r_squared)
@@ -238,9 +234,9 @@ class ControlAuthorityModel:
             and saturated.sample_count >= 3
         ):
             warnings.append(
-                "the suspected disturbance explains only {:.0%} of the saturated "
+                f"the suspected disturbance explains only {max(saturated.disturbance_r_squared, 0.0):.0%} of the saturated "
                 "variance; it is unlikely to be the cause being complained "
-                "about".format(max(saturated.disturbance_r_squared, 0.0))
+                "about"
             )
         if modulating.sample_count < 2:
             warnings.append(
@@ -451,7 +447,7 @@ class ControlAuthorityModel:
         )
         if not have_disturbance:
             return f"Over {span}, {saturation}; no disturbance measure was supplied."
-        disturbance = "the disturbance changed by {:+.0%}".format(disturbance_relative)
+        disturbance = f"the disturbance changed by {disturbance_relative:+.0%}"
         if verdict == "control-authority-loss":
             return (
                 f"Over {span}, {saturation} while {disturbance}. The loop lost "

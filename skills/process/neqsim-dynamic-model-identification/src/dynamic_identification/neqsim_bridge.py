@@ -18,11 +18,11 @@ verified on Windows; on Linux load CoreCLR first, as the notebook does.
 from __future__ import annotations
 
 import math
-from typing import Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from collections.abc import Callable, Mapping, Sequence
 
 import numpy as np
 
-Evaluate = Callable[[Mapping[str, float]], Dict[str, float]]
+Evaluate = Callable[[Mapping[str, float]], dict[str, float]]
 
 
 def automation_evaluator(
@@ -37,11 +37,11 @@ def automation_evaluator(
     """
     automation = process.getAutomation()
 
-    def split(spec: str) -> Tuple[str, str]:
+    def split(spec: str) -> tuple[str, str]:
         address, _, unit = spec.partition("|")
         return address.strip(), unit.strip()
 
-    def evaluate(values: Mapping[str, float]) -> Dict[str, float]:
+    def evaluate(values: Mapping[str, float]) -> dict[str, float]:
         for name, value in values.items():
             address, unit = split(inputs[name])
             automation.setVariableValue(address, float(value), unit)
@@ -59,8 +59,8 @@ def steady_gains(
     evaluate: Evaluate,
     base: Mapping[str, float],
     steps: Mapping[str, float],
-    outputs: Optional[Sequence[str]] = None,
-) -> Dict[str, object]:
+    outputs: Sequence[str] | None = None,
+) -> dict[str, object]:
     """Central-difference steady-state gains d(output)/d(input) at ``base``, with a half-step convergence check.
 
     The base point is restored at the end. ``relative_step_error`` above about 0.03 means the response is not
@@ -68,8 +68,8 @@ def steady_gains(
     """
     names = list(base)
 
-    def gains(scale: float) -> Dict[str, Dict[str, float]]:
-        table: Dict[str, Dict[str, float]] = {}
+    def gains(scale: float) -> dict[str, dict[str, float]]:
+        table: dict[str, dict[str, float]] = {}
         for name in names:
             h = float(steps[name]) * scale
             plus = evaluate({**base, name: base[name] + h})
@@ -97,7 +97,7 @@ def compare_gains(
     identified: Mapping[str, float],
     physics: Mapping[str, float],
     tolerance: float = 0.3,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Compare identified gains of one output with NeqSim gains (same input names and units).
 
     A gain is ``consistent`` when the sign agrees and the ratio is within ``1 +/- tolerance``. A sign error or a
@@ -128,7 +128,7 @@ def physics_residuals(
     calibration: slice,
     smoothing_samples: float = 1.5,
     threshold: float = 4.0,
-) -> Dict[str, Dict[str, object]]:
+) -> dict[str, dict[str, object]]:
     """Measured minus NeqSim-expected values, standardised on a healthy calibration window and low-pass filtered.
 
     Standardising on the calibration window removes a steady model offset and scales by the normal scatter. The
@@ -166,12 +166,12 @@ def physics_residuals(
 def two_residual_diagnosis(
     primary_flag: Sequence[bool],
     secondary_flag: Sequence[bool],
-    labels: Tuple[str, str, str] = (
+    labels: tuple[str, str, str] = (
         "physical change candidate",
         "measurement or model candidate (primary only)",
         "within baseline",
     ),
-) -> List[str]:
+) -> list[str]:
     """Label each sample: both residuals flagged, only the primary flagged, or neither.
 
     Example: compressor power (primary) and discharge temperature (secondary). Lower efficiency raises both; a

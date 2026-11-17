@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any
 
 from .model import OwnershipError, OwnershipRecord, Stake, check_prospect_stakes
 from .sodir import (
@@ -34,11 +35,11 @@ class PortfolioItem:
     kind: str
     name: str
     interest_pct: float
-    owner_kind: Optional[str]
-    owner_name: Optional[str]
-    status: Optional[str] = None
+    owner_kind: str | None
+    owner_name: str | None
+    status: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
 
 
@@ -50,7 +51,7 @@ def _valid(row: Mapping[str, Any], from_key: str, to_key: str, on: date) -> bool
 
 def _latest(
     rows: Sequence[Mapping[str, Any]], from_key: str
-) -> List[Mapping[str, Any]]:
+) -> list[Mapping[str, Any]]:
     """Rows of the most recent period, used when nothing is valid on the requested date."""
     if not rows:
         return []
@@ -58,12 +59,12 @@ def _latest(
     return [r for r in rows if (to_date(r.get(from_key)) or date.min) == best]
 
 
-def _id_from_url(url: Optional[str]) -> Optional[int]:
+def _id_from_url(url: str | None) -> int | None:
     match = re.search(r"/(\d+)$", url or "")
     return int(match.group(1)) if match else None
 
 
-def _latest_date(rows: Iterable[Mapping[str, Any]], key: str) -> Optional[date]:
+def _latest_date(rows: Iterable[Mapping[str, Any]], key: str) -> date | None:
     dates = [d for d in (to_date(r.get(key)) for r in rows) if d]
     return max(dates) if dates else None
 
@@ -76,7 +77,7 @@ class OwnershipReader:
 
     # ------------------------------------------------------------------ fields
 
-    def field(self, name: str, as_of: Optional[date] = None) -> OwnershipRecord:
+    def field(self, name: str, as_of: date | None = None) -> OwnershipRecord:
         """Equity of a producing or past field on ``as_of`` (default today)."""
         on = as_of or date.today()
         fld = self._resolve("field", "fldName", "fldNpdidField", name, "field")
@@ -86,7 +87,7 @@ class OwnershipReader:
             for r in self.client.query("field_licensee_hst", f"fldNpdidField={fid}")
             if int(r["fldNpdidField"]) == fid
         ]
-        warnings: List[str] = []
+        warnings: list[str] = []
         active = [r for r in rows if _valid(r, "fldLicenseeFrom", "fldLicenseeTo", on)]
         if not active:
             active = _latest(rows, "fldLicenseeFrom")
@@ -140,7 +141,7 @@ class OwnershipReader:
 
     # --------------------------------------------------------------- discoveries
 
-    def discovery(self, name: str, as_of: Optional[date] = None) -> OwnershipRecord:
+    def discovery(self, name: str, as_of: date | None = None) -> OwnershipRecord:
         """Equity of a discovery: its owner licence or unit, then that owner's licensees."""
         on = as_of or date.today()
         dsc = self._resolve(
@@ -158,7 +159,7 @@ class OwnershipReader:
             raise OwnershipError(
                 f"Sodir lists no owner for discovery '{dsc['dscName']}'"
             )
-        warnings: List[str] = []
+        warnings: list[str] = []
         current = [
             r
             for r in owners
@@ -213,7 +214,7 @@ class OwnershipReader:
 
     # ------------------------------------------------------------------ licences
 
-    def licence(self, name: str, as_of: Optional[date] = None) -> OwnershipRecord:
+    def licence(self, name: str, as_of: date | None = None) -> OwnershipRecord:
         """Equity of a production licence, e.g. ``'537'``."""
         on = as_of or date.today()
         key = name.strip().upper()
@@ -249,7 +250,7 @@ class OwnershipReader:
         )
         return self._finish(record)
 
-    def licence_milestones(self, name: str) -> List[Dict[str, Any]]:
+    def licence_milestones(self, name: str) -> list[dict[str, Any]]:
         """Work obligations of a production licence with local (Europe/Oslo) deadlines.
 
         Returns one dict per task (``code``, ``task``, ``category``, ``status``, ``deadline``
@@ -293,7 +294,7 @@ class OwnershipReader:
     # ----------------------------------------------------------------- prospects
 
     def prospect_from_licence(
-        self, prospect: str, licence: str, as_of: Optional[date] = None
+        self, prospect: str, licence: str, as_of: date | None = None
     ) -> OwnershipRecord:
         """Public proxy for a prospect: the equity of the licence it sits in, labelled as a proxy."""
         record = self.licence(licence, as_of)
@@ -306,9 +307,9 @@ class OwnershipReader:
         name: str,
         stakes: Mapping[str, float],
         *,
-        operator: Optional[str] = None,
+        operator: str | None = None,
         source: str = "user supplied",
-        as_of: Optional[date] = None,
+        as_of: date | None = None,
         allow_partial: bool = False,
     ) -> OwnershipRecord:
         """Prospect equity entered by the user, e.g. from the licence group's own records."""
@@ -331,7 +332,7 @@ class OwnershipReader:
 
     # ------------------------------------------------------------------- history
 
-    def history(self, kind: str, name: str) -> List[Dict[str, Any]]:
+    def history(self, kind: str, name: str) -> list[dict[str, Any]]:
         """Ownership periods, oldest first: ``{from, to, owner, total_pct, stakes}``."""
         if kind == "field":
             fld = self._resolve("field", "fldName", "fldNpdidField", name, "field")
@@ -372,14 +373,14 @@ class OwnershipReader:
 
     def portfolio(
         self,
-        company: Union[str, int],
-        as_of: Optional[date] = None,
+        company: str | int,
+        as_of: date | None = None,
         include_discoveries_in_fields: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Every field and discovery in which one company holds an interest on ``as_of``."""
         on = as_of or date.today()
         company_id, company_name = self._resolve_company(company)
-        items: List[PortfolioItem] = []
+        items: list[PortfolioItem] = []
         for r in self.client.query(
             "field_licensee_hst", f"cmpNpdidCompany={company_id}"
         ):
@@ -395,7 +396,7 @@ class OwnershipReader:
                         r.get("fldOwnerName"),
                     )
                 )
-        held: Dict[Tuple[str, int], float] = {}
+        held: dict[tuple[str, int], float] = {}
         for layer, id_key, from_key, to_key, pct_key, kind in (
             (
                 "licence_licensee_hst",
@@ -458,7 +459,7 @@ class OwnershipReader:
 
     def _resolve(
         self, layer: str, name_attr: str, id_attr: str, name: str, label: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         key = name.strip().upper()
         rows = self.client.query(layer, f"UPPER({name_attr})={sql_quote(key)}")
         if not rows:
@@ -487,7 +488,7 @@ class OwnershipReader:
         to_key: str,
         on: date,
         fallback: Mapping[str, Any],
-    ) -> Tuple[Optional[int], Optional[str]]:
+    ) -> tuple[int | None, str | None]:
         rows = [r for r in self.client.query(layer, where) if int(r[id_key]) == ident]
         rows = [r for r in rows if _valid(r, from_key, to_key, on)] or _latest(
             rows, from_key
@@ -498,7 +499,7 @@ class OwnershipReader:
 
     def _licensee_stakes(
         self, owner_kind: str, owner_id: int, on: date
-    ) -> Tuple[List[Stake], Optional[date], List[str]]:
+    ) -> tuple[list[Stake], date | None, list[str]]:
         if owner_kind == PRODUCTION_LICENCE:
             layer, id_key, f_key, t_key, p_key, s_key = (
                 "licence_licensee_hst",
@@ -524,7 +525,7 @@ class OwnershipReader:
             for r in self.client.query(layer, f"{id_key}={owner_id}")
             if int(r[id_key]) == owner_id
         ]
-        warnings: List[str] = []
+        warnings: list[str] = []
         active = [r for r in rows if _valid(r, f_key, t_key, on)]
         if not active:
             active = _latest(rows, f_key)
@@ -560,7 +561,7 @@ class OwnershipReader:
         )
 
     @staticmethod
-    def _mark_operator(stake: Stake, operator_id: Optional[int]) -> Stake:
+    def _mark_operator(stake: Stake, operator_id: int | None) -> Stake:
         if operator_id is None or stake.company_id != operator_id or stake.is_operator:
             return stake
         return Stake(
@@ -593,8 +594,8 @@ class OwnershipReader:
         t_key: str,
         p_key: str,
         owner_key: str,
-    ) -> List[Dict[str, Any]]:
-        grouped: Dict[Tuple[Optional[date], Optional[date], Any], Dict[str, float]] = {}
+    ) -> list[dict[str, Any]]:
+        grouped: dict[tuple[date | None, date | None, Any], dict[str, float]] = {}
         for r in rows:
             key = (to_date(r.get(f_key)), to_date(r.get(t_key)), r.get(owner_key))
             grouped.setdefault(key, {})
@@ -613,7 +614,7 @@ class OwnershipReader:
         ]
         return sorted(out, key=lambda p: p["from"] or "")
 
-    def _resolve_company(self, company: Union[str, int]) -> Tuple[int, str]:
+    def _resolve_company(self, company: str | int) -> tuple[int, str]:
         if isinstance(company, int):
             rows = self.client.query(
                 "licence_licensee_hst", f"cmpNpdidCompany={company}"
@@ -632,7 +633,7 @@ class OwnershipReader:
             f"UPPER(cmpLongName) LIKE {sql_quote('%' + key + '%')}",
         )
         rows = [r for r in rows if key in str(r["cmpLongName"]).upper()]
-        names: Dict[int, Dict[str, Any]] = {}
+        names: dict[int, dict[str, Any]] = {}
         for r in rows:
             cur = names.setdefault(
                 int(r["cmpNpdidCompany"]), {"name": r["cmpLongName"], "open": False}

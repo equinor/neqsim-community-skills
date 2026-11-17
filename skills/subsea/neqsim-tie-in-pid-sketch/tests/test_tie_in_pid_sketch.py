@@ -1,7 +1,6 @@
 import xml.etree.ElementTree as ET
 
 import pytest
-
 from tie_in_pid_sketch import (
     Element,
     TieInEndSketch,

@@ -10,7 +10,7 @@ verified by this skill.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 STANDARD_STATUS = (
     "TO_VERIFY",
@@ -138,7 +138,7 @@ _SEED = [
 ]
 
 
-def _jurisdiction_rows(jurisdiction: str) -> List[StandardEntry]:
+def _jurisdiction_rows(jurisdiction: str) -> list[StandardEntry]:
     """Return TO_VERIFY rows for the laws, regulations and contract terms of a known jurisdiction.
 
     Uses ``jurisdiction_basis.activity_basis`` when that skill is installed; returns no rows when it is
@@ -153,7 +153,7 @@ def _jurisdiction_rows(jurisdiction: str) -> List[StandardEntry]:
         "well_control_bop": "well_control",
         "materials_sour_chemicals": "materials",
     }
-    rows: List[StandardEntry] = []
+    rows: list[StandardEntry] = []
     seen = set()
     for topic, item in block.get("activities", {}).get("well", {}).items():
         for r in item["instruments"]:
@@ -162,7 +162,7 @@ def _jurisdiction_rows(jurisdiction: str) -> List[StandardEntry]:
             seen.add(r["instrument"])
             rows.append(
                 StandardEntry(
-                    "STD-J{:02d}".format(len(rows) + 1),
+                    f"STD-J{len(rows) + 1:02d}",
                     item["title"],
                     r["instrument"],
                     applicability="TO_VERIFY (jurisdiction: {}; {}; registry status {})".format(
@@ -177,7 +177,7 @@ def _jurisdiction_rows(jurisdiction: str) -> List[StandardEntry]:
     return rows
 
 
-def seed_register(jurisdiction: str = "TO_BE_IDENTIFIED") -> List[StandardEntry]:
+def seed_register(jurisdiction: str = "TO_BE_IDENTIFIED") -> list[StandardEntry]:
     """Return the default register (all rows TO_VERIFY) for the study.
 
     A recognised jurisdiction (for example ``Norway`` or ``US``) adds ``STD-J`` rows for its laws and
@@ -190,7 +190,7 @@ def seed_register(jurisdiction: str = "TO_BE_IDENTIFIED") -> List[StandardEntry]
                 sid,
                 topic,
                 doc,
-                applicability="TO_VERIFY (jurisdiction: {})".format(jurisdiction),
+                applicability=f"TO_VERIFY (jurisdiction: {jurisdiction})",
                 verification_method=method,
                 assessment_area=area,
             )
@@ -200,7 +200,7 @@ def seed_register(jurisdiction: str = "TO_BE_IDENTIFIED") -> List[StandardEntry]
 
 
 def update_entry(
-    register: List[StandardEntry], entry_id: str, **changes: Any
+    register: list[StandardEntry], entry_id: str, **changes: Any
 ) -> StandardEntry:
     """Update fields of one entry (validates the status value).
 
@@ -213,7 +213,7 @@ def update_entry(
             for k, v in changes.items():
                 setattr(e, k, v)
             if e.status not in STANDARD_STATUS:
-                raise ValueError("status must be one of {}".format(STANDARD_STATUS))
+                raise ValueError(f"status must be one of {STANDARD_STATUS}")
             if e.status == "COMPLIANT_EVIDENCE_REVIEWED" and (
                 not e.evidence or e.edition_checked == "NOT_VERIFIED"
             ):
@@ -224,38 +224,36 @@ def update_entry(
     raise KeyError(entry_id)
 
 
-def validate_register(register: List[StandardEntry]) -> List[str]:
+def validate_register(register: list[StandardEntry]) -> list[str]:
     """Return problems: unverified editions behind compliance claims, unknown statuses, duplicate ids."""
-    problems: List[str] = []
+    problems: list[str] = []
     seen = set()
     for e in register:
         if e.id in seen:
             problems.append("duplicate id " + e.id)
         seen.add(e.id)
         if e.status not in STANDARD_STATUS:
-            problems.append("{}: unknown status {}".format(e.id, e.status))
+            problems.append(f"{e.id}: unknown status {e.status}")
         if e.status == "COMPLIANT_EVIDENCE_REVIEWED" and (
             not e.evidence or e.edition_checked == "NOT_VERIFIED"
         ):
-            problems.append(
-                "{}: compliance claimed without evidence/edition".format(e.id)
-            )
+            problems.append(f"{e.id}: compliance claimed without evidence/edition")
     return problems
 
 
-def summarise(register: List[StandardEntry]) -> Dict[str, int]:
+def summarise(register: list[StandardEntry]) -> dict[str, int]:
     """Count entries per status."""
-    out: Dict[str, int] = {}
+    out: dict[str, int] = {}
     for e in register:
         out[e.status] = out.get(e.status, 0) + 1
     return out
 
 
-def to_rows(register: List[StandardEntry]) -> List[Dict[str, Any]]:
+def to_rows(register: list[StandardEntry]) -> list[dict[str, Any]]:
     """Return rows as dictionaries."""
     return [asdict(e) for e in register]
 
 
-def ready_for_compliance_statement(register: List[StandardEntry]) -> bool:
+def ready_for_compliance_statement(register: list[StandardEntry]) -> bool:
     """True only when no entry is still TO_VERIFY/NOT_ASSESSED (otherwise reports must say so)."""
     return all(e.status not in ("TO_VERIFY", "NOT_ASSESSED") for e in register)

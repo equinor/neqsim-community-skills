@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -37,7 +37,7 @@ class Tank:
     def hcpv0(self) -> float:
         return self.n0 * self.path.v_cell
 
-    def pressure(self, np_mol: float, we_m3: float) -> Tuple[float, bool]:
+    def pressure(self, np_mol: float, we_m3: float) -> tuple[float, bool]:
         n_rel = (self.n0 - np_mol) / (self.n0 * max(1.0 - we_m3 / self.hcpv0, 1e-6))
         return self.path.pressure_for(n_rel), self.path.depleted(n_rel)
 
@@ -50,7 +50,7 @@ class Well:
     """
 
     name: str
-    tank_weights: Dict[str, float]
+    tank_weights: dict[str, float]
     a: float = 0.0
     c: float = 0.0
     wgr: float = 0.0  # Sm3 water per Sm3 gas
@@ -74,16 +74,16 @@ class Well:
 class Field:
     """Tanks connected by optional transmissibilities and drained by wells."""
 
-    tanks: Dict[str, Tank]
-    wells: Dict[str, Well]
-    connections: List[Tuple[str, str, float]] = field(
+    tanks: dict[str, Tank]
+    wells: dict[str, Well]
+    connections: list[tuple[str, str, float]] = field(
         default_factory=list
     )  # (tank a, tank b, kSm3/d per bar)
 
     def initial_state(self) -> dict:
         return {t: dict(np=0.0, we=0.0) for t in self.tanks}
 
-    def tank_rates(self, well_rates: Dict[str, float]) -> Dict[str, float]:
+    def tank_rates(self, well_rates: dict[str, float]) -> dict[str, float]:
         """Gas rate per tank (Sm3/d) from well gas rates (Sm3/d) and the well-to-tank shares."""
         q = {t: 0.0 for t in self.tanks}
         for w, rate in well_rates.items():
@@ -93,7 +93,7 @@ class Field:
                 q[t] += rate * wt / tot
         return q
 
-    def step(self, state: dict, q_tank_sm3d: Dict[str, float], dt_days: float) -> dict:
+    def step(self, state: dict, q_tank_sm3d: dict[str, float], dt_days: float) -> dict:
         """Advance every tank by one step; returns per-tank record and updates ``state`` in place."""
         p0, rec = {}, {}
         for t, tk in self.tanks.items():
@@ -132,8 +132,8 @@ class Field:
         return rec
 
     def simulate(
-        self, rates: pd.DataFrame, dt_days: Optional[Sequence[float]] = None
-    ) -> "SimResult":
+        self, rates: pd.DataFrame, dt_days: Sequence[float] | None = None
+    ) -> SimResult:
         """Run a production history. ``rates``: index = step start dates, columns = well gas rates (Sm3/d)."""
         idx = pd.DatetimeIndex(rates.index)
         if dt_days is None:

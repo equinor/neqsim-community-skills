@@ -10,7 +10,8 @@ or Esri JSON (``rings``, ``paths``, ``x``/``y``) as served by Sodir.
 from __future__ import annotations
 
 import math
-from typing import Any, Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any
 
 EARTH_RADIUS_KM = 6371.0088
 Ring = Sequence[Sequence[float]]

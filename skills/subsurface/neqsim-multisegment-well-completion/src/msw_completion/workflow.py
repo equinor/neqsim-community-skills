@@ -22,7 +22,7 @@ import copy
 import json
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .case import DEVICE_KEYWORD, build_case
 from .devices import (
@@ -40,11 +40,11 @@ from .screening import Zone, compare_at_same_oil
 SCHEMA = "well_completion_evidence.v1"
 
 
-def _device_table(design: Dict[str, Any], kind: str) -> List[Dict[str, Any]]:
+def _device_table(design: dict[str, Any], kind: str) -> list[dict[str, Any]]:
     return design.get(DEVICE_KEYWORD[kind.upper()]) or []
 
 
-def _device(design: Dict[str, Any], ref: Dict[str, Any]):
+def _device(design: dict[str, Any], ref: dict[str, Any]):
     kind = str(ref["type"]).upper()
     for row in _device_table(design, kind):
         if int(row["number"]) == int(ref["number"]):
@@ -53,8 +53,8 @@ def _device(design: Dict[str, Any], ref: Dict[str, Any]):
 
 
 def _properties(
-    config: Dict[str, Any], evidence: Dict[str, Any]
-) -> Optional[PhaseProperties]:
+    config: dict[str, Any], evidence: dict[str, Any]
+) -> PhaseProperties | None:
     if config.get("phase_properties"):
         evidence["sources"].append(
             {
@@ -93,7 +93,7 @@ def _properties(
 
 
 def _wsegdims_check(
-    deck: str, layer: Dict[str, Dict[str, object]], evidence: Dict[str, Any]
+    deck: str, layer: dict[str, dict[str, object]], evidence: dict[str, Any]
 ) -> None:
     head, _ = split_schedule(deck)
     blocks = keyword_blocks(head, "WSEGDIMS")
@@ -114,8 +114,8 @@ def _wsegdims_check(
 
 
 def _plot(
-    devices: Dict[str, Any], props: PhaseProperties, path: Path, rate_max: float
-) -> Optional[str]:
+    devices: dict[str, Any], props: PhaseProperties, path: Path, rate_max: float
+) -> str | None:
     try:
         import matplotlib
 
@@ -151,10 +151,10 @@ def _plot(
     return str(path)
 
 
-def run_completion_workflow(config: Dict[str, Any]) -> Dict[str, Any]:
+def run_completion_workflow(config: dict[str, Any]) -> dict[str, Any]:
     """Run the configured steps and return a ``well_completion_evidence.v1`` record."""
     out_dir = Path(config["out_dir"]) if config.get("out_dir") else None
-    evidence: Dict[str, Any] = {
+    evidence: dict[str, Any] = {
         "schema": SCHEMA,
         "status": "ok",
         "verification": "unverified",
@@ -262,9 +262,7 @@ def run_completion_workflow(config: Dict[str, Any]) -> Dict[str, Any]:
                 evidence["steps"].append("completor deck written")
             except CompletorUnavailable as exc:
                 evidence["missing"].append(str(exc))
-            except (
-                Exception
-            ) as exc:  # noqa: BLE001 - completor errors name the well or keyword
+            except Exception as exc:
                 evidence["missing"].append(f"completor failed: {exc}")
 
     if props is not None:

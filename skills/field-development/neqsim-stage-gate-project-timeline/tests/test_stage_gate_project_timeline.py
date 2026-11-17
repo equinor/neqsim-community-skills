@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from stage_gate_project_timeline import (  # noqa: E402
+from stage_gate_project_timeline import (
     discounted,
     life_extension_timeline,
     next_turnaround,

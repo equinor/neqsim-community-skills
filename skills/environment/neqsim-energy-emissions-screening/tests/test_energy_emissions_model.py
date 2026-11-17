@@ -1,5 +1,4 @@
 import pytest
-
 from energy_emissions_screening import EnergyEmissionsModel
 
 

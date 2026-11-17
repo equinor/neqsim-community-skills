@@ -10,7 +10,8 @@ a wellstream composition.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 from .parse import GAS_COMPOSITION_KEYS
 
@@ -55,7 +56,7 @@ def oil_density_kg_m3(api: float) -> float:
     return 141.5 / (131.5 + api) * WATER_DENSITY_60F
 
 
-def gas_composition(rec: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
+def gas_composition(rec: Mapping[str, Any]) -> dict[str, Any] | None:
     """Return the normalised gas composition of a record.
 
     Args:
@@ -84,7 +85,7 @@ def gas_composition(rec: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
     }
 
 
-def fluid_basis(rec: Mapping[str, Any]) -> Dict[str, Any]:
+def fluid_basis(rec: Mapping[str, Any]) -> dict[str, Any]:
     """Build a declared fluid basis from one by-well rate record.
 
     Args:
@@ -102,7 +103,7 @@ def fluid_basis(rec: Mapping[str, Any]) -> Dict[str, Any]:
     liquid, gas = rec.get("liquid_m3d"), rec.get("gas_total_km3d")
     gor = gas * 1000.0 / liquid if (liquid and liquid > 0 and gas is not None) else None
     comp = gas_composition(rec)
-    warnings: List[str] = [
+    warnings: list[str] = [
         "Composition is the gas stream sampled at the installation, not a wellstream or reservoir fluid.",
         "No separator pressure or temperature, no C7+ molecular weight or density and no saturation pressure are published.",
         "API gravity is the stock-tank oil of the installation stream and can blend several wells.",
@@ -145,7 +146,7 @@ def fluid_basis(rec: Mapping[str, Any]) -> Dict[str, Any]:
 
 def latest_fluid_basis(
     history: Iterable[Mapping[str, Any]],
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Fluid basis of the newest month that has both API gravity and composition.
 
     Args:

@@ -7,7 +7,6 @@ All coordinates are synthetic (local E, N in m; V = TVD below MSL). Run:
 import json
 
 import numpy as np
-
 from well_trajectory_anticollision import (
     ErrorModel,
     SFRule,

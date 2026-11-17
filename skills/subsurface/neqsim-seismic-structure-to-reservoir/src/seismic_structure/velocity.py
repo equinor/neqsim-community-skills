@@ -12,8 +12,8 @@ two or more ties also let ``k`` be fitted.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field, replace
-from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -27,8 +27,8 @@ class VelocityModel:
     v0: float
     k: float = 0.0
     datum_m: float = 0.0
-    ties: List[Tuple[float, float]] = field(default_factory=list)
-    rms_error_m: Optional[float] = None
+    ties: list[tuple[float, float]] = field(default_factory=list)
+    rms_error_m: float | None = None
     note: str = ""
 
     def depth(self, twt_ms) -> np.ndarray:
@@ -66,10 +66,10 @@ def _g(t: np.ndarray, k: float) -> np.ndarray:
 
 
 def calibrate_velocity(
-    ties: Sequence[Tuple[float, float]],
-    k: Optional[float] = None,
+    ties: Sequence[tuple[float, float]],
+    k: float | None = None,
     datum_m: float = 0.0,
-    k_range: Tuple[float, float] = (0.0, 1.5),
+    k_range: tuple[float, float] = (0.0, 1.5),
 ) -> VelocityModel:
     """Fit ``v0`` (and ``k`` when not given and there are two or more ties) to well ties.
 
@@ -90,7 +90,7 @@ def calibrate_velocity(
     if (z <= 0).any() or (t <= 0).any():
         raise ValueError("ties must lie below the datum with positive time")
 
-    def fit(gradient: float) -> Tuple[float, float]:
+    def fit(gradient: float) -> tuple[float, float]:
         g = _g(t, gradient)
         v0 = float(np.dot(z, g) / np.dot(g, g))
         return v0, float(np.sqrt(np.mean((v0 * g - z) ** 2)))

@@ -9,7 +9,7 @@ and its unresolved dependencies listed.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .registers import get_path
 
@@ -35,14 +35,14 @@ class BarrierElement:
     name: str
     envelope: str
     function: str
-    depth_md_m: Optional[float] = None
+    depth_md_m: float | None = None
     verification_method: str = (
         "to be defined against the verified barrier-element acceptance table"
     )
     verification_status: str = "UNVERIFIED"
     evidence: str = ""
-    depends_on: List[str] = field(default_factory=list)
-    unresolved: List[str] = field(default_factory=list)
+    depends_on: list[str] = field(default_factory=list)
+    unresolved: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -51,8 +51,8 @@ class BarrierState:
 
     state: str
     description: str
-    elements: List[BarrierElement]
-    notes: List[str] = field(default_factory=list)
+    elements: list[BarrierElement]
+    notes: list[str] = field(default_factory=list)
 
 
 def _e(i, name, env, fn, depth=None, deps=None, unresolved=None, method=None):
@@ -68,7 +68,7 @@ def _e(i, name, env, fn, depth=None, deps=None, unresolved=None, method=None):
     )
 
 
-def propose_barriers(basis: Dict[str, Any]) -> List[BarrierState]:
+def propose_barriers(basis: dict[str, Any]) -> list[BarrierState]:
     """Propose barrier schematics for producer or injector wells from the completion description."""
     comp = get_path(basis, "completion") or {}
     env = get_path(basis, "well.environment")
@@ -119,7 +119,7 @@ def propose_barriers(basis: Dict[str, Any]) -> List[BarrierState]:
             ["seal-assembly qualification to be supplied"],
         ),
     ]
-    states: List[BarrierState] = []
+    states: list[BarrierState] = []
 
     def prim(shut=False):
         els = [
@@ -296,7 +296,7 @@ def propose_barriers(basis: Dict[str, Any]) -> List[BarrierState]:
 EXPLORATION_STATES = ("drilling", "well_test", "suspended", "abandonment")
 
 
-def propose_exploration_barriers(basis: Dict[str, Any]) -> List[BarrierState]:
+def propose_exploration_barriers(basis: dict[str, Any]) -> list[BarrierState]:
     """Propose barrier schematics for an exploration / appraisal well (drilling, well test, temporary suspension, permanent abandonment).
 
     Elements are proposals from the casing description (``completion.casing``, ``drilling.rig``); they are ``UNVERIFIED`` and carry no acceptance
@@ -483,9 +483,9 @@ def propose_exploration_barriers(basis: Dict[str, Any]) -> List[BarrierState]:
     return states
 
 
-def barrier_summary(states: List[BarrierState]) -> Dict[str, Any]:
+def barrier_summary(states: list[BarrierState]) -> dict[str, Any]:
     """Counts of elements by verification status and open dependencies."""
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     unresolved = 0
     for s in states:
         for e in s.elements:
@@ -498,7 +498,7 @@ def barrier_summary(states: List[BarrierState]) -> Dict[str, Any]:
     }
 
 
-def to_rows(states: List[BarrierState]) -> List[Dict[str, Any]]:
+def to_rows(states: list[BarrierState]) -> list[dict[str, Any]]:
     """Flatten the barrier states for tables."""
     rows = []
     for s in states:
@@ -510,7 +510,7 @@ def to_rows(states: List[BarrierState]) -> List[Dict[str, Any]]:
 
 
 def set_verification(
-    states: List[BarrierState], element_id: str, state: str, status: str, evidence: str
+    states: list[BarrierState], element_id: str, state: str, status: str, evidence: str
 ) -> None:
     """Record verification evidence for one element in one state.
 
@@ -519,7 +519,7 @@ def set_verification(
         KeyError: when the element is not found.
     """
     if status not in VERIFICATION_STATUS:
-        raise ValueError("status must be one of {}".format(VERIFICATION_STATUS))
+        raise ValueError(f"status must be one of {VERIFICATION_STATUS}")
     if status == "VERIFIED" and not evidence:
         raise ValueError("VERIFIED needs an evidence reference")
     for s in states:

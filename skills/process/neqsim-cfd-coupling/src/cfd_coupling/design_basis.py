@@ -13,9 +13,10 @@ required, so the same code serves a pipe, a bend, a vessel or a tube bundle.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from math import isfinite
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 # Highest authority first. A value from an earlier source wins a conflict.
 SOURCE_PRECEDENCE: tuple[str, ...] = (

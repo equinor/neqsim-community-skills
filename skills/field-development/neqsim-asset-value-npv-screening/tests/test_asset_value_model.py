@@ -1,5 +1,4 @@
 import pytest
-
 from asset_value_npv_screening import AssetValueModel
 
 

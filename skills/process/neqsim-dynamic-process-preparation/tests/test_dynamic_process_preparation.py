@@ -1,5 +1,4 @@
 import pytest
-
 from dynamic_process_preparation import DynamicProcessPreparationModel
 
 

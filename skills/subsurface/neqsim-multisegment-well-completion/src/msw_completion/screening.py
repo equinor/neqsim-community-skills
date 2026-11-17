@@ -9,8 +9,8 @@ change of a zone's phase split, so a multi-segment simulation must confirm the l
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence
 
 from .devices import Device, PhaseProperties, pressure_drop_bar
 
@@ -39,8 +39,8 @@ class Zone:
 
 
 def zone_rate(
-    zone: Zone, drawdown_bar: float, device: Optional[Device], props: PhaseProperties
-) -> Dict[str, float]:
+    zone: Zone, drawdown_bar: float, device: Device | None, props: PhaseProperties
+) -> dict[str, float]:
     """Reservoir rate of one zone and the split of its drawdown between reservoir and device."""
     dd = drawdown_bar + zone.reservoir_pressure_offset_bar
     if dd <= 0.0:
@@ -75,11 +75,11 @@ def zone_rate(
 def well_inflow(
     zones: Sequence[Zone],
     drawdown_bar: float,
-    device: Optional[Device],
+    device: Device | None,
     props: PhaseProperties,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Oil, water and gas reservoir rates per zone and in total for one drawdown."""
-    rows: List[Dict[str, object]] = []
+    rows: list[dict[str, object]] = []
     totals = {"oil": 0.0, "water": 0.0, "gas": 0.0}
     for zone in zones:
         result = zone_rate(zone, drawdown_bar, device, props)
@@ -104,7 +104,7 @@ def compare_at_same_oil(
     props: PhaseProperties,
     bare_drawdown_bar: float,
     max_drawdown_bar: float,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Water and gas reduction with devices at the oil rate of the bare completion.
 
     The drawdown with devices is raised until the oil rate matches the bare completion, up to
@@ -131,7 +131,7 @@ def compare_at_same_oil(
     with_devices = well_inflow(zones, dd, device, props)
     b, d = bare["totals_rm3_day"], with_devices["totals_rm3_day"]
 
-    def change(phase: str) -> Optional[float]:
+    def change(phase: str) -> float | None:
         return (d[phase] - b[phase]) / b[phase] if b[phase] > 0 else None
 
     return {

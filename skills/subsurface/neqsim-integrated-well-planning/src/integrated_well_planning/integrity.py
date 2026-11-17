@@ -9,11 +9,11 @@ of the required drilling/casing module ``well_design_study``; they are formula r
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .model_chain import (
-    effective_tubing_depths,
     build_fluid,
+    effective_tubing_depths,
     require,
     surface_temperature_C,
 )
@@ -36,8 +36,8 @@ def drilling_module():
 
 
 def pipe_dimensions(
-    od_in: float, weight_ppf: Optional[float] = None, wall_in: Optional[float] = None
-) -> Dict[str, float]:
+    od_in: float, weight_ppf: float | None = None, wall_in: float | None = None
+) -> dict[str, float]:
     """OD, wall and ID in inches (wall from weight with the plain-end formula when needed)."""
     if wall_in is None:
         if weight_ppf is None:
@@ -50,15 +50,13 @@ def pipe_dimensions(
 
 def tubular_ratings(
     od_in: float, wall_in: float, grade: str, temperature_c: float = 20.0
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Burst, collapse (bar) and body yield (kN) from API TR 5C3 formulas; ``available=False`` without the casing module."""
     wds = drilling_module()
     if wds is None or grade not in wds.GRADES:
         return {
             "available": False,
-            "reason": "well_design_study module or grade '{}' not available".format(
-                grade
-            ),
+            "reason": f"well_design_study module or grade '{grade}' not available",
         }
     yp = wds.casing_design.yield_psi(wds.GRADES[grade], temperature_c)
     return {
@@ -73,8 +71,8 @@ def tubular_ratings(
 
 
 def shut_in_wellhead_pressure(
-    basis: Dict[str, Any], reservoir_pressure_bara: float
-) -> Dict[str, float]:
+    basis: dict[str, Any], reservoir_pressure_bara: float
+) -> dict[str, float]:
     """Shut-in tubing head pressure from the reservoir fluid column (density iterated with a NeqSim flash, 3 passes)."""
     require("ThermodynamicOperations")
     tvd = effective_tubing_depths(basis)["tvd_m"]
@@ -96,7 +94,7 @@ def shut_in_wellhead_pressure(
     }
 
 
-def annulus_geometry(basis: Dict[str, Any]) -> Dict[str, float]:
+def annulus_geometry(basis: dict[str, Any]) -> dict[str, float]:
     """Annulus A geometry (m) from tubing and production casing definitions."""
     tub = get_path(basis, "completion.tubing")
     prod = [
@@ -121,8 +119,8 @@ def thermal_dT_mean(tm, depth_tvd_m: float, n: int = 30) -> float:
 
 
 def annular_pressure_build_up(
-    basis: Dict[str, Any], tm, packer_tvd_m: float
-) -> Dict[str, Any]:
+    basis: dict[str, Any], tm, packer_tvd_m: float
+) -> dict[str, Any]:
     """APB in annulus A for the flowing (or injecting) thermal profile; uses NeqSim ``AnnularPressureBuildup``."""
     require("AnnularPressureBuildup", "SystemSrkCPAstatoil")
     geo = annulus_geometry(basis)
@@ -172,14 +170,14 @@ def annular_pressure_build_up(
 
 
 def tubing_movement(
-    basis: Dict[str, Any],
+    basis: dict[str, Any],
     tm,
     state: str,
     d_pi_packer: float,
     d_po_packer: float,
     packer_tvd_m: float,
     packer_mode: str = "FREE",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Tubing length change / packer force for one state with ``TubingMovementCalculator`` (vertical, no friction)."""
     require("TubingMovementCalculator")
     tub = get_path(basis, "completion.tubing")
@@ -220,10 +218,10 @@ def tubing_movement(
 
 
 def build_load_cases(
-    basis: Dict[str, Any],
-    producer: Optional[Dict[str, Any]] = None,
-    injector: Optional[Dict[str, Any]] = None,
-) -> List[Dict[str, Any]]:
+    basis: dict[str, Any],
+    producer: dict[str, Any] | None = None,
+    injector: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     """Life-cycle load cases from the model results: production/injection, shut-in, evacuation (and supplied test pressure)."""
     tvd = effective_tubing_depths(basis)["tvd_m"]
     pack_tvd = (
@@ -235,7 +233,7 @@ def build_load_cases(
         get_path(basis, "completion.annulus_a.fluid_density_kg_m3") or 1030.0
     )
     annulus_hydro = ann_fluid * G * pack_tvd / 1e5
-    cases: List[Dict[str, Any]] = []
+    cases: list[dict[str, Any]] = []
     pres = float(
         get_path(basis, "reservoir.pressure_bara")
         if not isinstance(get_path(basis, "reservoir.pressure_bara"), dict)
@@ -251,9 +249,7 @@ def build_load_cases(
                 "pi_packer_bara": _interp_profile(producer, pack_tvd),
                 "po_packer_bara": 1.01325 + annulus_hydro,
                 "temperature_top_C": wh.get("temperature_C"),
-                "source": "producer base-case traverse; annulus = packer-fluid hydrostatic (density {} kg/m3 ASSUMED)".format(
-                    ann_fluid
-                ),
+                "source": f"producer base-case traverse; annulus = packer-fluid hydrostatic (density {ann_fluid} kg/m3 ASSUMED)",
             }
         )
         si = shut_in_wellhead_pressure(basis, pres)
@@ -309,7 +305,7 @@ def build_load_cases(
     return cases
 
 
-def _interp_profile(producer: Dict[str, Any], z_tvd: float) -> float:
+def _interp_profile(producer: dict[str, Any], z_tvd: float) -> float:
     prof = producer.get("profile") or {}
     if not prof:
         return float("nan")
@@ -319,8 +315,8 @@ def _interp_profile(producer: Dict[str, Any], z_tvd: float) -> float:
 
 
 def evaluate_tubing(
-    basis: Dict[str, Any], load_cases: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+    basis: dict[str, Any], load_cases: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     """Utilisation of the tubing against formula ratings, and design-factor status against supplied factors only."""
     tub = get_path(basis, "completion.tubing")
     dims = pipe_dimensions(tub["od_in"], tub.get("weight_ppf"), tub.get("wall_in"))
@@ -390,12 +386,12 @@ def evaluate_tubing(
 
 
 def evaluate_integrity(
-    basis: Dict[str, Any],
-    producer: Optional[Dict[str, Any]] = None,
-    injector: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    basis: dict[str, Any],
+    producer: dict[str, Any] | None = None,
+    injector: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Full screening integrity block for the base case (load cases, tubing, APB, movement)."""
-    out: Dict[str, Any] = {
+    out: dict[str, Any] = {
         "status": "SCREENING",
         "notes": [
             "formula ratings only; design factors are used only when supplied with a source",
@@ -447,16 +443,14 @@ def evaluate_integrity(
             tubing_movement(basis, tm, direction, d_pi, 0.0, pack_tvd, "FREE"),
             tubing_movement(basis, tm, direction, d_pi, 0.0, pack_tvd, "FIXED"),
         ]
-    except (
-        Exception
-    ) as exc:  # noqa: BLE001 - keep the rest of the integrity block when a Java class is missing
-        out["apb_error"] = "{}: {}".format(type(exc).__name__, str(exc)[:160])
+    except Exception as exc:
+        out["apb_error"] = f"{type(exc).__name__}: {str(exc)[:160]}"
     return out
 
 
 def lifecycle_tubing_matrix(
-    basis: Dict[str, Any], states: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+    basis: dict[str, Any], states: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     """Tubing utilisation for supplied life-cycle states at the tree and at the packer, with temperature-derated formula ratings and a von Mises triaxial check.
 
     Each state is a dict with ``state``, ``pi_top_bara``, ``pi_packer_bara``, ``po_top_bara``, ``po_packer_bara``, ``t_top_C``, ``t_packer_C`` and optionally
@@ -483,7 +477,7 @@ def lifecycle_tubing_matrix(
     calc.setLength(float(pack_tvd)).setGeometry(
         dims["od_in"] * IN, dims["id_in"] * IN, dims["id_in"] * IN * 1.05, 0.2
     )
-    rows: List[Dict[str, Any]] = []
+    rows: list[dict[str, Any]] = []
     for st in states:
         rho = float(st.get("fluid_density_kg_m3", 300.0))
         a_steel = (
@@ -493,14 +487,14 @@ def lifecycle_tubing_matrix(
         buoyant_n = max(0.0, (w_kg_m - rho * a_in - 0.0) * G * pack_tvd)
         for loc, key, z in (("tree", "top", 0.0), ("packer", "packer", pack_tvd)):
             pi, po, t = (
-                st["pi_{}_bara".format(key)],
-                st["po_{}_bara".format(key)],
-                st["t_{}_C".format(key)],
+                st[f"pi_{key}_bara"],
+                st[f"po_{key}_bara"],
+                st[f"t_{key}_C"],
             )
             rat = tubular_ratings(
                 dims["od_in"], dims["wall_in"], tub.get("grade", ""), float(t)
             )
-            row: Dict[str, Any] = {
+            row: dict[str, Any] = {
                 "state": st["state"],
                 "location": loc,
                 "pi_bara": pi,

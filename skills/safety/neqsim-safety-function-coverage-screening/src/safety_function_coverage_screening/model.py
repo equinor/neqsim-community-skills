@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from importlib.util import find_spec
-from typing import Iterable
 
 # Public simplified API RP 14C / ISO 10418 protective-function defaults per component type.
 _REQUIRED_FUNCTIONS: dict[str, tuple[str, ...]] = {

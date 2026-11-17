@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from importlib.util import find_spec
 from math import isfinite
-from typing import Optional, Tuple
 
 ISO_REFERENCE_TEMPERATURE_K = 288.15
 
@@ -20,10 +19,10 @@ class GasTurbinePerformanceResult:
     fuel_heat_input_kw: float
     exhaust_mass_flow_kg_s: float
     exhaust_temperature_k: float
-    power_margin_ratio: Optional[float]
+    power_margin_ratio: float | None
     power_warning: str
     neqsim_available: bool
-    assumptions: Tuple[str, ...]
+    assumptions: tuple[str, ...]
 
 
 class GasTurbinePerformanceModel:
@@ -71,7 +70,7 @@ class GasTurbinePerformanceModel:
         relative_humidity: float = 0.6,
         inlet_pressure_loss_mbar: float = 10.0,
         exhaust_pressure_loss_mbar: float = 10.0,
-        required_shaft_power_kw: Optional[float] = None,
+        required_shaft_power_kw: float | None = None,
     ) -> GasTurbinePerformanceResult:
         self._require_positive("iso_base_power_kw", iso_base_power_kw)
         self._require_positive("iso_heat_rate_kj_kwh", iso_heat_rate_kj_kwh)
@@ -123,7 +122,7 @@ class GasTurbinePerformanceModel:
             ambient_temperature_k - ISO_REFERENCE_TEMPERATURE_K
         )
 
-        power_margin_ratio: Optional[float] = None
+        power_margin_ratio: float | None = None
         if required_shaft_power_kw is not None:
             power_margin_ratio = site_power / required_shaft_power_kw
 
@@ -157,7 +156,7 @@ class GasTurbinePerformanceModel:
         )
 
     @staticmethod
-    def _power_warning(power_margin_ratio: Optional[float]) -> str:
+    def _power_warning(power_margin_ratio: float | None) -> str:
         if power_margin_ratio is None:
             return "no-rating"
         if power_margin_ratio < 1.0:

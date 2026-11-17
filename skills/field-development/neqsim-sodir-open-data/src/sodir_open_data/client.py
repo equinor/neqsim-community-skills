@@ -11,9 +11,10 @@ import io
 import json
 import urllib.parse
 import urllib.request
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from . import catalog
 from .downloads import (
@@ -27,7 +28,7 @@ Fetch = Callable[[str, float], bytes]
 USER_AGENT = (
     "neqsim-sodir-open-data/0.1 (+https://github.com/equinor/neqsim-community-skills)"
 )
-_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+_EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 
 
 def default_fetch(url: str, timeout: float = 120.0) -> bytes:
@@ -35,9 +36,7 @@ def default_fetch(url: str, timeout: float = 120.0) -> bytes:
     request = urllib.request.Request(
         url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"}
     )
-    with urllib.request.urlopen(
-        request, timeout=timeout
-    ) as response:  # noqa: S310 - fixed https hosts
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         return response.read()
 
 
@@ -46,7 +45,7 @@ def sql_quote(value: Any) -> str:
     return "'" + str(value).replace("'", "''") + "'"
 
 
-def to_date(epoch_ms: Optional[float]) -> Optional[datetime]:
+def to_date(epoch_ms: float | None) -> datetime | None:
     """Convert a Sodir epoch-millisecond timestamp to a UTC datetime (``None`` stays ``None``).
 
     Deadlines are stored as local midnight, i.e. the previous day in UTC: convert with
@@ -66,13 +65,13 @@ class ReadRecord:
     rows: int
     where: str = ""
     retrieved_utc: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
     )
     licence: str = LICENCE
     ok: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return the record as a plain dict for ``results.json`` / ``SOURCES.md``."""
         return dict(self.__dict__)
 
@@ -92,9 +91,9 @@ class SodirOpenData:
         self.timeout = timeout
         self.page_size = min(int(page_size), 2000)  # server maxRecordCount is 2000
         self.max_pages = max_pages
-        self.records: List[ReadRecord] = []
+        self.records: list[ReadRecord] = []
 
-    def _json(self, url: str) -> Dict[str, Any]:
+    def _json(self, url: str) -> dict[str, Any]:
         payload = json.loads(self.fetch(url, self.timeout).decode("utf-8"))
         if "error" in payload:
             self.records.append(
@@ -106,7 +105,7 @@ class SodirOpenData:
         return payload
 
     @staticmethod
-    def bbox_params(bbox: Sequence[float]) -> Dict[str, Any]:
+    def bbox_params(bbox: Sequence[float]) -> dict[str, Any]:
         """Return the envelope filter parameters for a WGS84 ``(west, south, east, north)`` box."""
         west, south, east, north = (float(v) for v in bbox)
         return {
@@ -116,7 +115,7 @@ class SodirOpenData:
             "spatialRel": "esriSpatialRelIntersects",
         }
 
-    def count(self, layer: "str | int", where: str = "1=1") -> int:
+    def count(self, layer: str | int, where: str = "1=1") -> int:
         """Return the number of rows matching ``where``."""
         url = (
             f"{DATASERVICE_DATA}/{catalog.resolve_id(layer)}/query?"
@@ -128,16 +127,16 @@ class SodirOpenData:
 
     def query(
         self,
-        layer: "str | int",
+        layer: str | int,
         where: str = "1=1",
         out_fields: str = "*",
         *,
         geometry: bool = False,
-        out_sr: Optional[int] = None,
-        bbox: Optional[Sequence[float]] = None,
-        order_by: Optional[str] = None,
-        max_rows: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
+        out_sr: int | None = None,
+        bbox: Sequence[float] | None = None,
+        order_by: str | None = None,
+        max_rows: int | None = None,
+    ) -> list[dict[str, Any]]:
         """Return rows of a layer/table as dicts, paging past the 2000-row server limit.
 
         ``geometry=True`` adds ``_geometry`` (ArcGIS JSON). Geometry is ED50 (EPSG 4230) unless
@@ -146,7 +145,7 @@ class SodirOpenData:
         """
         layer_id = catalog.resolve_id(layer)
         base = f"{DATASERVICE_DATA}/{layer_id}/query"
-        rows: List[Dict[str, Any]] = []
+        rows: list[dict[str, Any]] = []
         offset = 0
         url = base
         for _ in range(self.max_pages):
@@ -157,7 +156,7 @@ class SodirOpenData:
             )
             if take <= 0:
                 break
-            params: Dict[str, Any] = {
+            params: dict[str, Any] = {
                 "where": where,
                 "outFields": out_fields,
                 "returnGeometry": "true" if geometry else "false",
@@ -185,9 +184,7 @@ class SodirOpenData:
         self.records.append(ReadRecord("sodir-dataservice", base, len(rows), where))
         return rows
 
-    def distinct(
-        self, layer: "str | int", column: str, where: str = "1=1"
-    ) -> List[Any]:
+    def distinct(self, layer: str | int, column: str, where: str = "1=1") -> list[Any]:
         """Return the distinct values of one column (useful for enumerations such as ``wlbPurpose``)."""
         layer_id = catalog.resolve_id(layer)
         url = f"{DATASERVICE_DATA}/{layer_id}/query?" + urllib.parse.urlencode(
@@ -210,18 +207,18 @@ class SodirOpenData:
         )
 
     def by_name(
-        self, layer: "str | int", column: str, value: str, **kwargs: Any
-    ) -> List[Dict[str, Any]]:
+        self, layer: str | int, column: str, value: str, **kwargs: Any
+    ) -> list[dict[str, Any]]:
         """Query rows where ``column`` equals ``value`` (names are upper/lower case sensitive in Sodir data)."""
         return self.query(layer, f"{column}={sql_quote(value)}", **kwargs)
 
     def children(
-        self, layer: "str | int", wellbore_npdid: int, **kwargs: Any
-    ) -> List[Dict[str, Any]]:
+        self, layer: str | int, wellbore_npdid: int, **kwargs: Any
+    ) -> list[dict[str, Any]]:
         """Return the rows of a wellbore child table (tops, DST, cores, samples, mud, logs...) for one wellbore."""
         return self.query(layer, f"wlbNpdidWellbore={int(wellbore_npdid)}", **kwargs)
 
-    def metadata_attributes(self, table_name: str) -> List[Dict[str, Any]]:
+    def metadata_attributes(self, table_name: str) -> list[dict[str, Any]]:
         """Return the attribute descriptions of a table from the live Metadata service."""
         url = f"{DATASERVICE_METADATA}/11/query?" + urllib.parse.urlencode(
             {
@@ -235,7 +232,7 @@ class SodirOpenData:
         self.records.append(ReadRecord("sodir-metadata", url, len(feats)))
         return [f["attributes"] for f in feats]
 
-    def factpages_table(self, table: str) -> List[Dict[str, str]]:
+    def factpages_table(self, table: str) -> list[dict[str, str]]:
         """Read a FactPages CSV table view (e.g. ``field_production_monthly``) as string rows."""
         url = factpages_table_url(table)
         text = self.fetch(url, self.timeout).decode("utf-8-sig")
@@ -243,19 +240,19 @@ class SodirOpenData:
         self.records.append(ReadRecord("sodir-factpages", url, len(rows)))
         return rows
 
-    def provenance(self) -> List[Dict[str, Any]]:
+    def provenance(self) -> list[dict[str, Any]]:
         """Return every recorded read as dicts."""
         return [r.to_dict() for r in self.records]
 
 
-def to_float(value: Any) -> Optional[float]:
+def to_float(value: Any) -> float | None:
     """Parse a FactPages cell to float (empty string and ``None`` give ``None``)."""
     if value is None or str(value).strip() == "":
         return None
     return float(str(value).replace(",", "."))
 
 
-def point_lonlat(row: Dict[str, Any]) -> Optional[Tuple[float, float]]:
+def point_lonlat(row: dict[str, Any]) -> tuple[float, float] | None:
     """Return ``(lon, lat)`` of a point row fetched with ``geometry=True`` and ``out_sr=4326``."""
     geom = row.get("_geometry") or {}
     if "x" in geom and "y" in geom:

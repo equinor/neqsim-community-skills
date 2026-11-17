@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from olga_multiphase_simulator import OlgaRunner, describe_exit_code
 from olga_multiphase_simulator.discovery import find_olga
 from olga_multiphase_simulator.runner import collect_outputs

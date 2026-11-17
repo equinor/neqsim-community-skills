@@ -12,10 +12,11 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from .parser import ThermomlReport, parse_thermoml
 
@@ -36,9 +37,7 @@ def default_fetch(url: str, timeout: float = 60.0) -> bytes:
         url, headers={"User-Agent": USER_AGENT, "Accept": "*/*"}
     )
     try:
-        with urllib.request.urlopen(
-            request, timeout=timeout
-        ) as response:  # noqa: S310 - fixed https host
+        with urllib.request.urlopen(request, timeout=timeout) as response:
             return response.read()
     except urllib.error.HTTPError as error:
         raise ThermomlUnavailable(f"{url} -> HTTP {error.code}") from error
@@ -66,13 +65,13 @@ class ReadRecord:
     doi: str = ""
     cached: bool = False
     retrieved_utc: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
     )
     note: str = (
         "Public archive, no login. Cite the article DOI and NIST/TRC; do not redistribute the files."
     )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return the record as a plain dict."""
         return dict(self.__dict__)
 
@@ -83,7 +82,7 @@ class ThermomlClient:
     def __init__(
         self,
         fetch: Fetch = default_fetch,
-        cache_dir: Optional[Path] = None,
+        cache_dir: Path | None = None,
         *,
         timeout: float = 60.0,
         max_requests: int = 50,
@@ -93,7 +92,7 @@ class ThermomlClient:
         self.timeout = timeout
         self.max_requests = max_requests
         self.requests = 0
-        self.records: List[ReadRecord] = []
+        self.records: list[ReadRecord] = []
 
     def _get(self, url: str) -> bytes:
         if self.requests >= self.max_requests:
@@ -127,7 +126,7 @@ class ThermomlClient:
 
     def search(
         self, query: str, page_size: int = 10, page: int = 0
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Best-effort Lucene-style search (compound name, InChIKey, author) of the archive.
 
         Returns ``[{"doi", "title", "year", "journal", "compounds"}]``. The archive's search API is intermittently
@@ -167,6 +166,6 @@ class ThermomlClient:
             )
         return hits
 
-    def provenance(self) -> List[Dict[str, Any]]:
+    def provenance(self) -> list[dict[str, Any]]:
         """All read records as dicts."""
         return [r.to_dict() for r in self.records]

@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 from . import iwp_graphics as G
-from .barriers import BarrierState, BarrierElement
+from .barriers import BarrierElement, BarrierState
 from .basis import load_basis
 from .iwp_drawings import barrier_schematic_sheet, render_sheet, well_schematic_sheet
 from .planning_extras import (
@@ -21,7 +20,7 @@ from .registers import Registers, get_path
 from .study import load_json, study_paths
 
 
-def _states_from(res: Dict[str, Any]) -> List[BarrierState]:
+def _states_from(res: dict[str, Any]) -> list[BarrierState]:
     out = []
     for s in res["barriers"]["states"]:
         out.append(
@@ -35,7 +34,7 @@ def _states_from(res: Dict[str, Any]) -> List[BarrierState]:
     return out
 
 
-def make_drawings(root: Path, formats_charts=("png",)) -> Dict[str, Any]:
+def make_drawings(root: Path, formats_charts=("png",)) -> dict[str, Any]:
     """Render every available chart and sheet. Missing inputs skip that figure and are listed in the register with the reason."""
     paths = study_paths(root)
     d = paths["drawings"]
@@ -51,12 +50,12 @@ def make_drawings(root: Path, formats_charts=("png",)) -> Dict[str, Any]:
     well = get_path(basis, "well.id")
     sid = get_path(basis, "study.id")
     synthetic = bool(get_path(basis, "study.synthetic"))
-    register: List[Dict[str, str]] = []
+    register: list[dict[str, str]] = []
 
     def note(
         fig_id: str,
         title: str,
-        files: Optional[Dict[str, str]],
+        files: dict[str, str] | None,
         status: str,
         reason: str = "",
         dwg: str = "",
@@ -75,7 +74,7 @@ def make_drawings(root: Path, formats_charts=("png",)) -> Dict[str, Any]:
         )
 
     survey = res["trajectory"]["survey"]
-    fig = well_schematic_sheet(basis, survey, "{}-DWG-001".format(sid))
+    fig = well_schematic_sheet(basis, survey, f"{sid}-DWG-001")
     note(
         "F01",
         "Well schematic (A3)",
@@ -84,16 +83,16 @@ def make_drawings(root: Path, formats_charts=("png",)) -> Dict[str, Any]:
             d / "well_schematic",
             "well_schematic",
             basis,
-            "{}-DWG-001".format(sid),
+            f"{sid}-DWG-001",
             "Well schematic with depth tracks",
             synthetic,
             ["L13"],
         ),
         "RENDERED",
-        dwg="{}-DWG-001".format(sid),
+        dwg=f"{sid}-DWG-001",
     )
     states = _states_from(res)
-    fig = barrier_schematic_sheet(states, basis, "{}-DWG-002".format(sid))
+    fig = barrier_schematic_sheet(states, basis, f"{sid}-DWG-002")
     note(
         "F02",
         "Barrier schematics per well state (A3)",
@@ -102,13 +101,13 @@ def make_drawings(root: Path, formats_charts=("png",)) -> Dict[str, Any]:
             d / "barrier_schematics",
             "barrier_schematic",
             res["barriers"],
-            "{}-DWG-002".format(sid),
+            f"{sid}-DWG-002",
             "Proposed barrier envelopes, elements UNVERIFIED",
             synthetic,
             ["L13"],
         ),
         "RENDERED",
-        dwg="{}-DWG-002".format(sid),
+        dwg=f"{sid}-DWG-002",
     )
     prod = res.get("producer") or {}
     inj = res.get("injector") or {}
@@ -130,7 +129,7 @@ def make_drawings(root: Path, formats_charts=("png",)) -> Dict[str, Any]:
             family=fam,
             ops=ops,
             target_rate=prod["base"]["target_rate"],
-            rate_label="Rate [{}]".format(unit),
+            rate_label=f"Rate [{unit}]",
             ipr_band={"low": fam["ipr_low"], "high": fam["ipr_high"]},
             outflow_min_rate=(
                 prod["base"]["nodal"].get("outflow_min_rate")
@@ -522,7 +521,7 @@ def make_drawings(root: Path, formats_charts=("png",)) -> Dict[str, Any]:
     renderer = G.trajectory_3d(survey, d / "trajectory_3d.png")
     note(
         "F20",
-        "Trajectory 3D view ({})".format(renderer),
+        f"Trajectory 3D view ({renderer})",
         {"png": str(d / "trajectory_3d.png")},
         "RENDERED",
     )

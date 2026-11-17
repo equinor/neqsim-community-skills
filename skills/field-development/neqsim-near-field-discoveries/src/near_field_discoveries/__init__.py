@@ -21,11 +21,11 @@ from .ncs import (
 )
 
 __all__ = [
-    "Discovery",
-    "Inventory",
     "STAGES",
     "STAGE_COLOURS",
     "STAGE_LABELS",
+    "Discovery",
+    "Inventory",
     "area_clusters",
     "bbox_around",
     "bearing_deg",

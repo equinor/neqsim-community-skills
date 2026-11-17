@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -21,14 +21,14 @@ class Section:
     y: np.ndarray
     trace_index: np.ndarray
     label: str
-    distance: Optional[np.ndarray] = None
-    snap_distance: Optional[np.ndarray] = None
+    distance: np.ndarray | None = None
+    snap_distance: np.ndarray | None = None
 
 
 def _nearest(tx: np.ndarray, ty: np.ndarray, px: np.ndarray, py: np.ndarray):
     """Index of and distance to the nearest trace for every point."""
     try:
-        from scipy.spatial import cKDTree  # noqa: PLC0415  (optional speed-up)
+        from scipy.spatial import cKDTree
 
         distance, index = cKDTree(np.column_stack([tx, ty])).query(
             np.column_stack([px, py])
@@ -60,9 +60,9 @@ def _section(handle, traces: np.ndarray, label: str, source: str) -> Section:
 def _line_traces(
     handle,
     used,
-    inline: Optional[int] = None,
-    crossline: Optional[int] = None,
-    offset: Optional[int] = None,
+    inline: int | None = None,
+    crossline: int | None = None,
+    offset: int | None = None,
 ) -> np.ndarray:
     """Trace indices on one inline or crossline, ordered along the line, one offset only."""
     segyio = segyio_module()
@@ -90,7 +90,7 @@ def read_inline(
     inline: int,
     header_bytes=DEFAULT_HEADER_BYTES,
     source: str = "cdp",
-    offset: Optional[int] = None,
+    offset: int | None = None,
 ) -> Section:
     """Return one inline as a section (crosslines x samples).
 
@@ -122,7 +122,7 @@ def read_crossline(
     crossline: int,
     header_bytes=DEFAULT_HEADER_BYTES,
     source: str = "cdp",
-    offset: Optional[int] = None,
+    offset: int | None = None,
 ) -> Section:
     """Return one crossline as a section (inlines x samples).
 
@@ -169,7 +169,7 @@ def read_slice(path, sample_value: float, header_bytes=DEFAULT_HEADER_BYTES):
 
 def trace_at_xy(
     path, x: float, y: float, header_bytes=DEFAULT_HEADER_BYTES, source: str = "cdp"
-) -> Tuple[np.ndarray, np.ndarray, dict]:
+) -> tuple[np.ndarray, np.ndarray, dict]:
     """Return the trace nearest to a map point (for example a well location).
 
     Returns:
@@ -194,7 +194,7 @@ def trace_at_xy(
         return trace, np.asarray(handle.samples, dtype=float), info
 
 
-def densify_polyline(points: Sequence[Tuple[float, float]], spacing: float):
+def densify_polyline(points: Sequence[tuple[float, float]], spacing: float):
     """Return x, y and along-line distance at a regular spacing along a polyline.
 
     Raises:
@@ -216,9 +216,9 @@ def densify_polyline(points: Sequence[Tuple[float, float]], spacing: float):
 
 def extract_fence(
     path,
-    points: Sequence[Tuple[float, float]],
+    points: Sequence[tuple[float, float]],
     spacing: float = 25.0,
-    max_snap: Optional[float] = None,
+    max_snap: float | None = None,
     header_bytes=DEFAULT_HEADER_BYTES,
     source: str = "cdp",
 ) -> Section:
@@ -259,8 +259,8 @@ def write_cube(
     inlines: Sequence[int],
     crosslines: Sequence[int],
     sample_interval_ms: float,
-    origin: Tuple[float, float] = (0.0, 0.0),
-    bin_size: Tuple[float, float] = (25.0, 25.0),
+    origin: tuple[float, float] = (0.0, 0.0),
+    bin_size: tuple[float, float] = (25.0, 25.0),
     rotation_deg: float = 0.0,
     text: str = "",
     coordinate_scalar: int = -100,
@@ -332,10 +332,10 @@ def save_section_png(
     sample_label: str = "TWT (ms)",
 ) -> Path:
     """Plot a section with a symmetric grey-scale clip and save it as PNG."""
-    import matplotlib  # noqa: PLC0415  (optional dependency)
+    import matplotlib
 
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt  # noqa: PLC0415
+    import matplotlib.pyplot as plt
 
     data = section.data
     finite = np.abs(data[np.isfinite(data)])

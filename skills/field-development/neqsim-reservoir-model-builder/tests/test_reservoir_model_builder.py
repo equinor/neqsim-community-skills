@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from reservoir_model_builder import (
     Parameter,
     ReservoirInputs,

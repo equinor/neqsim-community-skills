@@ -2,7 +2,6 @@ import json
 import os
 
 import pytest
-
 from subsea_slot_tee_reuse import (
     INVENTORY_SCHEMA,
     free_slot_table,

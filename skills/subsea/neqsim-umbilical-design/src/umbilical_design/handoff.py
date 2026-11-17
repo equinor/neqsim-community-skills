@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .figures import CHECK_LABELS, FigureMeta, render_all
 from .layout import cross_section_layout
@@ -40,12 +40,12 @@ SCREENING_DEFAULTS = [
 ]
 
 
-def key_numbers(result: DesignResult) -> Dict[str, Dict[str, Any]]:
+def key_numbers(result: DesignResult) -> dict[str, dict[str, Any]]:
     """Flat ``{key: {value, unit, source}}`` map so that report numbers are traceable."""
     res = result.data["calculatedResults"]
     w = result.data["weight"]
     src = "umbilical_design.json"
-    out: Dict[str, Dict[str, Any]] = {
+    out: dict[str, dict[str, Any]] = {
         "umbilical_length_km": {
             "value": result.length_m / 1000.0,
             "unit": "km",
@@ -173,7 +173,7 @@ def key_numbers(result: DesignResult) -> Dict[str, Dict[str, Any]]:
     return out
 
 
-def captions(result: DesignResult) -> Dict[str, str]:
+def captions(result: DesignResult) -> dict[str, str]:
     """Ready-to-paste captions with the headline numbers of this design."""
     res = result.data["calculatedResults"]
     w = result.data["weight"]
@@ -233,9 +233,9 @@ def captions(result: DesignResult) -> Dict[str, str]:
     return out
 
 
-def findings(result: DesignResult) -> List[str]:
+def findings(result: DesignResult) -> list[str]:
     """Plain statements the reviewer should read first (failed checks, long response, packing)."""
-    out: List[str] = []
+    out: list[str] = []
     for key, ok in result.checks.items():
         if not ok:
             out.append("FAIL: %s." % CHECK_LABELS.get(key, key))
@@ -292,11 +292,11 @@ def findings(result: DesignResult) -> List[str]:
 def write_handoff(
     result: DesignResult,
     out_dir: Path,
-    spec: Optional[UmbilicalSpec] = None,
-    meta: Optional[FigureMeta] = None,
-    open_items: Optional[List[str]] = None,
-    extra_sections: Optional[Dict[str, str]] = None,
-) -> Dict[str, Path]:
+    spec: UmbilicalSpec | None = None,
+    meta: FigureMeta | None = None,
+    open_items: list[str] | None = None,
+    extra_sections: dict[str, str] | None = None,
+) -> dict[str, Path]:
     """Render the figures and write ``HANDOFF.md``, ``data/umbilical_design.json`` and ``data/key_numbers.json``."""
     out_dir = Path(out_dir)
     meta = meta or FigureMeta(title="Umbilical")
@@ -307,7 +307,7 @@ def write_handoff(
     kn_path.write_text(json.dumps(key_numbers(result), indent=1), encoding="utf-8")
 
     caps = captions(result)
-    lines: List[str] = []
+    lines: list[str] = []
     lines.append("# HANDOFF: umbilical design (`%s`)" % out_dir.name)
     lines.append("")
     lines.append(

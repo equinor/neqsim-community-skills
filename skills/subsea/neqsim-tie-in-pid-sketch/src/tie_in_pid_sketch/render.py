@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import List
 from xml.sax.saxutils import escape
 
 from .elements import Element, TieInEndSketch
@@ -30,11 +29,11 @@ def _txt(
     )
 
 
-def _symbol(el: Element, x: float, y: float) -> List[str]:
+def _symbol(el: Element, x: float, y: float) -> list[str]:
     sw = 1.6 if el.existing else 2.8
     col = INK if el.existing else NEW
     base = f'stroke="{col}" stroke-width="{sw}" fill="white"'
-    out: List[str] = []
+    out: list[str] = []
     k = el.kind
     if k in ("gate_valve", "ball_valve", "esdv", "check_valve", "control_valve", "psv"):
         out.append(
@@ -127,7 +126,7 @@ def render_svg(sketch: TieInEndSketch) -> str:
     n = len(sketch.elements)
     width = X0 * 2 + PITCH * max(n - 1, 1) + 120
     height = 470
-    out: List[str] = [
+    out: list[str] = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         f'<rect width="{width}" height="{height}" fill="white"/>',
         _txt(24, 30, sketch.title, 18, "start", "bold"),

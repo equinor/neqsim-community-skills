@@ -167,8 +167,8 @@ class HeatExchangerFoulingModel:
         imbalance = abs(duty_hot - duty_cold) / (0.5 * (duty_hot + duty_cold))
         if imbalance > self.duty_imbalance_tolerance:
             warnings.append(
-                "duty imbalance {:.1%} exceeds tolerance; one side is derived, "
-                "not measured".format(imbalance)
+                f"duty imbalance {imbalance:.1%} exceeds tolerance; one side is derived, "
+                "not measured"
             )
 
         delta_hot_end = hot_inlet_temperature - cold_outlet_temperature
@@ -181,10 +181,8 @@ class HeatExchangerFoulingModel:
         lmtd_reliable = min(delta_hot_end, delta_cold_end) >= CLOSE_APPROACH_K
         if not lmtd_reliable:
             warnings.append(
-                "close approach ({:.2f} K); LMTD is sensitive to temperature error, "
-                "effectiveness-NTU used for the coefficient".format(
-                    min(delta_hot_end, delta_cold_end)
-                )
+                f"close approach ({min(delta_hot_end, delta_cold_end):.2f} K); LMTD is sensitive to temperature error, "
+                "effectiveness-NTU used for the coefficient"
             )
 
         capacity_min = min(capacity_hot, capacity_cold)
@@ -240,10 +238,8 @@ class HeatExchangerFoulingModel:
         naive_optimism = 100.0 * (naive_ratio - performance_ratio)
         if abs(naive_optimism) >= 1.0:
             warnings.append(
-                "one-sided flow normalisation would report {:.0f} % of design against "
-                "{:.0f} % for the two-sided form".format(
-                    100.0 * naive_ratio, 100.0 * performance_ratio
-                )
+                f"one-sided flow normalisation would report {100.0 * naive_ratio:.0f} % of design against "
+                f"{100.0 * performance_ratio:.0f} % for the two-sided form"
             )
 
         excess_fouling = fouling_resistance - design_fouling_allowance

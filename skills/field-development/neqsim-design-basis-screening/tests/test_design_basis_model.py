@@ -1,5 +1,4 @@
 import pytest
-
 from design_basis_screening import DesignBasisModel, DesignBasisResult
 
 

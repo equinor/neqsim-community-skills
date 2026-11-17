@@ -41,7 +41,7 @@ def identifiability(jacobian, names=None, parameter_scale=None, rel_tol=1e-3):
     j = np.atleast_2d(np.asarray(jacobian, dtype=float))
     if parameter_scale is not None:
         j = j * np.asarray(parameter_scale, dtype=float)
-    names = list(names) if names else ["p{}".format(i) for i in range(j.shape[1])]
+    names = list(names) if names else [f"p{i}" for i in range(j.shape[1])]
     u, s, vt = np.linalg.svd(j, full_matrices=False)
     tol = rel_tol * (s[0] if len(s) else 0.0)
     rank = int(np.sum(s > tol))

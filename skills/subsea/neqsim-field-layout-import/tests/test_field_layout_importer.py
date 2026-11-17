@@ -1,5 +1,4 @@
 import pytest
-
 from field_layout_import import FieldLayoutImporter
 
 

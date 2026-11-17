@@ -12,9 +12,9 @@ with figures verified against the Norwegian Offshore Directorate FactPages and
 the operator's own reporting. Nothing here is an official resource statement.
 """
 
-from pathlib import Path
 import json
 import sys
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 

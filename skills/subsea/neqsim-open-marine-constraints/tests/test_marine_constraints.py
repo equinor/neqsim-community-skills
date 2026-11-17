@@ -3,7 +3,6 @@ import os
 import urllib.parse
 
 import pytest
-
 from open_marine_constraints import (
     MarineClient,
     SourceError,

@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from anp_open_data import (
     OIL_M3_TO_BBL,
     check_crs,

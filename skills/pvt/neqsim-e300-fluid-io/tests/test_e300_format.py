@@ -9,7 +9,6 @@ from __future__ import annotations
 import os
 
 import pytest
-
 from e300_fluid_io import (
     WATER_E300_PARAMETERS,
     add_water,

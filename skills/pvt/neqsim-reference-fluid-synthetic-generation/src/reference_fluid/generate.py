@@ -17,8 +17,8 @@ All functions are public, deterministic, and dependency-free.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Mapping, Sequence, Tuple
 
 
 @dataclass(frozen=True)
@@ -96,7 +96,7 @@ def match_split_factor(
 def generate_fluid_cases(
     factors: Sequence[float],
     builder: Callable[[float], Mapping[str, float]],
-) -> List[Dict[str, float]]:
+) -> list[dict[str, float]]:
     """Generate representative fluid cases by applying a range of split factors.
 
     :param factors: split / characterization factors to apply (for example
@@ -120,13 +120,13 @@ class BlendResult:
     :ivar weights: the normalized molar-rate weight of each input stream.
     """
 
-    composition: Dict[str, float]
+    composition: dict[str, float]
     total_molar_rate: float
-    weights: Tuple[float, ...]
+    weights: tuple[float, ...]
 
 
 def blend_compositions(
-    weighted_compositions: Sequence[Tuple[float, Mapping[str, float]]],
+    weighted_compositions: Sequence[tuple[float, Mapping[str, float]]],
 ) -> BlendResult:
     """Blend several compositions into one by molar-rate allocation.
 
@@ -151,7 +151,7 @@ def blend_compositions(
     if total_rate <= 0.0:
         raise ValueError("total molar rate must be positive")
 
-    moles: Dict[str, float] = {}
+    moles: dict[str, float] = {}
     for rate, composition in pairs:
         comp_sum = sum(composition.values())
         if comp_sum <= 0.0:

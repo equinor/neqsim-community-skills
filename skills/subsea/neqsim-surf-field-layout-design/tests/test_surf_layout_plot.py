@@ -1,7 +1,6 @@
 import os
 
 import pytest
-
 from surf_field_layout_design import design_surf_layout, plot_layout_map
 
 matplotlib = pytest.importorskip("matplotlib")

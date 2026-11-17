@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from h2s_partitioning import (
     SeparatorStage,
     conversion_factor_curve,

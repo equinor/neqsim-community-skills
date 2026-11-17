@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from uncertainty_quantification.distributions import Triangular, Uniform
 from uncertainty_quantification.report import UncertaintyReport
 from uncertainty_quantification.study import UncertaintyStudy

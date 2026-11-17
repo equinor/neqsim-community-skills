@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from erd_reach_screening import (
     DrillString,
     WellEnvironment,
@@ -31,7 +30,7 @@ def test_path_closes_on_tvd_and_departure():
 
 
 def test_vertical_hook_load_is_buoyed_weight():
-    mds = [10.0 * k for k in range(0, 301)]
+    mds = [10.0 * k for k in range(301)]
     incs = [0.0] * len(mds)
     weights = [40.0] * (len(mds) - 1)
     load, torque = torque_and_drag(mds, incs, STRING, ENV, "pickup", weights)
@@ -40,7 +39,7 @@ def test_vertical_hook_load_is_buoyed_weight():
 
 
 def test_horizontal_drag_and_torque_follow_coulomb():
-    mds = [10.0 * k for k in range(0, 201)]
+    mds = [10.0 * k for k in range(201)]
     incs = [90.0] * len(mds)
     weights = [40.0] * (len(mds) - 1)
     env = WellEnvironment(ff_cased=0.25, ff_open=0.25)

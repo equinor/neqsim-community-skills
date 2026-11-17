@@ -44,11 +44,11 @@ def model_density(temperature_K: float, pressure_Pa: float) -> float:
 
 def main() -> None:
     if not is_available():
-        print("CoolProp is not installed — {}".format(INSTALL_HINT))
+        print(f"CoolProp is not installed — {INSTALL_HINT}")
         print("Falling back: run validate_against_anchor_points.py instead.")
         return
 
-    print("CoolProp version: {}".format(coolprop_version()))
+    print(f"CoolProp version: {coolprop_version()}")
     print(
         "NOTE: the stand-in model is a crude fixed-Z correlation, so FAIL rows "
         "below are the expected demonstration outcome.\n"

@@ -1,5 +1,4 @@
 import pytest
-
 from reference_fluid import (
     blend_compositions,
     generate_fluid_cases,

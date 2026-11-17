@@ -10,7 +10,7 @@ from stage_gate_project_timeline import (
     portfolio_plan,
     project_timeline,
     prospect_timeline,
-)  # noqa: E402
+)
 
 prospects = [
     {"name": "Discovery A", "status": "discovered"},

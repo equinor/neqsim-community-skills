@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import posixpath
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 _KEYWORD = re.compile(r"^[A-Z][A-Z0-9_]{1,7}$")
 _SECTIONS = (
@@ -36,7 +36,7 @@ _PVT_KEYWORDS = (
 )
 
 
-def strip_comments(text: str) -> List[str]:
+def strip_comments(text: str) -> list[str]:
     """Return the deck lines without ``--`` comments (a ``--`` inside quotes is kept)."""
     lines = []
     for raw in text.splitlines():
@@ -57,12 +57,12 @@ def strip_comments(text: str) -> List[str]:
     return lines
 
 
-def _blocks(lines: List[str], keyword: str) -> List[List[List[str]]]:
-    blocks: List[List[List[str]]] = []
+def _blocks(lines: list[str], keyword: str) -> list[list[list[str]]]:
+    blocks: list[list[list[str]]] = []
     for start, line in enumerate(lines):
         if line.strip() != keyword:
             continue
-        body: List[str] = []
+        body: list[str] = []
         for follow in lines[start + 1 :]:
             if _KEYWORD.match(follow.strip()):
                 break
@@ -74,12 +74,12 @@ def _blocks(lines: List[str], keyword: str) -> List[List[List[str]]]:
     return blocks
 
 
-def keyword_blocks(text: str, keyword: str) -> List[List[List[str]]]:
+def keyword_blocks(text: str, keyword: str) -> list[list[list[str]]]:
     """Return one record list per occurrence of ``keyword`` (schedule keywords repeat), see :func:`keyword_records`."""
     return _blocks(strip_comments(text), keyword)
 
 
-def keyword_records(text: str, keyword: str) -> List[List[str]]:
+def keyword_records(text: str, keyword: str) -> list[list[str]]:
     """Return the ``/``-terminated records after the first ``keyword`` as token lists.
 
     Reading stops at the next section or keyword line. An empty list in the result marks a table terminator
@@ -91,9 +91,9 @@ def keyword_records(text: str, keyword: str) -> List[List[str]]:
     return blocks[0] if blocks else []
 
 
-def expand_repeats(tokens: List[str]) -> List[str]:
+def expand_repeats(tokens: list[str]) -> list[str]:
     """Expand ``n*value`` tokens (``3*20`` becomes ``20 20 20``); ``n*`` (defaults) stays as ``1*``-style markers."""
-    out: List[str] = []
+    out: list[str] = []
     for token in tokens:
         match = re.fullmatch(r"(\d+)\*(.*)", token)
         if match:
@@ -103,12 +103,12 @@ def expand_repeats(tokens: List[str]) -> List[str]:
     return out
 
 
-def to_floats(tokens: List[str]) -> List[float]:
+def to_floats(tokens: list[str]) -> list[float]:
     """Convert tokens to floats after expanding repeats; raises ``ValueError`` on defaults or text."""
     return [float(t) for t in expand_repeats(tokens)]
 
 
-def include_paths(text: str, after: Optional[str] = None) -> List[str]:
+def include_paths(text: str, after: str | None = None) -> list[str]:
     """Return the paths named by ``INCLUDE`` and ``IMPORT`` keywords, in order, unquoted.
 
     With ``after="SCHEDULE"`` only includes that follow that section keyword are returned.
@@ -121,7 +121,7 @@ def include_paths(text: str, after: Optional[str] = None) -> List[str]:
         if marker is None:
             return []
         lines = lines[marker + 1 :]
-    paths: List[str] = []
+    paths: list[str] = []
     for index, line in enumerate(lines):
         if line.strip() in ("INCLUDE", "IMPORT"):
             for follow in lines[index + 1 : index + 6]:
@@ -152,9 +152,9 @@ def resolve_include(deck_path: str, include: str) -> str:
     return resolved
 
 
-def schedule_facts(text: str) -> Dict[str, Any]:
+def schedule_facts(text: str) -> dict[str, Any]:
     """Return wells (``WELSPECS``) and the number of ``TSTEP``/``DATES`` records found in schedule text."""
-    wells: List[str] = []
+    wells: list[str] = []
     for block in keyword_blocks(text, "WELSPECS"):
         for record in block:
             if record:
@@ -168,7 +168,7 @@ def schedule_facts(text: str) -> Dict[str, Any]:
     }
 
 
-def summarize_deck(text: str) -> Dict[str, Any]:
+def summarize_deck(text: str) -> dict[str, Any]:
     """Return units, phases, grid size, start date, wells, includes and PVT keywords of one deck file.
 
     Schedule data that sits in an INCLUDE file (as in Norne) is not read here; ``OpmDataClient.summary`` follows
@@ -179,7 +179,7 @@ def summarize_deck(text: str) -> Dict[str, Any]:
     dimens = keyword_records(text, "DIMENS")
     start = keyword_records(text, "START")
     facts = schedule_facts(text)
-    dims: Optional[List[int]] = None
+    dims: list[int] | None = None
     if dimens and len(dimens[0]) >= 3:
         dims = [int(float(v)) for v in dimens[0][:3]]
     return {

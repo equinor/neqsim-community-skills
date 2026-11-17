@@ -7,17 +7,17 @@ import math
 import time
 import urllib.parse
 import urllib.request
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 EARTH_RADIUS_KM = 6371.0088
 EMODNET_URL = "https://rest.emodnet-bathymetry.eu/depth_sample?geom="
 
 
 def great_circle_points(
-    a: Tuple[float, float], b: Tuple[float, float], spacing_km: float
-) -> Tuple[float, List[Tuple[float, float, float]]]:
+    a: tuple[float, float], b: tuple[float, float], spacing_km: float
+) -> tuple[float, list[tuple[float, float, float]]]:
     """Points along the great circle from ``a`` to ``b`` (both ``(lon, lat)`` in degrees).
 
     Args:
@@ -42,7 +42,7 @@ def great_circle_points(
     omega = math.acos(max(-1.0, min(1.0, sum(x * y for x, y in zip(v1, v2)))))
     total = omega * EARTH_RADIUS_KM
     n = max(1, round(total / spacing_km))
-    pts: List[Tuple[float, float, float]] = []
+    pts: list[tuple[float, float, float]] = []
     for i in range(n + 1):
         t = i / n
         if omega < 1e-12:
@@ -60,9 +60,9 @@ def great_circle_points(
 def fetch_emodnet_depth(
     lon: float,
     lat: float,
-    fetch: Optional[Callable[[str], dict]] = None,
+    fetch: Callable[[str], dict] | None = None,
     retries: int = 4,
-) -> Optional[float]:
+) -> float | None:
     """Water depth in metres (positive down) at a point, or ``None`` on land or outside the DTM.
 
     Args:
@@ -77,9 +77,7 @@ def fetch_emodnet_depth(
     url = EMODNET_URL + urllib.parse.quote(f"POINT({lon:.6f} {lat:.6f})")
 
     def _default(u: str) -> dict:
-        with urllib.request.urlopen(
-            u, timeout=30
-        ) as resp:  # noqa: S310 - fixed public https endpoint
+        with urllib.request.urlopen(u, timeout=30) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
     getter = fetch or _default
@@ -88,7 +86,7 @@ def fetch_emodnet_depth(
         try:
             body = getter(url)
             break
-        except Exception:  # noqa: BLE001 - retry on any transient failure
+        except Exception:
             if attempt == retries - 1:
                 raise
             time.sleep(1.5 * (attempt + 1))
@@ -102,11 +100,11 @@ def fetch_emodnet_depth(
 class RouteProfile:
     """Seabed profile of a straight corridor."""
 
-    kp_km: List[float]
-    lon: List[float]
-    lat: List[float]
-    depth_m: List[float]
-    gaps: List[int]
+    kp_km: list[float]
+    lon: list[float]
+    lat: list[float]
+    depth_m: list[float]
+    gaps: list[int]
 
     @property
     def length_km(self) -> float:
@@ -115,11 +113,11 @@ class RouteProfile:
 
 
 def build_profile(
-    start: Tuple[float, float],
-    end: Tuple[float, float],
+    start: tuple[float, float],
+    end: tuple[float, float],
     spacing_km: float = 0.5,
-    fetch: Optional[Callable[[str], dict]] = None,
-    cache_path: Optional[Path] = None,
+    fetch: Callable[[str], dict] | None = None,
+    cache_path: Path | None = None,
 ) -> RouteProfile:
     """Sample the DTM along the corridor, caching responses on disk.
 
@@ -134,10 +132,10 @@ def build_profile(
         A :class:`RouteProfile`. Points without depth are listed in ``gaps`` and filled by linear interpolation.
     """
     total, pts = great_circle_points(start, end, spacing_km)
-    cache: Dict[str, Optional[float]] = {}
+    cache: dict[str, float | None] = {}
     if cache_path and Path(cache_path).exists():
         cache = json.loads(Path(cache_path).read_text(encoding="utf-8"))
-    depths: List[Optional[float]] = []
+    depths: list[float | None] = []
     for _kp, lon, lat in pts:
         key = f"{lon:.5f},{lat:.5f}"
         if key not in cache:
@@ -152,11 +150,11 @@ def build_profile(
     )
 
 
-def _fill_gaps(values: Sequence[Optional[float]]) -> List[float]:
+def _fill_gaps(values: Sequence[float | None]) -> list[float]:
     known = [(i, v) for i, v in enumerate(values) if v is not None]
     if not known:
         raise ValueError("no depth values returned for the corridor")
-    out: List[float] = []
+    out: list[float] = []
     for i, v in enumerate(values):
         if v is not None:
             out.append(float(v))
@@ -175,10 +173,10 @@ def _fill_gaps(values: Sequence[Optional[float]]) -> List[float]:
 
 def profile_statistics(
     profile: RouteProfile, steep_deg: float = 3.0
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Depth range, slopes, 3D length and steep intervals of a profile."""
-    slopes: List[float] = []
-    steep: List[Dict[str, float]] = []
+    slopes: list[float] = []
+    steep: list[dict[str, float]] = []
     length3d = 0.0
     for i in range(1, len(profile.kp_km)):
         dh = (profile.kp_km[i] - profile.kp_km[i - 1]) * 1000.0

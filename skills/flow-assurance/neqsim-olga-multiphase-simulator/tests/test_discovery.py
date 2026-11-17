@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from olga_multiphase_simulator import (
     OlgaNotFoundError,
     find_olga,

@@ -8,15 +8,15 @@ real fluid and the surveyed profile, and let qualified pipeline engineering revi
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence
 
 G = 9.80665
 RHO_SEAWATER = 1025.0
 E_MOD_MPA = 207000.0
 POISSON = 0.3
 
-NPS_OD_M: Dict[int, float] = {
+NPS_OD_M: dict[int, float] = {
     4: 0.1143,
     6: 0.1683,
     8: 0.2191,
@@ -155,7 +155,7 @@ def solve_hydraulics(
     basis: PipelineDesignBasis,
     u_w_m2k: float,
     steps: int = 200,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """March along the pipe with temperature-dependent density and viscosity.
 
     Args:
@@ -215,7 +215,7 @@ def solve_hydraulics(
 
 def f101_checks(
     d_o_m: float, t_nom_m: float, basis: PipelineDesignBasis, rho_oil: float
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """DNV-ST-F101 pressure containment and system collapse utilisation (hand calculation, screening).
 
     Pressure containment uses the incidental pressure 1.1 x design pressure at deck level and the local value
@@ -265,7 +265,7 @@ def f101_checks(
 
 def select_wall_thickness(
     d_o_m: float, basis: PipelineDesignBasis, rho_oil: float
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Smallest standard wall thickness that passes containment, collapse and the D/t handling limit."""
     for t_mm in basis.standard_wt_mm:
         c = f101_checks(d_o_m, t_mm / 1000.0, basis, rho_oil)
@@ -288,11 +288,11 @@ def select_wall_thickness(
 def size_pipeline(
     props: OilProperties,
     basis: PipelineDesignBasis,
-    rates_sm3d: Dict[str, float],
+    rates_sm3d: dict[str, float],
     design_case: str,
     turndown_case: str,
-    nps_list: Optional[Sequence[int]] = None,
-) -> Dict[str, object]:
+    nps_list: Sequence[int] | None = None,
+) -> dict[str, object]:
     """Sweep nominal sizes and recommend the smallest that meets the criteria at the design rate.
 
     Criteria: operating inlet pressure at the design rate below ``operating_fraction_of_design`` x design
@@ -311,8 +311,8 @@ def size_pipeline(
         Dictionary with ``wall``, ``cases`` and ``recommended`` (nominal size, or ``None`` with reasons).
     """
     sizes = list(nps_list or (8, 10, 12, 14, 16, 18, 20))
-    wall: Dict[int, Dict[str, float]] = {}
-    cases: List[Dict[str, object]] = []
+    wall: dict[int, dict[str, float]] = {}
+    cases: list[dict[str, object]] = []
     for nps in sizes:
         w = select_wall_thickness(NPS_OD_M[nps], basis, props.std_density_kg_m3)
         wall[nps] = w
@@ -341,8 +341,8 @@ def size_pipeline(
                 }
             )
     limit = basis.operating_fraction_of_design * basis.design_pressure_barg
-    recommended: Optional[int] = None
-    reasons: Dict[int, List[str]] = {}
+    recommended: int | None = None
+    reasons: dict[int, list[str]] = {}
     for nps in sizes:
         d = next(c for c in cases if c["nps"] == nps and c["rate_case"] == design_case)
         t = next(

@@ -1,20 +1,18 @@
 import json
 import urllib.parse
-from datetime import date
+from datetime import UTC, date
 
 import pytest
-
 from ncs_ownership_equity import OwnershipError, OwnershipReader, portfolio_net
 from ncs_ownership_equity.sodir import SodirClient, sql_quote, to_date
 
 
 def ms(y, m, d):
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     return int(
         (
-            datetime(y, m, d, tzinfo=timezone.utc)
-            - datetime(1970, 1, 1, tzinfo=timezone.utc)
+            datetime(y, m, d, tzinfo=UTC) - datetime(1970, 1, 1, tzinfo=UTC)
         ).total_seconds()
         * 1000
     )

@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
-def bottlenecks(result: Dict[str, Any], top: int = 15) -> List[Dict[str, Any]]:
+def bottlenecks(result: dict[str, Any], top: int = 15) -> list[dict[str, Any]]:
     """Capacity elements ranked by discounted shadow value over the horizon.
 
     Shadow price = extra MNOK per year from one more MSm3/d (gas) or Sm3/d
     (liquid) of capacity in that element, holding everything else fixed.
     """
     rate, base = result["discount_rate"], result["base_year"]
-    agg: Dict[str, Dict[str, Any]] = defaultdict(
+    agg: dict[str, dict[str, Any]] = defaultdict(
         lambda: {"pv_mnok_per_unit": 0.0, "years": [], "max": 0.0}
     )
     for yr in result["years"]:
@@ -39,10 +39,10 @@ def bottlenecks(result: Dict[str, Any], top: int = 15) -> List[Dict[str, Any]]:
 
 
 def ullage_timeline(
-    result: Dict[str, Any], elements: Optional[List[str]] = None
-) -> Dict[str, Dict[int, float]]:
+    result: dict[str, Any], elements: list[str] | None = None
+) -> dict[str, dict[int, float]]:
     """Spare capacity per element and year (capacity - optimised flow), in element units."""
-    out: Dict[str, Dict[int, float]] = defaultdict(dict)
+    out: dict[str, dict[int, float]] = defaultdict(dict)
     for yr in result["years"]:
         for element, util in yr["utilization"].items():
             if elements and element not in elements:
@@ -54,7 +54,7 @@ def ullage_timeline(
     return dict(out)
 
 
-def curtailment(result: Dict[str, Any]) -> List[Dict[str, Any]]:
+def curtailment(result: dict[str, Any]) -> list[dict[str, Any]]:
     """Entities that could produce more than the network lets them (by year)."""
     rows = []
     for yr in result["years"]:
@@ -66,15 +66,15 @@ def curtailment(result: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def tiein_ranking(
-    result: Dict[str, Any], *, gas_price: float, liquid_price: float
-) -> List[Dict[str, Any]]:
+    result: dict[str, Any], *, gas_price: float, liquid_price: float
+) -> list[dict[str, Any]]:
     """Discoveries ranked by discounted gross revenue actually accepted by the network."""
     rate, base = result["discount_rate"], result["base_year"]
-    value: Dict[str, float] = defaultdict(float)
-    volumes: Dict[str, Dict[str, float]] = defaultdict(
+    value: dict[str, float] = defaultdict(float)
+    volumes: dict[str, dict[str, float]] = defaultdict(
         lambda: {"gas_gsm3": 0.0, "liquid_msm3": 0.0}
     )
-    first_year: Dict[str, int] = {}
+    first_year: dict[str, int] = {}
     for yr in result["years"]:
         df = 1.0 / (1.0 + rate) ** (yr["year"] - base)
         for ent, prod in yr["produced"].items():
@@ -109,7 +109,7 @@ def tiein_ranking(
     return rows
 
 
-def stranded_discoveries(result: Dict[str, Any]) -> List[str]:
+def stranded_discoveries(result: dict[str, Any]) -> list[str]:
     """Discoveries with supply but no host within the tie-back radius (need standalone or longer tie-back)."""
     seen = set()
     for yr in result["years"]:
@@ -118,8 +118,8 @@ def stranded_discoveries(result: Dict[str, Any]) -> List[str]:
 
 
 def production_uplift(
-    optimizer: Any, result: Dict[str, Any], year: int, top: int = 15
-) -> List[Dict[str, Any]]:
+    optimizer: Any, result: dict[str, Any], year: int, top: int = 15
+) -> list[dict[str, Any]]:
     """Extra rate each producing field could ship in ``year``.
 
     Uplift = min(route headroom, demonstrated capability gap). Route headroom

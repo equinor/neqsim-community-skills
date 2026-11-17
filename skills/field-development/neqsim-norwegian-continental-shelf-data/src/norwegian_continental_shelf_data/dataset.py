@@ -16,9 +16,11 @@ from __future__ import annotations
 
 import csv
 import json
-from dataclasses import dataclass, field as dc_field
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from dataclasses import field as dc_field
 from importlib import resources
-from typing import Any, Iterable, Mapping
+from typing import Any
 
 _DATA_PACKAGE = "norwegian_continental_shelf_data.data"
 _DATA_FILE = "ncs_reference.json"
@@ -86,7 +88,7 @@ class NcsDataset:
 
     # ---- construction -----------------------------------------------------
     @classmethod
-    def load(cls) -> "NcsDataset":
+    def load(cls) -> NcsDataset:
         """Load the bundled public reference snapshot."""
         text = resources.files(_DATA_PACKAGE).joinpath(_DATA_FILE).read_text("utf-8")
         raw = json.loads(text)

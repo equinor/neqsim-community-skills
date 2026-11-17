@@ -1,5 +1,4 @@
 import pytest
-
 from control_valve_cv_screening import ControlValveCvModel
 
 

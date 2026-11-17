@@ -2,7 +2,6 @@ import math
 
 import numpy as np
 import pytest
-
 from well_trajectory_anticollision import (
     ErrorModel,
     SFRule,

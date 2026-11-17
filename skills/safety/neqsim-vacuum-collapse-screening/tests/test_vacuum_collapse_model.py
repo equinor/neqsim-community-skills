@@ -1,5 +1,4 @@
 import pytest
-
 from vacuum_collapse_screening import VacuumCollapseModel
 
 

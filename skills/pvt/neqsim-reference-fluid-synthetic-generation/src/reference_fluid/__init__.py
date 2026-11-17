@@ -37,16 +37,16 @@ from reference_fluid.generate import (
 )
 
 __all__ = [
-    "Assumption",
-    "BlendResult",
     "FLUID_TYPE_BANDS",
-    "FluidAnalogue",
     "GOR_DEFINITIONS",
-    "MatchResult",
     "OVERPRESSURE_WARNING",
     "PRESSURE_GRADIENTS",
     "PROVENANCE_RANKS",
     "THERMAL_DEFAULTS",
+    "Assumption",
+    "BlendResult",
+    "FluidAnalogue",
+    "MatchResult",
     "api_to_density",
     "blend_compositions",
     "build_analogue_fluid_basis",

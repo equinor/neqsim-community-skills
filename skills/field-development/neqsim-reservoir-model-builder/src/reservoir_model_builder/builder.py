@@ -10,8 +10,9 @@ reduce the remaining uncertainty.
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from .parameters import (
     ACQUISITION_ROUTE,
@@ -182,7 +183,7 @@ class ReservoirModel:
         updates: Mapping[str, Any],
         provenance: str = "measured",
         reference: str = "",
-    ) -> "ReservoirModel":
+    ) -> ReservoirModel:
         """Return a new model rebuilt with ``updates`` applied to the inputs."""
         if self._inputs is None:
             raise RuntimeError(
@@ -208,7 +209,7 @@ class ReservoirModel:
         refined.changes = self._diff(refined)
         return refined
 
-    def _diff(self, other: "ReservoirModel") -> list[dict]:
+    def _diff(self, other: ReservoirModel) -> list[dict]:
         changes: list[dict] = []
         for name in sorted(set(self.parameters) | set(other.parameters)):
             before = self.parameters.get(name)

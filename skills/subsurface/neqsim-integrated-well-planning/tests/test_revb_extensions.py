@@ -7,11 +7,13 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from PIL import Image
-
 from integrated_well_planning import (
     examples_data as ed,
+)
+from integrated_well_planning import (
     iwp_charts_extra as X,
+)
+from integrated_well_planning import (
     iwp_graphics as G,
 )
 from integrated_well_planning.alternatives import score_raw
@@ -21,6 +23,7 @@ from integrated_well_planning.barriers import (
     propose_exploration_barriers,
 )
 from integrated_well_planning.nodal import solve_nodal
+from PIL import Image
 
 
 def _png_ok(path, min_w=400):
@@ -330,7 +333,7 @@ def test_e300_fluid_round_trip_and_basis_resolution(java, tmp_path):
     try:
         reader.write(src, str(path))
     except Exception as exc:  # noqa: BLE001
-        pytest.skip("E300 writer unavailable: {}".format(exc))
+        pytest.skip(f"E300 writer unavailable: {exc}")
     f = read_e300_fluid(str(path))
     assert f.getNumberOfComponents() == 3
     b = copy.deepcopy(ed.gas_condensate_producer_subsea())

@@ -2,7 +2,6 @@ import json
 import math
 
 import pytest
-
 from seabed_protection_screening import (
     PipeBasis,
     RouteSegment,

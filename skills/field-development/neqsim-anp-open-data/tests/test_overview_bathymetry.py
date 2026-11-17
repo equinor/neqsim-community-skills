@@ -3,7 +3,6 @@
 import json
 
 import pytest
-
 from anp_open_data import (
     build_etopo_url,
     connect_pipelines,

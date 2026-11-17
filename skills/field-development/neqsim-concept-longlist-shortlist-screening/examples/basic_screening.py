@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from concept_longlist_shortlist import generate_long_list, run_screening  # noqa: E402
+from concept_longlist_shortlist import generate_long_list, run_screening
 
 ELEMENTS = {
     "host": ["fpso", "semi_submersible", "subsea_tieback", "subsea_to_shore"],

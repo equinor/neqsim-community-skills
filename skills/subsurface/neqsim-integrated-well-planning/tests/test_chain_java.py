@@ -4,8 +4,8 @@ import json
 from pathlib import Path
 
 import pytest
-
-from integrated_well_planning import examples_data as ed, handoff, model_chain
+from integrated_well_planning import examples_data as ed
+from integrated_well_planning import handoff, model_chain
 
 pytestmark = pytest.mark.usefixtures("java")
 

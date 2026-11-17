@@ -1,5 +1,4 @@
 import pytest
-
 from compressor_antisurge_recycle import AntiSurgeRecycleModel
 
 

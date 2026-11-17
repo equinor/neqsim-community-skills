@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Dict, List, Sequence
+from collections.abc import Callable, Sequence
 
 import numpy as np
 
@@ -11,15 +11,15 @@ from .gate import accept_calibration
 
 
 def calibrate_well(
-    cases: List[Dict],
-    predict: Callable[[Dict, Sequence[float]], Dict[str, float]],
+    cases: list[dict],
+    predict: Callable[[dict, Sequence[float]], dict[str, float]],
     prior: Sequence[float],
     prior_std: Sequence[float],
     bounds: Sequence[Sequence[float]],
-    sigma: Dict[str, float],
+    sigma: dict[str, float],
     steps: Sequence[float] = None,
     iters: int = 4,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Fit the lift-model parameters of one well to its clean tests and decide whether to use them.
 
     ``cases``: one dict per test, oldest first, with measured observations (for example ``{"wht": 61.2, "dp": 145.0}``;

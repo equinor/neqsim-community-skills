@@ -6,8 +6,8 @@ profile, so the P90 case is ``p90 / p50`` and the P10 case ``p10 / p50``.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Callable, Optional, Sequence, Tuple
 
 from .model import PscBidModel, PscBidResult
 
@@ -19,7 +19,7 @@ def swanson_cases(
     volume_p50: float,
     volume_p10: float,
     weights: Sequence[float] = SWANSON_WEIGHTS,
-) -> Tuple[list, list]:
+) -> tuple[list, list]:
     """Volume scales and weights (P90, P50, P10 with 0.3/0.4/0.3) for ``PscBidModel.evaluate``."""
     if min(volume_p90, volume_p50, volume_p10) <= 0.0:
         raise ValueError("volumes must be positive")
@@ -61,13 +61,13 @@ class Belief:
     pv_pre_discovery_cost_musd: float
     break_even_chance_of_discovery: float
     chance_attainable: bool
-    p50_volume_scale_for_zero_emv: Optional[float]
-    p50_volume_mmbbl_for_zero_emv: Optional[float]
+    p50_volume_scale_for_zero_emv: float | None
+    p50_volume_mmbbl_for_zero_emv: float | None
 
 
 def _bisect(
     f: Callable[[float], float], lo: float, hi: float, iterations: int = 60
-) -> Optional[float]:
+) -> float | None:
     """Root of an increasing ``f`` on [lo, hi]; ``lo`` if already positive, ``None`` if never positive."""
     if f(lo) >= 0.0:
         return lo
@@ -87,7 +87,7 @@ def what_you_need_to_believe(
     production_mmbbl: Sequence[float],
     capex_musd: Sequence[float],
     opex_musd: Sequence[float],
-    volumes_p90_p50_p10: Optional[Sequence[float]] = None,
+    volumes_p90_p50_p10: Sequence[float] | None = None,
     weights: Sequence[float] = SWANSON_WEIGHTS,
     max_volume_scale: float = 100.0,
     **evaluate_kwargs,
@@ -138,7 +138,7 @@ def minimum_economic_volume(
     opex_musd: Sequence[float],
     max_volume_scale: float = 100.0,
     **evaluate_kwargs,
-) -> Optional[float]:
+) -> float | None:
     """Recoverable volume (MMbbl, 100 %, P50 profile scaled) where development NPV given discovery is zero."""
 
     def dev(m: float) -> float:
@@ -163,7 +163,7 @@ def breakeven_oil_price(
     low: float = 5.0,
     high: float = 300.0,
     **evaluate_kwargs,
-) -> Optional[float]:
+) -> float | None:
     """Realised oil price at which development NPV given discovery is zero (Brent follows via the model's discount)."""
     original = model.oil_price
 
@@ -185,7 +185,7 @@ def find_crossover(
     low: float,
     high: float,
     iterations: int = 60,
-) -> Optional[float]:
+) -> float | None:
     """Volume where concept A and B have equal NPV (for example tie-back versus stand-alone).
 
     Pass callables that build each concept's cash flows at a given volume (MMbbl) and

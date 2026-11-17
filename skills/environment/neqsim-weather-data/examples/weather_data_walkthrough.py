@@ -17,9 +17,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from weather_data import Location, WeatherDataService  # noqa: E402
-from weather_data.open_meteo import OpenMeteoClient, WeatherSeries  # noqa: E402
-from weather_data.site_conditions import estimate_pasquill_stability_class  # noqa: E402
+from weather_data import Location, WeatherDataService
+from weather_data.open_meteo import OpenMeteoClient, WeatherSeries
+from weather_data.site_conditions import estimate_pasquill_stability_class
 
 
 def _fake_forecast_fetch(url: str, timeout: float) -> bytes:

@@ -12,14 +12,13 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple
 
 import numpy as np
 
 from .trajectory import Wellpath, tangent
 
 
-def _default_terms(b_total_nt: float, dip_deg: float) -> Dict[str, Tuple[str, float]]:
+def _default_terms(b_total_nt: float, dip_deg: float) -> dict[str, tuple[str, float]]:
     bh = b_total_nt * math.cos(math.radians(dip_deg))
     return {
         "DSF depth scale": ("md", 5.6e-4),
@@ -44,9 +43,9 @@ class ErrorModel:
 
     b_total_nt: float = 52000.0
     dip_deg: float = 76.0
-    terms: Optional[Dict[str, Tuple[str, float]]] = None
+    terms: dict[str, tuple[str, float]] | None = None
     name: str = "reduced-MWD (illustrative)"
-    _resolved: Dict[str, Tuple[str, float]] = field(
+    _resolved: dict[str, tuple[str, float]] = field(
         default_factory=dict, init=False, repr=False
     )
 
@@ -97,7 +96,7 @@ class ErrorModel:
 
 
 def add_model_covariance(
-    wp: Wellpath, model: Optional[ErrorModel] = None, from_md: Optional[float] = None
+    wp: Wellpath, model: ErrorModel | None = None, from_md: float | None = None
 ) -> Wellpath:
     """Add model covariance growth from ``from_md`` (default: the tie-in, else the first station).
 
@@ -118,8 +117,8 @@ def add_model_covariance(
 
 def compare_growth(
     reference: Wellpath,
-    model: Optional[ErrorModel] = None,
-    from_md: Optional[float] = None,
+    model: ErrorModel | None = None,
+    from_md: float | None = None,
     samples: int = 6,
 ) -> list:
     """Compare model sqrt(trace) growth with the reference wellbore's own covariance growth below ``from_md``.

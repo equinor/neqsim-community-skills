@@ -35,7 +35,6 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 FRONTMATTER_RE = re.compile(r"^(---\s*\n)(.*?)(\n---\s*\n)", re.DOTALL)
 NAME_RE = re.compile(r'^\s*name:\s*["\']?([^"\'\n]+?)["\']?\s*$', re.MULTILINE)
@@ -128,7 +127,7 @@ def _count(patterns, text: str) -> int:
     return sum(1 for p in patterns if p.search(text))
 
 
-def classify(text: str, area: str = "", folder: str = "") -> Tuple[Optional[str], str]:
+def classify(text: str, area: str = "", folder: str = "") -> tuple[str | None, str]:
     """Return (basis, rationale) or (None, reason) when it cannot be justified.
 
     @param text the full SKILL.md content
@@ -257,9 +256,9 @@ def main() -> int:
         )
         return 2
 
-    existing: List[str] = []
-    assigned: List[Tuple[str, str, str]] = []
-    unclassified: List[Tuple[str, str]] = []
+    existing: list[str] = []
+    assigned: list[tuple[str, str, str]] = []
+    unclassified: list[tuple[str, str]] = []
 
     for skill_md in sorted(skills_dir.glob("*/*/SKILL.md")):
         try:
@@ -293,7 +292,7 @@ def main() -> int:
         print(f"  {line}")
     verb = "Backfilled" if args.write else "Would set"
     print(f"\n{verb}: {len(assigned)}")
-    by_basis: Dict[str, int] = {}
+    by_basis: dict[str, int] = {}
     for name, basis, rationale in assigned:
         by_basis[basis] = by_basis.get(basis, 0) + 1
         print(f"  {basis:<14} {name}   [{rationale}]")

@@ -9,7 +9,6 @@ from __future__ import annotations
 import math
 import re
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 
@@ -28,10 +27,10 @@ SURFACE_SUFFIXES = (
     ".dat",
     ".txt",
 )
-_TIME_NAME = re.compile(r"(^|[^a-z])(twt|time|ms)([^a-z]|$)", re.I)
+_TIME_NAME = re.compile(r"(^|[^a-z])(twt|time|ms)([^a-z]|$)", re.IGNORECASE)
 
 
-def infer_domain(name: str, values: Optional[np.ndarray] = None) -> str:
+def infer_domain(name: str, values: np.ndarray | None = None) -> str:
     """Guess depth or time from a file name (``twt``, ``time``, ``ms``); default depth.
 
     The guess is reported as such; a caller who knows the domain passes it explicitly.
@@ -39,7 +38,7 @@ def infer_domain(name: str, values: Optional[np.ndarray] = None) -> str:
     return "time" if _TIME_NAME.search(name or "") else "depth"
 
 
-def sniff_format(path) -> Optional[str]:
+def sniff_format(path) -> str | None:
     """Return ``irap``, ``zmap``, ``xyz`` or None from the first lines of a text file."""
     try:
         with open(path, "r", encoding="utf-8", errors="replace") as handle:
@@ -64,10 +63,10 @@ def sniff_format(path) -> Optional[str]:
 
 def read_surface(
     path,
-    fmt: Optional[str] = None,
-    domain: Optional[str] = None,
-    unit: Optional[str] = None,
-    xyz_increment: Optional[float] = None,
+    fmt: str | None = None,
+    domain: str | None = None,
+    unit: str | None = None,
+    xyz_increment: float | None = None,
 ) -> Surface:
     """Read a surface file.
 
@@ -214,7 +213,7 @@ def write_zmap(surface: Surface, path, null: float = 1e30) -> Path:
     return out
 
 
-def _read_xyz(path: Path, increment: Optional[float]) -> Surface:
+def _read_xyz(path: Path, increment: float | None) -> Surface:
     rows = []
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
         parts = [p for p in re.split(r"[,\s;]+", line.strip()) if p]
@@ -229,7 +228,7 @@ def _read_xyz(path: Path, increment: Optional[float]) -> Surface:
 
 
 def grid_points(
-    x, y, z, increment: Optional[float] = None, max_gap: Optional[float] = None
+    x, y, z, increment: float | None = None, max_gap: float | None = None
 ) -> Surface:
     """Grid scattered points (linear triangulation; nodes far from any point stay undefined).
 
@@ -238,8 +237,8 @@ def grid_points(
         increment: node spacing; estimated from point density when omitted.
         max_gap: nodes further than this from any point are undefined (default 2 x increment).
     """
-    from scipy.interpolate import griddata  # noqa: PLC0415
-    from scipy.spatial import cKDTree  # noqa: PLC0415
+    from scipy.interpolate import griddata
+    from scipy.spatial import cKDTree
 
     x, y, z = (np.asarray(a, dtype=float) for a in (x, y, z))
     area = max((x.max() - x.min()) * (y.max() - y.min()), 1.0)
@@ -261,7 +260,7 @@ def grid_points(
 
 def _read_xtgeo(path: Path) -> Surface:
     try:
-        import xtgeo  # noqa: PLC0415
+        import xtgeo
     except ImportError as exc:
         raise ValueError(
             f"{path}: binary surface formats need xtgeo; export IRAP ASCII instead"

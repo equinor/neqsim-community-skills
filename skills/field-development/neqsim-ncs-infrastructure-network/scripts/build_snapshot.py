@@ -21,7 +21,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "src"))
 
-from ncs_infrastructure_network.build import build_snapshot, fetch_raw  # noqa: E402
+from ncs_infrastructure_network.build import build_snapshot, fetch_raw
 
 DEFAULT_OUT = (
     HERE.parent

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Dict, List, Sequence
 
 import numpy as np
 
@@ -14,8 +14,8 @@ from .units import BAR_PER_SG_M
 class EmwCurve:
     """Piecewise-linear equivalent-mud-weight curve (sg) against TVD below RKB (m)."""
 
-    tvd_m: List[float]
-    sg: List[float]
+    tvd_m: list[float]
+    sg: list[float]
 
     def __post_init__(self) -> None:
         if len(self.tvd_m) != len(self.sg) or len(self.tvd_m) < 1:
@@ -33,11 +33,11 @@ class EmwCurve:
 class PressureModel:
     """Low/base/high pore and fracture curves. ``frac`` low is the conservative (lower) bound."""
 
-    pore: Dict[str, EmwCurve]
-    frac: Dict[str, EmwCurve]
+    pore: dict[str, EmwCurve]
+    frac: dict[str, EmwCurve]
     water_depth_m: float = 0.0
     air_gap_m: float = 0.0
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
     @property
     def mudline_tvd_m(self) -> float:
@@ -67,7 +67,7 @@ class PressureModel:
         frac_case: str = "low",
         trip_margin_sg: float = 0.04,
         frac_margin_sg: float = 0.03,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Drillable mud-weight window at one depth.
 
         Args:
@@ -93,7 +93,7 @@ class PressureModel:
             "width_sg": hi - lo,
         }
 
-    def window_table(self, depths_m: Sequence[float], **kw) -> List[Dict[str, float]]:
+    def window_table(self, depths_m: Sequence[float], **kw) -> list[dict[str, float]]:
         """Window at several depths."""
         return [self.window(float(d), **kw) for d in depths_m]
 

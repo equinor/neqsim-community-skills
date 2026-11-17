@@ -14,9 +14,9 @@ from __future__ import annotations
 import os
 import subprocess
 import time
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple
 
 from .discovery import OlgaInstallation, find_olga
 
@@ -28,7 +28,7 @@ __all__ = [
 ]
 
 #: ``{exit_code: (category, symbolic_name, description)}`` — from ``exit_code_lookup list``.
-EXIT_CODES: Dict[int, Tuple[str, str, str]] = {
+EXIT_CODES: dict[int, tuple[str, str, str]] = {
     0: ("Normal stop", "OK", "OK"),
     1: ("Normal stop", "STOP_TOGGLED", "OPC Stop command"),
     2: ("Normal stop", "CTRL_C", "Ctrl-C pressed event"),
@@ -100,7 +100,7 @@ _DISABLE_FLAGS = {
 }
 
 
-def describe_exit_code(code: int) -> Tuple[str, str, str]:
+def describe_exit_code(code: int) -> tuple[str, str, str]:
     """Return ``(category, symbolic_name, description)`` for an OLGA exit code."""
     return EXIT_CODES.get(
         code, ("Unknown", "UNMAPPED", f"exit code {code} is not in the OLGA table")
@@ -113,7 +113,7 @@ class OlgaRunResult:
 
     case: Path
     out_dir: Path
-    command: Tuple[str, ...]
+    command: tuple[str, ...]
     returncode: int
     category: str
     code_name: str
@@ -128,7 +128,7 @@ class OlgaRunResult:
         """``True`` only when OLGA reported a normal stop (exit code 0)."""
         return self.returncode == 0 and not self.timed_out
 
-    def summary(self) -> Dict[str, object]:
+    def summary(self) -> dict[str, object]:
         """Return a JSON-friendly summary suitable for a task ``results.json``."""
         return {
             "case": str(self.case),
@@ -157,9 +157,9 @@ class OlgaRunner:
 
     def __init__(
         self,
-        installation: Optional[OlgaInstallation] = None,
-        version: Optional[str] = None,
-        default_nthreads: Optional[int] = None,
+        installation: OlgaInstallation | None = None,
+        version: str | None = None,
+        default_nthreads: int | None = None,
     ) -> None:
         self.installation = installation or find_olga(version=version)
         self.default_nthreads = default_nthreads
@@ -169,15 +169,15 @@ class OlgaRunner:
     def build_command(
         self,
         case: str | os.PathLike[str],
-        out_dir: Optional[str | os.PathLike[str]] = None,
-        nthreads: Optional[int] = None,
+        out_dir: str | os.PathLike[str] | None = None,
+        nthreads: int | None = None,
         rule_check_only: bool = False,
         init_check_only: bool = False,
         disable_outputs: Sequence[str] = (),
-        log: Optional[str | os.PathLike[str]] = None,
+        log: str | os.PathLike[str] | None = None,
         console_log: bool = False,
         extra_args: Sequence[str] = (),
-    ) -> List[str]:
+    ) -> list[str]:
         """Build the OLGA command line without running anything.
 
         Args:
@@ -196,7 +196,7 @@ class OlgaRunner:
             The argument list, with the case file last as OLGA requires.
         """
         case_path = Path(case).resolve()
-        command: List[str] = [str(self.installation.engine)]
+        command: list[str] = [str(self.installation.engine)]
 
         threads = self.default_nthreads if nthreads is None else nthreads
         if threads is not None:
@@ -227,9 +227,9 @@ class OlgaRunner:
     def run(
         self,
         case: str | os.PathLike[str],
-        out_dir: Optional[str | os.PathLike[str]] = None,
-        timeout: Optional[float] = None,
-        env: Optional[Mapping[str, str]] = None,
+        out_dir: str | os.PathLike[str] | None = None,
+        timeout: float | None = None,
+        env: Mapping[str, str] | None = None,
         **command_kwargs: object,
     ) -> OlgaRunResult:
         """Run a case to completion and return a structured result.
@@ -301,7 +301,7 @@ class OlgaRunner:
     def rule_check(
         self,
         case: str | os.PathLike[str],
-        timeout: Optional[float] = 600.0,
+        timeout: float | None = 600.0,
         **kwargs: object,
     ) -> OlgaRunResult:
         """Validate case input without simulating (``-exitRC``).
@@ -320,10 +320,10 @@ def _as_text(value: object) -> str:
     return str(value)
 
 
-def collect_outputs(out_dir: str | os.PathLike[str], case_stem: str) -> Dict[str, Path]:
+def collect_outputs(out_dir: str | os.PathLike[str], case_stem: str) -> dict[str, Path]:
     """Return the OLGA output files produced for ``case_stem`` in ``out_dir``."""
     directory = Path(out_dir)
-    outputs: Dict[str, Path] = {}
+    outputs: dict[str, Path] = {}
     for suffix in _OUTPUT_SUFFIXES:
         candidate = directory / f"{case_stem}{suffix}"
         if candidate.is_file():

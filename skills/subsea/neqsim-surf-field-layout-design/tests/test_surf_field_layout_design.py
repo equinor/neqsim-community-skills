@@ -1,7 +1,6 @@
 import math
 
 import pytest
-
 from surf_field_layout_design import (
     OPEN_DATA_SOURCES,
     LocalFrame,

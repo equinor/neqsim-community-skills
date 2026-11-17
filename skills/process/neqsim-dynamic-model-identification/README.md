@@ -8,3 +8,6 @@ Package `dynamic_identification`. It identifies process models, PID tuning and c
 ```
 
 The evidence record is `identification_evidence.json` (`dynamic_identification_evidence.v1`); each result has a `usable` verdict. See [SKILL.md](SKILL.md).
+
+Alignment infers sample intervals in seconds regardless of the pandas timestamp
+resolution. Frozen-value masking leaves the input series unchanged.

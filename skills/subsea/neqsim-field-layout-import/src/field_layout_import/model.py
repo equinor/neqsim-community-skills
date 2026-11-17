@@ -29,11 +29,12 @@ class FieldLayoutImporter:
     """Educational subsea field-layout import and normalization placeholder."""
 
     def from_geojson(self, obj) -> LayoutImportResult:
+        """Import parsed GeoJSON, raising TypeError for invalid container types."""
         if not isinstance(obj, dict):
-            raise ValueError("geojson must be an already-parsed dict")
+            raise TypeError("geojson must be an already-parsed dict")
         features = obj.get("features")
         if not isinstance(features, list):
-            raise ValueError("geojson must contain a 'features' list")
+            raise TypeError("geojson must contain a 'features' list")
 
         nodes: list[ImportedNode] = []
         issues: list[str] = []
@@ -44,8 +45,9 @@ class FieldLayoutImporter:
         return self._finalize(nodes, issues)
 
     def from_rows(self, rows) -> LayoutImportResult:
+        """Import records, raising TypeError when rows is not a list."""
         if not isinstance(rows, list):
-            raise ValueError("rows must be a list of dicts")
+            raise TypeError("rows must be a list of dicts")
 
         nodes: list[ImportedNode] = []
         issues: list[str] = []

@@ -248,7 +248,7 @@ def build_design_basis(
         reference = str(entry.get("reference", "")).strip() or "not recorded"
         values = entry.get("values") or {}
         if not isinstance(values, Mapping):
-            raise ValueError(f"source '{source}' must provide a mapping under 'values'")
+            raise TypeError(f"source '{source}' must provide a mapping under 'values'")
 
         for field, raw in values.items():
             if raw is None:

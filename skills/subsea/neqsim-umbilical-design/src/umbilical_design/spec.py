@@ -120,11 +120,13 @@ class UmbilicalSpec:
 
         The block uses the same keys as :meth:`from_dict`. Missing keys raise a
         ``ValueError`` that names them, so that the study basis is completed rather than
-        silently defaulted.
+        silently defaulted. A non-dict umbilical block raises ``TypeError``.
         """
         block = basis.get("umbilical")
-        if not isinstance(block, dict):
+        if block is None:
             raise ValueError("common basis has no 'umbilical' block")
+        if not isinstance(block, dict):
+            raise TypeError("common basis 'umbilical' block must be a dict")
         missing = [k for k in ("water_depth_m",) if block.get(k) is None]
         if block.get("length_m") is None and block.get("length_km") is None:
             missing.append("length_m|length_km")

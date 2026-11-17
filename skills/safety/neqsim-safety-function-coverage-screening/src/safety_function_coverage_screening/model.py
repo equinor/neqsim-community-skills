@@ -77,7 +77,7 @@ class SafetyFunctionCoverageModel:
     @staticmethod
     def _normalize_type(component_type: str) -> str:
         if not isinstance(component_type, str):
-            raise ValueError("component_type must be a string")
+            raise TypeError("component_type must be a string")
         key = component_type.strip().lower().replace(" ", "_").replace("-", "_")
         if key not in _REQUIRED_FUNCTIONS:
             supported = ", ".join(sorted(_REQUIRED_FUNCTIONS))
@@ -89,7 +89,7 @@ class SafetyFunctionCoverageModel:
         normalized: list[str] = []
         for code in provided_functions:
             if not isinstance(code, str):
-                raise ValueError("provided_functions must contain strings")
+                raise TypeError("provided_functions must contain strings")
             token = code.strip().upper()
             if not token:
                 raise ValueError("provided_functions must not contain blank codes")

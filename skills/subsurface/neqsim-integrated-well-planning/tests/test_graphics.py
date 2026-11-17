@@ -445,7 +445,7 @@ def test_sheet_has_title_block_and_synthetic_stamp_in_provenance(out_dir):
 
 
 def test_a3_sheet_geometry_and_content_box():
-    fig, ax, box = S.a3_sheet("t", "D-1", scale_bar_m=100, north_arrow=True)
+    fig, _ax, box = S.a3_sheet("t", "D-1", scale_bar_m=100, north_arrow=True)
     assert (
         abs(fig.get_size_inches()[0] - 420 / 25.4) < 1e-6
         and abs(fig.get_size_inches()[1] - 297 / 25.4) < 1e-6

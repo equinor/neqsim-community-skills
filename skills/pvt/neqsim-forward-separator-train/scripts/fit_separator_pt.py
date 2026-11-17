@@ -65,7 +65,7 @@ def oil_gas_rates(jneqsim, base, stages, kmol_h, feed_p, feed_t):
     fluid = base.clone()
     fluid.setTemperature(feed_t + 273.15)
     fluid.setPressure(feed_p)
-    feed, records, _ = rfs.run_train(
+    _feed, records, _ = rfs.run_train(
         jneqsim, fluid, stages, kmol_h * 1000.0 / 3600.0, "mole/sec"
     )
     sto = records[-1][4]

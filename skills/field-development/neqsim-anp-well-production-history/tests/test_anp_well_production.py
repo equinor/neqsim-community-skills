@@ -95,7 +95,7 @@ STATUS_ROW = (
 
 def rate_records(*rows, header=RATE_HEADER, enc="cp1252"):
     raw = (header + "\n" + "\n".join(rows) + "\n").encode(enc)
-    h, r, meta = read_table_bytes(raw)
+    h, r, _meta = read_table_bytes(raw)
     return normalize(h, r)
 
 

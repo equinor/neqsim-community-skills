@@ -54,7 +54,7 @@ def test_pz_fit_recovers_giip_and_rejects_outlier():
         pz_i * (1 - g / giip) + (0.6 if i % 2 == 0 else -0.6) for i, g in enumerate(gp)
     ]
     pz[5] = 40.0
-    a, b, g, rms, keep = fit_pz_line(gp, pz, 2.0)
+    _a, _b, g, _rms, keep = fit_pz_line(gp, pz, 2.0)
     assert g == pytest.approx(giip, rel=0.03)
     assert not keep[5] and sum(keep) == n - 1
 
@@ -91,7 +91,7 @@ def test_capacity_from_sweep_cases():
 
 def test_maximise_rate_crossing_and_edges():
     cap = PressureCapacityCurve([20.0, 30.0, 40.0], [40.0, 60.0, 80.0])
-    p, q, bind = maximise_rate(lambda p: 100.0 - p, cap, 20.0, 40.0)
+    p, q, _bind = maximise_rate(lambda p: 100.0 - p, cap, 20.0, 40.0)
     assert p == pytest.approx(100.0 / 3.0, abs=1e-6) and q == pytest.approx(
         200.0 / 3.0, abs=1e-6
     )

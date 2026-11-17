@@ -693,7 +693,7 @@ def casing_programme_sheet(
     wd = float(plan.get("water_depth_m", 0.0))
     seabed = wd + air
     td = float(plan["td_m"])
-    fig, sheet, box = a3_sheet(
+    fig, _sheet, box = a3_sheet(
         plan.get("title", "Casing programme"),
         drawing_no,
         revision,

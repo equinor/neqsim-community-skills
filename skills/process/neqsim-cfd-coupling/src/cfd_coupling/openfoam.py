@@ -904,7 +904,6 @@ class VofOpenFoamCase(_FoamCaseBase):
         return files
 
     def _constant_files(self) -> dict[str, str]:
-        spec = _FLAVOURS[self.flavour]
         state = self.boundary.state
         files = {
             "constant/g": _foam_file("uniformDimensionedVectorField", "constant", "g")

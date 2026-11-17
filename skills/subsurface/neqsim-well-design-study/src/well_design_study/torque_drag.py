@@ -175,7 +175,6 @@ def torque_and_drag(
         dl = (hi - lo) / n
         w = c.weight_kg_per_m * 9.80665 / 1000.0 * bf  # kN/m buoyed
         rt = (c.tool_joint_od_in or c.od_in) * M_PER_IN / 2.0
-        r_pipe = c.od_in * M_PER_IN / 2.0
         for k in range(n):
             md_b = hi - k * dl
             md_t = md_b - dl

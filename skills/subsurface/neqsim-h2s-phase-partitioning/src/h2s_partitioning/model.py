@@ -435,7 +435,7 @@ def recombine_to_gor_and_h2s(
     """
     if gor_measured <= 0 or not 0 < y_h2s_measured < 0.5:
         raise ValueError("gor_measured must be positive and y_h2s_measured in (0, 0.5)")
-    jn = _jneqsim()
+    _jneqsim()
     cur = fluid.clone()
     cur.init(0)
     names = [str(n) for n in cur.getComponentNames()]

@@ -79,14 +79,12 @@ def propose_barriers(basis: dict[str, Any]) -> list[BarrierState]:
     prod_csg = [c for c in casing if "production" in c["name"].lower()]
     shoe = prod_csg[-1]["shoe_md_m"] if prod_csg else None
     top_cement = prod_csg[-1].get("cement_top_md_m") if prod_csg else None
-    tree = comp.get("tree", "tree (type to be defined)")
     injector = wtype in ("water_injector", "gas_injector")
     surface_valve = (
         "subsea tree valves (master/wing, actuated)"
         if env == "subsea"
         else "surface tree master and wing valves"
     )
-    td = "tubing"
 
     common_secondary = [
         _e(

@@ -610,7 +610,6 @@ class ReservoirModelBuilder:
         recovery = self._recovery_factor(inputs, drive, parameters)
         bo = parameters["oil_formation_volume_factor"].value
         bg = parameters["gas_formation_volume_factor"].value
-        bw = parameters["water_formation_volume_factor"].value
 
         hcpv = self._hydrocarbon_pore_volume(inputs, parameters, derivations)
         stoiip = inputs.stoiip_Sm3

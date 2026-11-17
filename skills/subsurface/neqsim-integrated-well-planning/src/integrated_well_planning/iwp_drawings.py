@@ -170,7 +170,6 @@ def well_schematic_sheet(
         ha="center",
         va="bottom",
     )
-    tvd_grid = np.linspace(0, tvd_td, 400)
     md_of_tvd = (
         (lambda z: float(np.interp(z, survey["tvd"], survey["md"])))
         if survey
@@ -316,7 +315,6 @@ def well_schematic_sheet(
         )
         if ctop is not None:
             for sgn in (-1, 1):
-                x0 = sgn * half if sgn > 0 else -hole_half
                 ax_w.add_patch(
                     Rectangle(
                         (half if sgn > 0 else -hole_half, ctop),

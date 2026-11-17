@@ -578,7 +578,7 @@ def alternatives_scorecard(
                 data[i, j] = v
     fig, ax = plt.subplots(figsize=(1.0 * len(crit) + 3.5, 0.62 * len(ids) + 1.7))
     cmap = plt.get_cmap("YlGnBu").with_extremes(bad="#EDEDED")
-    im = ax.imshow(np.ma.masked_invalid(data), cmap=cmap, vmin=0, vmax=1, aspect="auto")
+    ax.imshow(np.ma.masked_invalid(data), cmap=cmap, vmin=0, vmax=1, aspect="auto")
     ax.set_xticks(range(len(crit)))
     ax.set_xticklabels(
         [(crit_labels or {}).get(c, c.replace("_", "\n")) for c in crit], fontsize=7.5
@@ -1053,7 +1053,6 @@ def decision_tree(
     nodes: list[dict[str, Any]], title: str = "Decision tree"
 ) -> plt.Figure:
     """Decision tree: nodes ``{id, parent, label, kind (decision|chance|outcome), edge}``; laid out by depth and leaf order."""
-    by = {n["id"]: n for n in nodes}
     kids: dict[Any, list[Any]] = {}
     for n in nodes:
         kids.setdefault(n.get("parent"), []).append(n["id"])

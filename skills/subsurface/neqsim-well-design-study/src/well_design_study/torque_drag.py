@@ -170,7 +170,7 @@ def torque_and_drag(
     mds_out, ft_out, tq_out = [bit], [ft], [0.0]
     buckling_margin = float("inf")
     for hi, lo, c in comps:
-        n = max(1, int(math.ceil((hi - lo) / 10.0)))
+        n = max(1, math.ceil((hi - lo) / 10.0))
         dl = (hi - lo) / n
         w = c.weight_kg_per_m * 9.80665 / 1000.0 * bf  # kN/m buoyed
         rt = (c.tool_joint_od_in or c.od_in) * M_PER_IN / 2.0

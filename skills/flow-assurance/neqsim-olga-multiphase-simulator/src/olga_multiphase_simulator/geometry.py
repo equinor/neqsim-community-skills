@@ -260,7 +260,7 @@ def _section_count(length, target, minimum, maximum):
     :param maximum: longest acceptable section in m
     :return: number of sections, at least 1
     """
-    count = int(round(length / target)) if target > 0 else 1
+    count = round(length / target) if target > 0 else 1
     count = max(1, count)
     while length / count > maximum:
         count += 1

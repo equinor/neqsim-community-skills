@@ -116,7 +116,7 @@ def densify(route: Sequence[Point], step_m: float) -> list[tuple[float, Point]]:
     out, ch = [], 0.0
     for a, b in zip(route, route[1:]):
         seg = dist(a, b)
-        n = max(1, int(round(seg / step_m)))
+        n = max(1, round(seg / step_m))
         for i in range(n):
             t = i / n
             out.append(

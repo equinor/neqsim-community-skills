@@ -230,7 +230,7 @@ def forecast_production(
     remaining = 0.0
     years_to_limit: float | None = None
 
-    steps = int(math.ceil(max_years / timestep_years))
+    steps = math.ceil(max_years / timestep_years)
     prev_rate = _predict_rate(fit, t_offset)
     profile.append((round(origin, 4), round(prev_rate, 6)))
     for i in range(1, steps + 1):

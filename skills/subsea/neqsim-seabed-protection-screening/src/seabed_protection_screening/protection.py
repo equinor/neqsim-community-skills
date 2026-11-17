@@ -677,7 +677,7 @@ class SeabedProtectionScreener:
             length = float(_get(cand, "length_m"))
             if length <= allowable:
                 continue
-            supports = int(math.ceil(length / allowable)) - 1
+            supports = math.ceil(length / allowable) - 1
             height = float(_get(cand, "max_gap_m"))
             base_h = max(height, 0.0) + od / 2.0
             area = (a.rock_crest_width_m + a.rock_side_slope * base_h) * base_h

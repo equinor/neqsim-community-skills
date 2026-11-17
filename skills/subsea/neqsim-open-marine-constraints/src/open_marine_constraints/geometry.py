@@ -60,7 +60,7 @@ def densify(route: Sequence[LonLat], step_m: float) -> list[tuple[LonLat, float]
     chain = 0.0
     for a, b in zip(route[:-1], route[1:]):
         seg = haversine_m(a, b)
-        n = max(1, int(math.ceil(seg / step_m)))
+        n = max(1, math.ceil(seg / step_m))
         for i in range(1, n + 1):
             f = i / n
             out.append(

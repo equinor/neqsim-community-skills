@@ -91,7 +91,7 @@ class ReservoirDepletionModel:
         years_to_abandonment: float | None = None
         depleted = False
 
-        n_steps = int(round(years / time_step_years))
+        n_steps = round(years / time_step_years)
         for index in range(1, n_steps + 1):
             year = round(index * time_step_years, 6)
 

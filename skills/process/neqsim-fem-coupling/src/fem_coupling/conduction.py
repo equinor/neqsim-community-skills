@@ -466,7 +466,7 @@ class RadialConductionModel:
             [float(inner_bulk_temperature_c)] if track_fluid else []
         ) + wall_initial
 
-        steps = max(1, int(round(duration_s / time_step_s)))
+        steps = max(1, round(duration_s / time_step_s))
         dt = duration_s / steps
 
         system_diag = [m / dt + k for m, k in zip(m_diag, k_diag)]

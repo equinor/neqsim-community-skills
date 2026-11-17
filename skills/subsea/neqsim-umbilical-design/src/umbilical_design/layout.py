@@ -116,13 +116,11 @@ def conductor_diameter_mm(area_mm2: float) -> float:
 def armor_wire_count(
     layer_diameter_mm: float, wire_diameter_mm: float, lay_angle_deg: float
 ) -> int:
-    return int(
-        math.floor(
-            math.pi
-            * layer_diameter_mm
-            * math.cos(math.radians(lay_angle_deg))
-            / wire_diameter_mm
-        )
+    return math.floor(
+        math.pi
+        * layer_diameter_mm
+        * math.cos(math.radians(lay_angle_deg))
+        / wire_diameter_mm
     )
 
 

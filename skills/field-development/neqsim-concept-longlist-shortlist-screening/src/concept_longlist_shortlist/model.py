@@ -559,7 +559,7 @@ def weight_crossovers(
     """
     base_leader = weighted_ranking(normalised, weights)[0]["concept"]
     rows = []
-    n = int(round(1.0 / step))
+    n = round(1.0 / step)
     for key, w0 in weights.items():
         rest = 1.0 - w0
         best = None

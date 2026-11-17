@@ -317,7 +317,7 @@ class AgeingLifeExtensionModel:
             return None
         if corrective_cost_per_failure <= 0.0 and annual_cost_of_ownership <= 0.0:
             return None
-        horizon = max(1, int(round(max(target_year_offset, 1.0))) + 20)
+        horizon = max(1, round(max(target_year_offset, 1.0)) + 20)
         cumulative = 0.0
         for year in range(1, horizon + 1):
             t0 = observation_years + year - 1

@@ -225,7 +225,7 @@ def profile_along_route(
     kp = 0.0
     for (lo0, la0), (lo1, la1) in zip(waypoints[:-1], waypoints[1:]):
         seg = haversine_km(lo0, la0, lo1, la1)
-        n = max(1, int(math.ceil(seg / step_km)))
+        n = max(1, math.ceil(seg / step_km))
         start = 0 if not rows else 1
         for k in range(start, n + 1):
             lon, lat = _interp_gc(lo0, la0, lo1, la1, k / n)

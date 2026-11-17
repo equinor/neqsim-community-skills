@@ -107,7 +107,7 @@ def multi_line_chart(
             continue
         idx = np.where(inside)[0]
         if s.get("label_frac") is not None:
-            j = int(idx[int(round(float(s["label_frac"]) * (len(idx) - 1)))])
+            j = int(idx[round(float(s["label_frac"]) * (len(idx) - 1))])
             ax.annotate(
                 s["label"],
                 (x[j], y[j]),

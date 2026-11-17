@@ -166,7 +166,7 @@ def load_limits(source: str | os.PathLike | Mapping) -> dict[str, Limit]:
     data = _read(source)
     limits = data.get("limits", data) if isinstance(data, Mapping) else None
     if not isinstance(limits, Mapping):
-        raise ValueError(
+        raise TypeError(
             "the limits document must be a mapping (optionally under a 'limits' key)"
         )
     problems: list[str] = []

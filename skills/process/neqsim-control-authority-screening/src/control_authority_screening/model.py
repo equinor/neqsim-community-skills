@@ -290,7 +290,7 @@ class ControlAuthorityModel:
             raise ValueError("at least two comparable periods are required")
         for period in ordered:
             if not isinstance(period, PeriodObservation):
-                raise ValueError("periods must be PeriodObservation instances")
+                raise TypeError("periods must be PeriodObservation instances")
             if not 0.0 <= period.saturation_fraction <= 1.0:
                 raise ValueError(
                     f"saturation_fraction of period '{period.label}' must be in [0, 1]"

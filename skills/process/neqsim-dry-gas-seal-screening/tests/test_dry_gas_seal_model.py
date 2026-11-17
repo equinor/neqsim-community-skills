@@ -64,6 +64,17 @@ def test_invalid_leakage_rate():
         )
 
 
+@pytest.mark.parametrize("seal_count", [True, 1.5, "2"])
+def test_seal_count_rejects_non_integer_types(seal_count):
+    with pytest.raises(TypeError, match="seal_count must be an integer"):
+        DryGasSealModel().evaluate(
+            seal_leakage_rate_nl_per_min=200.0,
+            seal_cavity_temperature_c=44.0,
+            hydrocarbon_dew_point_c=30.0,
+            seal_count=seal_count,
+        )
+
+
 def test_invalid_threshold_ordering():
     with pytest.raises(ValueError, match="high_margin_c"):
         DryGasSealModel(watch_margin_c=3.0, high_margin_c=8.0)

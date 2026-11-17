@@ -118,6 +118,6 @@ class DryGasSealModel:
     @staticmethod
     def _require_positive_int(name: str, value: int) -> None:
         if not isinstance(value, int) or isinstance(value, bool):
-            raise ValueError(f"{name} must be an integer")
+            raise TypeError(f"{name} must be an integer")
         if value <= 0:
             raise ValueError(f"{name} must be a positive integer")

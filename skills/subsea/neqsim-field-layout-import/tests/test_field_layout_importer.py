@@ -104,6 +104,15 @@ def test_duplicate_name_flagged() -> None:
     assert any("duplicate node name" in issue for issue in result.issues)
 
 
-def test_rejects_non_dict_geojson() -> None:
-    with pytest.raises(ValueError, match="already-parsed dict"):
-        FieldLayoutImporter().from_geojson([])
+@pytest.mark.parametrize("obj", [[], None, "{}"])
+def test_rejects_non_dict_geojson(obj) -> None:
+    with pytest.raises(TypeError, match="already-parsed dict"):
+        FieldLayoutImporter().from_geojson(obj)
+
+
+def test_rejects_wrong_feature_and_row_container_types() -> None:
+    importer = FieldLayoutImporter()
+    with pytest.raises(TypeError, match="features"):
+        importer.from_geojson({"features": {}})
+    with pytest.raises(TypeError, match="rows must be a list"):
+        importer.from_rows({})

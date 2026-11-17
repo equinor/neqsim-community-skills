@@ -180,7 +180,7 @@ class UtilityBalanceModel:
     @staticmethod
     def _require_non_negative_int(name: str, value: int) -> None:
         if not isinstance(value, int) or isinstance(value, bool):
-            raise ValueError(f"{name} must be an integer")
+            raise TypeError(f"{name} must be an integer")
         if value < 0:
             raise ValueError(f"{name} must be non-negative")
 

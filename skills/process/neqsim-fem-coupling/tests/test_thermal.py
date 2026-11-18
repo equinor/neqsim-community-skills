@@ -1,3 +1,7 @@
+import logging
+from types import SimpleNamespace
+from unittest.mock import Mock
+
 import pytest
 from fem_coupling import (
     FemFluidState,
@@ -190,6 +194,56 @@ def test_auto_takes_the_only_phase():
     assert state.phase == "aqueous"
     assert state.density_kg_per_m3 == pytest.approx(931.1)
     assert state.temperature_c == pytest.approx(150.0)
+
+
+@pytest.mark.parametrize(
+    "failed_initialiser", ["initProperties", "initPhysicalProperties"]
+)
+def test_failed_initialiser_logs_and_continues(caplog, failed_initialiser):
+    system = _FakeSystem("aqueous")
+    system.initProperties = Mock()
+    system.initPhysicalProperties = Mock()
+    getattr(system, failed_initialiser).side_effect = RuntimeError(
+        "unsupported initializer"
+    )
+
+    state = fluid_state_from_neqsim(system)
+
+    system.initProperties.assert_called_once_with()
+    system.initPhysicalProperties.assert_called_once_with()
+    assert state.density_kg_per_m3 == pytest.approx(931.1)
+    [record] = caplog.records
+    assert record.name == "fem_coupling.thermal"
+    assert record.levelno == logging.WARNING
+    assert failed_initialiser in record.getMessage()
+    assert record.exc_info[0] is RuntimeError
+
+
+def test_missing_diffusion_coefficient_logs_and_keeps_remaining_components(caplog):
+    properties = SimpleNamespace(
+        setDiffusionCoefficientModel=Mock(),
+        calcEffectiveDiffusionCoefficients=Mock(),
+        getEffectiveDiffusionCoefficient=Mock(
+            side_effect=[KeyError("missing"), 2.0e-6]
+        ),
+    )
+    system = _FakeSystem("gas")
+    system.initProperties = Mock()
+    system.initPhysicalProperties = Mock()
+    phase = system.getPhase(0)
+    phase.getPhysicalProperties = Mock(return_value=properties)
+    phase.initPhysicalProperties = Mock()
+
+    state = fluid_state_from_neqsim(system, diffusing_components=["missing", "methane"])
+
+    assert state.diffusion_coefficients_m2_per_s == (("methane", 2.0e-6),)
+    [record] = caplog.records
+    assert record.name == "fem_coupling.thermal"
+    assert record.levelno == logging.WARNING
+    assert (
+        record.getMessage() == "Diffusion coefficient unavailable for component missing"
+    )
+    assert record.exc_info[0] is KeyError
 
 
 def test_auto_refuses_to_choose_between_phases():

@@ -17,7 +17,7 @@ def test_align_infers_seconds_and_masks_frozen_values_without_mutating_input(uni
     data = align({"f": series}, frozen_samples=10)
 
     assert data["timebase_s"] == 2.0
-    pd.testing.assert_index_equal(data["times"], index, exact=False)
+    pd.testing.assert_index_equal(data["times"].as_unit(unit), index, exact=False)
     expected = values.copy()
     expected[40:60] = np.nan
     np.testing.assert_array_equal(data["values"]["f"], expected)

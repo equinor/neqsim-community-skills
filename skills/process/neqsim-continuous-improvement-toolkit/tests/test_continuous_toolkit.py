@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -26,7 +26,7 @@ class FakeClient:
 
 def test_tagreader_adapter_writes_part_and_watermark(tmp_path):
     pd = pytest.importorskip("pandas")
-    start = datetime(2026, 1, 1, tzinfo=UTC)
+    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
     index = pd.date_range(start, periods=3, freq="h")
     frame = pd.DataFrame({"PT-1": [30.0, 30.1, 29.9]}, index=index)
     adapter = TagreaderAdapter(
@@ -41,7 +41,7 @@ def test_tagreader_adapter_writes_part_and_watermark(tmp_path):
 
 
 def test_tagreader_adapter_degrades_instead_of_raising(tmp_path):
-    start = datetime(2026, 1, 1, tzinfo=UTC)
+    start = datetime(2026, 1, 1, tzinfo=timezone.utc)
     failed = TagreaderAdapter(
         "SRC", {"a": "A"}, client=FakeClient(error="401 auth")
     ).pull(start, start + timedelta(hours=1), str(tmp_path))

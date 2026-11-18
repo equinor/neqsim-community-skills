@@ -85,7 +85,10 @@ python -m pip install -e skills/process/neqsim-separator-modelling
 python skills/process/neqsim-separator-modelling/examples/basic_separator_screening.py
 ```
 
-Individual skill packages specify their own Python and dependency requirements.
+The aggregate package supports Python 3.10 or newer. Individual skill packages
+specify their own Python and dependency requirements.
+In particular, the optional Completor integration needs Python 3.11–3.13;
+the aggregate runtime test extra only installs it on those versions.
 The NeqSim CLI installation described above also does not require `uv`.
 
 ### Repository development

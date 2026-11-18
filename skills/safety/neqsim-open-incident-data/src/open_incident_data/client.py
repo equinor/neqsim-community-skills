@@ -8,7 +8,7 @@ import urllib.request
 import zipfile
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -49,7 +49,7 @@ class ReadRecord:
     cached: bool = False
     terms: str = TERMS
     retrieved_utc: str = field(
-        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
     )
 
     def to_dict(self) -> dict[str, Any]:

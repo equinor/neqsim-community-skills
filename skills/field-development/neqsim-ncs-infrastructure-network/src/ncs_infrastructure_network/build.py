@@ -17,7 +17,7 @@ Snapshot schema ``ncs_network_snapshot.v1``::
 from __future__ import annotations
 
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from .open_api import (
@@ -485,7 +485,7 @@ def build_snapshot(
     return {
         "schema": SCHEMA,
         "generated_utc": generated_utc
-        or datetime.now(UTC).isoformat(timespec="seconds"),
+        or datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "licence": "Sodir data NLOD 2.0; norskpetroleum.no and gassco.eu reused with attribution",
         "units": {
             "gas_capacity": "MSm3/d",

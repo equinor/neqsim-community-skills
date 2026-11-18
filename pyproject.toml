@@ -7,7 +7,7 @@ name = "neqsim-community-skills"
 version = "0.1.0"
 description = "Public community-contributed skills for NeqSim agentic engineering workflows."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 authors = [{ name = "NeqSim community" }]
 dependencies = []
@@ -27,7 +27,7 @@ test = [
   "dliswriter>=1.2",
   "segyio>=1.9",
   "scipy>=1.10",
-  "completor>=1.6",
+  "completor>=1.6; python_version >= '3.11' and python_version < '3.14'",
   "pyproj>=3.6",
   "pythonnet>=3.0.3",
 ]
@@ -48,7 +48,7 @@ dev = [
   "dliswriter>=1.2",
   "segyio>=1.9",
   "scipy>=1.10",
-  "completor>=1.6",
+  "completor>=1.6; python_version >= '3.11' and python_version < '3.14'",
   "pyproj>=3.6",
   "pythonnet>=3.0.3",
   "ruff>=0.5",
@@ -56,6 +56,9 @@ dev = [
 
 # Packages are discovered by setup.py from every skills/<category>/<skill>/src
 # so `pip install -e .` makes all skill modules importable in one step.
+
+[tool.uv.dependency-groups]
+dev = { requires-python = ">=3.11" }
 
 [tool.ruff]
 target-version = "py310"

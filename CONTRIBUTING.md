@@ -78,6 +78,23 @@ Add or update root development dependencies with
 `uv add --group dev <package>` and commit the resulting `uv.lock` changes.
 Skill users can still install individual packages with pip.
 
+End-user packages support Python 3.10 or newer; developer tools require Python
+3.11 or newer. Ruff targets Python 3.10 so lint fixes must preserve that runtime
+floor. To reproduce the separate Python 3.10 runtime CI job without installing
+the default developer group, use an isolated environment:
+
+```bash
+UV_PROJECT_ENVIRONMENT=.venv-py310 uv sync --locked --python 3.10 --no-default-groups --extra test
+UV_PROJECT_ENVIRONMENT=.venv-py310 uv run --locked --python 3.10 --no-default-groups --extra test pytest
+```
+
+Keep the `--no-default-groups --extra test` flags on both commands: an unqualified
+`uv run` selects the Python 3.11+ developer group again. The `test` extra supplies
+the runtime test dependencies without Ruff, Black or pre-commit.
+The optional Completor integration requires Python 3.11–3.13 (its upstream
+support range); its existing integration tests skip when unavailable. The
+standalone multisegment-well-completion skill retains its Python 3.11 minimum.
+
 After `uv sync --locked`, the repository's skill modules are available in the
 development environment. For a single skill, run its example and tests:
 

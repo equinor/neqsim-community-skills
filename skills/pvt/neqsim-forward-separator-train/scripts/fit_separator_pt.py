@@ -211,12 +211,7 @@ def main():
         )
         runs.append(sol)
         print(
-            "start %d: cost %.5g, stages %s"
-            % (
-                i,
-                sol.cost,
-                [(round(float(p), 2), round(float(t), 1)) for p, t in decode(sol.x, n)],
-            )
+            f"start {i:d}: cost {sol.cost:.5g}, stages {[(round(float(p), 2), round(float(t), 1)) for p, t in decode(sol.x, n)]!s}"
         )
     best = min(runs, key=lambda s: s.cost)
     stages = decode(best.x, n)
@@ -252,9 +247,9 @@ def main():
     dof = max(1, len(best.fun) - len(best.x))
     s2 = float(np.sum(best.fun**2) / dof)
     names = (
-        ["P_%d" % (n)]
-        + ["ln(P_%d/P_%d)" % (k, k + 1) for k in range(n - 1, 0, -1)]
-        + ["T_%d" % (k + 1) for k in range(n)]
+        [f"P_{n:d}"]
+        + [f"ln(P_{k:d}/P_{k + 1:d})" for k in range(n - 1, 0, -1)]
+        + [f"T_{k + 1:d}" for k in range(n)]
     )
     try:
         cov = np.linalg.inv(jac.T @ jac) * s2
@@ -271,14 +266,12 @@ def main():
     warnings = []
     if at_bound:
         warnings.append(
-            "Parameters at a bound: %s. Widen the bounds or the match is constrained."
-            % at_bound
+            f"Parameters at a bound: {at_bound!s}. Widen the bounds or the match is constrained."
         )
     if cond > 1e6:
         warnings.append(
-            "Jacobian condition number %.2g: some P/T combinations are weakly determined "
+            f"Jacobian condition number {cond:.2g}: some P/T combinations are weakly determined "
             "by these fluids; add fluids with different volatility or fix the weak stage."
-            % cond
         )
     costs = sorted(s.cost for s in runs)
     if len(runs) > 1 and costs[-1] - costs[0] > 0.02 * (costs[0] + 1e-9):
@@ -308,8 +301,8 @@ def main():
         bias = max(abs(v["GOR_err_pct_mean"]) for v in formation_report.values())
         if bias > 2.0 * max(0.5, float(np.mean(np.abs(e_gor)))):
             warnings.append(
-                "A formation is biased by %.1f %% in GOR: one P/T set does not fit all formations "
-                "equally well (see formation_report)." % bias
+                f"A formation is biased by {bias:.1f} % in GOR: one P/T set does not fit all formations "
+                "equally well (see formation_report)."
             )
     result = {
         "stages_bara_degC": [

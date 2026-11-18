@@ -125,7 +125,7 @@ def block_bounds(designation: str, numbering: str = "row-major-from-northwest") 
     quadrant = quadrant_bounds(quadrant_text)
     block = int(block_text.strip())
     if not 1 <= block <= BLOCKS_PER_QUADRANT:
-        raise ValueError("block number must be between 1 and %d" % BLOCKS_PER_QUADRANT)
+        raise ValueError(f"block number must be between 1 and {BLOCKS_PER_QUADRANT:d}")
 
     index = block - 1
     row = index // BLOCK_COLUMNS  # 0 is the northernmost row

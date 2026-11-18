@@ -74,7 +74,7 @@ def _query(
     log: list | None = None,
 ) -> list[dict[str, Any]]:
     """Read every row of a layer (paged); rows carry ``_geometry`` (Esri JSON, WGS84) when requested."""
-    base = "%s/%d/query" % (SODIR_DATASERVICE, LAYERS[layer])
+    base = f"{SODIR_DATASERVICE!s}/{LAYERS[layer]:d}/query"
     rows: list[dict[str, Any]] = []
     for page in range(max_pages):
         params = {
@@ -119,7 +119,7 @@ def _query(
                     }
                 )
             raise RuntimeError(
-                "Sodir DataService error for %s: %s" % (layer, payload["error"])
+                "Sodir DataService error for {!s}: {!s}".format(layer, payload["error"])
             )
         feats = payload.get("features", [])
         for f in feats:
@@ -226,7 +226,7 @@ def _ms_date(value: Any) -> str | None:
 def _in_clause(column: str, values: Iterable[Any]) -> list[str]:
     vals = [v for v in values if v is not None]
     return [
-        "%s IN (%s)" % (column, ",".join(str(v) for v in vals[i : i + 80]))
+        "{!s} IN ({!s})".format(column, ",".join(str(v) for v in vals[i : i + 80]))
         for i in range(0, len(vals), 80)
     ]
 
@@ -283,8 +283,9 @@ def discovery_records(
             "discovery_well": r.get("wlbName"),
             "field": r.get("fldName"),
             "included_in_discovery": r.get("dscResInclInDiscoveryName"),
-            "owner": "%s %s"
-            % (r.get("dscOwnerKind") or "", r.get("dscOwnerName") or ""),
+            "owner": "{!s} {!s}".format(
+                r.get("dscOwnerKind") or "", r.get("dscOwnerName") or ""
+            ),
             "area": r.get("nmaName"),
             "main_area": r.get("ngpName"),
         }
@@ -297,7 +298,7 @@ def discovery_records(
         out.append(
             Discovery(
                 country="NO",
-                id="NO_DSC_%s" % npd,
+                id=f"NO_DSC_{npd!s}",
                 name=str(r.get("dscName") or npd),
                 kind="discovery",
                 stage=stage,
@@ -328,7 +329,7 @@ def discovery_records(
             d.plan_note = (
                 (d.plan_note or "")
                 if d.plan_note
-                else "Included in %s; evaluate through that discovery." % incl
+                else f"Included in {incl!s}; evaluate through that discovery."
             )
     return out
 
@@ -355,7 +356,7 @@ def field_records_ncs(rows: list[dict], reserves: list[dict]) -> list[Discovery]
         out.append(
             Discovery(
                 country="NO",
-                id="NO_FLD_%s" % npd,
+                id=f"NO_FLD_{npd!s}",
                 name=str(r.get("fldName")),
                 kind="field",
                 stage=ncs_stage(r.get("fldCurrentActivitySatus")),
@@ -488,7 +489,7 @@ def fetch_ncs_near_field(
         for row in _query(
             fetch,
             "field",
-            "fldName='%s'" % name.replace("'", "''"),
+            "fldName='{!s}'".format(name.replace("'", "''")),
             timeout=timeout,
             out_fields="fldName,fldCurrentActivitySatus",
             log=log,
@@ -535,7 +536,7 @@ def records_from_snapshot(
         out.append(
             Discovery(
                 country="NO",
-                id="NO_DSC_%s" % d.get("npdid"),
+                id="NO_DSC_{!s}".format(d.get("npdid")),
                 name=str(d.get("name")),
                 stage=ncs_stage(d.get("status")),
                 status_raw=d.get("status"),

@@ -32,22 +32,21 @@ def lifetime_check(item, horizon_end_year, as_of_year):
     if gap <= 0:
         margin = -gap
         action = "monitor" if (margin < 2.0 or cond in ("fair", "poor")) else "ok"
-        basis = "remaining life covers the horizon with %.1f years margin" % margin
+        basis = f"remaining life covers the horizon with {margin:.1f} years margin"
     elif gap <= 10.0 and cond != "poor":
         action, basis = (
             "life-extend",
-            "shortfall %.1f years: life-extension assessment (integrity data, inspection) before commitment"
-            % gap,
+            f"shortfall {gap:.1f} years: life-extension assessment (integrity data, inspection) before commitment",
         )
     elif gap <= 20.0:
         action, basis = (
             "refurbish",
-            "shortfall %.1f years: refurbishment / requalification scope needed" % gap,
+            f"shortfall {gap:.1f} years: refurbishment / requalification scope needed",
         )
     else:
         action, basis = (
             "replace",
-            "shortfall %.1f years: plan replacement (new-build cost basis)" % gap,
+            f"shortfall {gap:.1f} years: plan replacement (new-build cost basis)",
         )
     if cond == "poor" and action in ("ok", "monitor", "life-extend"):
         action, basis = (

@@ -49,15 +49,15 @@ def _write_e300(path, zi):
     for key, vals in PROPS.items():
         lines.append("-- " + key)
         lines.append(key)
-        lines += ["%.6f" % v for v in vals[:-1]] + ["%.6f /" % vals[-1]]
+        lines += [f"{v:.6f}" for v in vals[:-1]] + [f"{vals[-1]:.6f} /"]
     lines += (
         ["-- Overall composition", "ZI"]
-        + ["%.6f" % v for v in zi[:-1]]
-        + ["%.6f /" % zi[-1]]
+        + [f"{v:.6f}" for v in zi[:-1]]
+        + [f"{zi[-1]:.6f} /"]
     )
     lines += (
         ["-- BIC", "BIC"]
-        + ["  ".join("%.4f" % v for v in row) for row in BIC_ROWS]
+        + ["  ".join(f"{v:.4f}" for v in row) for row in BIC_ROWS]
         + ["/"]
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")

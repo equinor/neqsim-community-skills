@@ -199,7 +199,7 @@ def plot_near_field(
             zorder=8,
         )
         if labelled < max_labels:
-            tag = r.name if r.oe_msm3() is None else "%s (%.1f)" % (r.name, r.oe_msm3())
+            tag = r.name if r.oe_msm3() is None else f"{r.name!s} ({r.oe_msm3():.1f})"
             ax.annotate(
                 tag,
                 (r.lon, r.lat),
@@ -318,8 +318,9 @@ def plot_near_field(
     ax.text(
         0.99,
         0.99,
-        "%d discoveries, %d fields, %d evaluation areas\nwithin %.0f km"
-        % (s["n_discoveries"], s["n_fields"], s["n_evaluation_areas"], radius),
+        "{:d} discoveries, {:d} fields, {:d} evaluation areas\nwithin {:.0f} km".format(
+            s["n_discoveries"], s["n_fields"], s["n_evaluation_areas"], radius
+        ),
         transform=ax.transAxes,
         ha="right",
         va="top",
@@ -332,8 +333,9 @@ def plot_near_field(
     ax.grid(True, lw=0.3, alpha=0.4)
     ax.set_title(
         title
-        or "Near-field discoveries around %s (%.0f km)"
-        % (inv.target.get("name"), radius),
+        or "Near-field discoveries around {!s} ({:.0f} km)".format(
+            inv.target.get("name"), radius
+        ),
         fontsize=12,
     )
     note = (

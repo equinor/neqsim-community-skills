@@ -61,8 +61,7 @@ def _finish(fig, meta: FigureMeta, path: Path, pdf: bool = False) -> Path:
     fig.text(
         0.01,
         0.005,
-        "Basis version: %s  |  Source: %s  |  Screening design, not for construction"
-        % (meta.basis_version, meta.source),
+        f"Basis version: {meta.basis_version!s}  |  Source: {meta.source!s}  |  Screening design, not for construction",
         fontsize=7,
         color="#555555",
         ha="left",
@@ -190,24 +189,22 @@ def draw_element_schedule(ax, result: DesignResult) -> None:
     for i, e in enumerate(result.elements, start=1):
         kind = e["type"]
         if kind in ("hydraulic", "chemical"):
-            dims = "ID %.2f / wall %.2f / OD %.2f" % (
+            dims = "ID {:.2f} / wall {:.2f} / OD {:.2f}".format(
                 e["innerDiameterMm"],
                 e["wallThicknessMm"],
                 e["outerDiameterMm"],
             )
-            extra = "%.0f bar, %s" % (
+            extra = "{:.0f} bar, {!s}".format(
                 e["designPressureBar"],
                 textwrap.shorten(str(e.get("fluid", "")), width=18, placeholder="."),
             )
         elif kind == "electrical":
-            dims = "%d x %.1f mm2, OD %.1f" % (
-                e["cores"],
-                e["conductorAreaMm2"],
-                e["outerDiameterMm"],
+            dims = "{:d} x {:.1f} mm2, OD {:.1f}".format(
+                int(e["cores"]), e["conductorAreaMm2"], e["outerDiameterMm"]
             )
-            extra = "%.0f V" % e["voltageV"]
+            extra = "{:.0f} V".format(e["voltageV"])
         else:
-            dims = "OD %.1f" % e["outerDiameterMm"]
+            dims = "OD {:.1f}".format(e["outerDiameterMm"])
             extra = "fibre tube"
         rows.append([str(i), e["name"], kind, dims, extra])
         colours.append(TYPE_COLOURS.get(kind, "#888888"))
@@ -304,8 +301,7 @@ def draw_mechanical(ax_cat, ax_util, result: DesignResult) -> None:
         cb.set_label("Tension (kN)", fontsize=7)
         cb.ax.tick_params(labelsize=6)
         ax_cat.annotate(
-            "top %.1f kN (design %.1f kN)\n%.0f deg from vertical"
-            % (
+            "top {:.1f} kN (design {:.1f} kN)\n{:.0f} deg from vertical".format(
                 res["staticTopTensionKN"],
                 res["designTopTensionKN"],
                 res["topAngleFromVerticalDeg"],
@@ -318,7 +314,7 @@ def draw_mechanical(ax_cat, ax_util, result: DesignResult) -> None:
         ax_cat.text(
             0.02 * max(x),
             0.06 * max(z),
-            "touchdown radius %.0f m" % res["touchdownBendRadiusM"],
+            "touchdown radius {:.0f} m".format(res["touchdownBendRadiusM"]),
             fontsize=7,
         )
     else:
@@ -332,7 +328,8 @@ def draw_mechanical(ax_cat, ax_util, result: DesignResult) -> None:
     ax_cat.set_xlabel("Horizontal distance from touchdown (m)")
     ax_cat.set_ylabel("Height above seabed (m)")
     ax_cat.set_title(
-        "Free-hanging catenary, %.0f m water depth" % result.water_depth_m, fontsize=9
+        f"Free-hanging catenary, {result.water_depth_m:.0f} m water depth",
+        fontsize=9,
     )
     ax_cat.grid(alpha=0.3)
 
@@ -359,7 +356,7 @@ def draw_mechanical(ax_cat, ax_util, result: DesignResult) -> None:
     ax_util.set_title("Mechanical utilisation", fontsize=9)
     ax_util.tick_params(axis="y", labelsize=7)
     for i, v in enumerate(vals):
-        ax_util.text(v + 0.02, i, "%.2f" % v, va="center", fontsize=7)
+        ax_util.text(v + 0.02, i, f"{v:.2f}", va="center", fontsize=7)
 
 
 def draw_electrical(ax, result: DesignResult) -> bool:
@@ -414,8 +411,7 @@ def draw_electrical(ax, result: DesignResult) -> bool:
         ax.text(
             0.03,
             0.97,
-            "%.2f MW load at design length:\nloss %.3f MW, voltage drop %.2f %%,\ncharging current %.1f A"
-            % (
+            "{:.2f} MW load at design length:\nloss {:.3f} MW, voltage drop {:.2f} %,\ncharging current {:.1f} A".format(
                 pt["loadMW"],
                 pt["lossMW"],
                 pt["voltageDropPercent"],
@@ -438,27 +434,31 @@ def draw_checks(ax, result: DesignResult) -> None:
     w = result.data["weight"]
     res = result.data["calculatedResults"]
     headline = [
-        ("Overall diameter", "%.1f mm" % res["calculatedOuterDiameterMm"]),
-        ("Armour layers", "%d" % res["requiredArmorLayers"]),
+        ("Overall diameter", "{:.1f} mm".format(res["calculatedOuterDiameterMm"])),
+        ("Armour layers", "{:d}".format(res["requiredArmorLayers"])),
         (
             "Weight in air, empty / filled",
-            "%.1f / %.1f kg/m"
-            % (w["dryWeightPerMeterKgM"], w["filledWeightPerMeterKgM"]),
+            "{:.1f} / {:.1f} kg/m".format(
+                w["dryWeightPerMeterKgM"], w["filledWeightPerMeterKgM"]
+            ),
         ),
-        ("Weight in seawater, filled", "%.1f kg/m" % w["submergedWeightPerMeterKgM"]),
+        (
+            "Weight in seawater, filled",
+            "{:.1f} kg/m".format(w["submergedWeightPerMeterKgM"]),
+        ),
         (
             "Weight ratio (air / displaced seawater)",
-            "%.2f" % res["weightRatio"] if "weightRatio" in res else "n/a",
+            "{:.2f}".format(res["weightRatio"]) if "weightRatio" in res else "n/a",
         ),
         (
             "Optical budget",
             (
-                "%.1f dB" % res["opticalBudgetDb"]
+                "{:.1f} dB".format(res["opticalBudgetDb"])
                 if "opticalBudgetDb" in res
                 else "no fibre"
             ),
         ),
-        ("Total dry weight", "%.0f t" % w["totalDryWeightTonnes"]),
+        ("Total dry weight", "{:.0f} t".format(w["totalDryWeightTonnes"])),
     ]
     n_rows = len(checks) + len(headline) + 2
     step = 1.0 / (n_rows + 0.5)

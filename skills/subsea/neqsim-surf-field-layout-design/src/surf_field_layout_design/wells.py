@@ -185,23 +185,14 @@ def trajectory_warnings(paths: Sequence[WellPath]) -> list[str]:
     if undrillable:
         worst = max(undrillable, key=lambda path: path.build_rate_deg_per_30m)
         warnings.append(
-            "%d of %d wells need more than %.0f deg/30 m to land in the reservoir "
-            "(worst %s at %.1f deg/30 m): move the drill centres further from the "
-            "targets, kick off shallower, or accept a higher dogleg severity"
-            % (
-                len(undrillable),
-                len(paths),
-                MAX_SCREENING_DOGLEG_DEG_PER_30M,
-                worst.well_tag,
-                worst.build_rate_deg_per_30m,
-            )
+            f"{len(undrillable):d} of {len(paths):d} wells need more than {MAX_SCREENING_DOGLEG_DEG_PER_30M:.0f} deg/30 m to land in the reservoir (worst {worst.well_tag!s} at {worst.build_rate_deg_per_30m:.1f} deg/30 m): move the drill centres further from the targets, kick off shallower, or accept a higher dogleg severity"
         )
     if paths:
         shallowest = min(path.landing_tvd_m - path.kick_off_tvd_m for path in paths)
         if shallowest < 150.0:
             warnings.append(
-                "only %.0f m of true vertical depth is available between the kick-off "
+                f"only {shallowest:.0f} m of true vertical depth is available between the kick-off "
                 "point and the reservoir; a shallow reservoir under deep water is a "
-                "drilling constraint, not a geometry detail" % shallowest
+                "drilling constraint, not a geometry detail"
             )
     return warnings

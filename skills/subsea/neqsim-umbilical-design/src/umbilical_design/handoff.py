@@ -119,24 +119,24 @@ def key_numbers(result: DesignResult) -> dict[str, dict[str, Any]]:
     }
     for e in result.fluid_lines:
         slug = e["name"].lower().replace(" ", "_")
-        out["umbilical_%s_friction_drop_bar" % slug] = {
+        out[f"umbilical_{slug!s}_friction_drop_bar"] = {
             "value": e["frictionDropBar"],
             "unit": "bar",
             "source": src,
         }
-        out["umbilical_%s_time90_min" % slug] = {
+        out[f"umbilical_{slug!s}_time90_min"] = {
             "value": e["time90PercentS"] / 60.0,
             "unit": "min",
             "source": src,
         }
         if "fillVolumeLitres" in e:
-            out["umbilical_%s_fill_volume_l" % slug] = {
+            out[f"umbilical_{slug!s}_fill_volume_l"] = {
                 "value": e["fillVolumeLitres"],
                 "unit": "L",
                 "source": src,
             }
         if "displacementTimeHours" in e:
-            out["umbilical_%s_displacement_time_h" % slug] = {
+            out[f"umbilical_{slug!s}_displacement_time_h"] = {
                 "value": e["displacementTimeHours"],
                 "unit": "h",
                 "source": src,
@@ -181,10 +181,7 @@ def captions(result: DesignResult) -> dict[str, str]:
     km = result.length_m / 1000.0
     out = {
         "cross_section": (
-            "Umbilical cross-section (to scale, element packing by circle placement): %d fluid lines, %d cables or "
-            "fibres inside %d armour layer(s) and an outer sheath, overall diameter %.1f mm, %.1f kg/m in air "
-            "(empty) and %.1f kg/m in seawater (filled)."
-            % (
+            "Umbilical cross-section (to scale, element packing by circle placement): {:d} fluid lines, {:d} cables or fibres inside {:d} armour layer(s) and an outer sheath, overall diameter {:.1f} mm, {:.1f} kg/m in air (empty) and {:.1f} kg/m in seawater (filled).".format(
                 n_lines,
                 len(result.elements) - n_lines,
                 res["requiredArmorLayers"],
@@ -194,15 +191,14 @@ def captions(result: DesignResult) -> dict[str, str]:
             )
         ),
         "hydraulics": (
-            "Hydraulic and chemical lines over %.1f km: friction pressure drop against flow (dot = design flow) and the "
-            "time for a topside pressure step to reach 90 %% at the subsea end, with the acoustic transit time as a lower "
-            "bound." % km
+            f"Hydraulic and chemical lines over {km:.1f} km: friction pressure drop against flow (dot = design flow) and the "
+            "time for a topside pressure step to reach 90 % at the subsea end, with the acoustic transit time as a lower "
+            "bound."
         ),
         "mechanical": (
-            "Free-hanging catenary in %.0f m water depth: static top tension %.1f kN (design %.1f kN) against an armour "
-            "capacity of %.0f kN, touchdown bend radius %.0f m against a minimum bend radius of %.1f m; collapse "
-            "utilisation %.2f and hoop-stress utilisation %.2f."
-            % (
+            "Free-hanging catenary in {:.0f} m water depth: static top tension {:.1f} kN (design {:.1f} kN) against an armour "
+            "capacity of {:.0f} kN, touchdown bend radius {:.0f} m against a minimum bend radius of {:.1f} m; collapse "
+            "utilisation {:.2f} and hoop-stress utilisation {:.2f}.".format(
                 result.water_depth_m,
                 res["staticTopTensionKN"],
                 res["designTopTensionKN"],
@@ -220,9 +216,8 @@ def captions(result: DesignResult) -> dict[str, str]:
     pt = result.data.get("powerTransmission")
     if pt:
         out["electrical"] = (
-            "Power cable against step-out distance for a %.2f MW load: voltage drop %.2f %% and loss %.3f MW at %.1f km; "
-            "the cable charging current grows linearly with length (%.1f A at the design length)."
-            % (
+            "Power cable against step-out distance for a {:.2f} MW load: voltage drop {:.2f} % and loss {:.3f} MW at {:.1f} km; "
+            "the cable charging current grows linearly with length ({:.1f} A at the design length).".format(
                 pt["loadMW"],
                 pt["voltageDropPercent"],
                 pt["lossMW"],
@@ -238,7 +233,7 @@ def findings(result: DesignResult) -> list[str]:
     out: list[str] = []
     for key, ok in result.checks.items():
         if not ok:
-            out.append("FAIL: %s." % CHECK_LABELS.get(key, key))
+            out.append(f"FAIL: {CHECK_LABELS.get(key, key)!s}.")
     slow = [
         l
         for l in result.fluid_lines
@@ -246,9 +241,9 @@ def findings(result: DesignResult) -> list[str]:
     ]
     for l in slow:
         out.append(
-            "Hydraulic line '%s' needs %.0f min for 90 %% of a pressure step at the subsea end (valve response time "
-            "requirement must be checked against the control-system specification)."
-            % (l["name"], l["time90PercentS"] / 60.0)
+            "Hydraulic line '{!s}' needs {:.0f} min for 90 % of a pressure step at the subsea end (valve response time requirement must be checked against the control-system specification).".format(
+                l["name"], l["time90PercentS"] / 60.0
+            )
         )
     heavy = [
         l
@@ -257,8 +252,9 @@ def findings(result: DesignResult) -> list[str]:
     ]
     for l in heavy:
         out.append(
-            "Chemical line '%s' has %.0f bar friction drop at its design flow; increase the inner diameter or reduce the "
-            "rate." % (l["name"], l["frictionDropBar"])
+            "Chemical line '{!s}' has {:.0f} bar friction drop at its design flow; increase the inner diameter or reduce the rate.".format(
+                l["name"], l["frictionDropBar"]
+            )
         )
     lay = cross_section_layout(result)
     if lay["packing_ratio"] > 1.1:
@@ -271,20 +267,22 @@ def findings(result: DesignResult) -> list[str]:
     ]
     for l in slow_change:
         out.append(
-            "Line '%s' needs %.0f h to displace its %.0f L volume at the design flow; check the fluid changeout and "
-            "start-up time against the operating requirement."
-            % (l["name"], l["displacementTimeHours"], l["fillVolumeLitres"])
+            "Line '{!s}' needs {:.0f} h to displace its {:.0f} L volume at the design flow; check the fluid changeout and start-up time against the operating requirement.".format(
+                l["name"], l["displacementTimeHours"], l["fillVolumeLitres"]
+            )
         )
     if result.data["calculatedResults"].get("weightRatio", 99.0) < 1.2:
         out.append(
-            "Weight ratio %.2f is low; check on-bottom stability and handling."
-            % result.data["calculatedResults"]["weightRatio"]
+            "Weight ratio {:.2f} is low; check on-bottom stability and handling.".format(
+                result.data["calculatedResults"]["weightRatio"]
+            )
         )
     pt = result.data.get("powerTransmission")
     if pt and abs(pt["voltageDropPercent"]) > 10.0:
         out.append(
-            "Power cable voltage drop %.1f %% is large; check conductor size and transmission voltage."
-            % pt["voltageDropPercent"]
+            "Power cable voltage drop {:.1f} % is large; check conductor size and transmission voltage.".format(
+                pt["voltageDropPercent"]
+            )
         )
     return out
 
@@ -308,11 +306,10 @@ def write_handoff(
 
     caps = captions(result)
     lines: list[str] = []
-    lines.append("# HANDOFF: umbilical design (`%s`)" % out_dir.name)
+    lines.append(f"# HANDOFF: umbilical design (`{out_dir.name!s}`)")
     lines.append("")
     lines.append(
-        "Date: %s. **Basis version used = %s.** Screening-level design (NeqSim `UmbilicalMechanicalDesign`), not reviewed, not for construction."
-        % (date.today().isoformat(), meta.basis_version)
+        f"Date: {date.today().isoformat()!s}. **Basis version used = {meta.basis_version!s}.** Screening-level design (NeqSim `UmbilicalMechanicalDesign`), not reviewed, not for construction."
     )
     lines.append("")
     lines.append("## 1. Result")
@@ -325,7 +322,9 @@ def write_handoff(
     lines.append("|---|---|")
     for key, ok in result.checks.items():
         lines.append(
-            "| %s | %s |" % (CHECK_LABELS.get(key, key), "PASS" if ok else "**FAIL**")
+            "| {!s} | {!s} |".format(
+                CHECK_LABELS.get(key, key), "PASS" if ok else "**FAIL**"
+            )
         )
     lines.append("")
     lines.append("## 2. Figures and captions")
@@ -334,7 +333,7 @@ def write_handoff(
     lines.append("|---|---|---|")
     for i, (name, path) in enumerate(figs.items(), start=1):
         rel = path.relative_to(out_dir).as_posix()
-        lines.append("| %d | `%s` | %s |" % (i, rel, caps.get(name, "")))
+        lines.append("| {:d} | `{!s}` | {!s} |".format(i, rel, caps.get(name, "")))
     lines.append("")
     lines.append("## 3. Findings")
     lines.append("")
@@ -351,16 +350,16 @@ def write_handoff(
         lines.append("| Input | Value | Status |")
         lines.append("|---|---|---|")
         lines.append(
-            "| Length | %.0f m | %s |" % (spec.length_m, spec.status("length"))
+            "| Length | {:.0f} m | {!s} |".format(spec.length_m, spec.status("length"))
         )
         lines.append(
-            "| Water depth | %.0f m | %s |"
-            % (spec.water_depth_m, spec.status("water_depth"))
+            "| Water depth | {:.0f} m | {!s} |".format(
+                spec.water_depth_m, spec.status("water_depth")
+            )
         )
         for l in spec.lines:
             lines.append(
-                "| %s (%s) | ID %.2f mm, %.0f bar, %.2f m3/h | %s |"
-                % (
+                "| {!s} ({!s}) | ID {:.2f} mm, {:.0f} bar, {:.2f} m3/h | {!s} |".format(
                     l.name,
                     l.kind,
                     l.inner_diameter_mm,
@@ -371,16 +370,17 @@ def write_handoff(
             )
         for c in spec.cables:
             lines.append(
-                "| %s | %d cores, %.0f V | %s |"
-                % (c.name, c.cores, c.voltage_v, spec.status("cable:" + c.name))
+                "| {!s} | {:d} cores, {:.0f} V | {!s} |".format(
+                    c.name, c.cores, c.voltage_v, spec.status("cable:" + c.name)
+                )
             )
         lines.append("")
-    lines.append("## 5. Screening defaults used (status: %s)" % STATUS_DEFAULT)
+    lines.append(f"## 5. Screening defaults used (status: {STATUS_DEFAULT!s})")
     lines.append("")
     lines.append("| Item | Default |")
     lines.append("|---|---|")
     for k, v in SCREENING_DEFAULTS:
-        lines.append("| %s | %s |" % (k, v))
+        lines.append(f"| {k!s} | {v!s} |")
     lines.append("")
     lines.append("## 6. Open items")
     lines.append("")
@@ -401,8 +401,7 @@ def write_handoff(
     lines.append("")
     lines.append("```")
     lines.append(
-        'python -m umbilical_design render --result data\\umbilical_design.json --out . --basis-version "%s"'
-        % meta.basis_version
+        f'python -m umbilical_design render --result data\\umbilical_design.json --out . --basis-version "{meta.basis_version!s}"'
     )
     lines.append("```")
     handoff_path = out_dir / "HANDOFF.md"

@@ -142,7 +142,7 @@ def nps_od_mm(nps):
         ValueError: if the NPS is not in the table.
     """
     if nps not in NPS_OD_MM:
-        raise ValueError("NPS %s is not a tabulated size" % nps)
+        raise ValueError(f"NPS {nps!s} is not a tabulated size")
     return NPS_OD_MM[nps]
 
 

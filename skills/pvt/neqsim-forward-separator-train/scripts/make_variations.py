@@ -97,7 +97,7 @@ def main():
     for k, z in enumerate(comps, start=1):
         fl = base.clone()
         fl.setMolarComposition(z.tolist())
-        name = "fluid_%02d.e300" % k
+        name = f"fluid_{k:02d}.e300"
         jneqsim.thermo.util.readwrite.EclipseFluidReadWrite.write(
             fl, os.path.join(args.outdir, name)
         )
@@ -123,7 +123,7 @@ def main():
         )
         w.writeheader()
         w.writerows(rows)
-    print("wrote %d E300 files and %s" % (len(rows), path))
+    print(f"wrote {len(rows):d} E300 files and {path!s}")
 
 
 if __name__ == "__main__":

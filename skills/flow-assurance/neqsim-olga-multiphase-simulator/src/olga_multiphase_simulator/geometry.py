@@ -332,8 +332,7 @@ def discretize_route(
     for i in range(1, len(x)):
         if x[i] <= x[i - 1]:
             raise DiscretizationError(
-                "route distances must increase: x[%d]=%r is not beyond x[%d]=%r"
-                % (i, x[i], i - 1, x[i - 1])
+                f"route distances must increase: x[{i:d}]={x[i]!r} is not beyond x[{i - 1:d}]={x[i - 1]!r}"
             )
     if max_section_length is None:
         max_section_length = 2.0 * target_section_length
@@ -391,7 +390,7 @@ def discretize_route(
     for i in range(npipes):
         pipes.append(
             PipeSegment(
-                label="%s_%02d" % (label_prefix, i + 1),
+                label=f"{label_prefix!s}_{i + 1:02d}",
                 x_start=x[i],
                 y_start=y[i],
                 x_end=x[i + 1],

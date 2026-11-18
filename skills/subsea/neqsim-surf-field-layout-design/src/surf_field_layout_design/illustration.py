@@ -59,7 +59,7 @@ class KeyFact:
     group: str = ""
 
     def rendered(self) -> str:
-        return "%s %s" % (self.value, self.unit) if self.unit else self.value
+        return f"{self.value!s} {self.unit!s}" if self.unit else self.value
 
 
 @dataclass(frozen=True)
@@ -125,7 +125,7 @@ def horizon_from_model_grid(
     values = np.asarray(depth_values, dtype=float)
     if values.size != nx * ny:
         raise ValueError(
-            "depth_values has %d entries but nx*ny is %d" % (values.size, nx * ny)
+            f"depth_values has {values.size:d} entries but nx*ny is {nx * ny:d}"
         )
     depth = values.reshape(ny, nx)
 
@@ -554,7 +554,7 @@ def render_field_illustration(
         bar_axis = figure.add_axes([0.045, 0.10, 0.013, 0.26])
         bar = figure.colorbar(horizon_artist, cax=bar_axis)
         bar.set_label(
-            "%s [m TVDMSL]" % horizon.name, fontsize=8.0, color=THEME["muted"]
+            f"{horizon.name!s} [m TVDMSL]", fontsize=8.0, color=THEME["muted"]
         )
         bar.ax.tick_params(labelsize=7.0, colors=THEME["muted"])
         bar.ax.invert_yaxis()

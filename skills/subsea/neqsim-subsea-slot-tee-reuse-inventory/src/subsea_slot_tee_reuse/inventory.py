@@ -123,7 +123,7 @@ def validate_inventory(inv, as_of_year=None):
         issues.append({"level": level, "item": item, "message": msg})
 
     if inv.get("schema") != INVENTORY_SCHEMA:
-        add("error", None, "schema must be %s" % INVENTORY_SCHEMA)
+        add("error", None, f"schema must be {INVENTORY_SCHEMA!s}")
     ids = set()
     items = [normalize_item(i, as_of_year) for i in inv.get("items", [])]
     if not items:
@@ -141,7 +141,11 @@ def validate_inventory(inv, as_of_year=None):
             ("condition", CONDITIONS),
         ):
             if it[key] not in allowed:
-                add("error", iid, "%s '%s' not in %s" % (key, it[key], list(allowed)))
+                add(
+                    "error",
+                    iid,
+                    f"{key!s} '{it[key]!s}' not in {list(allowed)!s}",
+                )
         if it["kind"] in (
             "template",
             "manifold",
@@ -155,7 +159,7 @@ def validate_inventory(inv, as_of_year=None):
                 add(
                     "error",
                     iid,
-                    "free_slots %.0f exceeds total_slots %.0f" % (free, tot),
+                    f"free_slots {free:.0f} exceeds total_slots {tot:.0f}",
                 )
             if (
                 free is not None
@@ -165,11 +169,16 @@ def validate_inventory(inv, as_of_year=None):
                 add(
                     "warning",
                     iid,
-                    "free slots are %s, not documented: do not present them as free"
-                    % it["verification"],
+                    "free slots are {!s}, not documented: do not present them as free".format(
+                        it["verification"]
+                    ),
                 )
         if it["status"] in ("spare", "abandoned") and it["verification"] == "unknown":
-            add("warning", iid, "%s claimed without any documentation" % it["status"])
+            add(
+                "warning",
+                iid,
+                "{!s} claimed without any documentation".format(it["status"]),
+            )
         if it["kind"] in LINE_KINDS and it["status"] != "planned":
             if it["size_in"] is None:
                 add(
@@ -187,7 +196,7 @@ def validate_inventory(inv, as_of_year=None):
                 )
         for ref in it["connects"]:
             if ref not in {i.get("id", i.get("name")) for i in inv.get("items", [])}:
-                add("warning", iid, "connects to unknown id '%s'" % ref)
+                add("warning", iid, f"connects to unknown id '{ref!s}'")
     return issues
 
 

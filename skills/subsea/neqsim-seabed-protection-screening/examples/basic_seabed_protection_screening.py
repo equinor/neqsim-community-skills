@@ -81,15 +81,7 @@ def main():
 
     for seg in plan.segments:
         print(
-            "KP %6.0f-%6.0f %-24s %-22s trench %-18s rock %7.0f t"
-            % (
-                seg.start_kp_m,
-                seg.end_kp_m,
-                seg.controlling_hazard,
-                seg.strategy,
-                seg.trench_method,
-                seg.rock_tonnes,
-            )
+            f"KP {seg.start_kp_m:6.0f}-{seg.end_kp_m:6.0f} {seg.controlling_hazard!s:<24} {seg.strategy!s:<22} trench {seg.trench_method!s:<18} rock {seg.rock_tonnes:7.0f} t"
         )
     print(
         "rock tonnes:",

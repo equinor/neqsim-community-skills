@@ -85,7 +85,7 @@ def items_from_sodir(
                     "total_slots": total,
                     "free_slots": free,
                     "verification": "estimated" if free is not None else "unknown",
-                    "source": "Sodir facility %s" % name,
+                    "source": f"Sodir facility {name!s}",
                     "notes": (
                         "slot numbers are not published by Sodir; count is nominal minus connected wells"
                         if free is not None
@@ -110,7 +110,7 @@ def items_from_sodir(
                         x for x in (row.get("fclNameFrom"), row.get("fclNameTo")) if x
                     ],
                     "verification": "documented",
-                    "source": "Sodir pipeline %s" % row.get("pplName"),
+                    "source": "Sodir pipeline {!s}".format(row.get("pplName")),
                 },
                 as_of_year,
             )

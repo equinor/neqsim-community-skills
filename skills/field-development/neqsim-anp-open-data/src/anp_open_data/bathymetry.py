@@ -32,15 +32,7 @@ def build_etopo_url(
 ) -> str:
     """Build the ERDDAP griddap query for ``bbox = (min_lon, max_lon, min_lat, max_lat)``."""
     lon0, lon1, lat0, lat1 = bbox
-    return "%s?altitude[(%s):%d:(%s)][(%s):%d:(%s)]" % (
-        base,
-        lat0,
-        stride,
-        lat1,
-        lon0,
-        stride,
-        lon1,
-    )
+    return f"{base!s}?altitude[({lat0!s}):{stride:d}:({lat1!s})][({lon0!s}):{stride:d}:({lon1!s})]"
 
 
 def _default_get(url: str, timeout: float) -> bytes:
@@ -83,7 +75,7 @@ def fetch_etopo_grid(
     key = hashlib.sha1(url.encode("utf-8")).hexdigest()[:10]
     cache = Path(cache_dir)
     cache.mkdir(parents=True, exist_ok=True)
-    fname = cache / ("etopo_%s.json" % key)
+    fname = cache / (f"etopo_{key!s}.json")
     manifest = fname.with_suffix(".manifest.json")
     status = "cache"
     if fname.exists():
@@ -96,7 +88,7 @@ def fetch_etopo_grid(
     else:
         if offline:
             raise FileNotFoundError(
-                "offline mode and no cached ETOPO grid %s" % fname.name
+                f"offline mode and no cached ETOPO grid {fname.name!s}"
             )
         raw = json.loads((getter or _default_get)(url, timeout).decode("utf-8"))
         fname.write_text(json.dumps(raw), encoding="utf-8")
@@ -160,7 +152,7 @@ def _index(axis: Sequence[float], v: float) -> tuple[int, float]:
     """Return lower index and fraction of ``v`` on an ascending regular axis."""
     if not axis[0] <= v <= axis[-1]:
         raise ValueError(
-            "point %.4f outside grid range %.4f..%.4f" % (v, axis[0], axis[-1])
+            f"point {v:.4f} outside grid range {axis[0]:.4f}..{axis[-1]:.4f}"
         )
     step = (axis[-1] - axis[0]) / (len(axis) - 1)
     i = min(int((v - axis[0]) / step), len(axis) - 2)
@@ -270,5 +262,5 @@ def flag_slopes(
         for a, b in itertools.pairwise(profile):
             if b["slope_deg"] > lim:
                 km += b["kp_km"] - a["kp_km"]
-        out["length_above_%gdeg_km" % lim] = round(km, 2)
+        out[f"length_above_{lim:g}deg_km"] = round(km, 2)
     return out

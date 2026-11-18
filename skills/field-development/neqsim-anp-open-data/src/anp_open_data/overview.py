@@ -241,7 +241,7 @@ def pipeline_register(layers: Mapping[str, list[dict]]) -> list[dict]:
                 )
             rows.append(
                 {
-                    "id": "%s_%03d" % (cat, i),
+                    "id": f"{cat!s}_{i:03d}",
                     "category": cat,
                     "name": _first(
                         p, ("NOME_DUTO", "DUTO", "NOME", "TRECHO", "DUTO_ID", "ID")
@@ -310,14 +310,14 @@ def node_register(layers: Mapping[str, list[dict]]) -> list[dict]:
                 continue
             p = f.get("properties", {})
             if kind == "platform":
-                cap = "oil %s m3/d; gas %s m3/d" % (
+                cap = "oil {!s} m3/d; gas {!s} m3/d".format(
                     _first(p, ("QTD_PROCESSAMENTO_PETROLEO",)),
                     _first(p, ("QTD_PROCESSAMENTO_GAS",)),
                 )
                 detail = _first(p, ("DESC_TIPO_UEP",))
                 fields = _first(p, ("DESC_ATENDIMENTOS",))
                 if fields:
-                    detail = "%s; serves %s" % (detail, fields)
+                    detail = f"{detail!s}; serves {fields!s}"
             else:
                 cap = _first(p, ("CAPACIDADE", "CAPAC_BPD"))
                 detail = _first(
@@ -333,7 +333,7 @@ def node_register(layers: Mapping[str, list[dict]]) -> list[dict]:
                 )
             nodes.append(
                 {
-                    "node_id": "%s_%03d" % (kind, i),
+                    "node_id": f"{kind!s}_{i:03d}",
                     "kind": kind,
                     "name": _first(p, name_keys),
                     "lon": round(pt[0], 5),
@@ -400,7 +400,7 @@ def connect_pipelines(
         names = {m[0]["id"] for m in c["members"]}
         if len(names) < 2:
             continue
-        nid = "junction_%03d" % k
+        nid = f"junction_{k:03d}"
         k += 1
         label = sorted({str(m[0]["name"]) for m in c["members"]})
         all_nodes.append(

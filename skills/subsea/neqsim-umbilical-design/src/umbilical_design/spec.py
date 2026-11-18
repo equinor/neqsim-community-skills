@@ -22,11 +22,11 @@ class FluidLine:
     def __post_init__(self) -> None:
         if self.kind not in ("hydraulic", "chemical"):
             raise ValueError(
-                "kind must be 'hydraulic' or 'chemical', got %r" % self.kind
+                f"kind must be 'hydraulic' or 'chemical', got {self.kind!r}"
             )
         if self.inner_diameter_mm <= 0 or self.design_pressure_bar <= 0:
             raise ValueError(
-                "inner diameter and design pressure must be positive for %s" % self.name
+                f"inner diameter and design pressure must be positive for {self.name!s}"
             )
 
 

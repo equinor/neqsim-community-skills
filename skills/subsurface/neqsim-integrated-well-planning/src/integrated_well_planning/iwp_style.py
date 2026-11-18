@@ -242,7 +242,7 @@ def provenance_record(
         "caption": caption,
         "generator": generator,
         "inputs_sha256_16": _hash(inputs),
-        "created": _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"),
+        "created": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
         "synthetic": synthetic,
         "sources": sources or [],
         "ledger_refs": ledger_refs or [],

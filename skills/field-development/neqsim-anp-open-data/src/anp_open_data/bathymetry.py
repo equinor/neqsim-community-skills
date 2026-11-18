@@ -100,7 +100,7 @@ def fetch_etopo_grid(
             )
         raw = json.loads((getter or _default_get)(url, timeout).decode("utf-8"))
         fname.write_text(json.dumps(raw), encoding="utf-8")
-        retrieved = _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds")
+        retrieved = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
         status = "downloaded"
     grid = grid_from_erddap(raw)
     grid.update(

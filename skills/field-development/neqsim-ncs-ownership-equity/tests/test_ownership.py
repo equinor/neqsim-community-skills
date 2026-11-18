@@ -1,6 +1,6 @@
 import json
 import urllib.parse
-from datetime import UTC, date
+from datetime import date, timezone
 
 import pytest
 from ncs_ownership_equity import OwnershipError, OwnershipReader, portfolio_net
@@ -12,7 +12,8 @@ def ms(y, m, d):
 
     return int(
         (
-            datetime(y, m, d, tzinfo=UTC) - datetime(1970, 1, 1, tzinfo=UTC)
+            datetime(y, m, d, tzinfo=timezone.utc)
+            - datetime(1970, 1, 1, tzinfo=timezone.utc)
         ).total_seconds()
         * 1000
     )

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from .client import MarineClient, SourceError
@@ -322,7 +322,7 @@ def screen_earthquakes(
 def _year(millis: float | None) -> int | None:
     if millis is None:
         return None
-    return datetime.fromtimestamp(millis / 1000.0, tz=UTC).year
+    return datetime.fromtimestamp(millis / 1000.0, tz=timezone.utc).year
 
 
 def summary_rows(result: dict[str, Any]) -> list[dict[str, Any]]:

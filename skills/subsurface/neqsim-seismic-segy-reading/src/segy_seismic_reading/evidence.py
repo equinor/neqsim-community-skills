@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from .geometry import SegyGeometry, inspect_segy
@@ -42,7 +42,7 @@ def to_evidence(geometry: SegyGeometry) -> dict:
         "source": {
             "path": geometry.path,
             "sha256": geometry.sha256,
-            "read_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+            "read_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "reader": "segyio",
         },
         "trace_count": geometry.trace_count,

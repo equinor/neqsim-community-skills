@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import sys
 import urllib.parse
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -90,7 +90,7 @@ def build_catalog(fetch: Fetch = default_fetch) -> dict[str, Any]:
     entries.sort(key=lambda e: e["id"])
     return {
         "source": DATASERVICE_DATA,
-        "generated_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+        "generated_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "id_scheme": "XYZZ: X main category (1 admin, 2 geology, 3 licences, 4 surveys, 5 wellbore, 6 facilities, "
         "7 hydrocarbons, 8 seabed minerals, 9 carbon storage), Y sub category, ZZ layer (00 = mother table)",
         "geometry_crs": "EPSG:4230 (ED50) unless outSR is requested",

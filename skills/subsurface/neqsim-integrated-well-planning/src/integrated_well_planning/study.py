@@ -386,8 +386,6 @@ def alternatives(
             model, basis, profile_years, CASES
         )
     _dump(paths["results"] / "alternatives.json", out)
-    if (paths["results"] / "model_results.json").exists():
-        load_json(paths["results"] / "model_results.json")
     if profile_years and producer:
         paths["results"].joinpath("handoffs").mkdir(exist_ok=True)
         msg = cost_profile_message(basis, out["deliverability_profile"])

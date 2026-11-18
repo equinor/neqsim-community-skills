@@ -200,7 +200,7 @@ def draw_element_schedule(ax, result: DesignResult) -> None:
             )
         elif kind == "electrical":
             dims = "{:d} x {:.1f} mm2, OD {:.1f}".format(
-                e["cores"], e["conductorAreaMm2"], e["outerDiameterMm"]
+                int(e["cores"]), e["conductorAreaMm2"], e["outerDiameterMm"]
             )
             extra = "{:.0f} V".format(e["voltageV"])
         else:

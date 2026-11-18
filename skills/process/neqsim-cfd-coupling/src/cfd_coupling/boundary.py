@@ -10,9 +10,12 @@ and the solver that follows from them.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from math import isfinite, pi, sqrt
 from typing import Any
+
+_LOGGER = logging.getLogger(__name__)
 
 # Standard k-epsilon model constant.
 C_MU = 0.09
@@ -81,7 +84,10 @@ def fluid_state_from_neqsim(system: Any, *, phase: str = "gas") -> FluidState:
     try:
         system.initProperties()
     except Exception:  # pragma: no cover - depends on the NeqSim build in use
-        pass
+        _LOGGER.warning(
+            "NeqSim property initialization failed; reading existing phase properties",
+            exc_info=True,
+        )
 
     wanted = (phase or "").strip().lower()
     phase_count = int(system.getNumberOfPhases())

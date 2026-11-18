@@ -11,11 +11,14 @@ Nothing is downloaded or built at run time. ``setup`` is an explicit, user-run c
 
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+_LOGGER = logging.getLogger(__name__)
 
 DEFAULT_VERSION = "1.4.38"
 ASSEMBLY = "TimeSeriesAnalysis"
@@ -42,8 +45,11 @@ def find_assemblies(version: str = DEFAULT_VERSION) -> Path | None:
         candidates.append(
             Path(timeseriesanalysis.__file__).resolve().parent / "_assemblies"
         )
-    except Exception:  # noqa: BLE001 - the py package is optional
-        pass
+    except Exception:
+        _LOGGER.warning(
+            "Optional timeseriesanalysis package unavailable; checking the configured bundle",
+            exc_info=True,
+        )
     candidates.append(default_bundle_dir(version))
     for path in candidates:
         if (path / f"{ASSEMBLY}.dll").exists():

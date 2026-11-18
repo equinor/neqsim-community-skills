@@ -218,8 +218,7 @@ def _read_tokens(lines: list[str], start: int):
             break
         terminated = "/" in content
         content = content.replace("/", " ")
-        for token in content.split():
-            tokens.append(token)
+        tokens.extend(content.split())
         if terminated:
             break
     return tokens, i

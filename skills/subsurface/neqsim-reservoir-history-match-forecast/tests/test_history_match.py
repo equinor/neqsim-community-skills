@@ -291,7 +291,7 @@ def test_deliverability_fit_and_forecast(specs):
     tbl = history_forecast_table(sim, fc)
     assert set(tbl.period) == {"history", "forecast"}
     # composition of the produced fluid becomes leaner with depletion
-    c1 = fc.field.tanks["A"].path.fluid.names.index("methane")
+    assert "methane" in fc.field.tanks["A"].path.fluid.names
     comp = fc.composition_series("A", fld.tanks["A"].path.fluid.names)
     assert comp.methane.iloc[-1] > comp.methane.iloc[0]
 

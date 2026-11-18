@@ -193,7 +193,6 @@ class CfdCouplingModel:
         steady_state: bool = True,
     ) -> CfdQualityResult:
         """Decide whether a CFD study is fit to feed an engineering model."""
-        model_key = _normalise_model(turbulence_model)
         treatment_key = (wall_treatment or "").strip().lower()
         if treatment_key not in {"wall_function", "resolved"}:
             raise ValueError("wall_treatment must be 'wall_function' or 'resolved'")

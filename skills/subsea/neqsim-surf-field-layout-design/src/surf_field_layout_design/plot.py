@@ -104,7 +104,7 @@ def plot_layout_map(
     axis.set_xlabel("longitude [deg E]")
     axis.set_ylabel("latitude [deg N]")
     axis.grid(True, alpha=0.3, ls=":")
-    axis.set_title(title or "%s SURF layout" % layout.field_name)
+    axis.set_title(title or f"{layout.field_name!s} SURF layout")
 
     latitude = layout.frame.origin_latitude_deg
     axis.set_aspect(1.0 / max(abs(_cos(latitude)), 1e-6))

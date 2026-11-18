@@ -109,7 +109,7 @@ def nearest_pipeline(
     out = []
     for i, f in enumerate(pipelines_geojson.get("features", [])):
         props = f.get("properties") or {}
-        name = next((props[k] for k in name_keys if props.get(k)), "feature-%d" % i)
+        name = next((props[k] for k in name_keys if props.get(k)), f"feature-{i:d}")
         best = None
         for part in _lines(f.get("geometry")):
             if not part:
@@ -195,7 +195,7 @@ def rank_tie_in_hosts(
         if req is None:
             return None
         if cap is None or cur is None:
-            notes.append("%s ullage unknown" % label)
+            notes.append(f"{label!s} ullage unknown")
             return 0.5
         free = max(0.0, float(cap) - float(cur))
         return min(1.0, free / req) if req > 0 else 1.0
@@ -217,7 +217,7 @@ def rank_tie_in_hosts(
             d = float(h["distance_km"])
         else:
             if h.get("lon") is None or h.get("lat") is None:
-                raise ValueError("host %r has no coordinates" % h.get("name"))
+                raise ValueError("host {!r} has no coordinates".format(h.get("name")))
             d = haversine_km(lon0, lat0, float(h["lon"]), float(h["lat"]))
         s_dist = max(0.0, 1.0 - d / max_step_out_km)
 

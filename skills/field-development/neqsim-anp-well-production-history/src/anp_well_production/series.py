@@ -106,8 +106,7 @@ def merge_environments(
         )
     if only and n_offshore:
         warnings.append(
-            "%d pre-salt well-months are absent from the offshore file; check that both files are from the same release."
-            % len(only)
+            f"{len(only):d} pre-salt well-months are absent from the offshore file; check that both files are from the same release."
         )
     report = {
         "n_offshore": n_offshore,
@@ -184,9 +183,7 @@ def aggregate(
             dup = _row_key(r)
             if dup in seen:
                 raise ValueError(
-                    "Duplicate row for %s in %s (field %s, installation %s): do not add the pre-salt file "
-                    "to the offshore file; use merge_environments"
-                    % (dup[0], dup[1], dup[2], dup[4])
+                    f"Duplicate row for {dup[0]!s} in {dup[1]!s} (field {dup[2]!s}, installation {dup[4]!s}): do not add the pre-salt file to the offshore file; use merge_environments"
                 )
             seen.add(dup)
         key = tuple(r.get(k) for k in by) + (r["period"],)
@@ -338,7 +335,7 @@ def completeness(
             "last": None,
             "n_periods": 0,
             "missing": [],
-            "expected_latest": "%04d-%02d" % expected_latest_period(today),
+            "expected_latest": "{:04d}-{:02d}".format(*expected_latest_period(today)),
             "behind_expected_months": None,
         }
 
@@ -350,14 +347,14 @@ def completeness(
     missing = []
     for i in range(idx(periods[0]), idx(periods[-1]) + 1):
         if i not in have:
-            missing.append("%04d-%02d" % (i // 12, i % 12 + 1))
+            missing.append(f"{i // 12:04d}-{i % 12 + 1:02d}")
     ey, em = expected_latest_period(today)
     return {
         "first": periods[0],
         "last": periods[-1],
         "n_periods": len(periods),
         "missing": missing,
-        "expected_latest": "%04d-%02d" % (ey, em),
+        "expected_latest": f"{ey:04d}-{em:02d}",
         "behind_expected_months": ey * 12 + em - 1 - idx(periods[-1]),
     }
 

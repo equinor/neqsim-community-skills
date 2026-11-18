@@ -61,19 +61,14 @@ layout = design_surf_layout(
 
 print("drill centres      :", layout.summary["drill_centres"])
 print("Xmas trees         :", layout.summary["xmas_trees"])
-print("flowline length    : %.2f km" % layout.summary["flowline_length_km"])
-print("umbilical length   : %.2f km" % layout.summary["umbilical_length_km"])
-print("riser length       : %.2f km" % layout.summary["riser_length_km"])
-print("max step-out       : %.2f km" % layout.summary["max_step_out_km"])
+print("flowline length    : {:.2f} km".format(layout.summary["flowline_length_km"]))
+print("umbilical length   : {:.2f} km".format(layout.summary["umbilical_length_km"]))
+print("riser length       : {:.2f} km".format(layout.summary["riser_length_km"]))
+print("max step-out       : {:.2f} km".format(layout.summary["max_step_out_km"]))
 for line in layout.lines_of_service("production")[:1]:
     if line.size:
         print(
-            "production flowline: %g inch nominal, %.2f m/s, erosional ratio %.2f"
-            % (
-                line.size.nominal_inch,
-                line.size.velocity_m_per_s,
-                line.size.erosional_ratio,
-            )
+            f"production flowline: {line.size.nominal_inch:g} inch nominal, {line.size.velocity_m_per_s:.2f} m/s, erosional ratio {line.size.erosional_ratio:.2f}"
         )
 for warning in layout.warnings:
     print("  !", warning)
@@ -93,4 +88,4 @@ plot_layout_map(
 print()
 print("open-data requests planned (not executed):")
 for request in DATA_PLAN["requests"]:
-    print("  %-18s %s" % (request["source"], request["purpose"]))
+    print("  {!s:<18} {!s}".format(request["source"], request["purpose"]))

@@ -29,7 +29,7 @@ def __getattr__(name):
 
         module = importlib.import_module("." + _LAZY[name], __name__)
         return getattr(module, name)
-    raise AttributeError("module %r has no attribute %r" % (__name__, name))
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 __all__ = [

@@ -93,7 +93,7 @@ def download(
     cache = Path(cache_dir)
     cache.mkdir(parents=True, exist_ok=True)
     key = hashlib.sha1(url.encode("utf-8")).hexdigest()[:8]
-    path = cache / ("anp_%s_%s" % (key, url.rsplit("/", 1)[-1]))
+    path = cache / ("anp_{!s}_{!s}".format(key, url.rsplit("/", 1)[-1]))
     meta = path.with_name(path.name + ".log.json")
     if path.exists():
         log = (
@@ -104,7 +104,7 @@ def download(
         log["status"] = "cache"
         return path, log
     if offline:
-        raise FileNotFoundError("Offline and not cached: %s" % url)
+        raise FileNotFoundError(f"Offline and not cached: {url!s}")
     raw = (getter or _default_get)(url, timeout)
     path.write_bytes(raw)
     log = {

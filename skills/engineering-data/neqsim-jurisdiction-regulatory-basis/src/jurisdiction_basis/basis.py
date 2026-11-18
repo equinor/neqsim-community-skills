@@ -71,8 +71,7 @@ def jurisdiction_block(country, facility_scope="", user_confirmed=False):
     )
     if not user_confirmed:
         block["assumptions"].append(
-            "Jurisdiction %s was inferred from the request and not confirmed by the user."
-            % key
+            f"Jurisdiction {key!s} was inferred from the request and not confirmed by the user."
         )
     return block
 
@@ -109,8 +108,7 @@ def activity_basis(
     for activity in activities:
         if activity not in ACTIVITY_TOPICS:
             raise ValueError(
-                "activity must be one of %s, got %r"
-                % (sorted(ACTIVITY_TOPICS), activity)
+                f"activity must be one of {sorted(ACTIVITY_TOPICS)!s}, got {activity!r}"
             )
     block = jurisdiction_block(country, facility_scope, user_confirmed)
     block["schema"] = "jurisdiction_activity_basis.v1"
@@ -132,10 +130,7 @@ def activity_basis(
                 "design_questions": list(DESIGN_QUESTIONS.get(topic, [])),
             }
             if not rows:
-                gap = (
-                    "No %s instrument is registered for %s (%s): research the authority source before design."
-                    % (TOPICS[topic].lower(), key, activity)
-                )
+                gap = f"No {TOPICS[topic].lower()!s} instrument is registered for {key!s} ({activity!s}): research the authority source before design."
                 block["coverage_gaps"].append(gap)
         block["activities"][activity] = topics
     unverified = sum(
@@ -147,13 +142,11 @@ def activity_basis(
     )
     if unverified:
         block["data_gaps"].append(
-            "%d registered instruments are orientation entries; fetch the current text at the source before quoting them."
-            % unverified
+            f"{unverified:d} registered instruments are orientation entries; fetch the current text at the source before quoting them."
         )
     block["data_gaps"].extend(block["coverage_gaps"])
     if operator and "equinor" not in operator.lower():
         block["assumptions"].append(
-            "Asset operated by %s: the operator's design basis and authority interface govern; Equinor requirements apply as a partner review basis only."
-            % operator
+            f"Asset operated by {operator!s}: the operator's design basis and authority interface govern; Equinor requirements apply as a partner review basis only."
         )
     return block

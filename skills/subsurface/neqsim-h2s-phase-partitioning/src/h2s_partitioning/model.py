@@ -204,11 +204,11 @@ def run_train(
     gas_total = oil_total = water_total = 0.0
     current_flow = flow_mol_s
     for idx, st in enumerate(stages):
-        feed = jn.process.equipment.stream.Stream("feed%d" % idx, current)
+        feed = jn.process.equipment.stream.Stream(f"feed{idx:d}", current)
         feed.setTemperature(st.temperature_c, "C")
         feed.setPressure(st.pressure_bara, "bara")
         feed.setFlowRate(current_flow, "mole/sec")
-        sep = jn.process.equipment.separator.ThreePhaseSeparator("sep%d" % idx, feed)
+        sep = jn.process.equipment.separator.ThreePhaseSeparator(f"sep{idx:d}", feed)
         ps = jn.process.processmodel.ProcessSystem()
         ps.add(feed)
         ps.add(sep)
@@ -236,7 +236,7 @@ def run_train(
             oil_total = o_mol
         results.append(
             StageResult(
-                name=st.name or "stage%d" % (idx + 1),
+                name=st.name or f"stage{idx + 1:d}",
                 temperature_c=st.temperature_c,
                 pressure_bara=st.pressure_bara,
                 gas_h2s_ppmv=gas_y * 1.0e6,
@@ -251,8 +251,7 @@ def run_train(
         )
         if oil_flow <= 1.0e-12 and idx < len(stages) - 1:
             warnings.append(
-                "no oil phase leaving %s; downstream stages not evaluated"
-                % results[-1].name
+                f"no oil phase leaving {results[-1].name!s}; downstream stages not evaluated"
             )
             break
         current = sep.getOilOutStream().getFluid().clone()
@@ -260,7 +259,7 @@ def run_train(
     if h2s_in > 0:
         closure = (gas_total + oil_total + water_total) / h2s_in
         if abs(closure - 1.0) > 0.02:
-            warnings.append("H2S balance closure %.3f outside 2 percent" % closure)
+            warnings.append(f"H2S balance closure {closure:.3f} outside 2 percent")
     denom = h2s_in if h2s_in > 0 else 1.0
     return TrainResult(
         wellstream_h2s_mol_fraction=h2s_in / flow_mol_s,
@@ -284,8 +283,7 @@ def _bisect_log(
     f_lo, f_hi = func(lo), func(hi)
     if not (f_lo <= target <= f_hi):
         raise ValueError(
-            "measured value %.4g is outside the bracket [%.4g, %.4g] reachable for z in [%.2g, %.2g]"
-            % (target, f_lo, f_hi, lo, hi)
+            f"measured value {target:.4g} is outside the bracket [{f_lo:.4g}, {f_hi:.4g}] reachable for z in [{lo:.2g}, {hi:.2g}]"
         )
     a, b = math.log(lo), math.log(hi)
     for _ in range(itmax):
@@ -413,7 +411,7 @@ def separator_gor_and_gas_h2s(fluid, stage: SeparatorStage) -> tuple[float, floa
     f = _flash_stage(fluid, stage)
     ph = _phase_by_type(f)
     if "gas" not in ph or "oil" not in ph:
-        raise ValueError("separator flash must give gas and oil; got %s" % sorted(ph))
+        raise ValueError(f"separator flash must give gas and oil; got {sorted(ph)!s}")
     t_k, p_pa = stage.temperature_c + 273.15, stage.pressure_bara * 1.0e5
     v_oil = float(ph["oil"].getBeta()) * float(ph["oil"].getZ()) * _R * t_k / p_pa
     v_gas_sc = float(ph["gas"].getBeta()) * _R * _T_SC_K / _P_SC_PA
@@ -468,7 +466,7 @@ def recombine_to_gor_and_h2s(
         ph = _phase_by_type(f)
         if "gas" not in ph or "oil" not in ph:
             warnings.append(
-                "separator flash lost a gas or oil phase at iteration %d" % it
+                f"separator flash lost a gas or oil phase at iteration {it:d}"
             )
             break
         gas, oil = ph["gas"], ph["oil"]
@@ -514,8 +512,7 @@ def recombine_to_gor_and_h2s(
         cur.init(0)
     if not converged:
         warnings.append(
-            "recombination did not converge in %d iterations (tol %.1e relative)"
-            % (max_iter, tol)
+            f"recombination did not converge in {max_iter:d} iterations (tol {tol:.1e} relative)"
         )
     cur_z = float(cur.getPhase(0).getComponent("H2S").getz())
     return RecombinationResult(
@@ -556,7 +553,7 @@ def parse_e300_names_and_zi(path: str) -> tuple[list[str], list[float]]:
             if line.endswith("/"):
                 section = None
     if not names:
-        raise ValueError("no CNAMES section in %s" % path)
+        raise ValueError(f"no CNAMES section in {path!s}")
     return names, zi
 
 
@@ -583,8 +580,7 @@ def apply_e300_composition(fluid, model_e300: str, composition) -> list[str]:
     fluid_names = [str(n) for n in fluid.getComponentNames()]
     if len(fluid_names) < len(names) or len(fluid_names) > len(names) + 1:
         raise ValueError(
-            "fluid has %d components but model file lists %d"
-            % (len(fluid_names), len(names))
+            f"fluid has {len(fluid_names):d} components but model file lists {len(names):d}"
         )
     if isinstance(composition, str):
         c_names, c_zi = parse_e300_names_and_zi(composition)
@@ -597,14 +593,14 @@ def apply_e300_composition(fluid, model_e300: str, composition) -> list[str]:
         unknown = sorted(set(composition) - set(names))
         if unknown:
             raise ValueError(
-                "composition has components not in the model file: %s" % unknown
+                f"composition has components not in the model file: {unknown!s}"
             )
         values = [float(composition.get(n, 0.0)) for n in names]
     else:
         values = [float(v) for v in composition]
     if len(values) != len(names):
         raise ValueError(
-            "composition has %d values for %d components" % (len(values), len(names))
+            f"composition has {len(values):d} values for {len(names):d} components"
         )
     if any(v < 0 for v in values):
         raise ValueError("composition has negative values")

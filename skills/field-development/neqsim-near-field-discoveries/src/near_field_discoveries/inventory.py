@@ -134,7 +134,7 @@ class Inventory:
                     "resource_class": r.volumes.get("resource_class"),
                     "water_depth_m": r.water_depth_m,
                     "nearest_host": (
-                        "%s (%.0f km)" % (host["name"], host["distance_km"])
+                        "{!s} ({:.0f} km)".format(host["name"], host["distance_km"])
                         if host
                         else None
                     ),
@@ -422,18 +422,18 @@ def to_markdown(inv: Inventory, max_rows: int = 40) -> str:
     """Short Markdown note: stage summary, nearest records, clusters and the data gaps to close."""
     s = inv.summary()
     lines = [
-        "# Near-field discoveries around %s" % inv.target.get("name"),
+        "# Near-field discoveries around {!s}".format(inv.target.get("name")),
         "",
-        "Target %.4f N, %.4f E; radius %.0f km; analysis date %s."
-        % (inv.target["lat"], inv.target["lon"], inv.radius_km, inv.as_of),
+        "Target {:.4f} N, {:.4f} E; radius {:.0f} km; analysis date {!s}.".format(
+            inv.target["lat"], inv.target["lon"], inv.radius_km, inv.as_of
+        ),
         "",
         "| Stage | Count | Sum oe (MSm3) | Without volume | Nearest |",
         "|---|---|---|---|---|",
     ]
     for info in s["stages"].values():
         lines.append(
-            "| %s | %d | %s | %d | %s (%s km) |"
-            % (
+            "| {!s} | {:d} | {!s} | {:d} | {!s} ({!s} km) |".format(
                 info["label"],
                 info["count"],
                 info["oe_msm3_sum"] if info["oe_msm3_sum"] is not None else "n/a",
@@ -449,19 +449,20 @@ def to_markdown(inv: Inventory, max_rows: int = 40) -> str:
     ]
     for row in inv.table()[:max_rows]:
         lines.append(
-            "| %s | %s | %s | %s | %s | %s | %s | %s | %s |"
-            % tuple(
-                "" if row[k] is None else row[k]
-                for k in (
-                    "name",
-                    "kind",
-                    "stage_label",
-                    "hc_type",
-                    "operator",
-                    "distance_km",
-                    "bearing",
-                    "oe_msm3",
-                    "nearest_host",
+            "| {!s} | {!s} | {!s} | {!s} | {!s} | {!s} | {!s} | {!s} | {!s} |".format(
+                *tuple(
+                    "" if row[k] is None else row[k]
+                    for k in (
+                        "name",
+                        "kind",
+                        "stage_label",
+                        "hc_type",
+                        "operator",
+                        "distance_km",
+                        "bearing",
+                        "oe_msm3",
+                        "nearest_host",
+                    )
                 )
             )
         )
@@ -473,8 +474,7 @@ def to_markdown(inv: Inventory, max_rows: int = 40) -> str:
         ]
         for c in clusters:
             lines.append(
-                "- %s (oe %s MSm3; %d without volume)"
-                % (
+                "- {!s} (oe {!s} MSm3; {:d} without volume)".format(
                     ", ".join(c["members"]),
                     c["oe_msm3_sum"] if c["oe_msm3_sum"] is not None else "n/a",
                     c["n_without_volume"],

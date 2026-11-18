@@ -181,7 +181,7 @@ def plan_protection_data_package(
         requests.append(
             MapDataRequest(
                 key,
-                "%s?%s" % (source.base_url, query),
+                f"{source.base_url!s}?{query!s}",
                 "GET",
                 purpose,
                 source.licence,
@@ -193,7 +193,7 @@ def plan_protection_data_package(
         query = urlencode(
             {
                 "where": "1=1",
-                "geometry": "%s,%s,%s,%s" % (west, south, east, north),
+                "geometry": f"{west!s},{south!s},{east!s},{north!s}",
                 "geometryType": "esriGeometryEnvelope",
                 "inSR": 4326,
                 "outSR": 4326,
@@ -205,7 +205,7 @@ def plan_protection_data_package(
         requests.append(
             MapDataRequest(
                 "sodir_factmaps",
-                "%s/%d/query?%s" % (source.base_url, sodir_pipeline_layer_id, query),
+                f"{source.base_url!s}/{sodir_pipeline_layer_id:d}/query?{query!s}",
                 "GET",
                 "existing pipelines for crossing detection",
                 source.licence,
@@ -322,7 +322,7 @@ def _as_collection(data: Mapping[str, Any]) -> dict[str, Any]:
             "type": "FeatureCollection",
             "features": [{"type": "Feature", "geometry": dict(data), "properties": {}}],
         }
-    raise ValueError("not a GeoJSON object: type=%r" % (kind,))
+    raise ValueError(f"not a GeoJSON object: type={kind!r}")
 
 
 def _frame(route: Sequence[RoutePoint]):
@@ -471,7 +471,7 @@ def find_line_crossings(
     for index, feature in enumerate(collection["features"]):
         props = feature.get("properties") or {}
         feature_id = str(
-            props.get(id_attribute) or feature.get("id") or "feature-%d" % index
+            props.get(id_attribute) or feature.get("id") or f"feature-{index:d}"
         )
         diameter = None
         if outer_diameter_attribute and props.get(outer_diameter_attribute) is not None:
@@ -536,8 +536,7 @@ def assemble_segments(
     for name, values in series.items():
         if len(values) != len(route):
             raise ValueError(
-                "series %r has %d values for %d stations"
-                % (name, len(values), len(route))
+                f"series {name!r} has {len(values):d} values for {len(route):d} stations"
             )
     bounds = [route[0].kp_m]
     bounds += [(route[i].kp_m + route[i + 1].kp_m) / 2.0 for i in range(len(route) - 1)]

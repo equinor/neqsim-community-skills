@@ -57,7 +57,7 @@ def main(argv=None) -> int:
             result, Path(args.out), None, FigureMeta(args.title, args.basis_version)
         )
     for name, path in paths.items():
-        print("%-12s %s" % (name, path))
+        print(f"{name!s:<12} {path!s}")
     return 0
 
 

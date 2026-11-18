@@ -312,7 +312,7 @@ def test_well_flags():
 
 def test_decline_series_drops_shut_in_and_feeds_fit():
     hist = [
-        month_record("2024-%02d" % m, q, 1, 1)
+        month_record(f"2024-{m:02d}", q, 1, 1)
         for m, q in enumerate([100, 90, 0, 72, 65, 58], start=1)
     ]
     s = decline_series(hist)

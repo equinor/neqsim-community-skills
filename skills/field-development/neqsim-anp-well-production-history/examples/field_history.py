@@ -38,13 +38,15 @@ def main() -> None:
     print(
         "field",
         field["field"],
-        "liquid m3/d %.0f" % field["liquid_m3d"],
-        "GOR sm3/sm3 %.1f" % field["gor_sm3_sm3"],
-        "water cut %.2f" % field["water_cut"],
+        "liquid m3/d {:.0f}".format(field["liquid_m3d"]),
+        "GOR sm3/sm3 {:.1f}".format(field["gor_sm3_sm3"]),
+        "water cut {:.2f}".format(field["water_cut"]),
     )
     history = well_history(records, "7-PPT-50HP-RJS")
     basis = fluid_basis(history[0])
-    print("methane mole fraction %.3f" % basis["gas"]["mole_fraction"]["methane"])
+    print(
+        "methane mole fraction {:.3f}".format(basis["gas"]["mole_fraction"]["methane"])
+    )
     for warning in basis["warnings"][:2]:
         print("warning:", warning)
 

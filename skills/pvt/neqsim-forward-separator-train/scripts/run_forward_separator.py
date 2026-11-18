@@ -77,7 +77,7 @@ def run_train(jneqsim, fluid, stages, flow, unit="kg/hr"):
     liquid = feed
     records = []
     for k, (p, t) in enumerate(stages + [(STD_P_BARA, STD_T_C)], start=1):
-        name = "stage%d" % k if k <= len(stages) else "stock_tank"
+        name = f"stage{k:d}" if k <= len(stages) else "stock_tank"
         valve = eq.valve.ThrottlingValve("valve_" + name, liquid)
         valve.setOutletPressure(p)
         ps.add(valve)

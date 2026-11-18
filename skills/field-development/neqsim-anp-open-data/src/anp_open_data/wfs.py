@@ -150,7 +150,7 @@ def fetch_layer(
     key = hashlib.sha1(url.encode("utf-8")).hexdigest()[:10]
     cache = Path(cache_dir)
     cache.mkdir(parents=True, exist_ok=True)
-    fname = cache / ("anp_wfs_%s_%s.geojson" % (layer.replace(":", "_"), key))
+    fname = cache / ("anp_wfs_{!s}_{!s}.geojson".format(layer.replace(":", "_"), key))
     status = "cache"
     if fname.exists():
         data = json.loads(fname.read_text(encoding="utf-8"))
@@ -163,13 +163,13 @@ def fetch_layer(
     else:
         if offline:
             raise FileNotFoundError(
-                "offline mode and no cache for %s (%s)" % (layer, fname.name)
+                f"offline mode and no cache for {layer!s} ({fname.name!s})"
             )
         raw = (getter or _default_get)(url, timeout)
         data = json.loads(raw.decode("utf-8"))
         if data.get("type") != "FeatureCollection":
             raise ValueError(
-                "ANP WFS did not return a FeatureCollection for %s" % layer
+                f"ANP WFS did not return a FeatureCollection for {layer!s}"
             )
         fname.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
         retrieved = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
@@ -321,9 +321,7 @@ def locate_installations(
                 ),
                 location_quality="approximate-derived-from-ANP-wells",
                 location_method=(
-                    "median of ANP wellhead coordinates of %d producing wells; the hull "
-                    "position is not published by ANP, wells spread up to %.1f km"
-                    % (len(pts), spread)
+                    f"median of ANP wellhead coordinates of {len(pts):d} producing wells; the hull position is not published by ANP, wells spread up to {spread:.1f} km"
                 ),
             )
         out.append(rec)
@@ -370,10 +368,10 @@ def installation_production(
         s = str(v or "").strip()
         m = re.match(r"^(\d{1,2})/(\d{4})$", s)
         if m:
-            return "%s-%02d" % (m.group(2), int(m.group(1)))
+            return f"{m.group(2)!s}-{int(m.group(1)):02d}"
         m = re.match(r"^(\d{4})-(\d{1,2})", s)
         if m:
-            return "%s-%02d" % (m.group(1), int(m.group(2)))
+            return f"{m.group(1)!s}-{int(m.group(2)):02d}"
         return None
 
     for r in rows:

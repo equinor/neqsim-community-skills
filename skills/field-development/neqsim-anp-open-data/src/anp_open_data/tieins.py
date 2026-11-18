@@ -182,6 +182,24 @@ def rank_tie_in_hosts(
     Raises:
         ValueError: If a host lacks coordinates or weights sum to zero.
     """
+
+    def ullage(
+        h: Mapping,
+        notes: list[str],
+        cap_key: str,
+        cur_key: str,
+        req: float | None,
+        label: str,
+    ) -> float | None:
+        cap, cur = h.get(cap_key), h.get(cur_key)
+        if req is None:
+            return None
+        if cap is None or cur is None:
+            notes.append("%s ullage unknown" % label)
+            return 0.5
+        free = max(0.0, float(cap) - float(cur))
+        return min(1.0, free / req) if req > 0 else 1.0
+
     w = dict(DEFAULT_WEIGHTS)
     w.update(weights or {})
     wsum = sum(w.values())
@@ -203,23 +221,6 @@ def rank_tie_in_hosts(
             d = haversine_km(lon0, lat0, float(h["lon"]), float(h["lat"]))
         s_dist = max(0.0, 1.0 - d / max_step_out_km)
 
-        def ullage(
-            cap_key: str,
-            cur_key: str,
-            req: float | None,
-            label: str,
-            h=h,
-            notes=notes,
-        ) -> float | None:
-            cap, cur = h.get(cap_key), h.get(cur_key)
-            if req is None:
-                return None
-            if cap is None or cur is None:
-                notes.append("%s ullage unknown" % label)
-                return 0.5
-            free = max(0.0, float(cap) - float(cur))
-            return min(1.0, free / req) if req > 0 else 1.0
-
         if kind == "standalone":
             s_ull = 1.0
         else:
@@ -227,9 +228,16 @@ def rank_tie_in_hosts(
                 v
                 for v in (
                     ullage(
-                        "oil_capacity_m3d", "oil_m3d_current", required_oil_m3d, "oil"
+                        h,
+                        notes,
+                        "oil_capacity_m3d",
+                        "oil_m3d_current",
+                        required_oil_m3d,
+                        "oil",
                     ),
                     ullage(
+                        h,
+                        notes,
                         "gas_capacity_mm3d",
                         "gas_mm3d_current",
                         required_gas_mm3d,

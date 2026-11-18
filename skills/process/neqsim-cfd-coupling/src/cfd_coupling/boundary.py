@@ -283,6 +283,9 @@ def _optional_float(source: Any, method_name: str) -> float | None:
     try:
         value = float(method())
     except Exception:  # pragma: no cover - property unavailable for this phase model
+        _LOGGER.warning(
+            "Optional phase property %s unavailable", method_name, exc_info=True
+        )
         return None
     return value if isfinite(value) and value > 0.0 else None
 
@@ -294,6 +297,7 @@ def _optional_flow(source: Any, unit: str) -> float | None:
     try:
         value = float(method(unit))
     except Exception:  # pragma: no cover - flow not set on the system
+        _LOGGER.warning("Optional flow in %s unavailable", unit, exc_info=True)
         return None
     return value if isfinite(value) and value > 0.0 else None
 

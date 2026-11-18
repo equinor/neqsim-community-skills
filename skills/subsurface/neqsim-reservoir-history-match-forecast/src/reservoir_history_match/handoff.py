@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
@@ -110,6 +111,7 @@ def run_process_series(
             kpi = run_case(d, streams)
             kpi["status"] = "ok"
         except Exception as exc:
+            logging.getLogger(__name__).exception("Process model failed for date %s", d)
             kpi = {"status": f"failed: {exc!r}"}
         rows.append(dict(date=d, **kpi))
     return pd.DataFrame(rows)

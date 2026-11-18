@@ -280,7 +280,7 @@ class EntsogTransparency:
         for point_key, meta in ENTSOG_NORWEGIAN_ENTRY_POINTS.items():
             try:
                 rows = self.operational_data(point_key, date_from, date_to, indicator)
-            except Exception as exc:  # one failing point must not drop the others
+            except (OSError, RuntimeError, ValueError) as exc:
                 self.records.append(
                     ReadRecord(
                         "entsog-transparency", point_key, 0, ok=False, error=str(exc)

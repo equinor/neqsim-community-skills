@@ -11,6 +11,7 @@ it elsewhere are printed.
 
 from __future__ import annotations
 
+import logging
 import tempfile
 from pathlib import Path
 
@@ -89,6 +90,9 @@ try:
     state = fluid_state_from_neqsim(process_fluid, phase="gas")
     print("\nFluid state taken from a NeqSim flash.")
 except Exception as error:  # NeqSim not installed, or no gas phase at this condition
+    logging.getLogger(__name__).exception(
+        "NeqSim gas state unavailable; using the declared example state"
+    )
     state = FluidState(
         name="wet gas (fallback)",
         phase="gas",

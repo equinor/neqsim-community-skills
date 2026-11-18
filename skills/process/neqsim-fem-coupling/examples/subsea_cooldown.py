@@ -15,6 +15,7 @@ Run:  python examples/subsea_cooldown.py
 
 from __future__ import annotations
 
+import logging
 from math import pi
 
 from fem_coupling import (
@@ -65,6 +66,9 @@ def fluid_properties() -> tuple[float, float, float]:
         print("fluid and hydrate temperature from NeqSim (CPA)")
         return density, heat_capacity, hydrate_c
     except Exception as error:  # NeqSim absent, or the hydrate solve did not converge
+        logging.getLogger(__name__).exception(
+            "NeqSim cooldown inputs unavailable; using the declared example state"
+        )
         print(f"NeqSim unavailable ({type(error).__name__}); using stated properties")
         return 95.0, 2600.0, 20.0
 

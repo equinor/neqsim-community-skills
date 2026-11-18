@@ -8,6 +8,7 @@ model-uncertainty indicator, not a confidence interval.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Sequence
 from typing import Any
 
@@ -57,6 +58,9 @@ def _pipe_dp_bar(
     try:
         pipe.run()
     except Exception:
+        logging.getLogger(__name__).warning(
+            "Hydraulic correlation %s could not run", method_class, exc_info=True
+        )
         return None
     return float(p_in_bara - pipe.getOutletStream().getPressure("bara"))
 

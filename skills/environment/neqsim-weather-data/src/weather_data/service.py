@@ -4,6 +4,7 @@ screening-level site-condition summaries into one call for consuming agents.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -63,6 +64,9 @@ class WeatherDataService:
         correct, works anywhere; (2) ``name`` against the open Sodir
         ``facility`` register - Norwegian Continental Shelf, best-effort;
         (3) ``name`` against Open-Meteo's worldwide geocoding API.
+
+        Network and provider failures are logged before trying the next source.
+        Unexpected programming errors propagate to the caller.
         """
         if latitude is not None and longitude is not None:
             return Location(
@@ -80,7 +84,11 @@ class WeatherDataService:
         if try_ncs:
             try:
                 matches = self.ncs_locator.find(name)
-            except Exception:
+            except (OSError, RuntimeError, ValueError):
+                logging.getLogger(__name__).warning(
+                    "Sodir facility lookup failed; trying the next location source",
+                    exc_info=True,
+                )
                 matches = []
             if matches:
                 best = matches[0]
@@ -95,7 +103,10 @@ class WeatherDataService:
         if try_geocoding:
             try:
                 results = self.open_meteo.geocode(name)
-            except Exception:
+            except (OSError, RuntimeError, ValueError):
+                logging.getLogger(__name__).warning(
+                    "Open-Meteo geocoding failed", exc_info=True
+                )
                 results = []
             if results:
                 best = results[0]
@@ -199,7 +210,7 @@ class WeatherDataService:
         open_meteo_series = self.get_forecast(location, days=days)
         try:
             metno_series = self.get_metno_forecast(location)
-        except Exception as exc:  # pragma: no cover - network/User-Agent failures
+        except (OSError, RuntimeError, ValueError) as exc:  # pragma: no cover
             return {
                 "open_meteo": open_meteo_series.to_dict(),
                 "met_norway": None,

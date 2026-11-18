@@ -19,6 +19,7 @@ Example config::
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -246,6 +247,9 @@ def run_identification(config: dict[str, Any]) -> dict[str, Any]:
     except TsaUnavailable as exc:
         evidence["missing"].append(str(exc))
     except Exception as exc:
+        logging.getLogger(__name__).exception(
+            "Identification engine failed on this window"
+        )
         first = (
             str(exc).strip().splitlines()[0] if str(exc).strip() else type(exc).__name__
         )

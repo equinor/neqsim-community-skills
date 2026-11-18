@@ -8,6 +8,7 @@ transformations are refused, a missing grid is reported, and the PROJ pipeline t
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
@@ -142,7 +143,10 @@ def transform(
         lons, lats = [p[0] for p in lonlat], [p[1] for p in lonlat]
         if all(-180 <= v <= 180 for v in lons) and all(-90 <= v <= 90 for v in lats):
             aoi = AreaOfInterest(min(lons), min(lats), max(lons), max(lats))
-    except Exception:
+    except (ValueError, pyproj.exceptions.ProjError):
+        logging.getLogger(__name__).warning(
+            "Could not derive the transformation area of interest", exc_info=True
+        )
         aoi = None
     group = TransformerGroup(
         src, dst, always_xy=True, allow_ballpark=False, area_of_interest=aoi

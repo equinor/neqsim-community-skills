@@ -6,6 +6,7 @@ Physical partitioning only (SRK-CPA, gas / oil / aqueous). Aqueous ionisation of
 
 from __future__ import annotations
 
+import logging
 import math
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
@@ -173,6 +174,10 @@ def _stream_flow_mol_s(stream) -> float:
     try:
         return float(stream.getFlowRate("mole/sec"))
     except Exception:
+        logging.getLogger(__name__).warning(
+            "Stream molar flow unavailable; retaining the zero-flow fallback",
+            exc_info=True,
+        )
         return 0.0
 
 

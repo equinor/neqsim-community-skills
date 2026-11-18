@@ -22,6 +22,7 @@ Run:  python examples/insulated_flowline_defect.py
 
 from __future__ import annotations
 
+import logging
 from math import pi
 from pathlib import Path
 
@@ -101,6 +102,9 @@ def fluid_state() -> FemFluidState:
         print("fluid properties from a NeqSim SRK flash")
         return state
     except Exception as error:  # NeqSim absent or the flash failed
+        logging.getLogger(__name__).exception(
+            "NeqSim flash unavailable; using the declared example state"
+        )
         print(f"NeqSim unavailable ({type(error).__name__}); using stated properties")
         return FemFluidState(
             name="rich gas (stated)",

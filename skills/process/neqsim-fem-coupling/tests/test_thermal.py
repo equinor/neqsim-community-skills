@@ -251,6 +251,38 @@ def test_auto_refuses_to_choose_between_phases():
         fluid_state_from_neqsim(_FakeSystem("gas", "aqueous"))
 
 
+def test_failed_optional_pressure_logs_without_losing_required_properties(caplog):
+    system = _FakeSystem("gas")
+    system.initProperties = Mock()
+    system.initPhysicalProperties = Mock()
+    system.getPhase(0).getPressure = Mock(side_effect=RuntimeError("unsupported"))
+
+    state = fluid_state_from_neqsim(system)
+
+    assert state.pressure_bara is None
+    assert state.density_kg_per_m3 == pytest.approx(931.1)
+    [record] = caplog.records
+    assert "getPressure" in record.getMessage()
+    assert record.exc_info[0] is RuntimeError
+
+
+def test_failed_diffusion_model_logs_without_losing_the_fluid_state(caplog):
+    system = _FakeSystem("gas")
+    system.initProperties = Mock()
+    system.initPhysicalProperties = Mock()
+    system.getPhase(0).getPhysicalProperties = Mock(
+        side_effect=RuntimeError("diffusion unavailable")
+    )
+
+    state = fluid_state_from_neqsim(system, diffusing_components=["methane"])
+
+    assert state.diffusion_coefficients_m2_per_s == ()
+    assert state.density_kg_per_m3 == pytest.approx(931.1)
+    [record] = caplog.records
+    assert "Diffusion coefficient model" in record.getMessage()
+    assert record.exc_info[0] is RuntimeError
+
+
 def test_a_wrong_phase_name_lists_what_is_available():
     with pytest.raises(ValueError, match="available phases: aqueous"):
         fluid_state_from_neqsim(_FakeSystem("aqueous"), phase="oil")

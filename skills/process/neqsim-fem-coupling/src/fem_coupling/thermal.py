@@ -488,6 +488,9 @@ def _read_diffusion_coefficients(
         phase.initPhysicalProperties()
         properties.calcEffectiveDiffusionCoefficients()
     except Exception:  # pragma: no cover - depends on the NeqSim build in use
+        _LOGGER.warning(
+            "Diffusion coefficient model %s unavailable", model, exc_info=True
+        )
         return []
 
     values: list[tuple[str, float]] = []
@@ -512,6 +515,9 @@ def _optional_float(source: Any, accessor: str) -> float | None:
     try:
         value = float(getattr(source, accessor)())
     except Exception:  # pragma: no cover - accessor absent in this NeqSim build
+        _LOGGER.warning(
+            "Optional thermal property %s unavailable", accessor, exc_info=True
+        )
         return None
     return value if isfinite(value) else None
 

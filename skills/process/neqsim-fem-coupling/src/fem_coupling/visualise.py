@@ -20,6 +20,7 @@ answer in finite elements.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 from importlib.util import find_spec
@@ -154,6 +155,7 @@ def render_field(
     try:
         grid = pyvista.read(str(requested))
     except Exception as error:  # pragma: no cover - depends on the file written
+        logging.getLogger(__name__).exception("PyVista field read failed")
         return RenderOutcome(
             status="failed",
             images=(),
@@ -200,6 +202,7 @@ def render_field(
                 pyvista, grid, view, slice_normal, slice_origin, clip_normal
             )
         except Exception as error:  # pragma: no cover - degenerate geometry
+            logging.getLogger(__name__).exception("PyVista view %s failed", view)
             notes.append(f"{view}: {error}")
             continue
         if mesh is None or mesh.n_cells == 0:
@@ -330,7 +333,11 @@ def _resolve_field_file(directory: Path, field_file: str | None) -> Path | None:
             import json
 
             recorded = json.loads(results.read_text(encoding="utf-8")).get("field_file")
-        except Exception:  # pragma: no cover - malformed results.json
+        except (OSError, ValueError, AttributeError):  # pragma: no cover
+            logging.getLogger(__name__).warning(
+                "Could not read the recorded field file; searching the output directory",
+                exc_info=True,
+            )
             recorded = None
         if recorded:
             candidate = directory / recorded

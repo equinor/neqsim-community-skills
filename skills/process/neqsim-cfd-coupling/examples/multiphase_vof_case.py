@@ -15,6 +15,7 @@ dilute droplet mist. The skill says which, and refuses to build the wrong one.
 
 from __future__ import annotations
 
+import logging
 import tempfile
 from pathlib import Path
 
@@ -57,6 +58,9 @@ try:
     state = multiphase_state_from_neqsim(wellstream)
     print("Phase split taken from a NeqSim flash.")
 except Exception as error:  # NeqSim missing, or a single-phase result
+    logging.getLogger(__name__).exception(
+        "NeqSim phase split unavailable; using the declared example state"
+    )
     state = MultiphaseState(
         continuous=FluidState(
             name="wellstream (fallback)",

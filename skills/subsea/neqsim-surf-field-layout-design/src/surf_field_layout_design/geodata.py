@@ -12,6 +12,7 @@ layout needs; met-ocean data is what an FPSO heading needs.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from urllib.parse import urlencode
@@ -284,6 +285,9 @@ def execute(
         try:
             manifest["results"][request.source_key] = fetch(request.url)
         except Exception as error:  # a failed source must not abort the study
+            logging.getLogger(__name__).exception(
+                "Geodata source %s failed", request.source_key
+            )
             manifest["errors"][request.source_key] = "%s: %s" % (
                 type(error).__name__,
                 error,

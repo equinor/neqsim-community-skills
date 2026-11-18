@@ -8,6 +8,7 @@ of the required drilling/casing module ``well_design_study``; they are formula r
 
 from __future__ import annotations
 
+import logging
 import math
 from typing import Any
 
@@ -442,6 +443,9 @@ def evaluate_integrity(
             tubing_movement(basis, tm, direction, d_pi, 0.0, pack_tvd, "FIXED"),
         ]
     except Exception as exc:
+        logging.getLogger(__name__).exception(
+            "Annular pressure and tubing movement failed"
+        )
         out["apb_error"] = f"{type(exc).__name__}: {str(exc)[:160]}"
     return out
 

@@ -7,6 +7,7 @@ taken from the ``high`` end of their range in the ``low`` case.
 
 from __future__ import annotations
 
+import logging
 import math
 from pathlib import Path
 from typing import Any
@@ -409,6 +410,9 @@ def flowline_back_pressure(
         try:
             pipe.run()
         except Exception as exc:
+            logging.getLogger(__name__).exception(
+                "Flowline could not pass the requested rate; applying the pressure penalty"
+            )
             return {
                 "wellhead_pressure_bara": 4.0 * host_pressure_bara + choke,
                 "flowline_dp_bar": 3.0 * host_pressure_bara,

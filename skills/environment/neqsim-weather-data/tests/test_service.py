@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from unittest.mock import Mock
+
 import pytest
 from weather_data.ncs_facilities import FacilityLocation
 from weather_data.open_meteo import GeocodeResult, WeatherSeries
@@ -123,6 +125,35 @@ def test_resolve_location_raises_when_nothing_matches():
 
     with pytest.raises(LocationNotResolvedError):
         service.resolve_location(name="Nowhere At All")
+
+
+def test_failed_ncs_lookup_logs_and_uses_geocoding(caplog):
+    locator = FakeNcsLocator()
+    locator.find = Mock(side_effect=OSError("connection unavailable"))
+    service = WeatherDataService(
+        open_meteo=FakeOpenMeteo(
+            geocode_results=[
+                GeocodeResult("Troll", 60.64, 3.72, "NO", None, None, None)
+            ]
+        ),
+        ncs_locator=locator,
+    )
+
+    location = service.resolve_location(name="Troll")
+
+    assert location.source == "open-meteo-geocoding"
+    [record] = caplog.records
+    assert "Sodir facility lookup failed" in record.getMessage()
+    assert record.exc_info[0] is OSError
+
+
+def test_ncs_programming_error_is_not_treated_as_a_missing_location():
+    locator = FakeNcsLocator()
+    locator.find = Mock(side_effect=KeyError("unexpected response key"))
+    service = WeatherDataService(open_meteo=FakeOpenMeteo(), ncs_locator=locator)
+
+    with pytest.raises(KeyError, match="unexpected response key"):
+        service.resolve_location(name="Troll")
 
 
 def test_resolve_location_requires_name_or_coordinates():

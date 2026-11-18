@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -263,6 +264,9 @@ def run_completion_workflow(config: dict[str, Any]) -> dict[str, Any]:
             except CompletorUnavailable as exc:
                 evidence["missing"].append(str(exc))
             except Exception as exc:
+                logging.getLogger(__name__).exception(
+                    "Completor deck generation failed"
+                )
                 evidence["missing"].append(f"completor failed: {exc}")
 
     if props is not None:

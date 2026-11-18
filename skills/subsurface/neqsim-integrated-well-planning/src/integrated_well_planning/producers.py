@@ -7,6 +7,7 @@ traverse with a Ramey thermal profile. Every number carries the label of the led
 
 from __future__ import annotations
 
+import logging
 import math
 from typing import Any
 
@@ -286,6 +287,7 @@ class ProducerModel:
         try:
             res, extra = self.traverse(case, q, pwf, overrides, from_bottomhole=True)
         except Exception as exc:
+            logging.getLogger(__name__).exception("Producer tubing traverse failed")
             return {
                 "q": q,
                 "feasible": False,

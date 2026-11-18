@@ -7,6 +7,7 @@ pull returns ``not_installed`` so the cycle degrades instead of failing.
 """
 
 import csv
+import logging
 import os
 
 from .results import SourceResult
@@ -52,6 +53,7 @@ class TagreaderAdapter:
         except ImportError:
             return SourceResult("not_installed", message="tagreader is not installed")
         except Exception as error:  # connection or authentication problems
+            logging.getLogger(__name__).exception("Historian connection failed")
             text = str(error)
             return SourceResult(
                 "failed",
@@ -76,6 +78,7 @@ class TagreaderAdapter:
                 read_type=read_type,
             )
         except Exception as error:
+            logging.getLogger(__name__).exception("Historian data read failed")
             return SourceResult("failed", message=str(error))
         if frame is None or len(frame) == 0:
             return SourceResult("stale", message="no data in window")

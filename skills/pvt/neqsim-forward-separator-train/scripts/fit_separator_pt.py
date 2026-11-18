@@ -24,6 +24,7 @@ Example:
 import argparse
 import csv
 import json
+import logging
 import math
 import os
 import sys
@@ -166,6 +167,10 @@ def main():
                     )
                 )
             except Exception:
+                logging.getLogger(__name__).exception(
+                    "Separator-train evaluation failed for %s; applying the fit penalty",
+                    r["fluid"],
+                )
                 out.append(None)
         n_eval[0] += 1
         return out

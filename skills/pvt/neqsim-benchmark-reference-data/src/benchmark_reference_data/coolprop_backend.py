@@ -11,6 +11,7 @@ Install with::
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable, Sequence
 
 from .reference_data import ReferencePoint, normalise_fluid
@@ -81,7 +82,10 @@ def coolprop_version() -> str | None:
         return None
     try:
         return str(module.get_global_param_string("version"))
-    except Exception:  # pragma: no cover - defensive, CoolProp API drift
+    except (AttributeError, RuntimeError, ValueError):  # pragma: no cover
+        logging.getLogger(__name__).warning(
+            "CoolProp version unavailable", exc_info=True
+        )
         return "unknown"
 
 

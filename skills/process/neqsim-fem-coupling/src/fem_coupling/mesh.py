@@ -19,6 +19,7 @@ OpenFOAM case without OpenFOAM installed.
 
 from __future__ import annotations
 
+import logging
 import shutil
 import subprocess
 from collections.abc import Mapping, Sequence
@@ -536,6 +537,7 @@ class FemMeshSpec:
                 finally:
                     gmsh.finalize()
             except Exception as error:  # pragma: no cover - depends on the Gmsh build
+                logging.getLogger(__name__).exception("Gmsh Python API meshing failed")
                 return MeshOutcome(
                     status="failed",
                     geo_path=geo_path,

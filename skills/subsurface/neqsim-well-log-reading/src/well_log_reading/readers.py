@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 from collections.abc import Iterable, Sequence
 from pathlib import Path
@@ -10,6 +11,8 @@ from pathlib import Path
 import numpy as np
 
 from .model import LogCurve, LogFrame, WellLog
+
+_LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NULL_VALUES = (-999.25, -999.0, -9999.0, -99999.0)
 DLIS_SUFFIXES = (".dlis", ".dls")
@@ -132,6 +135,7 @@ def _text(value) -> str:
 
 
 def _read_dlis(path: Path, log: WellLog, null_values, tolerant: bool) -> None:
+    """Read DLIS data, logging unreadable parameters and retaining them in warnings."""
     try:
         from dlisio import dlis
         from dlisio.common import Actions, ErrorHandler
@@ -172,7 +176,10 @@ def _read_dlis(path: Path, log: WellLog, null_values, tolerant: bool) -> None:
                         if values
                         else ""
                     )
-                except Exception:  # noqa: BLE001 - parameter values may be undecodable
+                except Exception as exc:
+                    message = f"parameter {key}: values could not be read ({exc})"
+                    log.warnings.append(message)
+                    _LOGGER.warning(message, exc_info=True)
                     continue
                 if values:
                     log.metadata.setdefault(f"param.{key}", f"{values} {unit}".strip())
@@ -228,7 +235,7 @@ _LIS_WELLSITE = {"WN": "well_name", "FN": "field_name", "CN": "company"}
 
 
 def _lis_wellsite(logical_file, log: WellLog) -> None:
-    """Copy well, field and company from LIS wellsite-data tables (best effort)."""
+    """Copy LIS wellsite data; log skipped records and retain them in warnings."""
     try:
         records = logical_file.wellsite_data()
     except Exception as exc:  # noqa: BLE001 - optional header information
@@ -239,7 +246,10 @@ def _lis_wellsite(logical_file, log: WellLog) -> None:
             if not record.isstructured():
                 continue
             table = record.table(simple=True)
-        except Exception:  # noqa: BLE001 - malformed component blocks are common
+        except Exception as exc:
+            message = f"LIS wellsite record could not be read ({exc})"
+            log.warnings.append(message)
+            _LOGGER.warning(message, exc_info=True)
             continue
         names = table.dtype.names or ()
         if "MNEM" not in names or "VALU" not in names:

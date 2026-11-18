@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import logging
+from contextlib import nullcontext
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -17,6 +20,8 @@ from well_log_reading import (
     zone_statistics,
 )
 from well_log_reading.__main__ import main
+from well_log_reading.model import WellLog
+from well_log_reading.readers import _lis_wellsite
 
 LAS_TEXT = """~VERSION INFORMATION
  VERS.                  2.0 : CWLS LOG ASCII STANDARD - VERSION 2.0
@@ -66,6 +71,64 @@ def _write(tmp_path, name, text):
     path = tmp_path / name
     path.write_text(text, encoding="utf-8")
     return path
+
+
+@pytest.mark.parametrize("failed_method", ["isstructured", "table"])
+def test_unreadable_lis_record_is_reported(caplog, failed_method):
+    class BrokenRecord:
+        def isstructured(self):
+            if failed_method == "isstructured":
+                raise ValueError("malformed record")
+            return True
+
+        def table(self, simple):
+            raise ValueError("malformed record")
+
+    table = np.array([("WN", "TEST WELL")], dtype=[("MNEM", "U8"), ("VALU", "U16")])
+    good_record = SimpleNamespace(isstructured=lambda: True, table=lambda simple: table)
+    log = WellLog(source_path="test.lis", source_format="lis", sha256="")
+    logical_file = SimpleNamespace(wellsite_data=lambda: [BrokenRecord(), good_record])
+    _lis_wellsite(logical_file, log)
+    assert log.warnings == ["LIS wellsite record could not be read (malformed record)"]
+    assert log.well_name == "TEST WELL"
+    [record] = caplog.records
+    assert record.name == "well_log_reading.readers"
+    assert record.levelno == logging.WARNING
+    assert record.getMessage() == log.warnings[0]
+    assert record.exc_info[0] is ValueError
+
+
+def test_unreadable_dlis_parameter_is_logged_and_reading_continues(
+    tmp_path, monkeypatch, caplog
+):
+    dlis = pytest.importorskip("dlisio.dlis")
+
+    class BrokenParameter:
+        name = "PDAT"
+
+        @property
+        def values(self):
+            raise ValueError("undecodable value")
+
+    good_parameter = SimpleNamespace(
+        name="DREF", values=["MSL"], attic={"VALUES": SimpleNamespace(units="")}
+    )
+    logical_file = SimpleNamespace(
+        origins=[], parameters=[BrokenParameter(), good_parameter], frames=[]
+    )
+    monkeypatch.setattr(
+        dlis, "load", lambda *args, **kwargs: nullcontext([logical_file])
+    )
+    log = read_well_log(_write(tmp_path, "test.dlis", ""))
+    assert (
+        "parameter PDAT: values could not be read (undecodable value)" in log.warnings
+    )
+    assert log.metadata["param.DREF"] == "MSL"
+    [record] = caplog.records
+    assert record.name == "well_log_reading.readers"
+    assert record.levelno == logging.WARNING
+    assert record.getMessage() == log.warnings[0]
+    assert record.exc_info[0] is ValueError
 
 
 def test_las_header_curves_nulls_and_duplicates(tmp_path):

@@ -1,7 +1,7 @@
 ---
 name: neqsim-psc-bid-economics-screening
 calculation_basis: "screening"
-version: "0.2.0"
+version: "1.0.0"
 description: "Educational PSC exploration-block bid screening: royalty, capped cost oil, profit-oil split (optionally the Brazilian ANP Annex XX Brent and rate-per-well adjustment table), tax, bonus and exploration programme, with EMV, break-even offered share, break-even chance of discovery and volume. USE WHEN: judging a bid-round offer or how much State profit-oil share a block can bear, or comparing a tie-back with stand-alone."
 last_verified: "2026-10-14"
 requires:

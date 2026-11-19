@@ -1,7 +1,7 @@
 ---
 name: neqsim-control-authority-screening
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational control-authority screening from controller output history: saturation fraction and trend, saturated vs modulating variance and disturbance gain, off-set-point time and time-to-limit. USE WHEN: a controlled variable worsened while the disturbance looks unchanged, a valve is wide open or bottomed out, a loop may have stopped controlling, or an investigation must separate a growing disturbance from a loop out of authority."
 last_verified: "2026-09-17"
 requires:

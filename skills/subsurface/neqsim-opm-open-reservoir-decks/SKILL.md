@@ -1,7 +1,7 @@
 ---
 name: neqsim-opm-open-reservoir-decks
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Open, login-free reservoir benchmark decks from the OPM opm-data repository (Norne full field, SPE1/3/5/9/10 comparative solution projects, Sleipner CO2) with per-case licence, size guard, deck summary and PVTO/PVTG/PVDG/SWOF table extraction. USE WHEN: a NeqSim reservoir, PVT, material-balance or reservoir-to-facility task needs a real published reference case, a black-oil table to compare against a NeqSim fluid, or a realistic well/schedule example that is not company data."
 last_verified: "2026-11-12"
 requires:

@@ -1,7 +1,7 @@
 ---
 name: neqsim-subsea-equipment-placement
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Constraint-based siting of subsea equipment and routes (drill centres, templates, manifolds, PLETs, tie-ins): screens and ranks sites against clearances, existing lines and crossings, exclusion zones, seabed slope, fishing exposure and well reach, and checks the route. USE WHEN: a tie-back or SURF study must decide where equipment goes, or defend a placement against map data, standards and installation constraints."
 last_verified: "2026-11-08"
 requires:

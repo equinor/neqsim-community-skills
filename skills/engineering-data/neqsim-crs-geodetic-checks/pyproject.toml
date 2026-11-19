@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-crs-geodetic-checks"
-version = "0.1.0"
+version = "1.0.0"
 description = "CRS and datum checks with explicit, provenance-recorded transformations (equinor/geodetic-engine or pyproj)."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = ["pyproj>=3.6"]
 

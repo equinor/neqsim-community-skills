@@ -1,7 +1,7 @@
 ---
 name: neqsim-integrated-well-planning
 calculation_basis: "hybrid"
-version: "0.2.0"
+version: "1.0.0"
 description: "Integrated well planning for oil, gas-condensate, water- and gas-injection wells (onshore, platform, subsea): provenance-tracked basis, NeqSim reservoir-well-facility chain (IPR, drift-flux VLP, injectivity, hydrate, annulus pressure, tubing movement), operating envelopes, barrier schematics, alternatives, A3 drawings, hand-off schemas, report and capability ledger. USE WHEN: a well must be sized, compared or documented from reservoir, fluid, host and completion data."
 last_verified: "2026-10-31"
 required_skills:

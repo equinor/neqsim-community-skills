@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-jv-cost-control-screening"
-version = "0.1.0"
+version = "1.0.0"
 description = "Educational joint-venture cost-control toolkit: JIB-style statement parsing, variance analysis, reconciliation and identity checks."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = ["pandas>=1.5", "openpyxl>=3.1"]
 

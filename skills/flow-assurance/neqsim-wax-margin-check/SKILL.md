@@ -1,7 +1,7 @@
 ---
 name: neqsim-wax-margin-check
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational wax operating-margin screening placeholder with public assumptions. USE WHEN: a task needs a quick check of whether an operating point keeps a safe temperature margin above a wax appearance temperature and should be directed to validated NeqSim methods for real calculations."
 last_verified: "2026-05-31"
 requires:

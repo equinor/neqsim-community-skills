@@ -6,12 +6,12 @@
 # To publish a skill, submit the corresponding entry to the main NeqSim repo.
 
 catalog_version: "1.0"
-last_updated: "2026-09-17"
+last_updated: "2026-11-19"
 trust: community
 
 skills:
   - name: neqsim-open-marine-constraints
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Keyless route and site screening against open marine constraint layers: fishing and trawl exposure, protected and vulnerable seabed areas (MAREANO corals and sponges), offshore wind areas, Norwegian grid, existing pipelines, wrecks, munitions and earthquakes, from EMODnet, Fiskeridirektoratet, Miljodirektoratet, NVE, NOAA and USGS. USE WHEN: a tie-back, pipeline, cable or drill-centre concept needs sourced seabed-use, environmental or grid constraints that Omnia Maps and Sodir do not hold."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -20,7 +20,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-final-report-writing-style
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Select and apply prose_english or standard_engineering_english only when generating a final engineering report or summary. USE WHEN: the reporting step is ready to compose final narrative content, or the user explicitly requests either writing style for a generated document. Do not activate during analysis, working notes, ordinary chat, code generation, or source extraction."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -29,7 +29,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-prose-english
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Write direct, concrete, intellectually honest prose for final engineering reports and generated summaries while avoiding canned AI formatting. USE WHEN: the final reporting step needs an executive summary, discussion, conclusion, decision rationale, root-cause narrative, or other interpretive prose, or when the user requests prose_english. Do not activate during analysis, ordinary chat, code generation, or working notes."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -38,7 +38,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-standard-engineering-english
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Apply a concise controlled-language house style inspired by ASD-STE100 to final engineering documents and generated summaries. USE WHEN: the final reporting step produces procedures, equipment descriptions, technical requirements, warnings, cautions, checklists, method summaries, or other text that readers must interpret consistently, or when the user requests standard_engineering_english. Do not claim ASD-STE100 compliance."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -47,7 +47,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-document-intelligence-extraction
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Classify mixed engineering documents and images, route native text/table, OCR, and vision extraction, and produce source-traceable evidence packages with confidence and human-review gates. USE WHEN: a NeqSim task receives PDFs, scans, Word/Excel files, drawings, charts, photographs, or multiple conflicting engineering sources."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -56,7 +56,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-separator-modelling
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational separator screening indicators for gas load, residence time, and capacity warnings. USE WHEN: a task needs public separator capacity screening without proprietary design methods."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -65,7 +65,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-fluid-quality-check
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Public checks for fluid composition quality before NeqSim simulation. USE WHEN: a task needs mole fraction sum checks, negative fraction checks, required component checks, or water/CO2/H2S flags."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -83,7 +83,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-e300-fluid-io
-    version: "0.1.1"
+    version: "1.0.0"
     description: "Read, write, and add water to Eclipse E300 fluid files for NeqSim. USE WHEN: a task needs to load an E300 file into a NeqSim fluid, write a NeqSim fluid to E300, or add water to a fluid or E300 file with the public PVTsim water parameters (volume shift 0.084004, parachor 10.0, kij 0.5)."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -92,7 +92,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-benchmark-reference-data
-    version: "0.1.1"
+    version: "1.0.0"
     description: "Reproducible, source-traceable benchmark validation for NeqSim tasks: a registry of reference sources with authority tiers and uncertainties (IAPWS, Span-Wagner, GERG-2008, CoolProp, NIST), an offline anchor table, PASS/WARN/FAIL grading with the three-point minimum, and the benchmark_validation block the report and CI gate consume. USE WHEN: validating NeqSim against independent data, writing a benchmark notebook or block, tracing a deviation to a citable source, or checking a benchmark claim."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -101,7 +101,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-uncertainty-quantification
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Monte Carlo uncertainty, tornado and global sensitivity for NeqSim tasks: P10/P90 marginals, LHS/Halton sampling, a cached technical/economic split, ascending p10<=p50<=p90 percentiles, convergence check, optional SALib Sobol/Morris and chaospy surrogate, and the uncertainty block the report and CI gate consume. USE WHEN: reporting P10/P50/P90, a tornado or a probability of a negative outcome, wrapping an expensive simulation, ranking parameters, or auditing an uncertainty block."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -110,7 +110,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-pseudocomponent-split-characterization
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Public plus-fraction (C7+) characterization by a controllable split factor: Whitson gamma split, lumping and delumping split factors, and the universal Paraffinic-Aromatic heavy-lump split factor S. USE WHEN: splitting a heavy end with one adjustable factor, computing a delumping factor from a reference fluid, reconstructing a detailed composition from a lumped one, or splitting lumps into P/A copies before rigorous NeqSim characterization."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -119,7 +119,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reference-fluid-synthetic-generation
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Representative or synthetic fluids from a common reference fluid via a split factor, matched to PVT/separator data; molar-rate blending of well fluids; and, with NO PVT report, a declared best-guess fluid from geothermal gradient, GOR/API bands and analogue trends with low/base/high cases and an assumption register. USE WHEN: calibrating a heavy-end split factor, producing field or per-case fluids, allocating a combined field fluid, or establishing a fluid for a discovery without lab PVT."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -128,7 +128,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-pvt-regression-characterization-factor
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Public weighted multi-target regression of a split/characterization factor against measured PVT and separator data (saturation pressure, GOR, stock-tank-oil density, formation volume factor). USE WHEN: a task must calibrate one heavy-end characterization factor so a fluid model reproduces several measured PVT/separator quantities at once, with per-target weights and residual reporting, before rigorous NeqSim EOS regression."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -137,7 +137,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-hydrate-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational hydrate risk screening placeholder with public assumptions. USE WHEN: a task needs a quick hydrate risk triage and should be directed to validated NeqSim methods for real calculations."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -146,7 +146,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-firewater-deluge-design
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Fire-water and deluge coverage design per NORSOK S-001 / ISO 13702 / NFPA 15: area versus dedicated object demand, nozzle-net sizing from flow and spacing, fire monitors with wind drift, hydraulic feasibility, active-versus-passive substitution. USE WHEN: a task asks if an area has adequate deluge coverage, how many nozzles are needed, or whether monitors or PFP can replace fire water."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -155,7 +155,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-relief-load-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational fire-case relief load screening indicators for pressure relief devices. USE WHEN: a task needs public, screening-level fire-case relief load estimates and capacity flags without proprietary relief design methods."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -164,7 +164,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-depressurization-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational blowdown and depressurization screening with time-to-target and low-temperature flags. USE WHEN: a task needs a public, screening-level blowdown time indicator and auto-refrigeration low-temperature triage without proprietary blowdown design methods."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -173,7 +173,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-vacuum-collapse-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational vacuum-collapse (implosion) screening for a blocked-in vessel that cools down, with vacuum-depth and external-rating flags. USE WHEN: a task needs a public, screening-level check of whether a closed vessel cooldown or steam/vapour condensation can pull a vacuum below the external pressure rating, without proprietary vacuum-collapse design methods."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -182,7 +182,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-line-velocity-check
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational process line velocity screening against erosional velocity and recommended velocity guidelines. USE WHEN: a task needs a public, screening-level check that a pipe or line operates within erosional and recommended velocity limits before detailed line sizing."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -191,7 +191,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-erd-reach-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational extended-reach well screening: build-and-hold path and Johancsik soft-string torque and drag, torque-limited reach versus friction and drill string, calibrated to a rig's longest historic well. USE WHEN: a task asks whether a platform or fixed-rig well can reach a target at a given horizontal departure and TVD, how reach depends on friction factor or drill-string torque rating, or how a new long-reach keeper or infill well compares with the rig's history before detailed well design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -200,7 +200,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-well-log-reading
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Read DLIS and LIS well logs with equinor/dlisio and LAS 1.2/2.0 with a built-in parser into one model: frames, curves, units, canonical mnemonics, nulls as NaN, depth in metres, curve inventory and SHA-256 provenance. Zone statistics, event-window contrast and resampling. USE WHEN: a task has well-log files (petrophysics, formation tops, loss or fault picks, H2S vs formation, offset-well evidence)."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -209,7 +209,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-seismic-segy-reading
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Read SEG-Y seismic with equinor/segyio: geometry (inline/crossline ranges, header-byte fallback, unstructured 2-D), scaled trace coordinates, bin spacing, CRS hints, amplitude QA, inline/crossline/slice sections, nearest trace at a well, fences along map polylines, PNG sections and seismic_dataset_evidence.v1. USE WHEN: a task has SEG-Y files and needs structural context, a well tie or a fence."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -218,7 +218,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-seismic-structure-to-reservoir
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Seismic or mapped structure to a screening reservoir model: finds surfaces, SEG-Y, logs and ties in task folders; reads IRAP/ZMAP+/XYZ or tracks a horizon from a well seed; time-to-depth on well ties; crest, spill and closure; area and GRV per contact; builder inputs, gate records and an OPM grid. USE WHEN: a reservoir model should use seismic or interpreted horizons."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -236,7 +236,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-crs-geodetic-checks
-    version: "0.1.0"
+    version: "1.0.0"
     description: "CRS and datum checks for map, survey and layout data: explicit, provenance-recorded transforms (equinor/geodetic-engine, else pyproj with the same rules); named operations checked against their area of use; swapped lat/lon, degrees-as-metres and non-RFC 7946 GeoJSON; datum-ambiguity shift; grid convergence, scale factor and grid against geodesic route length. USE WHEN: positions, routes or distances come from maps, surveys or GIS."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -245,7 +245,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-dynamic-model-identification
-    version: "0.4.1"
+    version: "1.0.0"
     description: "Dynamic model identification from plant data with equinor/TimeSeriesAnalysis, joined to NeqSim physics: gain, time constant and delay; PID tuning; closed-loop model and disturbance; NeqSim gains to check identified ones; physics residuals that separate equipment change from sensor fault; replay of identified models; move forecasts with backtest; advisory loop: plan, pace and verify production moves; usability gate. USE WHEN: root cause, control-loop or monitoring studies use historian data."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -254,7 +254,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-well-test-calibration
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Calibrate a well's lift and inflow model on raw test-separator data with NeqSim: recombine the well stream from actual separator gas/oil volumes, convert to stock tank through the real separation train, tune heat transfer U and head factor kH with priors, update inflow only from gauge tests, gate on a held-out test, virtual flow meter from a gauge. USE WHEN: well tests should tune a well model automatically."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -263,7 +263,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-well-design-study
-    version: "0.3.0"
+    version: "1.0.0"
     description: "Screening well design study and well-plan document: pressure/fracture window, casing seats, kick tolerance, casing and tubing design (API TR 5C3) with load-basis comparison, torque and drag, ECD, offset calibration, time and cost P10/P50/P90, fail-closed validation, A3 well schematic, BOP and barrier sketches, Gantt, risk matrix and a professional Word report. USE WHEN: a concept or pre-FEED well design or well plan is needed, especially with offset wells."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -271,7 +271,7 @@ skills:
     tags: [wells, well-design, well-plan, casing, kick-tolerance, torque-drag, offset-wells, time-cost, report, screening]
     min_neqsim_version: "3.7.0"
   - name: neqsim-integrated-well-planning
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Integrated well planning for oil, gas-condensate, water- and gas-injection wells (onshore, platform, subsea): provenance-tracked basis, NeqSim reservoir-well-facility chain (IPR, drift-flux VLP, injectivity, hydrate, annulus pressure, tubing movement), operating envelopes, barrier schematics, alternatives, A3 drawings, hand-off schemas, report and capability ledger. USE WHEN: a well must be sized, compared or documented from reservoir, fluid, host and completion data."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -279,7 +279,7 @@ skills:
     tags: [wells, well-planning, nodal-analysis, injectivity, operating-envelope, barriers, flow-assurance, integrity, drawings, report]
     min_neqsim_version: "3.7.0"
   - name: neqsim-h2s-phase-partitioning
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational H2S gas/oil/water partitioning with NeqSim SRK-CPA through a separator train, and back-calculation of wellstream H2S from measured separator-gas H2S. USE WHEN: a task has H2S measured in separator or export gas and needs wellstream H2S, the H2S split between gas, oil and produced water, a sour-service pH2S screen, or a gas-to-well H2S conversion table."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -288,7 +288,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reservoir-souring-correlation
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational reservoir souring screening: seawater fraction from tracers, automatic per-well H2S-versus-seawater-fraction correlations updated from new data, and a substrate-limited mixing-zone H2S bound. USE WHEN: a task asks how well or produced-water H2S develops with seawater breakthrough, needs per-well H2S correlations for a production model, or an upper bound on biogenic souring."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -306,7 +306,7 @@ skills:
     min_neqsim_version: "3.29.0"
 
   - name: neqsim-well-trajectory-anticollision
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational 3D well path and anti-collision screening: minimum curvature, curve-hold from kick-off or sidetrack tie-in, reduced MWD uncertainty, ISCWSA separation factor against offsets, parent exit, slot check and target pull-back. USE WHEN: a task needs a concept well path, whether it clears existing wellbores, the governing offset, how far to move a target, or if a slot is free before an official anti-collision run."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -315,7 +315,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-sand-erosion-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational sand-erosion and remaining-wall-life screening for solids-bearing lines. USE WHEN: a task needs a public, screening-level estimate of sand erosion rate, cumulative wall loss, and remaining wall life from a sand production rate before detailed DNV RP O501 erosion analysis."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -324,7 +324,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-compressor-operating-window-check
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational compressor operating window screening against surge and stonewall margins. USE WHEN: a task needs a public, screening-level check that a centrifugal compressor operating point sits inside the surge and stonewall limits before detailed performance review."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -333,7 +333,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-compressor-antisurge-recycle
-    version: "0.5.0"
+    version: "1.0.0"
     description: "Anti-surge recycle for centrifugal compressors in NeqSim: chart generation, AntiSurgeRecycleCalculator, dynamic AntiSurgeController, CompressorAntiSurgeApplication binding, MinimumSpeedRecycleControllerStructure split-range control, speed-solve convergence and recycle power/CO2 savings. USE WHEN: a task must protect a compressor from surge with a recycle loop, coordinate speed and recycle at minimum speed, or value avoided recycle."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -342,7 +342,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-dynamic-process-preparation
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Prepare NeqSim ProcessSystem and ProcessModel flowsheets for dynamic simulation, including equipment holdup, mechanical-design, and volume-readiness checks. USE WHEN: a task needs to convert a steady-state NeqSim process into a dynamic-ready model before runTransient calculations."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -351,7 +351,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-dynamic-instrument-controller-setup
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Set up measurement devices and PID-style controllers for NeqSim dynamic process simulations. USE WHEN: a task needs to add transmitters, controller devices, valve manipulation, setpoints, controller action, and autotuning workflow guidance before runTransient calculations."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -360,7 +360,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-hydrate-margin-check
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational hydrate operating-margin screening placeholder with public assumptions. USE WHEN: a task needs a quick check of whether an operating point keeps a safe temperature margin above a hydrate equilibrium temperature and should be directed to validated NeqSim methods for real calculations."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -369,7 +369,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-wax-margin-check
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational wax operating-margin screening placeholder with public assumptions. USE WHEN: a task needs a quick check of whether an operating point keeps a safe temperature margin above a wax appearance temperature and should be directed to validated NeqSim methods for real calculations."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -378,7 +378,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-produced-water-scale-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Public produced-water brine builder and screening-level scale evaluation. USE WHEN: a task needs to turn an ion analysis, preset, or TDS value into a NeqSim-ready electrolyte ion mapping and a quick scale/mixing-incompatibility screening (BaSO4, SrSO4, CaSO4, CaCO3), and should be directed to validated NeqSim checkScalePotential methods for design-grade work."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -387,7 +387,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-surf-cooldown-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational SURF flowline/riser cooldown and no-touch-time screening placeholder with public assumptions. USE WHEN: a task needs a quick, public estimate of how long an insulated subsea flowline stays above its hydrate formation temperature after shutdown, and should be directed to validated NeqSim methods for real cooldown and hydrate calculations."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -396,7 +396,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-pressure-drop-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational single-phase line pressure-drop screening against a recommended pressure-gradient guideline. USE WHEN: a task needs a public, screening-level Darcy-Weisbach pressure-drop estimate and a check against NORSOK P-002 / GPSA style line pressure-gradient guidelines before detailed hydraulic design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -405,7 +405,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-umbilical-design
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Subsea umbilical sizing and drawings with the NeqSim umbilical physics: tube wall, cross-section and weights, armour from catenary tension, chemical and hydraulic line friction and response, power cable with charging current, design checks, figures and study hand-off. USE WHEN: a SURF or tie-back task needs an umbilical sized and drawn instead of a cost-library line item, or chemical injection, hydraulic response, power step-out or bend radius must be answered."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -414,7 +414,7 @@ skills:
     min_neqsim_version: "3.29.0"
 
   - name: neqsim-flow-induced-vibration-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational flow-induced vibration (FIV) screening using a public fluid kinetic-energy (rho v^2) likelihood-of-failure index. USE WHEN: a task needs a public, screening-level check of whether a main-line flow velocity and density produce a kinetic-energy level that warrants a detailed Energy Institute style FIV assessment before piping vibration design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -423,7 +423,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-pipe-wall-thickness-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational process-pipe wall-thickness screening using the public ASME B31.3 hoop-stress (Barlow style) equation. USE WHEN: a task needs a public, screening-level minimum wall-thickness estimate and a check against a nominal schedule wall before detailed piping or pipeline mechanical design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -432,7 +432,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-flare-radiation-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational flare thermal-radiation screening using the public API 521 / API 537 point-source equation. USE WHEN: a task needs a public, screening-level estimate of radiant heat flux at a distance from a flare and a check against allowable radiation limits before detailed flare and radiation design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -441,7 +441,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-psv-orifice-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational pressure-safety-valve orifice screening using the public API 520 Part I critical gas-flow equation. USE WHEN: a task needs a public, screening-level required PSV orifice area and a mapped API orifice letter before detailed relief-valve sizing and selection."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -450,7 +450,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-safety-function-coverage-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational process safety-function coverage screening using the public API RP 14C / ISO 10418 SAFE-chart concept. USE WHEN: a task needs a public, screening-level check of whether a process component has the typically required protective functions (PSH, PSL, PSV, LSH, LSL, etc.) before a formal SAFE-chart and safety analysis review."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -459,7 +459,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-water-dewpoint-dehydration-screening
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Educational gas water-content and dehydration screening using the public GPSA Bukacek saturated-water-content correlation. USE WHEN: a task needs a public, screening-level estimate of saturated water content in natural gas, a check against a sales-gas water spec, or a decision on whether a stated stream composition is already DEHYDRATED or merely cooled and knocked out (the saturation test), before detailed dehydration design or before asserting any hydrate/ice finding."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -468,7 +468,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-adsorbent-capillary-condensation-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational screening of the maximum allowable condensable-contaminant concentration in a gas feeding a fixed adsorbent bed (mercury guard bed, molecular sieve, catalyst guard) before capillary condensation floods the sorbent pores. USE WHEN: a task needs a public, screening-level contaminant ppmv limit from the Kelvin equation and a sorbent pore radius, or needs to explain why a bed degrades with no free liquid at the inlet."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -477,7 +477,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-teg-dehydration-modeling
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Build a validated, closed-loop TEG (triethylene glycol) gas dehydration plant in NeqSim, including absorber, flash drum, regeneration column, stripper, lean-TEG recycle, and still-vent emission classification. USE WHEN: a task needs a runnable NeqSim TEG dehydration flowsheet (water dew point, lean-TEG purity, NMVOC/methane/benzene still-vent emissions) rather than a screening-level water-content estimate."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -486,7 +486,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-compressor-power-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational centrifugal-compressor power screening using the public polytropic-head equation (API 617 / API 619 style). USE WHEN: a task needs a public, screening-level estimate of polytropic head, discharge temperature, and gas power for a single compression stage before detailed compressor selection."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -495,7 +495,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-fired-heater-duty-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational fired-heater duty and radiant-flux screening using public energy-balance relations (API 560 style). USE WHEN: a task needs a public, screening-level estimate of process duty, fired duty, fuel rate, and average radiant flux for a fired heater before detailed thermal design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -504,7 +504,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-resource-classification-screening
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Educational petroleum resource classification screening using public SODIR RC0-RC9 project maturity and SPE-PRMS categories as independent axes. USE WHEN: a task needs to classify historical production, reserves, contingent resources, or undiscovered/prospective resources without confusing maturity with 1P/2P/3P or 1C/2C/3C uncertainty."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -513,7 +513,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reservoir-depletion-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational reservoir tank-depletion vs time screening with gas/oil and water-cut evolution. USE WHEN: a task needs a public, screening-level pressure-decline and production profile over time from a recoverable volume and offtake rate before detailed NeqSim SimpleReservoir or reservoir-engineering modelling."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -522,7 +522,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reservoir-facility-value-chain
-    version: "0.1.0"
+    version: "1.0.0"
     description: "History-match and forecast a gas chain from reservoir to export: p/z tank from shut-in wellhead pressure, well deliverability, facility capacity from process-model sweeps, separation pressure at the supply/capacity crossing, multi-field export coupling, scenarios, P10/P90. USE WHEN: linking reservoir depletion to a platform or export system, history matching, finding whether wells or facility limit production, or valuing compression and well levers."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -531,7 +531,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reservoir-model-builder
-    version: "0.5.1"
+    version: "1.0.0"
     description: "Screening-level reservoir model from whatever data exists, on a maturity ladder from one public volume to a full static model, with ranked source ladders per ingredient. USE WHEN: a field has only open data, a best-guess structure without seismic/logs/contacts is needed, volumetrics or depth defaults, recovery and well count from analogues, static arrays to OPM Flow GRID/PROPS reconciled to P90/P50/P10, or a SimpleReservoir/WellFlow spec with provenance."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -540,7 +540,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-norwegian-continental-shelf-data
-    version: "0.4.0"
+    version: "1.0.0"
     description: "Public Norwegian Continental Shelf reference facts, carbon-cost basis, Arps decline forecasting and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, field, carbon-cost/abatement or decline-forecast facts (norskpetroleum.no / Sodir FactPages) to orient a production, resource-accounting, field-inventory, emission-reduction or forecast screening before a validated NeqSim study."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -549,7 +549,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-ncs-infrastructure-network
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Open-data graph of the Norwegian Continental Shelf export system - fields, discoveries, hosts, trunklines, processing plants, receiving terminals and markets - built live from Sodir, norskpetroleum.no and Gassco, with NeqSim hand-offs (TiebackAnalyzer, HostFacility, LoopedPipeNetwork). USE WHEN: a task must know how NCS fields reach market, which fields share a pipeline or plant, trunkline/plant loading, what an outage strands, single points of failure, or which host a discovery can tie into."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -567,7 +567,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-ncs-ownership-equity
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Reads who owns Norwegian Continental Shelf fields, discoveries and licences from Sodir (partners, equity %, operator, history, company portfolio) and turns it into net-equity inputs for field evaluation and economics. Prospect equity is not public: user-supplied or a labelled licence proxy. USE WHEN: an evaluation needs partners and working interests, a net-to-company view of volumes, capex, opex or cash flow, a portfolio roll-up, or a check of an equity assumption."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -575,7 +575,7 @@ skills:
     tags: [field-development, norwegian-continental-shelf, ownership, equity, licensee, discovery, prospect, economics, open-data, open-api, screening]
     min_neqsim_version: "3.7.0"
   - name: neqsim-sodir-open-data
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Map and read-only client for ALL Sodir (Sokkeldirektoratet) open data: DataService REST with 112 FactPages tables/layers (wellbores, DST, tops, fields, reserves, production, owners, facilities, pipelines, licences, surveys, CO2), FactPages CSV, FactMaps, bulk files. USE WHEN: a task needs an official NCS fact or must pick the right Sodir layer. Keyless, NLOD 2.0."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -584,7 +584,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-near-field-discoveries
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Inventory and map of the discoveries, fields, evaluation plans and hosts around a target on the NCS (Sodir) and in Brazil (ANP): common development-stage ladder, public volumes and resource class, concept text, nearest hosts, joint-development clusters, CSV/GeoJSON export. USE WHEN: a field-development, tie-back, bid or area study needs the best public knowledge of what is near the target, what is planned there, and a map of it (e.g. around a Santos or Campos discovery)."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -593,7 +593,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-ncs-value-chain-optimization
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Multi-year, capacity-constrained NCS value-chain optimisation: forecasts fields from Sodir history, phases in discoveries, routes oil and gas through real trunklines, plants and terminals with a HiGHS LP, and returns production, curtailment, shadow prices, ullage, tie-in rankings and uplift lists for NeqSim follow-up. USE WHEN: maximising NCS value or production, finding the binding pipeline/plant and its capacity value, testing an outage or tie-in, or fitting discoveries into spare capacity."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -602,7 +602,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-field-layout-import
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational subsea field-layout import and normalization from supplied GeoJSON or tabular rows. USE WHEN: a task needs to turn an already-parsed subsea map (GeoJSON point features or CSV-like rows) into a clean, validated node list of wells, manifolds, and a host before geometry and routing screening."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -611,7 +611,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-subsea-layout-geometry
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Educational subsea field-layout geometry screening from supplied coordinates. USE WHEN: a task needs public, screening-level step-out distances, tie-back lengths, a node-to-node distance matrix, or a schematic plan-view illustration for wells, manifolds, templates, and a host from a subsea map before detailed routing and hydraulic design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -620,7 +620,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-subsea-equipment-placement
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Constraint-based siting of subsea equipment and routes (drill centres, templates, manifolds, PLETs, tie-ins): screens and ranks sites against clearances, existing lines and crossings, exclusion zones, seabed slope, fishing exposure and well reach, and checks the route. USE WHEN: a tie-back or SURF study must decide where equipment goes, or defend a placement against map data, standards and installation constraints."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -629,7 +629,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-surf-field-layout-design
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Design a screening SURF field layout and host position from open map, bathymetry and licence data: drill centres, trees, templates, manifolds, riser bases, routed and sized flowlines, umbilicals and risers, GeoJSON export and a reservoir-to-host cutaway. USE WHEN: a layout must be designed, not screened - template count, host location, loop/single/daisy-chain architecture, line sizes, umbilical lengths, or a georeferenced hand-off to flow assurance, cost or NeqSim network models."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -647,7 +647,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-pipe-route-profile
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational pipe-route length and elevation-profile screening from supplied waypoints. USE WHEN: a task needs a public, screening-level flowline or riser route length, segment list, and seabed elevation profile from a subsea map before detailed pressure-drop and flow assurance design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -656,7 +656,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-tie-in-pipeline-concept
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Screening of a new export or tie-in pipeline between two facilities: ranked landing points on neighbouring hosts, seabed profile from open EMODnet bathymetry, pressure drop, thermal decay, DNV-ST-F101 wall thickness and a recommended nominal size per rate case. USE WHEN: a task asks where an oil or gas line can be tied in, what size and wall thickness it needs, what inlet pressure a pump must deliver, or wants a pipe profile before a NeqSim pipeline study."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -665,7 +665,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-tie-in-pid-sketch
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Conceptual P&ID sketches (SVG) of both ends of a new tie-in line - source platform end with pump, metering, pig launcher, ESDV and riser; landing end with riser, ESDV, pig receiver, sampling, pressure control, spectacle blind and tie-in to an existing header - plus a completeness check. USE WHEN: a tie-in or export concept needs a drawing of possible connection points and the isolation, pigging and metering philosophy before a controlled P&ID is made."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -674,7 +674,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-subsea-slot-tee-reuse-inventory
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Inventory of tie-in capacity in existing subsea infrastructure (free template/manifold slots, spare tees and hubs, J-tube/riser slots, spare or reusable pipelines, flowlines, gas-lift, injection and MEG lines, umbilical cores) with status, size, remaining life, source and verification level, and a reuse-versus-new-build ranking. USE WHEN: a tie-in needs to know which existing slots, tees or lines can be used or re-purposed, or which line could raise production."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -683,7 +683,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-jv-cost-control-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational JV cost-control toolkit for a non-operating partner: parse JIB-style statements with subtotal checks, rank budget/forecast variances with fact-only commentary, split unit cost into volume and rate effects, check partner-share PI, and reconcile reports by roll-forward and arithmetic identities. USE WHEN: a partner receives JIB, budget, operations and cost-recovery reports from an operator and wants extraction and cross-report controls before human review."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -692,7 +692,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-capex-opex-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational factored CAPEX/OPEX screening that turns a bare equipment cost into a total installed CAPEX (Lang/Hand-style installation factor + contingency), an annual OPEX, and a lifecycle total cost of ownership. USE WHEN: a task needs a public, screening-level CAPEX and OPEX magnitude before detailed NeqSim CostEstimationCalculator estimating or qualified cost-engineering review."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -701,7 +701,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-stage-gate-project-timeline
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational stage-gate project timelines for field-development screening: prospect maturation (exploration, appraisal, DG1-DG3, execution, first oil at a turnaround), host modification projects scheduled ASAP or just in time with cost in the phases that incur it, and host life-extension decision deadlines, combined into a portfolio plan, capex calendar and Gantt. USE WHEN: a tie-in, area-development or debottlenecking screening must respect that projects take time."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -710,7 +710,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-concept-longlist-shortlist-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational concept long-list to short-list screening for field development: long list from a decision-element matrix with rules and givens, capacity-variant and undecided-element flags, must-pass screens, weighted ranking with Pareto front, weight robustness and crossovers, a robust diverse short list with reference and elimination log, and traceable screening figures. USE WHEN: a concept long list must be generated, reduced to a short list or illustrated."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -718,7 +718,7 @@ skills:
     tags: [field-development, concept-selection, long-list, short-list, decision-matrix, mcda, robustness, screening, education]
     min_neqsim_version: "3.7.0"
   - name: neqsim-asset-value-npv-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational discounted-cash-flow (DCF) asset-value screening that builds a year-by-year net cash flow from revenue, OPEX, and a CAPEX schedule and returns NPV, IRR, and payback with a simple flat tax. USE WHEN: a task needs a public, screening-level NPV/IRR/payback before detailed NeqSim field-development economics or qualified commercial review."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -727,7 +727,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-economy-basis-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational economy-basis assembly and range-check screening for prices, discount rate, currency, inflation, and tax regime. USE WHEN: a task needs a public, screening-level economic assumptions basis with sanity flags before an asset-value (NPV) screening or detailed NeqSim field-economics modelling."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -736,7 +736,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-design-basis-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational design-basis margin screening for flow, pressure, and temperature design margins versus operating conditions, with a standards-basis echo. USE WHEN: a task needs a public, screening-level check that proposed design capacities and conditions carry sensible margins over operating before detailed mechanical design and code rating."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -745,7 +745,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-energy-emissions-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational field-life energy and CO2-equivalent emissions roll-up that turns a year-by-year energy use into annual and total CO2e, a carbon intensity (kg CO2e/boe), and an optional CO2-tax cost. USE WHEN: a task needs a public, screening-level field-life emissions and carbon-intensity picture before detailed NeqSim combustion modelling or certified emission reporting."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -754,7 +754,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-bathymetry-profile-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational bathymetry profile screening from supplied soundings. USE WHEN: a task needs public, screening-level seabed depth interpolation along a route, slope screening, and steep-section flags from sounding points before detailed free-span and on-bottom-stability design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -763,7 +763,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-pipeline-survey-processing
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational as-built pipeline survey processing: raw KP/depth/seabed/coordinate rows to a cleaned, sign-normalised pipeline profile with flagged points, free-span and cover candidates, repeat-survey comparison, processing log and a NeqSim-ready elevation profile. USE WHEN: a task needs a screening-level pipeline profile from survey or inspection data before DNV-RP-F105, F109, F114 or NeqSim thermal-hydraulic analysis."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -772,7 +772,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-seabed-protection-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Trenching, burial and rock-dump screening from route and map-layer data. Samples substrate, fishing intensity, ice scour and no-rock zones; finds crossings; selects protection by segment; estimates cover, rock quantities, supports, durations and a burial hand-off to NeqSim cooldown models. USE WHEN: early flow-assurance, SURF or tie-back studies need protection scope, burial thermal effects or rock quantities before detailed DNV assessments and contractor estimates."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -781,7 +781,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-step-out-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational subsea tie-back step-out and arrival-pressure screening with optional hydrate-margin input. USE WHEN: a task needs a public, screening-level check of whether a tie-back step-out distance and arrival pressure stay within simple guidelines before detailed flow-assurance and hydraulic design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -790,7 +790,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-production-network-routing
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational production-network routing: wells through manifolds and flowlines/risers to a host with an arrival-pressure roll-up, and multiwell flow regulated by an inlet/separator pressure. USE WHEN: a task needs screening-level per-well inflow, manifold rates, a platform arrival-pressure roll-up, or pressure-regulated multiwell flow before detailed NeqSim inflow and multiphase hydraulics."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -799,7 +799,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-co2-emissions-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational combustion-CO2 emission screening that estimates the CO2 mass rate from a fuel-gas flow and composition using public per-component carbon-count stoichiometry and the IPCC basis. USE WHEN: a task needs a public, screening-level CO2 emission rate (kg/s or tonnes/day) from burning a fuel-gas stream before detailed combustion or emission-factor reporting."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -808,7 +808,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-weather-data
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Live, forecast and historical weather, wind and sea-state data for installations from open, keyless APIs - Open-Meteo worldwide and MET Norway/Sodir for the Norwegian Continental Shelf. USE WHEN: a task needs current, forecast or historical temperature, wind, humidity, pressure or wave data for an installation - by name on the NCS or by coordinates anywhere - for gas-turbine derating, fire-water/flare wind screening, dispersion stability class, or subsea cooldown screening."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -817,7 +817,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-two-phase-flow-regime-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational two-phase flow-regime screening that classifies a horizontal gas-liquid flow pattern from superficial velocities using a simplified public Mandhane-style map and flags slug risk. USE WHEN: a task needs a public, screening-level flow-regime flag (stratified, slug, annular, bubble) and slug-risk triage to pair with slug-flow and flow-induced-vibration work."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -826,7 +826,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-control-valve-cv-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational control-valve sizing screening that estimates the required flow coefficient (Kv/Cv) and flags choked flow per public IEC 60534-2-1 / ISA-75.01 equations for liquid and gas service. USE WHEN: a task needs a public, screening-level required Cv and a choked-flow flag before detailed control-valve selection."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -835,7 +835,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-control-authority-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational control-authority screening from controller output history: saturation fraction and trend, saturated vs modulating variance and disturbance gain, off-set-point time and time-to-limit. USE WHEN: a controlled variable worsened while the disturbance looks unchanged, a valve is wide open or bottomed out, a loop may have stopped controlling, or an investigation must separate a growing disturbance from a loop out of authority."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -844,7 +844,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-heat-exchanger-fouling-assessment
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational heat-exchanger monitoring and fouling assessment for plate and shell-and-tube coolers, condensers and cooling-medium loops: operating U-value, flow normalisation without scaling the deposit, fouling vs film resistance, maldistribution rule-out, capacity loss and cleaning interval. USE WHEN: a task asks whether an exchanger or cooling loop has fouled, by how much against design U, what it costs in duty or capacity, or how often to clean."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -853,7 +853,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-noise-screening
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Standards-based gas-valve and restriction noise screening at a stated receiver distance using either a current measured A-weighted level or a conservative pressure-drop energy model. USE WHEN: a task needs noise triage, receiver/workplace assessment, or routing to detailed IEC 60534-8-3 prediction while keeping acoustic-induced-vibration assessment separate."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -862,7 +862,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-pump-hydraulics-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational centrifugal-pump hydraulics screening for hydraulic/shaft power, NPSH-available, and best-efficiency-point window using public pump relations and affinity laws. USE WHEN: a task needs a public, screening-level pump power, NPSH-available estimate, and BEP-window check before detailed pump selection."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -871,7 +871,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-gas-dispersion-distance-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational Gaussian point-source gas-dispersion screening that estimates the downwind distance to a target concentration (LFL or toxic ppm) using the public Pasquill-Gifford / Briggs rural model. USE WHEN: a task needs a public, screening-level distance-to-LFL or distance-to-ppm estimate for a continuous gas release before detailed dispersion or consequence analysis."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -880,7 +880,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-jet-fire-radiation-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational jet-fire thermal-radiation screening that estimates the radiative flux at a distance, or the distance to a target flux, using the public single-point-source flame radiation model. USE WHEN: a task needs a public, screening-level jet-fire radiation flux or a distance to a personnel/equipment thermal limit before detailed fire-consequence analysis."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -889,7 +889,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-dry-gas-seal-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational dry gas seal supply and condensation screening for centrifugal compressors. USE WHEN: a task needs a public, screening-level estimate of seal-gas and separation-gas supply demand and a seal-gas condensation-margin check (cavity temperature versus hydrocarbon dew point) before detailed dry gas seal system design per API 692."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -898,7 +898,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-multiphase-flow-slug-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational multiphase slug-flow regime and slug-catcher volume screening. USE WHEN: a task needs a public, screening-level indicator of whether a multiphase line is in an intermittent/slug regime and a first-pass slug-catcher volume estimate before validated multiphase flow analysis."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -907,7 +907,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-olga-multiphase-simulator
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Run the OLGA transient multiphase simulator from Python: locate it, build, configure and report its PVT table and hydrate curve from a NeqSim fluid, rule-check a genkey case, launch the batch engine, decode the exit code, and read .tpl/.ppl results. USE WHEN: executing or sweeping OLGA cases, building or documenting an OLGA PVT table or HYDRATECURVE, diagnosing an OLGA failure, or benchmarking OLGA against NeqSim pipe models."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -916,7 +916,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reciprocating-compressor-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational reciprocating-compressor screening using the public clearance volumetric-efficiency relation (API 618 / API 619 style). USE WHEN: a task needs a public, screening-level estimate of volumetric efficiency, actual inlet capacity, staging, discharge temperature, and rod-load utilisation for a reciprocating compressor before detailed selection."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -925,7 +925,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-gas-turbine-performance-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational gas-turbine performance screening using open ISO 3977 / GL1029 style derate factors. USE WHEN: a task needs a public, screening-level estimate of site-rated shaft power, site heat rate, thermal efficiency, fuel heat input, exhaust mass flow, and exhaust temperature for a gas-turbine driver before detailed package selection."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -934,7 +934,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-piping-flexibility-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational piping-flexibility screening using open ASME B31.3 / B16.5 style relations. USE WHEN: a task needs a public, screening-level check of hoop (sustained) stress, thermal expansion, displacement (expansion) stress range, and a flange-rating pressure check for a process pipe run before detailed pipe-stress analysis."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -943,7 +943,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-acoustic-induced-vibration-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational acoustic-induced-vibration (AIV) screening using the public Energy Institute likelihood-of-failure form for gas pressure-reducing devices. USE WHEN: a task needs a public, screening-level estimate of sound power level, pipe diameter-to-thickness ratio, allowable sound power level, and an AIV likelihood-of-failure index for a control valve, relief valve, or restriction orifice before detailed vibration assessment."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -952,7 +952,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-gas-scrubber-sizing-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational gas-scrubber sizing screening using the public Souders-Brown / K-factor relation for vertical separators with a mist-eliminator gas-load check. USE WHEN: a task needs a public, screening-level estimate of the Souders-Brown velocity, required vessel diameter, velocity utilisation, and mist-eliminator load for a vertical gas scrubber before detailed separator design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -961,7 +961,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-utility-balance-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational utility-balance screening for instrument air demand, fuel gas Wobbe index, and cooling water duty/flow with a simple capacity margin roll-up (NORSOK U-001 / ISA-7.0.01 style). USE WHEN: a task needs a public, screening-level estimate of instrument air demand, cooling water flow, fuel gas Wobbe index compliance, and utility capacity utilisation before detailed utility-system design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -970,7 +970,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reliability-data-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational reliability and availability screening from an ISO 14224 / OREDA style failure rate and repair time, with simple parallel-redundancy and planned-downtime handling. USE WHEN: a task needs a public, screening-level estimate of MTBF, steady-state availability, mission reliability, and expected failures for an equipment item or a simple redundant system before detailed RAM analysis."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -979,7 +979,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-ageing-life-extension-screening
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Educational ageing-trend and remaining-life screening (Laplace test, Crow-AMSAA fit, failure projection, maintain-vs-replace) plus the installation technical life basis (design life, cut-off, life-limiting populations). USE WHEN: asked whether equipment ages, how long a host or installation can operate, or whether a study horizon fits technical life."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -988,7 +988,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-artificial-lift-screening
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational artificial-lift screening that compares a simple straight-line IPR natural deliverability against a target rate and screens gas lift and ESP feasibility from a required bottomhole-pressure reduction. USE WHEN: a task needs a public, screening-level recommendation of natural flow, gas lift, or ESP for a well before detailed inflow/outflow (nodal) analysis and lift design."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -996,7 +996,7 @@ skills:
     tags: [field-development, artificial-lift, gas-lift, esp, ipr, screening, education]
     min_neqsim_version: "3.7.0"
   - name: neqsim-cfd-coupling
-    version: "0.4.0"
+    version: "1.0.0"
     description: "Link NeqSim and engineering documents to single- or multiphase CFD: traceable design basis, NeqSim boundary conditions, runnable OpenFOAM RANS/VOF cases, mesh/wall/turbulence gates and enhancement factors for 1-D models; tonal-noise work fails closed without evidence. USE WHEN: local velocity or shear peaks at bends, welds, tees or bundles, maldistribution, stratified/slug flow, real-geometry pressure drop, CFD/FEM report qualification, or aeroacoustic readiness."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1004,7 +1004,7 @@ skills:
     tags: [process, cfd, openfoam, multiphase, vof, aeroacoustics, tonal-noise, fsi-readiness, design-basis, tag_register, p-and-id, mass-transfer, wall-shear, mesh-quality, y-plus, coupling]
     min_neqsim_version: "3.7.0"
   - name: neqsim-fem-coupling
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Link NeqSim and engineering documents to finite-element models of the solid: layered-wall conduction, transient cooldown, porous diffusion and thermal/pressure stress, with NeqSim film coefficients, closed-form checks, Gmsh 2-D/3-D meshes, scikit-fem/FEniCSx cases, PyVista renders and 1-D outputs (U-value, hot-spot factor, no-touch time). USE WHEN: insulation defects, clamp short-circuits, buried/non-radial soil paths, wall discontinuities, cooldown or thermal shock, or FEM report qualification."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1020,7 +1020,7 @@ skills:
     tags: [subsurface, wells, injectivity, productivity, relative-permeability, opm-flow, reservoir-simulation, black-oil, pyscal, resdata]
     min_neqsim_version: "3.7.0"
   - name: neqsim-reservoir-history-match-forecast
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Compositional material-balance model of a gas-condensate field with several formations, compartments and wells: history match to rates, pressure and condensate yield, produced composition versus depletion, forecast under wellhead-pressure limits, and wellstreams for process models. USE WHEN: a multi-formation or multi-well gas field must be matched and forecast, composition change is needed, or a process model needs reservoir-driven feeds."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1044,7 +1044,7 @@ skills:
     tags: [subsurface, reservoir-simulation, visualization, 3d, pyvista, resdata, opm-flow, eclipse, sweep, reporting]
     min_neqsim_version: "3.7.0"
   - name: neqsim-continuous-improvement-toolkit
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Building blocks for NeqSim living tasks: a tagreader PI/IP.21 adapter for cycle_plan.yaml, Gaussian-process Bayesian optimisation with expected improvement, an ensemble Kalman parameter update, and an SVD identifiability check. USE WHEN: a living task needs historian data without enterprise adapters, a solve loop must pick the next trial and its expected gain, parameters must update each cycle from measurements, or a calibration must be checked for unidentifiable parameters."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1052,7 +1052,7 @@ skills:
     tags: [process, continuous-improvement, living-task, historian, tagreader, bayesian-optimization, enkf, identifiability]
     min_neqsim_version: "3.22.0"
   - name: neqsim-psc-bid-economics-screening
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Educational PSC exploration-block bid screening: royalty, capped cost oil, profit-oil split (optionally the Brazilian ANP Annex XX Brent and rate-per-well adjustment table), tax, bonus and exploration programme, with EMV, break-even offered share, break-even chance of discovery and volume. USE WHEN: judging a bid-round offer or how much State profit-oil share a block can bear, or comparing a tie-back with stand-alone."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1068,7 +1068,7 @@ skills:
     tags: [pvt, brazil, pre-salt, co2, analogue, fluid-characterization, flow-assurance]
     min_neqsim_version: "3.7.0"
   - name: neqsim-anp-open-data
-    version: "0.2.1"
+    version: "1.0.0"
     description: "Reads Brazilian ANP open data: bid-round blocks, field and well production, well data bank, GeoANP layers (blocks, fields, wells, gas pipelines), installation positions from wellheads and tie-in host ranking, with CRS, unit and date checks. USE WHEN: a task needs Brazilian block, field or well facts, a host such as a pre-salt FPSO, nearby installations or export lines for a tie-in, or a Sodir-like open-data basis."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1076,7 +1076,7 @@ skills:
     tags: [field-development, brazil, anp, open-data, production, blocks]
     min_neqsim_version: "3.7.0"
   - name: neqsim-anp-well-production-history
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Reads Brazilian ANP well-level production open data into unit-explicit series: merges onshore, offshore and pre-salt files without double counting, builds well/field histories with GOR and water cut, checks data features, prepares decline-fit input and a declared fluid basis. USE WHEN: a task needs production history of Brazilian wells or fields, decline or GOR analysis, a fluid basis from public data, or what public data can support for an MBAL or well-flow model."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1084,7 +1084,7 @@ skills:
     tags: [field-development, brazil, anp, open-data, production, wells, decline, gor, fluid-basis]
     min_neqsim_version: "3.7.0"
   - name: neqsim-brazil-offshore-infrastructure-market
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Public data and helpers for Brazilian offshore (Santos and Campos pre-salt) gas export routes, processing plants, tariff status, third-party access, gas spec, oil marketing and host capacity, with explicit UNKNOWNs and source ids. USE WHEN: a Brazilian block or tie-back evaluation needs gas export, CO2 removal, wellhead net-back, host ullage or market context, and no numeric offshore tariff is public."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1092,7 +1092,7 @@ skills:
     tags: [field-development, brazil, pre-salt, gas-export, tariffs, market, host-capacity, screening]
     min_neqsim_version: "3.7.0"
   - name: neqsim-technology-assessment
-    version: "0.1.1"
+    version: "1.0.0"
     description: "Educational technology assessment for new or step-out technology: decomposition, novelty categorisation (1-4), technology readiness level (TRL 0-7) roll-up, enabling vs enhancing, step-out, benefits and risks, standardisation potential and a preliminary qualification outline. USE WHEN: a project study must decide which technology elements need qualification before FMIRR, a qualification programme or a technology assessment report."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1100,7 +1100,7 @@ skills:
     tags: [field-development, technology-qualification, technology-assessment, trl, novelty, step-out, screening]
     min_neqsim_version: "3.7.0"
   - name: neqsim-technology-fmirr
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Educational failure-mode identification and risk ranking (FMIRR) register for any new technology: separate failed item, mode, mechanism and cause (ISO 14224 terms), 5x5 consequence-probability ranking, critical modes linked to qualification tests, re-rating history. USE WHEN: a technology assessment has identified novel elements and the project needs a ranked failure-mode register to define the qualification plan."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1108,7 +1108,7 @@ skills:
     tags: [safety, technology-qualification, fmirr, failure-modes, risk-ranking, iso-14224, screening]
     min_neqsim_version: "3.7.0"
   - name: neqsim-technology-assessment-report
-    version: "0.1.1"
+    version: "1.0.0"
     description: "Builds a full technology assessment report (Markdown and Word) for any technology from technology_assessment.v1 and technology_fmirr.v1 results: qualification basis, decomposition, novelty and TRL, step-out, benefits and risks, FMIRR, qualification outline, conclusions, open points. USE WHEN: a project study needs a technology assessment report as a deliverable, or an assessment and FMIRR must be turned into a reviewable document."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1124,7 +1124,7 @@ skills:
     tags: [reporting, intake, planning, workflow]
     min_neqsim_version: "3.7.0"
   - name: neqsim-jurisdiction-regulatory-basis
-    version: "0.2.0"
+    version: "1.0.0"
     description: "Identifies the country and regulatory regime of the evaluated asset and records authorities, governing laws, regulation families, recognised standards and fiscal basis, with NO, GB, US, BR, AO, CA and EU profiles and a per-topic well and SURF register. USE WHEN: any study, design, safety, emissions, layout, well-planning, SURF or economics task evaluates an asset in a specific country, or the country is not stated and must be asked or declared as an assumption."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1132,7 +1132,7 @@ skills:
     tags: [engineering-data, jurisdiction, regulation, compliance, standards, safety, environment, advisory]
     min_neqsim_version: "3.7.0"
   - name: neqsim-standard-equipment-sizes
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Rounds calculated equipment sizes up to standard industry sizes - pipe NPS/DN, API 526 relief-valve orifices, ASME B16.5 flange classes, typical IEC motor ratings, exchanger tube lengths, vessel diameter steps - and defines the size-source precedence of project/company datasheet, vendor, then public standard. USE WHEN: a design or study produces a calculated diameter, area, power or rating that must be reported as a buildable standard size, or a report quotes an equipment size."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1141,7 +1141,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-thermoml-experimental-data
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Fetch published experimental thermophysical data (density, VLE, viscosity, solubility, heat capacity) from the NIST/TRC ThermoML Archive by DOI with no login, flatten it into state points with expanded uncertainties, and score a NeqSim model against it with AAD, bias and within-uncertainty statistics. USE WHEN: validating or tuning an EOS or kij against measured data, finding measurements for a binary or mixture, or backing a benchmark with citable experiments rather than another model."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1150,7 +1150,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-opm-open-reservoir-decks
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Open, login-free reservoir benchmark decks from the OPM opm-data repository (Norne full field, SPE1/3/5/9/10 comparative solution projects, Sleipner CO2) with per-case licence, size guard, deck summary and PVTO/PVTG/PVDG/SWOF table extraction. USE WHEN: a NeqSim reservoir, PVT, material-balance or reservoir-to-facility task needs a real published reference case, a black-oil table to compare against a NeqSim fluid, or a realistic well/schedule example that is not company data."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1159,7 +1159,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-open-incident-data
-    version: "0.1.0"
+    version: "1.0.0"
     description: "Open, login-free offshore incident statistics from the US BSEE Data Center: accident investigations by type (fire, explosion, blowout, fatality, crane, pollution) divided by platform structure-years, with exact Poisson intervals and explicit caveats. USE WHEN: a safety, consequence or reliability task needs a sourced open order-of-magnitude frequency or trend to cross-check an assumed fire, explosion or blowout frequency, or needs to state what open incident data can and cannot support."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"

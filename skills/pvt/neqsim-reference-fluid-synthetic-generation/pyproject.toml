@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-reference-fluid-synthetic-generation"
-version = "0.1.0"
+version = "1.0.0"
 description = "Public helpers to match a split factor, generate representative fluid cases from a common reference fluid, and blend compositions by molar-rate allocation for NeqSim community workflows."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

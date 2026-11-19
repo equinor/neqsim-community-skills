@@ -1,7 +1,7 @@
 ---
 name: neqsim-well-log-reading
 calculation_basis: "data-retrieval"
-version: "0.1.0"
+version: "1.0.0"
 description: "Read DLIS and LIS well logs with equinor/dlisio and LAS 1.2/2.0 with a built-in parser into one model: frames, curves, units, canonical mnemonics, nulls as NaN, depth in metres, curve inventory and SHA-256 provenance. Zone statistics, event-window contrast and resampling. USE WHEN: a task has well-log files (petrophysics, formation tops, loss or fault picks, H2S vs formation, offset-well evidence)."
 last_verified: "2026-11-15"
 requires:

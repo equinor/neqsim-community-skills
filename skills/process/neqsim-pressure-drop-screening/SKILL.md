@@ -1,7 +1,7 @@
 ---
 name: neqsim-pressure-drop-screening
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational single-phase line pressure-drop screening against a recommended pressure-gradient guideline. USE WHEN: a task needs a public, screening-level Darcy-Weisbach pressure-drop estimate and a check against NORSOK P-002 / GPSA style line pressure-gradient guidelines before detailed hydraulic design."
 last_verified: "2026-06-18"
 requires:

@@ -1,7 +1,7 @@
 ---
 name: neqsim-reservoir-history-match-forecast
 calculation_basis: "neqsim-java"
-version: "0.1.0"
+version: "1.0.0"
 description: "Compositional material-balance model of a gas-condensate field with several formations, compartments and wells: history match to rates, pressure and condensate yield, produced composition versus depletion, forecast under wellhead-pressure limits, and wellstreams for process models. USE WHEN: a multi-formation or multi-well gas field must be matched and forecast, composition change is needed, or a process model needs reservoir-driven feeds."
 last_verified: "2026-10-06"
 requires:

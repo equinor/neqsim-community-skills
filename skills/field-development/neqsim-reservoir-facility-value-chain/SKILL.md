@@ -1,7 +1,7 @@
 ---
 name: neqsim-reservoir-facility-value-chain
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "History-match and forecast a gas chain from reservoir to export: p/z tank from shut-in wellhead pressure, well deliverability, facility capacity from process-model sweeps, separation pressure at the supply/capacity crossing, multi-field export coupling, scenarios, P10/P90. USE WHEN: linking reservoir depletion to a platform or export system, history matching, finding whether wells or facility limit production, or valuing compression and well levers."
 last_verified: "2026-10-07"
 requires:

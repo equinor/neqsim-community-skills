@@ -1,7 +1,7 @@
 ---
 name: neqsim-well-design-study
 calculation_basis: "screening"
-version: "0.3.0"
+version: "1.0.0"
 description: "Screening well design study and well-plan document: pressure/fracture window, casing seats, kick tolerance, casing and tubing design (API TR 5C3) with load-basis comparison, torque and drag, ECD, offset calibration, time and cost P10/P50/P90, fail-closed validation, A3 well schematic, BOP and barrier sketches, Gantt, risk matrix and a professional Word report. USE WHEN: a concept or pre-FEED well design or well plan is needed, especially with offset wells."
 last_verified: "2026-10-31"
 requires:

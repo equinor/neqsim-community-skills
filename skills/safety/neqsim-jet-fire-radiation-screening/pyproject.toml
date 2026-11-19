@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-jet-fire-radiation-screening"
-version = "0.1.0"
+version = "1.0.0"
 description = "Educational jet-fire thermal-radiation screening using the public single-point-source flame model."
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

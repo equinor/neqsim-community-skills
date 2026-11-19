@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-benchmark-reference-data"
-version = "0.1.0"
+version = "1.0.0"
 description = "Independent reference data and model-vs-reference comparison for NeqSim benchmark validation."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

@@ -1,7 +1,7 @@
 ---
 name: neqsim-well-test-calibration
 calculation_basis: "hybrid"
-version: "0.1.0"
+version: "1.0.0"
 description: "Calibrate a well's lift and inflow model on raw test-separator data with NeqSim: recombine the well stream from actual separator gas/oil volumes, convert to stock tank through the real separation train, tune heat transfer U and head factor kH with priors, update inflow only from gauge tests, gate on a held-out test, virtual flow meter from a gauge. USE WHEN: well tests should tune a well model automatically."
 last_verified: "2026-11-17"
 requires:

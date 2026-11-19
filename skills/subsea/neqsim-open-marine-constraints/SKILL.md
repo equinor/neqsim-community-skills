@@ -1,7 +1,7 @@
 ---
 name: neqsim-open-marine-constraints
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Keyless route and site screening against open marine constraint layers: fishing and trawl exposure, protected and vulnerable seabed areas (MAREANO corals and sponges), offshore wind areas, Norwegian grid, existing pipelines, wrecks, munitions and earthquakes, from EMODnet, Fiskeridirektoratet, Miljodirektoratet, NVE, NOAA and USGS. USE WHEN: a tie-back, pipeline, cable or drill-centre concept needs sourced seabed-use, environmental or grid constraints that Omnia Maps and Sodir do not hold."
 last_verified: "2026-11-13"
 requires:

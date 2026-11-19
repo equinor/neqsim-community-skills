@@ -1,7 +1,7 @@
 ---
 name: neqsim-stage-gate-project-timeline
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational stage-gate project timelines for field-development screening: prospect maturation (exploration, appraisal, DG1-DG3, execution, first oil at a turnaround), host modification projects scheduled ASAP or just in time with cost in the phases that incur it, and host life-extension decision deadlines, combined into a portfolio plan, capex calendar and Gantt. USE WHEN: a tie-in, area-development or debottlenecking screening must respect that projects take time."
 last_verified: "2026-10-18"
 requires:

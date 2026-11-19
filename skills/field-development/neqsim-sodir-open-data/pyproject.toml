@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-sodir-open-data"
-version = "0.1.0"
+version = "1.0.0"
 description = "Catalog and read-only client for the Sokkeldirektoratet (Norwegian Offshore Directorate, Sodir) open data: DataService REST (every FactPages table and layer), FactPages CSV, FactMaps map services, bulk shape/CSV/FGDB downloads, CO2 storage atlas themes. NLOD 2.0."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

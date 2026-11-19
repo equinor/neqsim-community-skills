@@ -1,7 +1,7 @@
 ---
 name: neqsim-erd-reach-screening
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational extended-reach well screening: build-and-hold path and Johancsik soft-string torque and drag, torque-limited reach versus friction and drill string, calibrated to a rig's longest historic well. USE WHEN: a task asks whether a platform or fixed-rig well can reach a target at a given horizontal departure and TVD, how reach depends on friction factor or drill-string torque rating, or how a new long-reach keeper or infill well compares with the rig's history before detailed well design."
 last_verified: "2026-10-09"
 requires:

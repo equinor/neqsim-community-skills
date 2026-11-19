@@ -1,7 +1,7 @@
 ---
 name: neqsim-seismic-segy-reading
 calculation_basis: "data-retrieval"
-version: "0.1.0"
+version: "1.0.0"
 description: "Read SEG-Y seismic with equinor/segyio: geometry (inline/crossline ranges, header-byte fallback, unstructured 2-D), scaled trace coordinates, bin spacing, CRS hints, amplitude QA, inline/crossline/slice sections, nearest trace at a well, fences along map polylines, PNG sections and seismic_dataset_evidence.v1. USE WHEN: a task has SEG-Y files and needs structural context, a well tie or a fence."
 last_verified: "2026-11-15"
 requires:

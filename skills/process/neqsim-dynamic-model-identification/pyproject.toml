@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-dynamic-model-identification"
-version = "0.4.1"
+version = "1.0.0"
 description = "Dynamic process, PID and closed-loop model identification from imperfect plant data with equinor/TimeSeriesAnalysis."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = ["pythonnet>=3.0.3", "numpy>=1.24", "pandas>=2.0", "matplotlib>=3.7"]
 

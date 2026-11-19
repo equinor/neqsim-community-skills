@@ -6,16 +6,16 @@ on:
     branches: [main]
 
 jobs:
-  runtime-py310:
+  runtime-py311:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up uv and Python 3.10
+      - name: Set up uv and Python 3.11
         uses: astral-sh/setup-uv@v10.3.3
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Install runtime test dependencies (without developer tools)
         run: uv sync --locked --no-default-groups --extra test

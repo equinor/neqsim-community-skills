@@ -1,7 +1,7 @@
 ---
 name: neqsim-heat-exchanger-fouling-assessment
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational heat-exchanger monitoring and fouling assessment for plate and shell-and-tube coolers, condensers and cooling-medium loops: operating U-value, flow normalisation without scaling the deposit, fouling vs film resistance, maldistribution rule-out, capacity loss and cleaning interval. USE WHEN: a task asks whether an exchanger or cooling loop has fouled, by how much against design U, what it costs in duty or capacity, or how often to clean."
 last_verified: "2026-09-17"
 requires:

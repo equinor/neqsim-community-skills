@@ -1,7 +1,7 @@
 ---
 name: neqsim-surf-field-layout-design
 calculation_basis: "screening"
-version: "0.2.0"
+version: "1.0.0"
 description: "Design a screening SURF field layout and host position from open map, bathymetry and licence data: drill centres, trees, templates, manifolds, riser bases, routed and sized flowlines, umbilicals and risers, GeoJSON export and a reservoir-to-host cutaway. USE WHEN: a layout must be designed, not screened - template count, host location, loop/single/daisy-chain architecture, line sizes, umbilical lengths, or a georeferenced hand-off to flow assurance, cost or NeqSim network models."
 last_verified: "2026-09-04"
 requires:

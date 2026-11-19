@@ -1,7 +1,7 @@
 ---
 name: neqsim-technology-assessment
 calculation_basis: "screening"
-version: "0.1.1"
+version: "1.0.0"
 description: "Educational technology assessment for new or step-out technology: decomposition, novelty categorisation (1-4), technology readiness level (TRL 0-7) roll-up, enabling vs enhancing, step-out, benefits and risks, standardisation potential and a preliminary qualification outline. USE WHEN: a project study must decide which technology elements need qualification before FMIRR, a qualification programme or a technology assessment report."
 last_verified: "2026-10-27"
 requires:

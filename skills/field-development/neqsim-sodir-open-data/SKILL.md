@@ -1,7 +1,7 @@
 ---
 name: neqsim-sodir-open-data
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Map and read-only client for ALL Sodir (Sokkeldirektoratet) open data: DataService REST with 112 FactPages tables/layers (wellbores, DST, tops, fields, reserves, production, owners, facilities, pipelines, licences, surveys, CO2), FactPages CSV, FactMaps, bulk files. USE WHEN: a task needs an official NCS fact or must pick the right Sodir layer. Keyless, NLOD 2.0."
 last_verified: "2026-10-26"
 requires:

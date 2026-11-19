@@ -1,7 +1,7 @@
 ---
 name: neqsim-crs-geodetic-checks
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "CRS and datum checks for map, survey and layout data: explicit, provenance-recorded transforms (equinor/geodetic-engine, else pyproj with the same rules); named operations checked against their area of use; swapped lat/lon, degrees-as-metres and non-RFC 7946 GeoJSON; datum-ambiguity shift; grid convergence, scale factor and grid against geodesic route length. USE WHEN: positions, routes or distances come from maps, surveys or GIS."
 last_verified: "2026-11-15"
 requires:

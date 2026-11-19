@@ -1,7 +1,7 @@
 ---
 name: neqsim-open-incident-data
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Open, login-free offshore incident statistics from the US BSEE Data Center: accident investigations by type (fire, explosion, blowout, fatality, crane, pollution) divided by platform structure-years, with exact Poisson intervals and explicit caveats. USE WHEN: a safety, consequence or reliability task needs a sourced open order-of-magnitude frequency or trend to cross-check an assumed fire, explosion or blowout frequency, or needs to state what open incident data can and cannot support."
 last_verified: "2026-11-12"
 requires:

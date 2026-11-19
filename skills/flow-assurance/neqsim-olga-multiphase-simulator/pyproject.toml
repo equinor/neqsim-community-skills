@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-olga-multiphase-simulator"
-version = "0.1.0"
+version = "1.0.0"
 description = "Locate, run and post-process the OLGA multiphase flow simulator from Python."
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

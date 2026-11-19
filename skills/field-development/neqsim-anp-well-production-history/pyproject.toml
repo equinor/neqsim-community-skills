@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-anp-well-production-history"
-version = "0.1.0"
+version = "1.0.0"
 description = "Read ANP (Brazil) well-level production open data into unit-explicit series: merge onshore, offshore and pre-salt files, field and installation aggregation, GOR and water cut, data checks, decline-fit input and a declared fluid basis."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

@@ -1,7 +1,7 @@
 ---
 name: neqsim-cfd-coupling
 calculation_basis: "hybrid"
-version: "0.4.0"
+version: "1.0.0"
 description: "Link NeqSim and engineering documents to single- or multiphase CFD: traceable design basis, NeqSim boundary conditions, runnable OpenFOAM RANS/VOF cases, mesh/wall/turbulence gates and enhancement factors for 1-D models; tonal-noise work fails closed without evidence. USE WHEN: local velocity or shear peaks at bends, welds, tees or bundles, maldistribution, stratified/slug flow, real-geometry pressure drop, CFD/FEM report qualification, or aeroacoustic readiness."
 last_verified: "2026-08-07"
 requires:

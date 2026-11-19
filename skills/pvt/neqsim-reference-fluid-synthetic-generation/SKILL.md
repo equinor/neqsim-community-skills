@@ -1,7 +1,7 @@
 ---
 name: neqsim-reference-fluid-synthetic-generation
 calculation_basis: "screening"
-version: "0.2.0"
+version: "1.0.0"
 description: "Representative or synthetic fluids from a common reference fluid via a split factor, matched to PVT/separator data; molar-rate blending of well fluids; and, with NO PVT report, a declared best-guess fluid from geothermal gradient, GOR/API bands and analogue trends with low/base/high cases and an assumption register. USE WHEN: calibrating a heavy-end split factor, producing field or per-case fluids, allocating a combined field fluid, or establishing a fluid for a discovery without lab PVT."
 last_verified: "2026-09-10"
 requires:

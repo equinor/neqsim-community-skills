@@ -1,6 +1,6 @@
 ---
 name: neqsim-jv-cost-control-screening
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational JV cost-control toolkit for a non-operating partner: parse JIB-style statements with subtotal checks, rank budget/forecast variances with fact-only commentary, split unit cost into volume and rate effects, check partner-share PI, and reconcile reports by roll-forward and arithmetic identities. USE WHEN: a partner receives JIB, budget, operations and cost-recovery reports from an operator and wants extraction and cross-report controls before human review."
 last_verified: "2026-10-21"
 calculation_basis: "screening"

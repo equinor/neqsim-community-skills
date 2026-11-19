@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-noise-screening"
-version = "0.2.0"
+version = "1.0.0"
 description = "Standards-based gas-valve noise screening from measured or modelled receiver levels."
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

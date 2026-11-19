@@ -78,14 +78,14 @@ Add or update root development dependencies with
 `uv add --group dev <package>` and commit the resulting `uv.lock` changes.
 Skill users can still install individual packages with pip.
 
-End-user packages support Python 3.10 or newer; developer tools require Python
-3.11 or newer. Ruff targets Python 3.10 so lint fixes must preserve that runtime
-floor. To reproduce the separate Python 3.10 runtime CI job without installing
+End-user packages and developer tools require Python 3.11 or newer. Ruff targets
+Python 3.11 so lint fixes must preserve that runtime floor.
+To reproduce the separate Python 3.11 runtime CI job without installing
 the default developer group, use an isolated environment:
 
 ```bash
-UV_PROJECT_ENVIRONMENT=.venv-py310 uv sync --locked --python 3.10 --no-default-groups --extra test
-UV_PROJECT_ENVIRONMENT=.venv-py310 uv run --locked --python 3.10 --no-default-groups --extra test pytest
+UV_PROJECT_ENVIRONMENT=.venv-py311 uv sync --locked --python 3.11 --no-default-groups --extra test
+UV_PROJECT_ENVIRONMENT=.venv-py311 uv run --locked --python 3.11 --no-default-groups --extra test pytest
 ```
 
 Keep the `--no-default-groups --extra test` flags on both commands: an unqualified

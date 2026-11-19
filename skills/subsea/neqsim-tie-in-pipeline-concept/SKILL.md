@@ -1,7 +1,7 @@
 ---
 name: neqsim-tie-in-pipeline-concept
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Screening of a new export or tie-in pipeline between two facilities: ranked landing points on neighbouring hosts, seabed profile from open EMODnet bathymetry, pressure drop, thermal decay, DNV-ST-F101 wall thickness and a recommended nominal size per rate case. USE WHEN: a task asks where an oil or gas line can be tied in, what size and wall thickness it needs, what inlet pressure a pump must deliver, or wants a pipe profile before a NeqSim pipeline study."
 last_verified: "2026-10-20"
 requires:

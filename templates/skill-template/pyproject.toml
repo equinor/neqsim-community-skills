@@ -7,7 +7,7 @@ name = "neqsim-skill-your-skill-name"
 version = "0.1.0"
 description = "Short public description of the community skill."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

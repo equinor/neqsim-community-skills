@@ -1,7 +1,7 @@
 ---
 name: neqsim-prose-english
 calculation_basis: "advisory"
-version: "0.1.0"
+version: "1.0.0"
 description: "Write direct, concrete, intellectually honest prose for final engineering reports and generated summaries while avoiding canned AI formatting. USE WHEN: the final reporting step needs an executive summary, discussion, conclusion, decision rationale, root-cause narrative, or other interpretive prose, or when the user requests prose_english. Do not activate during analysis, ordinary chat, code generation, or working notes."
 last_verified: "2026-09-11"
 requires:

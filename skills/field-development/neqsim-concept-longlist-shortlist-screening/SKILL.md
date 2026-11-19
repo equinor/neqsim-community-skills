@@ -1,7 +1,7 @@
 ---
 name: neqsim-concept-longlist-shortlist-screening
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational concept long-list to short-list screening for field development: long list from a decision-element matrix with rules and givens, capacity-variant and undecided-element flags, must-pass screens, weighted ranking with Pareto front, weight robustness and crossovers, a robust diverse short list with reference and elimination log, and traceable screening figures. USE WHEN: a concept long list must be generated, reduced to a short list or illustrated."
 last_verified: "2026-10-26"
 requires:

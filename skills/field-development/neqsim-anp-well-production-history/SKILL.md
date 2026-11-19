@@ -1,7 +1,7 @@
 ---
 name: neqsim-anp-well-production-history
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Reads Brazilian ANP well-level production open data into unit-explicit series: merges onshore, offshore and pre-salt files without double counting, builds well/field histories with GOR and water cut, checks data features, prepares decline-fit input and a declared fluid basis. USE WHEN: a task needs production history of Brazilian wells or fields, decline or GOR analysis, a fluid basis from public data, or what public data can support for an MBAL or well-flow model."
 last_verified: "2026-11-02"
 requires:

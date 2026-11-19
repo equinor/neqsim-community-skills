@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-well-test-calibration"
-version = "0.1.0"
+version = "1.0.0"
 description = "Well-test calibration from raw test-separator data with NeqSim: recombination, stock-tank conversion, lift-model tuning with priors, virtual flow meter."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = ["numpy>=1.24", "pandas>=2.0"]
 

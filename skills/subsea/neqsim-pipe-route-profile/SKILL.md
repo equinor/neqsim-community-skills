@@ -1,7 +1,7 @@
 ---
 name: neqsim-pipe-route-profile
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational pipe-route length and elevation-profile screening from supplied waypoints. USE WHEN: a task needs a public, screening-level flowline or riser route length, segment list, and seabed elevation profile from a subsea map before detailed pressure-drop and flow assurance design."
 last_verified: "2026-05-31"
 requires:

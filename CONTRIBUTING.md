@@ -50,7 +50,7 @@ skill-name/
 
 ## Testing Requirements
 
-Use Python 3.11 or newer and uv for repository development. From the
+Use Python 3.10 or newer and uv for repository development. From the
 repository root, install the locked environment and enable the local Git hook:
 
 ```bash
@@ -78,9 +78,10 @@ Add or update root development dependencies with
 `uv add --group dev <package>` and commit the resulting `uv.lock` changes.
 Skill users can still install individual packages with pip.
 
-End-user packages support Python 3.10 or newer; developer tools require Python
-3.11 or newer. Ruff targets Python 3.10 so lint fixes must preserve that runtime
-floor. To reproduce the separate Python 3.10 runtime CI job without installing
+End-user packages and developer tools support Python 3.10 or newer. CI tests
+the full developer environment on Python 3.10-3.14. Ruff targets Python 3.10 so
+lint fixes must preserve that runtime floor. To reproduce the separate Python
+3.10 runtime CI job without installing
 the default developer group, use an isolated environment:
 
 ```bash
@@ -89,7 +90,7 @@ UV_PROJECT_ENVIRONMENT=.venv-py310 uv run --locked --python 3.10 --no-default-gr
 ```
 
 Keep the `--no-default-groups --extra test` flags on both commands: an unqualified
-`uv run` selects the Python 3.11+ developer group again. The `test` extra supplies
+`uv run` selects the full developer group again. The `test` extra supplies
 the runtime test dependencies without Ruff, Black or pre-commit.
 The optional Completor integration requires Python 3.11–3.13 (its upstream
 support range); its existing integration tests skip when unavailable. The
@@ -104,6 +105,24 @@ uv run pytest skills/<domain>/<skill-name>/tests
 ```
 
 Tests should verify normal behavior, boundary conditions, invalid inputs, and documented warnings or flags.
+
+### Devtools 0.3.0 readiness
+
+The `neqsim-dev-setup` 0.3.0 release is defined by merged
+[equinor/neqsim#5155](https://github.com/equinor/neqsim/pull/5155).
+The aggregate skills package does not depend on the toolkit. Both its runtime
+and full developer environment support Python 3.10+, with a matching lockfile.
+Retain skill-specific Python exceptions and do not add a toolkit dependency
+to pure-Python skills.
+
+Run the development and isolated Python 3.10 checks above. For skills that use
+NeqSim or generate reports, also test against the released toolkit in a
+separate shared-plugin environment: 0.3.0 raises the NeqSim, JPype, plotting,
+PDF, Word, spreadsheet, and Pillow dependency floors. Dependency resolution
+alone does not verify numerical results or rendered reports. Use the
+[marketplace's 0.3.0 release gate](https://github.com/equinor/neqsim-copilot-plugin/blob/main/docs/maintaining.md#51-devtools-030-release-gate)
+for those integration checks; do not install the toolkit into
+the repository's locked development environment.
 
 ## Documentation Requirements
 
@@ -151,7 +170,7 @@ Before requesting review, confirm that:
 - [ ] The skill appears in `community-skills.yaml` with the canonical `neqsim-*` ID.
 - [ ] `SKILL.md` has valid YAML frontmatter and all required sections.
 - [ ] Examples run with public data.
-- [ ] Tests pass with Python 3.11 or newer.
+- [ ] Tests pass with Python 3.10 and the newer versions covered by CI.
 - [ ] Optional NeqSim integration has a fallback when NeqSim is not installed.
 - [ ] The contribution contains no confidential or company-specific information.
 - [ ] Limitations are explicit enough to prevent production misuse.

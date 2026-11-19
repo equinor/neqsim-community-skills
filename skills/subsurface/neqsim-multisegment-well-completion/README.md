@@ -10,3 +10,6 @@ Package `msw_completion`. It adds inflow-control devices (AICD, spiral ICD, nozz
 The evidence record is `completion_evidence.json` (`well_completion_evidence.v1`). See [SKILL.md](SKILL.md) for inputs, equations and limits.
 
 Dependencies are declared in `pyproject.toml`: completor and matplotlib, with neqsim as an optional extra. They are installed with the skill, never at run time.
+Completor is available on Python 3.11-3.13 only. Its dependency marker also keeps
+the aggregate plugin installable on Python 3.10; this standalone skill still
+requires Python 3.11+, and running Completor needs a supported interpreter.

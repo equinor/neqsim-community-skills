@@ -93,7 +93,7 @@ The NeqSim CLI installation described above also does not require `uv`.
 
 ### Repository development
 
-For repository development and validation, use Python 3.11 or newer and `uv`.
+For repository development and validation, use Python 3.10 or newer and `uv`.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and checks.
 
 The Python examples do not require confidential data. They detect whether the optional `neqsim` Python package is available and fall back to public placeholder logic when it is not installed.

@@ -1,7 +1,7 @@
 ---
 name: neqsim-norwegian-continental-shelf-data
 calculation_basis: "screening"
-version: "0.4.0"
+version: "1.0.0"
 description: "Public Norwegian Continental Shelf reference facts, carbon-cost basis, Arps decline forecasting and screening analysis. USE WHEN: a task needs offline, source-attributed NCS production, resource, field, carbon-cost/abatement or decline-forecast facts (norskpetroleum.no / Sodir FactPages) to orient a production, resource-accounting, field-inventory, emission-reduction or forecast screening before a validated NeqSim study."
 last_verified: "2026-07-13"
 requires:

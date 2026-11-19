@@ -1,7 +1,7 @@
 ---
 name: neqsim-ncs-ownership-equity
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Reads who owns Norwegian Continental Shelf fields, discoveries and licences from Sodir (partners, equity %, operator, history, company portfolio) and turns it into net-equity inputs for field evaluation and economics. Prospect equity is not public: user-supplied or a labelled licence proxy. USE WHEN: an evaluation needs partners and working interests, a net-to-company view of volumes, capex, opex or cash flow, a portfolio roll-up, or a check of an equity assumption."
 last_verified: "2026-10-07"
 requires:

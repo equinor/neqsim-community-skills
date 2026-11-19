@@ -110,9 +110,7 @@ def download(
     log = {
         "url": url,
         "file": path.name,
-        "retrieved_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(
-            timespec="seconds"
-        ),
+        "retrieved_utc": _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"),
         "bytes": len(raw),
         "sha256": hashlib.sha256(raw).hexdigest(),
         "status": "downloaded",

@@ -1,7 +1,7 @@
 ---
 name: neqsim-continuous-improvement-toolkit
 calculation_basis: "advisory"
-version: "0.1.0"
+version: "1.0.0"
 description: "Building blocks for NeqSim living tasks: a tagreader PI/IP.21 adapter for cycle_plan.yaml, Gaussian-process Bayesian optimisation with expected improvement, an ensemble Kalman parameter update, and an SVD identifiability check. USE WHEN: a living task needs historian data without enterprise adapters, a solve loop must pick the next trial and its expected gain, parameters must update each cycle from measurements, or a calibration must be checked for unidentifiable parameters."
 last_verified: "2026-09-25"
 requires:

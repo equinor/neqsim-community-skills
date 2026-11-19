@@ -1,7 +1,7 @@
 ---
 name: neqsim-ncs-value-chain-optimization
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Multi-year, capacity-constrained NCS value-chain optimisation: forecasts fields from Sodir history, phases in discoveries, routes oil and gas through real trunklines, plants and terminals with a HiGHS LP, and returns production, curtailment, shadow prices, ullage, tie-in rankings and uplift lists for NeqSim follow-up. USE WHEN: maximising NCS value or production, finding the binding pipeline/plant and its capacity value, testing an outage or tie-in, or fitting discoveries into spare capacity."
 last_verified: "2026-09-26"
 requires:

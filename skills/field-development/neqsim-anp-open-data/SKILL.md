@@ -1,7 +1,7 @@
 ---
 name: neqsim-anp-open-data
 calculation_basis: "screening"
-version: "0.2.1"
+version: "1.0.0"
 description: "Reads Brazilian ANP open data: bid-round blocks, field and well production, well data bank, GeoANP layers (blocks, fields, wells, gas pipelines), installation positions from wellheads and tie-in host ranking, with CRS, unit and date checks. USE WHEN: a task needs Brazilian block, field or well facts, a host such as a pre-salt FPSO, nearby installations or export lines for a tie-in, or a Sodir-like open-data basis."
 last_verified: "2026-10-26"
 requires:

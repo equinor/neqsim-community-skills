@@ -1,7 +1,7 @@
 ---
 name: neqsim-final-report-writing-style
 calculation_basis: "advisory"
-version: "0.1.0"
+version: "1.0.0"
 description: "Select and apply prose_english or standard_engineering_english only when generating a final engineering report or summary. USE WHEN: the reporting step is ready to compose final narrative content, or the user explicitly requests either writing style for a generated document. Do not activate during analysis, working notes, ordinary chat, code generation, or source extraction."
 last_verified: "2026-09-11"
 required_skills:

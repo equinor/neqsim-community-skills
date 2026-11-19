@@ -1,7 +1,7 @@
 ---
 name: neqsim-brazil-offshore-infrastructure-market
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Public data and helpers for Brazilian offshore (Santos and Campos pre-salt) gas export routes, processing plants, tariff status, third-party access, gas spec, oil marketing and host capacity, with explicit UNKNOWNs and source ids. USE WHEN: a Brazilian block or tie-back evaluation needs gas export, CO2 removal, wellhead net-back, host ullage or market context, and no numeric offshore tariff is public."
 last_verified: "2026-10-14"
 requires:

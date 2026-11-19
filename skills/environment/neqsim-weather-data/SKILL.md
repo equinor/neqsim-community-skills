@@ -1,7 +1,7 @@
 ---
 name: neqsim-weather-data
 calculation_basis: "data-retrieval"
-version: "0.1.0"
+version: "1.0.0"
 description: "Live, forecast and historical weather, wind and sea-state data for installations from open, keyless APIs - Open-Meteo worldwide and MET Norway/Sodir for the Norwegian Continental Shelf. USE WHEN: a task needs current, forecast or historical temperature, wind, humidity, pressure or wave data for an installation - by name on the NCS or by coordinates anywhere - for gas-turbine derating, fire-water/flare wind screening, dispersion stability class, or subsea cooldown screening."
 last_verified: "2026-09-30"
 requires:

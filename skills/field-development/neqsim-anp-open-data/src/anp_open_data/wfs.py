@@ -172,7 +172,7 @@ def fetch_layer(
                 f"ANP WFS did not return a FeatureCollection for {layer!s}"
             )
         fname.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-        retrieved = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+        retrieved = _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds")
         status = "downloaded"
     n = len(data.get("features", []))
     rec = {

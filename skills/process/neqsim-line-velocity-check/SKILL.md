@@ -1,7 +1,7 @@
 ---
 name: neqsim-line-velocity-check
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational process line velocity screening against erosional velocity and recommended velocity guidelines. USE WHEN: a task needs a public, screening-level check that a pipe or line operates within erosional and recommended velocity limits before detailed line sizing."
 last_verified: "2026-05-31"
 requires:

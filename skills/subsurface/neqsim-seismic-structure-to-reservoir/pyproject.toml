@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-seismic-structure-to-reservoir"
-version = "0.1.0"
+version = "1.0.0"
 description = "From seismic or interpreted surfaces to a screening reservoir model: horizon tracking, depth conversion, closure, volumes and an OPM grid."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = ["numpy>=1.24", "scipy>=1.10", "matplotlib>=3.7", "segyio>=1.9"]
 

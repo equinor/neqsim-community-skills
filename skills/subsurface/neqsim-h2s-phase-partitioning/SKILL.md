@@ -1,7 +1,7 @@
 ---
 name: neqsim-h2s-phase-partitioning
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational H2S gas/oil/water partitioning with NeqSim SRK-CPA through a separator train, and back-calculation of wellstream H2S from measured separator-gas H2S. USE WHEN: a task has H2S measured in separator or export gas and needs wellstream H2S, the H2S split between gas, oil and produced water, a sour-service pH2S screen, or a gas-to-well H2S conversion table."
 last_verified: "2026-10-26"
 requires:

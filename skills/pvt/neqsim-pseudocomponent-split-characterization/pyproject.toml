@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-pseudocomponent-split-characterization"
-version = "0.1.0"
+version = "1.0.0"
 description = "Public plus-fraction gamma split, lumping split factor, and delumping helpers for NeqSim community fluid characterization."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

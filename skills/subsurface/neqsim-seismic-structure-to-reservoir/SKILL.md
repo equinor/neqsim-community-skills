@@ -1,7 +1,7 @@
 ---
 name: neqsim-seismic-structure-to-reservoir
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Seismic or mapped structure to a screening reservoir model: finds surfaces, SEG-Y, logs and ties in task folders; reads IRAP/ZMAP+/XYZ or tracks a horizon from a well seed; time-to-depth on well ties; crest, spill and closure; area and GRV per contact; builder inputs, gate records and an OPM grid. USE WHEN: a reservoir model should use seismic or interpreted horizons."
 last_verified: "2026-11-15"
 requires:

@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-cfd-coupling"
-version = "0.3.0"
+version = "1.0.0"
 description = "Link NeqSim process simulations and engineering documents to CFD: traceable design basis, NeqSim-derived single-phase and multiphase boundary conditions, OpenFOAM case generation and execution, study quality gating, and local enhancement factors."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

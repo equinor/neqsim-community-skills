@@ -1,7 +1,7 @@
 ---
 name: neqsim-olga-multiphase-simulator
 calculation_basis: "neqsim-java"
-version: "0.2.0"
+version: "1.0.0"
 description: "Run the OLGA transient multiphase simulator from Python: locate it, build, configure and report its PVT table and hydrate curve from a NeqSim fluid, rule-check a genkey case, launch the batch engine, decode the exit code, and read .tpl/.ppl results. USE WHEN: executing or sweeping OLGA cases, building or documenting an OLGA PVT table or HYDRATECURVE, diagnosing an OLGA failure, or benchmarking OLGA against NeqSim pipe models."
 last_verified: "2026-11-11"
 requires:

@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-ncs-infrastructure-network"
-version = "0.1.0"
+version = "1.0.0"
 description = "Open-data graph of the Norwegian Continental Shelf export system (fields, hubs, pipelines, processing plants, receiving terminals) with read-only Sodir/ENTSOG clients and NeqSim tie-back and trunkline hand-offs."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

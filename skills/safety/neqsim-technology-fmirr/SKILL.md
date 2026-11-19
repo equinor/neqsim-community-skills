@@ -1,7 +1,7 @@
 ---
 name: neqsim-technology-fmirr
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational failure-mode identification and risk ranking (FMIRR) register for any new technology: separate failed item, mode, mechanism and cause (ISO 14224 terms), 5x5 consequence-probability ranking, critical modes linked to qualification tests, re-rating history. USE WHEN: a technology assessment has identified novel elements and the project needs a ranked failure-mode register to define the qualification plan."
 last_verified: "2026-10-27"
 requires:

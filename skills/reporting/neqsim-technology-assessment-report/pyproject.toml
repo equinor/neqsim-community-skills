@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-technology-assessment-report"
-version = "0.1.0"
+version = "1.0.0"
 description = "Builds a technology assessment report (Markdown and Word) from assessment and FMIRR results."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

@@ -1,7 +1,7 @@
 ---
 name: neqsim-depressurization-screening
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational blowdown and depressurization screening with time-to-target and low-temperature flags. USE WHEN: a task needs a public, screening-level blowdown time indicator and auto-refrigeration low-temperature triage without proprietary blowdown design methods."
 last_verified: "2026-05-31"
 requires:

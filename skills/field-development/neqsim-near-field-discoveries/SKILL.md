@@ -1,7 +1,7 @@
 ---
 name: neqsim-near-field-discoveries
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Inventory and map of the discoveries, fields, evaluation plans and hosts around a target on the NCS (Sodir) and in Brazil (ANP): common development-stage ladder, public volumes and resource class, concept text, nearest hosts, joint-development clusters, CSV/GeoJSON export. USE WHEN: a field-development, tie-back, bid or area study needs the best public knowledge of what is near the target, what is planned there, and a map of it (e.g. around a Santos or Campos discovery)."
 last_verified: "2026-10-27"
 requires:

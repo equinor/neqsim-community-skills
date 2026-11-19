@@ -1,7 +1,7 @@
 ---
 name: neqsim-benchmark-reference-data
 calculation_basis: "data-retrieval"
-version: "0.1.1"
+version: "1.0.0"
 description: "Reproducible, source-traceable benchmark validation for NeqSim tasks: a registry of reference sources with authority tiers and uncertainties (IAPWS, Span-Wagner, GERG-2008, CoolProp, NIST), an offline anchor table, PASS/WARN/FAIL grading with the three-point minimum, and the benchmark_validation block the report and CI gate consume. USE WHEN: validating NeqSim against independent data, writing a benchmark notebook or block, tracing a deviation to a citable source, or checking a benchmark claim."
 last_verified: "2026-09-25"
 requires:

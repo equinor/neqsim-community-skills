@@ -1,7 +1,7 @@
 ---
 name: neqsim-compressor-operating-window-check
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational compressor operating window screening against surge and stonewall margins. USE WHEN: a task needs a public, screening-level check that a centrifugal compressor operating point sits inside the surge and stonewall limits before detailed performance review."
 last_verified: "2026-05-31"
 requires:

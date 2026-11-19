@@ -1,7 +1,7 @@
 ---
 name: neqsim-fluid-quality-check
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Public checks for fluid composition quality before NeqSim simulation. USE WHEN: a task needs mole fraction sum checks, negative fraction checks, required component checks, or water/CO2/H2S flags."
 last_verified: "2026-05-31"
 requires:

@@ -1,7 +1,7 @@
 ---
 name: neqsim-relief-load-screening
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational fire-case relief load screening indicators for pressure relief devices. USE WHEN: a task needs public, screening-level fire-case relief load estimates and capacity flags without proprietary relief design methods."
 last_verified: "2026-05-31"
 requires:

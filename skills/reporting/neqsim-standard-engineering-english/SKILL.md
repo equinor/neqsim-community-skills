@@ -1,7 +1,7 @@
 ---
 name: neqsim-standard-engineering-english
 calculation_basis: "advisory"
-version: "0.1.0"
+version: "1.0.0"
 description: "Apply a concise controlled-language house style inspired by ASD-STE100 to final engineering documents and generated summaries. USE WHEN: the final reporting step produces procedures, equipment descriptions, technical requirements, warnings, cautions, checklists, method summaries, or other text that readers must interpret consistently, or when the user requests standard_engineering_english. Do not claim ASD-STE100 compliance."
 last_verified: "2026-09-11"
 requires:

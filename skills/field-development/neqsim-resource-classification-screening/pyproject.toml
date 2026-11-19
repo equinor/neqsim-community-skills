@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-resource-classification-screening"
-version = "0.2.0"
+version = "1.0.0"
 description = "Public SODIR RC0-RC9 and SPE-PRMS category screening with independent uncertainty reporting."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

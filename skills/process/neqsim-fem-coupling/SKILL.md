@@ -1,7 +1,7 @@
 ---
 name: neqsim-fem-coupling
 calculation_basis: "screening"
-version: "0.2.0"
+version: "1.0.0"
 description: "Link NeqSim and engineering documents to finite-element models of the solid: layered-wall conduction, transient cooldown, porous diffusion and thermal/pressure stress, with NeqSim film coefficients, closed-form checks, Gmsh 2-D/3-D meshes, scikit-fem/FEniCSx cases, PyVista renders and 1-D outputs (U-value, hot-spot factor, no-touch time). USE WHEN: insulation defects, clamp short-circuits, buried/non-radial soil paths, wall discontinuities, cooldown or thermal shock, or FEM report qualification."
 last_verified: "2026-08-08"
 requires:

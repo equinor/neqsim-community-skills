@@ -1,7 +1,7 @@
 ---
 name: neqsim-tie-in-pid-sketch
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Conceptual P&ID sketches (SVG) of both ends of a new tie-in line - source platform end with pump, metering, pig launcher, ESDV and riser; landing end with riser, ESDV, pig receiver, sampling, pressure control, spectacle blind and tie-in to an existing header - plus a completeness check. USE WHEN: a tie-in or export concept needs a drawing of possible connection points and the isolation, pigging and metering philosophy before a controlled P&ID is made."
 last_verified: "2026-10-20"
 requires:

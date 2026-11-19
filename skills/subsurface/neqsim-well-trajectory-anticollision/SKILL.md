@@ -1,7 +1,7 @@
 ---
 name: neqsim-well-trajectory-anticollision
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational 3D well path and anti-collision screening: minimum curvature, curve-hold from kick-off or sidetrack tie-in, reduced MWD uncertainty, ISCWSA separation factor against offsets, parent exit, slot check and target pull-back. USE WHEN: a task needs a concept well path, whether it clears existing wellbores, the governing offset, how far to move a target, or if a slot is free before an official anti-collision run."
 last_verified: "2026-10-15"
 requires:

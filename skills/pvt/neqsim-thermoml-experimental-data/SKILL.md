@@ -1,7 +1,7 @@
 ---
 name: neqsim-thermoml-experimental-data
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Fetch published experimental thermophysical data (density, VLE, viscosity, solubility, heat capacity) from the NIST/TRC ThermoML Archive by DOI with no login, flatten it into state points with expanded uncertainties, and score a NeqSim model against it with AAD, bias and within-uncertainty statistics. USE WHEN: validating or tuning an EOS or kij against measured data, finding measurements for a binary or mixture, or backing a benchmark with citable experiments rather than another model."
 last_verified: "2026-11-12"
 requires:

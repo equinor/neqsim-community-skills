@@ -1,7 +1,7 @@
 ---
 name: neqsim-reservoir-souring-correlation
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational reservoir souring screening: seawater fraction from tracers, automatic per-well H2S-versus-seawater-fraction correlations updated from new data, and a substrate-limited mixing-zone H2S bound. USE WHEN: a task asks how well or produced-water H2S develops with seawater breakthrough, needs per-well H2S correlations for a production model, or an upper bound on biogenic souring."
 last_verified: "2026-10-26"
 requires:

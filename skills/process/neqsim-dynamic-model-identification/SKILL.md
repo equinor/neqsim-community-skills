@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-model-identification
 calculation_basis: "hybrid"
-version: "0.4.1"
+version: "1.0.0"
 description: "Dynamic model identification from plant data with equinor/TimeSeriesAnalysis, joined to NeqSim physics: gain, time constant and delay; PID tuning; closed-loop model and disturbance; NeqSim gains to check identified ones; physics residuals that separate equipment change from sensor fault; replay of identified models; move forecasts with backtest; advisory loop: plan, pace and verify production moves; usability gate. USE WHEN: root cause, control-loop or monitoring studies use historian data."
 last_verified: "2026-11-17"
 requires:

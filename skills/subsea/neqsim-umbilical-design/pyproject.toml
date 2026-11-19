@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-umbilical-design"
-version = "0.1.0"
+version = "1.0.0"
 description = "Umbilical design and visualisation skill: runs the NeqSim umbilical physics and draws the cross-section, line hydraulics, tension, power cable and design checks."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = ["matplotlib>=3.7"]
 

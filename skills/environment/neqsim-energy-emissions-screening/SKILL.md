@@ -1,7 +1,7 @@
 ---
 name: neqsim-energy-emissions-screening
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Educational field-life energy and CO2-equivalent emissions roll-up that turns a year-by-year energy use into annual and total CO2e, a carbon intensity (kg CO2e/boe), and an optional CO2-tax cost. USE WHEN: a task needs a public, screening-level field-life emissions and carbon-intensity picture before detailed NeqSim combustion modelling or certified emission reporting."
 last_verified: "2026-06-24"
 requires:

@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-seabed-protection-screening"
-version = "0.1.0"
+version = "1.0.0"
 description = "Educational subsea pipeline trenching, burial and rock-dump screening driven by route and map-layer data for NeqSim community examples."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

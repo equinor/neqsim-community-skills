@@ -1,7 +1,7 @@
 ---
 name: neqsim-reservoir-model-builder
 calculation_basis: "screening"
-version: "0.5.1"
+version: "1.0.0"
 description: "Screening-level reservoir model from whatever data exists, on a maturity ladder from one public volume to a full static model, with ranked source ladders per ingredient. USE WHEN: a field has only open data, a best-guess structure without seismic/logs/contacts is needed, volumetrics or depth defaults, recovery and well count from analogues, static arrays to OPM Flow GRID/PROPS reconciled to P90/P50/P10, or a SimpleReservoir/WellFlow spec with provenance."
 last_verified: "2026-11-11"
 requires:

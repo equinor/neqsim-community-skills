@@ -1,7 +1,7 @@
 ---
 name: neqsim-ageing-life-extension-screening
 calculation_basis: "screening"
-version: "0.2.0"
+version: "1.0.0"
 description: "Educational ageing-trend and remaining-life screening (Laplace test, Crow-AMSAA fit, failure projection, maintain-vs-replace) plus the installation technical life basis (design life, cut-off, life-limiting populations). USE WHEN: asked whether equipment ages, how long a host or installation can operate, or whether a study horizon fits technical life."
 last_verified: "2026-09-10"
 requires:

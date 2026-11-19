@@ -1,7 +1,7 @@
 ---
 name: neqsim-ncs-infrastructure-network
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Open-data graph of the Norwegian Continental Shelf export system - fields, discoveries, hosts, trunklines, processing plants, receiving terminals and markets - built live from Sodir, norskpetroleum.no and Gassco, with NeqSim hand-offs (TiebackAnalyzer, HostFacility, LoopedPipeNetwork). USE WHEN: a task must know how NCS fields reach market, which fields share a pipeline or plant, trunkline/plant loading, what an outage strands, single points of failure, or which host a discovery can tie into."
 last_verified: "2026-09-26"
 requires:

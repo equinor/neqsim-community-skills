@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-seismic-segy-reading"
-version = "0.1.0"
+version = "1.0.0"
 description = "Read SEG-Y seismic (equinor/segyio): geometry, coordinates, sections, fences and evidence for NeqSim agentic workflows."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = ["segyio>=1.9", "numpy>=1.24", "matplotlib>=3.7"]
 

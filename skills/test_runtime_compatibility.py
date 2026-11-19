@@ -1,4 +1,4 @@
-"""Import UTC timestamp producers on every supported runtime, including 3.10."""
+"""Import UTC timestamp producers on every supported runtime, including 3.11."""
 
 import importlib
 

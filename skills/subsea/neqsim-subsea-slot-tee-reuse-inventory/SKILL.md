@@ -1,7 +1,7 @@
 ---
 name: neqsim-subsea-slot-tee-reuse-inventory
 calculation_basis: "screening"
-version: "0.1.0"
+version: "1.0.0"
 description: "Inventory of tie-in capacity in existing subsea infrastructure (free template/manifold slots, spare tees and hubs, J-tube/riser slots, spare or reusable pipelines, flowlines, gas-lift, injection and MEG lines, umbilical cores) with status, size, remaining life, source and verification level, and a reuse-versus-new-build ranking. USE WHEN: a tie-in needs to know which existing slots, tees or lines can be used or re-purposed, or which line could raise production."
 last_verified: "2026-10-30"
 requires:

@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-thermoml-experimental-data"
-version = "0.1.0"
+version = "1.0.0"
 description = "Keyless client and parser for the NIST/TRC ThermoML Archive: fetch a published experimental thermophysical dataset by DOI, flatten it into state points (T, P, composition, property, expanded uncertainty) and score a NeqSim model against it."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 dependencies = []
 

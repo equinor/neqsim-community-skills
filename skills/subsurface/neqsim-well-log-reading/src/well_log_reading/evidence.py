@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -62,7 +62,7 @@ def to_evidence(log: WellLog) -> dict:
             "path": log.source_path,
             "format": log.source_format,
             "sha256": log.sha256,
-            "read_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "read_utc": datetime.now(UTC).isoformat(timespec="seconds"),
             "reader": (
                 "dlisio" if log.source_format in ("dlis", "lis") else "built-in LAS 2.0"
             ),

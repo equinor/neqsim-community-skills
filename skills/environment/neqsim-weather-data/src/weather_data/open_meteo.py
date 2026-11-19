@@ -25,7 +25,7 @@ import urllib.parse
 import urllib.request
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 Fetch = Callable[[str, float], bytes]
@@ -85,7 +85,7 @@ class WeatherSeries:
     current_units: dict[str, str] = field(default_factory=dict)
     url: str = ""
     retrieved_utc: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
     )
 
     def to_dict(self) -> dict[str, Any]:

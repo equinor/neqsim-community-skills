@@ -152,7 +152,7 @@ def make_envelope(
         "revision": revision,
         "from_agent": from_agent,
         "to_agent": to_agent,
-        "created": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+        "created": _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds"),
         "status": status,
         "synthetic": synthetic,
         "open_items": list(open_items or []),

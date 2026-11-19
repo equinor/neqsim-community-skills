@@ -7,10 +7,10 @@ import urllib.parse
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
-_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+_EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 USER_AGENT = "neqsim-ncs-ownership-equity/0.1 (+https://github.com/equinor/neqsim-community-skills)"
 SODIR_DATASERVICE = (
     "https://factmaps.sodir.no/api/rest/services/DataService/Data/MapServer"
@@ -81,7 +81,7 @@ class ReadRecord:
     rows: int
     url: str
     retrieved_utc: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
     )
     licence: str = "NLOD 2.0 (Sodir); reuse with attribution"
 

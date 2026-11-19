@@ -136,7 +136,7 @@ def _query(
                 "url": base,
                 "rows": len(rows),
                 "ok": True,
-                "retrieved_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(
+                "retrieved_utc": _dt.datetime.now(_dt.UTC).isoformat(
                     timespec="seconds"
                 ),
                 "licence": "NLOD 2.0 (Sodir)",
@@ -215,11 +215,7 @@ def extract_plan_flags(text: str | None) -> list[str]:
 
 def _ms_date(value: Any) -> str | None:
     if isinstance(value, (int, float)) and value > 0:
-        return (
-            _dt.datetime.fromtimestamp(value / 1000.0, _dt.timezone.utc)
-            .date()
-            .isoformat()
-        )
+        return _dt.datetime.fromtimestamp(value / 1000.0, _dt.UTC).date().isoformat()
     return None
 
 

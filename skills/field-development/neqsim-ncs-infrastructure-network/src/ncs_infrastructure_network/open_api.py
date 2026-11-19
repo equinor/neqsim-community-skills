@@ -24,7 +24,7 @@ import urllib.parse
 import urllib.request
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 Fetch = Callable[[str, float], bytes]
@@ -108,7 +108,7 @@ class ReadRecord:
     url: str
     rows: int
     retrieved_utc: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
     )
     licence: str = "NLOD 2.0 (Sodir) / source terms; reuse with attribution"
     ok: bool = True

@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from .metno import MetNorwayClient
@@ -192,7 +192,7 @@ class WeatherDataService:
             end = datetime.strptime(end_date, "%Y-%m-%d").date()
         else:
             # Open-Meteo's archive lags live data by a few days; stay clear of the edge.
-            end = datetime.now(timezone.utc).date() - timedelta(days=6)
+            end = datetime.now(UTC).date() - timedelta(days=6)
         start = end.replace(year=end.year - years_back)
         series = self.get_historical(
             location, start.isoformat(), end.isoformat(), hourly=hourly

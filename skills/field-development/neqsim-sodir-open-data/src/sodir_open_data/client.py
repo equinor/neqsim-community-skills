@@ -13,7 +13,7 @@ import urllib.parse
 import urllib.request
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from . import catalog
@@ -28,7 +28,7 @@ Fetch = Callable[[str, float], bytes]
 USER_AGENT = (
     "neqsim-sodir-open-data/0.1 (+https://github.com/equinor/neqsim-community-skills)"
 )
-_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+_EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 
 
 def default_fetch(url: str, timeout: float = 120.0) -> bytes:
@@ -65,7 +65,7 @@ class ReadRecord:
     rows: int
     where: str = ""
     retrieved_utc: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
     )
     licence: str = LICENCE
     ok: bool = True

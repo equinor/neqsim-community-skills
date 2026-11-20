@@ -1210,3 +1210,12 @@ skills:
     path: "skills/safety/neqsim-open-incident-data/SKILL.md"
     tags: [safety, incident-data, bsee, fire, explosion, blowout, frequency, poisson, open-data, keyless, screening]
     min_neqsim_version: "3.7.0"
+
+  - name: neqsim-flare-helideck-dispersion
+    version: "1.0.0"
+    description: "Screening dispersion of unignited flare-tip gas to a helideck and its flight paths: choked tip and notional jet, Briggs rise with stable-air caps, Gaussian plume, wind-weighted conditional exceedance of 10 and 20 % LFL, tilt scan, tornado, Monte Carlo, house-style figures, results.json. USE WHEN: asking whether PSV or blowdown gas from a flare tip can reach a helideck or helicopter approach and departure paths."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/neqsim-flare-helideck-dispersion/SKILL.md"
+    tags: [safety, dispersion, flare, helideck, flight-path, unignited-gas, lfl, psv, api520, screening, sensitivity, reporting]
+    min_neqsim_version: "3.7.0"

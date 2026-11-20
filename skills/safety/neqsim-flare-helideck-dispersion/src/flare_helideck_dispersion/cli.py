@@ -329,7 +329,8 @@ def cmd_facility(inp: Inputs, with_figures: bool = False) -> int:
                 fr, inp.wind, receptors, inp.settings, tilts
             )
             for fr in releases
-            if fr.case.name in spec.get("tilt_scan_cases", [f.case.name for f in releases])
+            if fr.case.name
+            in spec.get("tilt_scan_cases", [f.case.name for f in releases])
         }
         (inp.out / "facility_sensitivity.json").write_text(
             json.dumps(scans, indent=1, default=float), encoding="utf-8"
@@ -361,7 +362,10 @@ def cmd_facility(inp: Inputs, with_figures: bool = False) -> int:
     for row in study.ranking(20.0)[:10]:
         sys.stdout.write(
             "{} -> {}: peak {:.2f} % LFL, >=20 % LFL on {:.2f} % of wind hours (given a release)\n".format(
-                row["case"], row["receptor"], row["peak_pct_lfl"], row["exceed_pct_hours"]
+                row["case"],
+                row["receptor"],
+                row["peak_pct_lfl"],
+                row["exceed_pct_hours"],
             )
         )
     for p in validate_fragment(fragment):
@@ -398,12 +402,20 @@ def cmd_section(inp: Inputs) -> int:
         spec.get("azimuth_deg"),
         lateral_tolerance_m=float(spec.get("tolerance_m", 15.0)),
     )
-    out = write_facility_section(_resolve(inp.base, spec.get("out", str(inp.out / "section.json"))), section)
-    sys.stdout.write(f"wrote {out} (peak {section['peak_pct_lfl']:.1f} % LFL in the plane)\n")
+    out = write_facility_section(
+        _resolve(inp.base, spec.get("out", str(inp.out / "section.json"))), section
+    )
+    sys.stdout.write(
+        f"wrote {out} (peak {section['peak_pct_lfl']:.1f} % LFL in the plane)\n"
+    )
     for m in section["marks"]:
         sys.stdout.write(
             "mark: {:.0f},{:.0f},{} (schematic; {:.0f} m off the plane, {:.1f} % LFL there)\n".format(
-                m["s_m"], m["z_m"], m["label"], m["lateral_offset_m"], m["peak_pct_lfl_here"]
+                m["s_m"],
+                m["z_m"],
+                m["label"],
+                m["lateral_offset_m"],
+                m["peak_pct_lfl_here"],
             )
         )
     return 0

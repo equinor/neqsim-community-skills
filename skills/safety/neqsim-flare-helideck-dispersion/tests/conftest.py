@@ -1,11 +1,16 @@
 """Shared fixtures: a small synthetic platform, wind table and releases (public, synthetic)."""
 
+import sys
+from pathlib import Path
+
 import numpy as np
 import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from flare_helideck_dispersion import (
     FlightPathSettings,
     PlatformGeometry,
-    ReleaseCase,
     StudySettings,
     WindTable,
     run_study,
@@ -14,6 +19,7 @@ from flare_helideck_dispersion.wind import (
     SECTOR_NAMES_16,
     default_representative_speeds,
 )
+from flare_release_cases import release_cases
 
 BIN_LABELS = ["0-2", "2-4", "4-8", ">8"]
 
@@ -33,15 +39,6 @@ def make_wind_table() -> WindTable:
         table,
         {"source": "synthetic test table"},
     )
-
-
-def release_cases():
-    """A warm, a cold dense and a small case."""
-    return [
-        ReleaseCase("warm", 150.0, 0.0215, 1.25, 273.15, 0.04, 0.96, 0.6),
-        ReleaseCase("cold", 150.0, 0.0215, 1.25, 190.0, 0.04, 0.96, 0.6),
-        ReleaseCase("small", 20.0, 0.0215, 1.25, 323.15, 0.04, 0.96, 0.6),
-    ]
 
 
 @pytest.fixture(scope="session")

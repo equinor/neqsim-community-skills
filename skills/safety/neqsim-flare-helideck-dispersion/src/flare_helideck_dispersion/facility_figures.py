@@ -71,7 +71,9 @@ def fig_facility_layout(
     mode = "briggs" if "briggs" in study.settings.modes else study.settings.modes[0]
     thr = _key_threshold(study)
     worst = study.ranking(thr, mode)[0]
-    entry = study.summaries[worst["case"]]["modes"][mode]["receptors"][worst["receptor"]]
+    entry = study.summaries[worst["case"]]["modes"][mode]["receptors"][
+        worst["receptor"]
+    ]
     cond = entry["peak_condition"]
     src = next(fr.source for fr in study.freleases if fr.case.name == worst["case"])
     release = study.releases[worst["case"]]
@@ -159,7 +161,10 @@ def fig_facility_layout(
     st.bottom_legend(fig, handles, labels, min(len(labels), 5))
     title = (
         "{} has the highest exceedance: {} % LFL peak, {:g} % LFL exceeded in {:.1f} % of wind hours".format(
-            worst["receptor"], _pct(worst["peak_pct_lfl"]), thr, worst["exceed_pct_hours"]
+            worst["receptor"],
+            _pct(worst["peak_pct_lfl"]),
+            thr,
+            worst["exceed_pct_hours"],
         )
         if worst["exceed_pct_hours"] > 0.0
         else "No receptor reaches {:g} % LFL; {} comes closest at {} % LFL peak".format(
@@ -167,7 +172,11 @@ def fig_facility_layout(
         )
     )
     sub = "{} from {}; footprint at {:.0f} m ASL for wind from {:03.0f} deg at {:.1f} m/s. Conditional on an unignited release.".format(
-        worst["case"], src.name, cond["point_up_m"], cond["wind_from_deg"], cond["speed_m_s"]
+        worst["case"],
+        src.name,
+        cond["point_up_m"],
+        cond["wind_from_deg"],
+        cond["speed_m_s"],
     )
     return _finish(
         fig,
@@ -238,7 +247,9 @@ def fig_facility_exceedance(
     else:
         ax.set_xlim(0.0, max(top, thr) * 1.25)
         ax.axvline(thr, color=st.RED, lw=1.0, ls="--")
-        ax.set_xlabel(f"Peak concentration over all winds (% LFL); dashed line: {thr:g} % LFL")
+        ax.set_xlabel(
+            f"Peak concentration over all winds (% LFL); dashed line: {thr:g} % LFL"
+        )
     st.bottom_legend(
         fig,
         [Line2D([0], [0], color=st.case_color(i), lw=5) for i in range(m)],
@@ -249,16 +260,14 @@ def fig_facility_exceedance(
         title = "{} has {:.2f} % of wind hours above {:g} % LFL, the most of any receptor".format(
             worst["receptor"], worst["exceed_pct_hours"], thr
         )
-        sub = "{} receptors, {} case(s); labels give the peak concentration over all winds. Conditional, not an annual frequency.".format(
-            n, m
-        )
+        sub = f"{n} receptors, {m} case(s); labels give the peak concentration over all winds. Conditional, not an annual frequency."
     else:
-        title = "No receptor reaches {:g} % LFL; {} comes closest at {} % LFL peak".format(
-            thr, worst["receptor"], _pct(worst["peak_pct_lfl"])
+        title = (
+            "No receptor reaches {:g} % LFL; {} comes closest at {} % LFL peak".format(
+                thr, worst["receptor"], _pct(worst["peak_pct_lfl"])
+            )
         )
-        sub = "{} receptors, {} case(s); peak concentration over all winds. Conditional on an unignited release.".format(
-            n, m
-        )
+        sub = f"{n} receptors, {m} case(s); peak concentration over all winds. Conditional on an unignited release."
     return _finish(
         fig,
         folders,
@@ -288,7 +297,10 @@ def make_facility_figures(
     Returns:
         The figure records (layout problems are listed in each record).
     """
-    return [fig_facility_layout(study, folders), fig_facility_exceedance(study, folders)]
+    return [
+        fig_facility_layout(study, folders),
+        fig_facility_exceedance(study, folders),
+    ]
 
 
 __all__: Sequence[str] = [

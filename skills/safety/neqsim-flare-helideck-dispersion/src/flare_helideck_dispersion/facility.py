@@ -27,6 +27,7 @@ unignited release and are never annual frequencies.
 from __future__ import annotations
 
 import dataclasses
+import itertools
 import json
 import math
 from collections.abc import Callable, Mapping, Sequence
@@ -37,7 +38,12 @@ from typing import Any
 import numpy as np
 
 from .model import Release, ReleaseCase, jet_consistency_check
-from .receptors import NAUTICAL_MILE_M, PlatformGeometry, Receptors, angular_difference_deg
+from .receptors import (
+    NAUTICAL_MILE_M,
+    PlatformGeometry,
+    Receptors,
+    angular_difference_deg,
+)
 from .study import (
     STUDY_SEMANTICS,
     StudySettings,
@@ -157,8 +163,8 @@ def _densify(vertices: np.ndarray, spacing_m: float) -> np.ndarray:
     if spacing_m <= 0.0:
         raise ValueError("spacing must be positive")
     pts = [vertices[0]]
-    for a, b in zip(vertices[:-1], vertices[1:]):
-        n = max(int(math.ceil(float(np.linalg.norm(b - a)) / spacing_m)), 1)
+    for a, b in itertools.pairwise(vertices):
+        n = max(math.ceil(float(np.linalg.norm(b - a)) / spacing_m), 1)
         for t in np.linspace(0.0, 1.0, n + 1)[1:]:
             pts.append(a + (b - a) * t)
     return np.array(pts)
@@ -238,7 +244,9 @@ class Receptor:
         if self.path_coords is not None:
             self.path_coords = np.asarray(self.path_coords, dtype=float)
             if self.path_coords.shape != (len(self.points), 2):
-                raise ValueError("path_coords must have one (bearing, distance) per point")
+                raise ValueError(
+                    "path_coords must have one (bearing, distance) per point"
+                )
         if self.thresholds_pct_lfl is not None:
             self.thresholds_pct_lfl = tuple(float(t) for t in self.thresholds_pct_lfl)
             if not self.thresholds_pct_lfl or min(self.thresholds_pct_lfl) <= 0.0:
@@ -282,7 +290,13 @@ class Receptor:
 
     @classmethod
     def point(
-        cls, name: str, kind: str, east_m: float, north_m: float, height_asl_m: float, **kw: Any
+        cls,
+        name: str,
+        kind: str,
+        east_m: float,
+        north_m: float,
+        height_asl_m: float,
+        **kw: Any,
     ) -> Receptor:
         """A single point, for example an air intake or a door.
 
@@ -373,10 +387,14 @@ class Receptor:
         if east_max_m < east_min_m or north_max_m < north_min_m or spacing_m <= 0.0:
             raise ValueError("rectangle needs max >= min and a positive spacing")
         es = np.linspace(
-            east_min_m, east_max_m, max(int(math.ceil((east_max_m - east_min_m) / spacing_m)), 1) + 1
+            east_min_m,
+            east_max_m,
+            max(math.ceil((east_max_m - east_min_m) / spacing_m), 1) + 1,
         )
         ns = np.linspace(
-            north_min_m, north_max_m, max(int(math.ceil((north_max_m - north_min_m) / spacing_m)), 1) + 1
+            north_min_m,
+            north_max_m,
+            max(math.ceil((north_max_m - north_min_m) / spacing_m), 1) + 1,
         )
         heights = np.atleast_1d(np.asarray(heights_asl_m, dtype=float))
         grid = [[e, n, z] for z in heights for n in ns for e in es]
@@ -404,8 +422,16 @@ class Receptor:
             The receptor; ``path_coords`` holds ``(0, distance along the line)``.
         """
         pts = _densify(_as_points(vertices), spacing_m)
-        dist = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(pts, axis=0), axis=1))])
-        return cls(name, kind, pts, path_coords=np.column_stack([np.zeros(len(pts)), dist]), **kw)
+        dist = np.concatenate(
+            [[0.0], np.cumsum(np.linalg.norm(np.diff(pts, axis=0), axis=1))]
+        )
+        return cls(
+            name,
+            kind,
+            pts,
+            path_coords=np.column_stack([np.zeros(len(pts)), dist]),
+            **kw,
+        )
 
     @classmethod
     def fan(
@@ -508,7 +534,9 @@ class Receptor:
         rise = math.tan(math.radians(climb_deg))
 
         def select(wind_from_deg: float) -> np.ndarray:
-            b = math.radians(into_wind_bearing(wind_from_deg, clear_start_deg, clear_end_deg))
+            b = math.radians(
+                into_wind_bearing(wind_from_deg, clear_start_deg, clear_end_deg)
+            )
             return np.column_stack(
                 [
                     east_m + dists * math.sin(b),
@@ -560,10 +588,18 @@ class Receptor:
             if k in d
         }
         if shape == "point":
-            r = cls.point(name, kind, d["east_m"], d["north_m"], d["height_asl_m"], **common)
+            r = cls.point(
+                name, kind, d["east_m"], d["north_m"], d["height_asl_m"], **common
+            )
         elif shape == "disc":
             r = cls.disc(
-                name, kind, d["east_m"], d["north_m"], d["height_asl_m"], d["radius_m"], **common
+                name,
+                kind,
+                d["east_m"],
+                d["north_m"],
+                d["height_asl_m"],
+                d["radius_m"],
+                **common,
             )
         elif shape == "rectangle":
             r = cls.rectangle(
@@ -578,7 +614,9 @@ class Receptor:
                 **common,
             )
         elif shape == "polyline":
-            r = cls.polyline(name, kind, d["vertices"], d.get("spacing_m", 5.0), **common)
+            r = cls.polyline(
+                name, kind, d["vertices"], d.get("spacing_m", 5.0), **common
+            )
         elif shape == "fan":
             r = cls.fan(
                 name,
@@ -630,7 +668,9 @@ class FacilityRelease:
 
 
 def helideck_facility(
-    geometry: PlatformGeometry, source_name: str = "flare_tip", origin_en: tuple[float, float] = (0.0, 0.0)
+    geometry: PlatformGeometry,
+    source_name: str = "flare_tip",
+    origin_en: tuple[float, float] = (0.0, 0.0),
 ) -> tuple[Source, list[Receptor]]:
     """The classic flare-tip, helideck and flight-path set as a facility.
 
@@ -659,7 +699,9 @@ def helideck_facility(
     )
     receptors = [
         Receptor("helideck", "helideck", rec.deck_points + shift),
-        Receptor("any_flight_path", "flight_path", rec.all_paths + shift, path_coords=coords),
+        Receptor(
+            "any_flight_path", "flight_path", rec.all_paths + shift, path_coords=coords
+        ),
         Receptor.into_wind_path(
             "into_wind_path",
             "flight_path",
@@ -741,7 +783,10 @@ def run_facility_case(
     moving = [r for r in receptors if r.follows_wind]
     stacked = np.vstack([r.points for r in fixed]) if fixed else None
     bounds = np.cumsum([0] + [len(r.points) for r in fixed])
-    stabilities = [pasquill_by_speed(float(u), settings.stability_scheme) for u in wind.speed_rep_ms]
+    stabilities = [
+        pasquill_by_speed(float(u), settings.stability_scheme)
+        for u in wind.speed_rep_ms
+    ]
     tip = source.position
     for i in range(ns):
         for j, off in enumerate(offsets):
@@ -790,7 +835,9 @@ def _describe_peak(
         "wind_from_deg": float((wind.sector_deg[i] + offsets[j]) % 360.0),
         "speed_bin": wind.speed_bins[k],
         "speed_m_s": float(wind.speed_rep_ms[k]),
-        "pasquill_class": pasquill_by_speed(float(wind.speed_rep_ms[k]), settings.stability_scheme),
+        "pasquill_class": pasquill_by_speed(
+            float(wind.speed_rep_ms[k]), settings.stability_scheme
+        ),
         "point_east_m": float(xyz[0]),
         "point_north_m": float(xyz[1]),
         "point_up_m": float(xyz[2]),
@@ -817,10 +864,12 @@ def _receptor_summary(
     thresholds = _thresholds(receptor, settings)
     return {
         "kind": receptor.kind,
-        "n_points": int(len(receptor.points)),
+        "n_points": len(receptor.points),
         "peak_pct_lfl": float(arr.max()),
         "thresholds_pct_lfl": list(thresholds),
-        "exceed_pct_hours": {threshold_key(t): exceedance_pct(arr, wind, t) for t in thresholds},
+        "exceed_pct_hours": {
+            threshold_key(t): exceedance_pct(arr, wind, t) for t in thresholds
+        },
         "exceed_by_speed_bin_pct_hours": {
             threshold_key(t): exceedance_by_speed_bin(arr, wind, t) for t in thresholds
         },
@@ -868,9 +917,13 @@ class FacilityStudyResult:
         Returns:
             Percent of all wind hours, conditional on an ongoing release.
         """
-        return exceedance_pct(self.arrays[f"{case}_{mode}"].peak[receptor], self.wind, threshold)
+        return exceedance_pct(
+            self.arrays[f"{case}_{mode}"].peak[receptor], self.wind, threshold
+        )
 
-    def ranking(self, threshold: float = 20.0, mode: str = "briggs") -> list[dict[str, Any]]:
+    def ranking(
+        self, threshold: float = 20.0, mode: str = "briggs"
+    ) -> list[dict[str, Any]]:
         """Case-receptor pairs ranked by exceedance, then peak concentration.
 
         Args:
@@ -924,7 +977,9 @@ class FacilityStudyResult:
         out.mkdir(parents=True, exist_ok=True)
         json_path = out / "facility_results.json"
         npz_path = out / "facility_arrays.npz"
-        json_path.write_text(json.dumps(self.to_dict(), indent=1, default=float), encoding="utf-8")
+        json_path.write_text(
+            json.dumps(self.to_dict(), indent=1, default=float), encoding="utf-8"
+        )
         flat: dict[str, np.ndarray] = {}
         for key, arr in self.arrays.items():
             for name, values in arr.peak.items():
@@ -994,7 +1049,9 @@ def run_facility_study(
         for k, label in enumerate(wind.speed_bins):
             if wind.speed_rep_ms[k] >= 9.0:
                 break
-            stab = pasquill_by_speed(float(wind.speed_rep_ms[k]), settings.stability_scheme)
+            stab = pasquill_by_speed(
+                float(wind.speed_rep_ms[k]), settings.stability_scheme
+            )
             check = jet_consistency_check(
                 release, float(wind.speed_rep_ms[k]), stab, fr.source.height_asl_m, 0.2
             )
@@ -1005,7 +1062,8 @@ def run_facility_study(
             arrays[f"{fr.case.name}_{mode}"] = arr
             entry["modes"][mode] = {
                 "receptors": {
-                    r.name: _receptor_summary(r, fr.source, arr, wind, settings) for r in receptors
+                    r.name: _receptor_summary(r, fr.source, arr, wind, settings)
+                    for r in receptors
                 }
             }
         summaries[fr.case.name] = entry
@@ -1067,11 +1125,18 @@ def facility_section(
         KeyError: If the case is unknown.
         ValueError: If a range or step is not positive.
     """
-    if ds_m <= 0.0 or dz_m <= 0.0 or s_range_m[1] <= s_range_m[0] or z_range_m[1] <= z_range_m[0]:
+    if (
+        ds_m <= 0.0
+        or dz_m <= 0.0
+        or s_range_m[1] <= s_range_m[0]
+        or z_range_m[1] <= z_range_m[0]
+    ):
         raise ValueError("section ranges must be increasing and steps positive")
     fr = next(f for f in study.freleases if f.case.name == case)
     release = study.releases[case]
-    azimuth = (wind_from_deg + 180.0) % 360.0 if azimuth_deg is None else azimuth_deg % 360.0
+    azimuth = (
+        (wind_from_deg + 180.0) % 360.0 if azimuth_deg is None else azimuth_deg % 360.0
+    )
     stab = pasquill_by_speed(float(speed_m_s), study.settings.stability_scheme)
     s = np.arange(s_range_m[0], s_range_m[1] + 0.5 * ds_m, ds_m)
     z = np.arange(z_range_m[0], z_range_m[1] + 0.5 * dz_m, dz_m)
@@ -1085,7 +1150,9 @@ def facility_section(
             gz.ravel(),
         ]
     )
-    values = release.pct_lfl(pts, wind_from_deg, float(speed_m_s), stab, src.position, mode).reshape(gs.shape)
+    values = release.pct_lfl(
+        pts, wind_from_deg, float(speed_m_s), stab, src.position, mode
+    ).reshape(gs.shape)
     marks: list[dict[str, Any]] = []
     for r in study.receptors:
         if r.follows_wind:
@@ -1105,7 +1172,14 @@ def facility_section(
                 "z_m": float(r.points[idx, 2]),
                 "lateral_offset_m": float(lateral[idx]),
                 "peak_pct_lfl_here": float(
-                    release.pct_lfl(r.points[idx : idx + 1], wind_from_deg, float(speed_m_s), stab, src.position, mode)[0]
+                    release.pct_lfl(
+                        r.points[idx : idx + 1],
+                        wind_from_deg,
+                        float(speed_m_s),
+                        stab,
+                        src.position,
+                        mode,
+                    )[0]
                 ),
             }
         )
@@ -1172,7 +1246,9 @@ def evaluate_facility(
     scale = values.pop("mass_flow_scale", 1.0)
     params = settings.params.replace(**values) if values else settings.params
     run_settings = dataclasses.replace(settings, params=params, modes=("briggs",))
-    case = dataclasses.replace(freelease.case, mass_flow_kg_s=freelease.case.mass_flow_kg_s * scale)
+    case = dataclasses.replace(
+        freelease.case, mass_flow_kg_s=freelease.case.mass_flow_kg_s * scale
+    )
     source = freelease.source
     if "tilt_deg" in values and source.tilt_deg is not None:
         source = dataclasses.replace(source, tilt_deg=values["tilt_deg"])
@@ -1182,7 +1258,9 @@ def evaluate_facility(
     for r in receptors:
         row = {"peak": float(arr.peak[r.name].max())}
         for t in thresholds_pct_lfl:
-            row[f"hours_ge{threshold_key(t)}"] = exceedance_pct(arr.peak[r.name], wind, t)
+            row[f"hours_ge{threshold_key(t)}"] = exceedance_pct(
+                arr.peak[r.name], wind, t
+            )
         out[r.name] = row
     return out
 
@@ -1211,7 +1289,11 @@ def facility_tilt_scan(
     Returns:
         One row per inclination, ascending, with a ``receptors`` mapping.
     """
-    base = freelease.source.tilt_deg if freelease.source.tilt_deg is not None else settings.params.tilt_deg
+    base = (
+        freelease.source.tilt_deg
+        if freelease.source.tilt_deg is not None
+        else settings.params.tilt_deg
+    )
     rows = []
     for tilt in sorted({float(t) for t in tilts_deg} | {float(base)}):
         fr = FacilityRelease(
@@ -1221,7 +1303,9 @@ def facility_tilt_scan(
         rows.append(
             {
                 "tilt_deg": tilt,
-                "receptors": evaluate_facility(fr, wind, receptors, settings, None, thresholds_pct_lfl),
+                "receptors": evaluate_facility(
+                    fr, wind, receptors, settings, None, thresholds_pct_lfl
+                ),
             }
         )
     return rows
@@ -1256,8 +1340,12 @@ def facility_tornado(
     key = f"hours_ge{threshold_key(threshold_pct_lfl)}"
     rows = []
     for name, (lo, hi) in ranges.items():
-        low = evaluate_facility(freelease, wind, receptors, settings, {name: lo}, (threshold_pct_lfl,))
-        high = evaluate_facility(freelease, wind, receptors, settings, {name: hi}, (threshold_pct_lfl,))
+        low = evaluate_facility(
+            freelease, wind, receptors, settings, {name: lo}, (threshold_pct_lfl,)
+        )
+        high = evaluate_facility(
+            freelease, wind, receptors, settings, {name: hi}, (threshold_pct_lfl,)
+        )
         rows.append(
             {
                 "parameter": name,

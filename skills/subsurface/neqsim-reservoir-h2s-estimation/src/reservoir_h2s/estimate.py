@@ -213,6 +213,50 @@ def find_analogues(
     return out[:count]
 
 
+def nearby_non_detects(
+    prospect: Mapping[str, Any],
+    wells: Iterable[Mapping[str, Any]],
+    max_km: float = 50.0,
+) -> list[dict[str, Any]]:
+    """List tested wells near the prospect in which no H2S was detected.
+
+    Args:
+        prospect: Prospect with ``lat`` and ``lon``.
+        wells: Calibration wells; those with ``detected`` false are considered.
+        max_km: Largest distance from the prospect.
+
+    Returns:
+        Records with well, distance, reservoir temperature and buffer value, nearest first; empty when the
+        prospect has no position.
+    """
+    if _missing(prospect.get("lat")) or _missing(prospect.get("lon")):
+        return []
+    out = []
+    for w in wells:
+        if not not_detected(w) or _missing(w.get("lat")) or _missing(w.get("lon")):
+            continue
+        km = distance_km(
+            float(prospect["lat"]),
+            float(prospect["lon"]),
+            float(w["lat"]),
+            float(w["lon"]),
+        )
+        if km <= max_km:
+            out.append(
+                {
+                    "well": w.get("wellbore") or w.get("well"),
+                    "distance_km": km,
+                    "reservoir_T_C": (
+                        None if _missing(w.get("res_T_C")) else float(w["res_T_C"])
+                    ),
+                    "buffer_ppm": (
+                        None if _missing(w.get("model_ppm")) else float(w["model_ppm"])
+                    ),
+                }
+            )
+    return sorted(out, key=lambda s: s["distance_km"])
+
+
 def estimate_prospect(
     prospect: Mapping[str, Any],
     registry: Mapping[str, Any],
@@ -442,39 +486,35 @@ def estimate_prospect(
     ]
     if near:
         vals = [a["measured_ppm"] for a in near]
+        temps = [a["reservoir_T_C"] for a in near if a["reservoir_T_C"] is not None]
+        if len(near) == 1:
+            at = f" at {fmt(temps[0], 3)} °C" if temps else ""
+            reasoning.append(
+                f"Within 100 km there is one measured well of the same setting: {fmt(vals[0])} ppm{at}."
+            )
+        else:
+            at = f" at {fmt(min(temps), 3)} to {fmt(max(temps), 3)} °C" if temps else ""
+            reasoning.append(
+                f"Within 100 km there are {len(near)} measured wells of the same setting: "
+                f"{fmt(min(vals))} to {fmt(max(vals))} ppm{at}."
+            )
+    silent = nearby_non_detects(p, wells or [])
+    if silent:
+        models = [s["buffer_ppm"] for s in silent if s["buffer_ppm"] is not None]
+        detail = (
+            f" (the buffer gives {fmt(min(models))} to {fmt(max(models))} ppm for them)"
+            if len(models) > 1
+            else (f" (the buffer gives {fmt(models[0])} ppm for it)" if models else "")
+        )
         reasoning.append(
-            "Within 100 km {} of the same setting: {} to {} ppm at {} to {} °C.".format(
+            "{} within 50 km had no detectable H2S in the test gas{}. A reading below the detection "
+            "limit of the tube is a likely outcome where the estimate is below about 1 ppm.".format(
                 (
-                    "there is one measured well"
-                    if len(near) == 1
-                    else f"there are {len(near)} measured wells"
+                    "One tested well"
+                    if len(silent) == 1
+                    else f"{len(silent)} tested wells"
                 ),
-                fmt(min(vals)),
-                fmt(max(vals)),
-                (
-                    fmt(
-                        min(
-                            a["reservoir_T_C"]
-                            for a in near
-                            if a["reservoir_T_C"] is not None
-                        ),
-                        3,
-                    )
-                    if any(a["reservoir_T_C"] is not None for a in near)
-                    else "-"
-                ),
-                (
-                    fmt(
-                        max(
-                            a["reservoir_T_C"]
-                            for a in near
-                            if a["reservoir_T_C"] is not None
-                        ),
-                        3,
-                    )
-                    if any(a["reservoir_T_C"] is not None for a in near)
-                    else "-"
-                ),
+                detail,
             )
         )
     # ---- measurements in the discovery
@@ -683,6 +723,7 @@ def estimate_prospect(
             "highest": max(measured) if measured else None,
         },
         "analogues": analogues,
+        "non_detects_nearby": silent,
         "curve": curve_points,
         "reasoning": reasoning,
         "accuracy": accuracy,

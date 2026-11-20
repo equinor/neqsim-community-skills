@@ -344,3 +344,59 @@ def test_report_files_and_registry_round_trip(registry, tmp_path):
     assert (
         "Prospect X" in text and "P10 / P50 / P90" in text and "nan" not in text.lower()
     )
+
+
+def test_nearby_wells_without_h2s_are_reported(registry):
+    wells = synthetic_wells()
+    for i, w in enumerate(w for w in wells if w.get("detected") is False):
+        w.update({"lat": 62.0 + 0.05 * i, "lon": 2.4})
+    res = estimate_prospect(
+        {
+            "name": "P",
+            "formation": "Garn Fm.",
+            "res_T_C": 75.0,
+            "lat": 62.0,
+            "lon": 2.4,
+        },
+        registry,
+        wells,
+        buffer=fake_buffer,
+        curve=False,
+    )
+    assert [round(s["distance_km"]) for s in res["non_detects_nearby"]] == [0, 6, 11]
+    assert any(
+        "3 tested wells within 50 km had no detectable H2S" in r
+        for r in res["reasoning"]
+    )
+    far = estimate_prospect(
+        {
+            "name": "P",
+            "formation": "Garn Fm.",
+            "res_T_C": 75.0,
+            "lat": 70.0,
+            "lon": 20.0,
+        },
+        registry,
+        wells,
+        buffer=fake_buffer,
+        curve=False,
+    )
+    assert far["non_detects_nearby"] == []
+    single = estimate_prospect(
+        {
+            "name": "P",
+            "formation": "Skagerrak Fm.",
+            "res_T_C": 120.0,
+            "lat": 58.2,
+            "lon": 2.5,
+        },
+        registry,
+        [w for w in wells if w.get("formation") == "Skagerrak Fm."][:1],
+        buffer=fake_buffer,
+        curve=False,
+    )
+    assert any(
+        "there is one measured well of the same setting" in r
+        and " to " not in r.split(":")[1]
+        for r in single["reasoning"]
+    )

@@ -12,6 +12,7 @@ only for an explicit flame-out frequency and duration.
 
 from __future__ import annotations
 
+import itertools
 import re
 from collections.abc import Mapping, Sequence
 from typing import Any
@@ -78,7 +79,9 @@ def build_facility_results(
     """
     mode = "briggs" if "briggs" in study.settings.modes else study.settings.modes[0]
     criteria = list(criteria or DEFAULT_FACILITY_CRITERIA)
-    thresholds = sorted({float(c["pct_lfl"]) for c in criteria} | set(study.settings.thresholds_pct_lfl))
+    thresholds = sorted(
+        {float(c["pct_lfl"]) for c in criteria} | set(study.settings.thresholds_pct_lfl)
+    )
     key_thr = 20.0 if 20.0 in thresholds else thresholds[-1]
     low_thr = 10.0 if 10.0 in thresholds else thresholds[0]
     ranking = study.ranking(key_thr, mode)
@@ -98,12 +101,20 @@ def build_facility_results(
         flat = []
         for case, rows in sensitivity.items():
             for rec in receptors:
-                hit = [row["tilt_deg"] for row in rows if row["receptors"][rec.name]["peak"] >= key_thr]
+                hit = [
+                    row["tilt_deg"]
+                    for row in rows
+                    if row["receptors"][rec.name]["peak"] >= key_thr
+                ]
                 base_hit = rsum(case, rec.name)["peak_pct_lfl"] >= key_thr
                 if hit and not base_hit:
-                    flat.append(f"{rec.name} ({case}) reaches {_fmt(key_thr)} % LFL at {min(hit):.0f} to {max(hit):.0f} deg")
+                    flat.append(
+                        f"{rec.name} ({case}) reaches {_fmt(key_thr)} % LFL at {min(hit):.0f} to {max(hit):.0f} deg"
+                    )
         tilt_note = (
-            " The base inclination hides exposure at other inclinations: " + "; ".join(flat) + "."
+            " The base inclination hides exposure at other inclinations: "
+            + "; ".join(flat)
+            + "."
             if flat
             else " No receptor changes class over the inclination scan."
         )
@@ -126,7 +137,9 @@ def build_facility_results(
             source=worst["source"],
             peak=_fmt(worst["peak_pct_lfl"]),
             exc=_fmt(worst["exceed_pct_hours"]),
-            exc_low=_fmt(study.exceedance(worst["case"], worst["receptor"], low_thr, mode)),
+            exc_low=_fmt(
+                study.exceedance(worst["case"], worst["receptor"], low_thr, mode)
+            ),
             wd=wc["wind_from_deg"],
             u=wc["speed_m_s"],
             st=wc["pasquill_class"],
@@ -140,7 +153,15 @@ def build_facility_results(
     tables: list[dict[str, Any]] = [
         {
             "title": "Release cases and sources (conditional on an unignited release)",
-            "headers": ["Case", "Source", "Kind", "Rate (kg/s)", "Tip jet (m/s)", "Inclination (deg)", "Height ASL (m)"],
+            "headers": [
+                "Case",
+                "Source",
+                "Kind",
+                "Rate (kg/s)",
+                "Tip jet (m/s)",
+                "Inclination (deg)",
+                "Height ASL (m)",
+            ],
             "rows": [
                 [
                     fr.case.name,
@@ -148,7 +169,11 @@ def build_facility_results(
                     fr.source.kind,
                     fr.case.mass_flow_kg_s,
                     round(study.releases[fr.case.name].tip["v_exit_ms"], 1),
-                    fr.source.tilt_deg if fr.source.tilt_deg is not None else study.settings.params.tilt_deg,
+                    (
+                        fr.source.tilt_deg
+                        if fr.source.tilt_deg is not None
+                        else study.settings.params.tilt_deg
+                    ),
                     fr.source.height_asl_m,
                 ]
                 for fr in study.freleases
@@ -156,32 +181,49 @@ def build_facility_results(
         },
         {
             "title": "Receptor register",
-            "headers": ["Receptor", "Kind", "Points", "Thresholds (% LFL)", "Criterion source"],
+            "headers": [
+                "Receptor",
+                "Kind",
+                "Points",
+                "Thresholds (% LFL)",
+                "Criterion source",
+            ],
             "rows": [
                 [
                     r.name,
                     r.kind,
                     len(r.points),
-                    ", ".join(threshold_key(t) for t in (r.thresholds_pct_lfl or study.settings.thresholds_pct_lfl)),
+                    ", ".join(
+                        threshold_key(t)
+                        for t in (
+                            r.thresholds_pct_lfl or study.settings.thresholds_pct_lfl
+                        )
+                    ),
                     r.criterion_source or "not stated (data gap)",
                 ]
                 for r in receptors
             ],
         },
     ]
-    shown = [t for t in thresholds if t in set(study.settings.thresholds_pct_lfl)][:4] or [key_thr]
+    shown = [t for t in thresholds if t in set(study.settings.thresholds_pct_lfl)][
+        :4
+    ] or [key_thr]
     exc_rows = []
     for fr in study.freleases:
         for r in receptors:
             entry = rsum(fr.case.name, r.name)
             exc_rows.append(
                 [fr.case.name, r.name, round(entry["peak_pct_lfl"], 2)]
-                + [round(study.exceedance(fr.case.name, r.name, t, mode), 3) for t in shown]
+                + [
+                    round(study.exceedance(fr.case.name, r.name, t, mode), 3)
+                    for t in shown
+                ]
             )
     tables.append(
         {
             "title": "Peak and exceedance by receptor (percent of wind hours, given a release)",
-            "headers": ["Case", "Receptor", "Peak (% LFL)"] + [f">= {threshold_key(t)} % LFL (% of hours)" for t in shown],
+            "headers": ["Case", "Receptor", "Peak (% LFL)"]
+            + [f">= {threshold_key(t)} % LFL (% of hours)" for t in shown],
             "rows": exc_rows,
         }
     )
@@ -204,7 +246,16 @@ def build_facility_results(
     tables.append(
         {
             "title": "Worst condition per receptor (worst case)",
-            "headers": ["Receptor", "Case", "Peak (% LFL)", "Wind from (deg)", "Speed (m/s)", "Pasquill", "Distance (m)", "Height rel. source (m)"],
+            "headers": [
+                "Receptor",
+                "Case",
+                "Peak (% LFL)",
+                "Wind from (deg)",
+                "Speed (m/s)",
+                "Pasquill",
+                "Distance (m)",
+                "Height rel. source (m)",
+            ],
             "rows": cond_rows,
         }
     )
@@ -221,16 +272,25 @@ def build_facility_results(
             for row in scan:
                 peaks = [row["receptors"][r.name]["peak"] for r in receptors]
                 top = max(range(len(peaks)), key=lambda i: peaks[i])
-                rows.append([case, row["tilt_deg"], receptors[top].name, round(peaks[top], 2)])
+                rows.append(
+                    [case, row["tilt_deg"], receptors[top].name, round(peaks[top], 2)]
+                )
         tables.append(
             {
                 "title": "Release-inclination scan (most exposed receptor per inclination)",
-                "headers": ["Case", "Inclination (deg)", "Most exposed receptor", "Peak (% LFL)"],
+                "headers": [
+                    "Case",
+                    "Inclination (deg)",
+                    "Most exposed receptor",
+                    "Peak (% LFL)",
+                ],
                 "rows": rows,
             }
         )
 
-    bins = study.summaries[worst["case"]]["modes"][mode]["receptors"][worst["receptor"]]["exceed_by_speed_bin_pct_hours"]
+    bins = study.summaries[worst["case"]]["modes"][mode]["receptors"][
+        worst["receptor"]
+    ]["exceed_by_speed_bin_pct_hours"]
     by_bin = bins.get(threshold_key(key_thr)) or {}
     contributor = [
         {"contributor": f"speed bin {b} m/s", "share_pct_of_hours": v}
@@ -249,18 +309,30 @@ def build_facility_results(
                 "conclusion": f"{worst['receptor']} exceedance of {_fmt(key_thr)} % LFL ({worst['case']})",
                 "test": "passive release bound (no plume rise)",
                 "result": f"{_fmt(passive)} % of hours without rise versus {_fmt(worst['exceed_pct_hours'])} % with rise",
-                "status": "robust" if passive <= worst["exceed_pct_hours"] * 1.5 + 1e-9 else "sensitive to plume rise",
+                "status": (
+                    "robust"
+                    if passive <= worst["exceed_pct_hours"] * 1.5 + 1e-9
+                    else "sensitive to plume rise"
+                ),
             }
         )
     for case, scan in (sensitivity or {}).items():
-        values = [row["receptors"][worst["receptor"]]["hours_ge20"] for row in scan if "hours_ge20" in row["receptors"][worst["receptor"]]]
+        values = [
+            row["receptors"][worst["receptor"]]["hours_ge20"]
+            for row in scan
+            if "hours_ge20" in row["receptors"][worst["receptor"]]
+        ]
         if values:
             robustness.append(
                 {
                     "conclusion": f"{worst['receptor']} exceedance of 20 % LFL ({case})",
                     "test": "release inclination scan",
                     "result": f"{min(values):.2f} to {max(values):.2f} % of hours over the scan",
-                    "status": "robust" if max(values) - min(values) < 0.5 * max(max(values), 1e-9) else "sensitive to inclination",
+                    "status": (
+                        "robust"
+                        if max(values) - min(values) < 0.5 * max(max(values), 1e-9)
+                        else "sensitive to inclination"
+                    ),
                 }
             )
     conservatism = [
@@ -273,10 +345,13 @@ def build_facility_results(
         "Air intakes and enclosed spaces are judged by the outside concentration; ventilation, dilution and detection inside the building are not modelled.",
         "A Gaussian plume is not valid much below 1 m/s and meander is ignored.",
     ]
-    discriminating_test = (
-        "Run a CFD simulation with the facility geometry for {case} from {source} at wind from {wd:03.0f} deg and {u:.1f} m/s (the worst condition) and compare the {thr} % LFL envelope at {receptor} with this screening result.".format(
-            case=worst["case"], source=worst["source"], wd=wc["wind_from_deg"], u=wc["speed_m_s"], thr=_fmt(key_thr), receptor=worst["receptor"]
-        )
+    discriminating_test = "Run a CFD simulation with the facility geometry for {case} from {source} at wind from {wd:03.0f} deg and {u:.1f} m/s (the worst condition) and compare the {thr} % LFL envelope at {receptor} with this screening result.".format(
+        case=worst["case"],
+        source=worst["source"],
+        wd=wc["wind_from_deg"],
+        u=wc["speed_m_s"],
+        thr=_fmt(key_thr),
+        receptor=worst["receptor"],
     )
     handoff = []
     for row in ranking[:6]:
@@ -292,7 +367,10 @@ def build_facility_results(
                 "receptor": row["receptor"],
                 "kind": row["kind"],
                 "mass_flow_kg_s": rel.mdot,
-                "tip_exit": {k: rel.tip[k] for k in ("v_exit_ms", "d_eff_m", "rho_exp", "t_exp_k", "choked")},
+                "tip_exit": {
+                    k: rel.tip[k]
+                    for k in ("v_exit_ms", "d_eff_m", "rho_exp", "t_exp_k", "choked")
+                },
                 "wind_from_deg": entry["peak_condition"]["wind_from_deg"],
                 "wind_speed_ms": entry["peak_condition"]["speed_m_s"],
                 "peak_pct_lfl": row["peak_pct_lfl"],
@@ -314,10 +392,11 @@ def build_facility_results(
         }
     )
     monotone = all(
-        study.exceedance(fr.case.name, r.name, hi, mode) <= study.exceedance(fr.case.name, r.name, lo, mode) + 1e-9
+        study.exceedance(fr.case.name, r.name, hi, mode)
+        <= study.exceedance(fr.case.name, r.name, lo, mode) + 1e-9
         for fr in study.freleases
         for r in receptors
-        for lo, hi in zip(thresholds[:-1], thresholds[1:])
+        for lo, hi in itertools.pairwise(thresholds)
     )
     internal.append(
         {
@@ -328,7 +407,8 @@ def build_facility_results(
         }
     )
     consistent = all(
-        study.exceedance(fr.case.name, r.name, t, mode) == 0.0 or rsum(fr.case.name, r.name)["peak_pct_lfl"] >= t
+        study.exceedance(fr.case.name, r.name, t, mode) == 0.0
+        or rsum(fr.case.name, r.name)["peak_pct_lfl"] >= t
         for fr in study.freleases
         for r in receptors
         for t in thresholds
@@ -346,11 +426,13 @@ def build_facility_results(
         "Receptor positions, heights and shapes are as supplied in one facility frame (true-north axes, height above sea level); positions taken from drawings are approximate until surveyed.",
         "The wind table is representative ({}); Pasquill class by speed: {}.".format(
             study.wind.metadata.get("source", "supplied"),
-            study.settings.stability_scheme if isinstance(study.settings.stability_scheme, str) else "user defined",
+            (
+                study.settings.stability_scheme
+                if isinstance(study.settings.stability_scheme, str)
+                else "user defined"
+            ),
         ),
-        "Plume model: choked tip with Birch notional nozzle, Briggs momentum rise with stable-air caps, Gaussian plume with sea reflection and sigma0 = dh / {:g}.".format(
-            study.settings.params.sigma0_divisor
-        ),
+        f"Plume model: choked tip with Birch notional nozzle, Briggs momentum rise with stable-air caps, Gaussian plume with sea reflection and sigma0 = dh / {study.settings.params.sigma0_divisor:g}.",
         "Several simultaneous releases are represented by one combined mass flow of one source; the cases are not superposed.",
     ] + list(extra_assumptions or [])
     no_source = [r.name for r in receptors if not r.criterion_source]
@@ -359,14 +441,19 @@ def build_facility_results(
             "gap": "Flame-out (unignited release) frequency and duration",
             "source": "operator reliability data",
             "status": "open" if release_frequency_per_year is None else "supplied",
-            "assumed": "none; results are conditional" if release_frequency_per_year is None else "supplied by the user",
+            "assumed": (
+                "none; results are conditional"
+                if release_frequency_per_year is None
+                else "supplied by the user"
+            ),
             "effect": "annual exposure cannot be stated without it",
         },
         {
             "gap": "Governing acceptance criterion and its source per receptor",
             "source": "project design basis",
             "status": "open",
-            "assumed": "10 % and 20 % LFL both reported" + (f"; no source for {', '.join(no_source)}" if no_source else ""),
+            "assumed": "10 % and 20 % LFL both reported"
+            + (f"; no source for {', '.join(no_source)}" if no_source else ""),
             "effect": "pass or fail depends on the governing value of each receptor",
         },
         {
@@ -421,7 +508,9 @@ def build_facility_results(
         "key_results": key_results,
         "approach": "Choked tip and Birch notional nozzle, Briggs momentum rise with stable-air limits, Gaussian plume with sea reflection; wind-weighted sweep over direction and speed against named receptors of any shape (conditional on an unignited release).",
         "conclusions": conclusions,
-        "validation": {"method": "internal consistency checks; independent CFD or a reference study is needed for design use"},
+        "validation": {
+            "method": "internal consistency checks; independent CFD or a reference study is needed for design use"
+        },
         "tables": tables,
         "references": REFERENCES,
         "assumptions": assumptions,

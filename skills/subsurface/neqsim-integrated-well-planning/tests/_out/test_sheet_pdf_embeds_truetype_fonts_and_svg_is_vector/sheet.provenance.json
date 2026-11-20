@@ -1,0 +1,21 @@
+{
+  "schema": "iwp_figure_provenance.v1",
+  "figure_id": "sheet",
+  "title": "well_schematic",
+  "caption": "c",
+  "generator": "integrated_well_planning.iwp_drawings.well_schematic",
+  "inputs_sha256_16": "6c91e91f8c9d2b95",
+  "created": "2026-11-20T11:19:24+00:00",
+  "synthetic": true,
+  "sources": [],
+  "ledger_refs": [],
+  "drawing_no": "T-002",
+  "font": "Segoe UI",
+  "matplotlib": "3.11.2",
+  "python": "3.13.13",
+  "files": {
+    "png": "sheet.png",
+    "pdf": "sheet.pdf",
+    "svg": "sheet.svg"
+  }
+}

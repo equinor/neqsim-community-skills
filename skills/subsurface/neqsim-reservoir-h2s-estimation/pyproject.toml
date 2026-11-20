@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-reservoir-h2s-estimation"
+version = "0.1.0"
+description = "Screening estimate of H2S in the gas of a reservoir, prospect or discovery: NeqSim mineral buffer, calibration on measured wells, uncertainty budget and a report."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+buffer = ["neqsim"]
+report = ["matplotlib>=3.7", "python-docx>=1.1"]
+test = ["pytest>=7.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

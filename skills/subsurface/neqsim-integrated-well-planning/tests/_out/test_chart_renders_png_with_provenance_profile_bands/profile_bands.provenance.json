@@ -1,0 +1,19 @@
+{
+  "schema": "iwp_figure_provenance.v1",
+  "figure_id": "profile_bands",
+  "title": "profile_bands",
+  "caption": "test caption",
+  "generator": "integrated_well_planning.iwp_graphics.profile_bands",
+  "inputs_sha256_16": "1a51847305e58308",
+  "created": "2026-11-20T11:19:05+00:00",
+  "synthetic": true,
+  "sources": [],
+  "ledger_refs": [],
+  "drawing_no": "",
+  "font": "Segoe UI",
+  "matplotlib": "3.11.2",
+  "python": "3.13.13",
+  "files": {
+    "png": "profile_bands.png"
+  }
+}

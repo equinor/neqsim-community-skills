@@ -1,0 +1,19 @@
+{
+  "schema": "iwp_figure_provenance.v1",
+  "figure_id": "a",
+  "title": "tornado",
+  "caption": "",
+  "generator": "integrated_well_planning.iwp_graphics.tornado_chart",
+  "inputs_sha256_16": "613fe5aa65343dbb",
+  "created": "2026-11-20T11:19:09+00:00",
+  "synthetic": true,
+  "sources": [],
+  "ledger_refs": [],
+  "drawing_no": "",
+  "font": "Segoe UI",
+  "matplotlib": "3.11.2",
+  "python": "3.13.13",
+  "files": {
+    "png": "a.png"
+  }
+}

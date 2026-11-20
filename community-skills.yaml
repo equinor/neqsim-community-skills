@@ -305,6 +305,15 @@ skills:
     tags: [h2s, reservoir, mineral-buffer, pyrite, siderite, thermodynamics, sour-gas, screening]
     min_neqsim_version: "3.29.0"
 
+  - name: neqsim-reservoir-h2s-estimation
+    version: "0.1.0"
+    description: "Screening estimate of H2S in the test gas of a reservoir, prospect or discovery: NeqSim pyrite and Fe-carbonate buffer flashed to separator gas, calibrated on measured wells per depositional setting, with an uncertainty budget (temperature, CO2, pressure), P10/P50/P90, sour-service and gas-specification screening and a report. USE WHEN: asked what H2S to expect from a new reservoir, how certain it is, or whether a reading is plausible."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-reservoir-h2s-estimation/SKILL.md"
+    tags: [h2s, reservoir, prospect, mineral-buffer, uncertainty, sour-service, screening, report]
+    min_neqsim_version: "3.29.0"
+
   - name: neqsim-well-trajectory-anticollision
     version: "1.0.0"
     description: "Educational 3D well path and anti-collision screening: minimum curvature, curve-hold from kick-off or sidetrack tie-in, reduced MWD uncertainty, ISCWSA separation factor against offsets, parent exit, slot check and target pull-back. USE WHEN: a task needs a concept well path, whether it clears existing wellbores, the governing offset, how far to move a target, or if a slot is free before an official anti-collision run."

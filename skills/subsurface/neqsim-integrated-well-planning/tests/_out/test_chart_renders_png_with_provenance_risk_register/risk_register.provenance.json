@@ -1,0 +1,19 @@
+{
+  "schema": "iwp_figure_provenance.v1",
+  "figure_id": "risk_register",
+  "title": "risk_register",
+  "caption": "test caption",
+  "generator": "integrated_well_planning.iwp_graphics.risk_register_heatmap",
+  "inputs_sha256_16": "a118d6c93b3a7a8a",
+  "created": "2026-11-20T11:19:06+00:00",
+  "synthetic": true,
+  "sources": [],
+  "ledger_refs": [],
+  "drawing_no": "",
+  "font": "Segoe UI",
+  "matplotlib": "3.11.2",
+  "python": "3.13.13",
+  "files": {
+    "png": "risk_register.png"
+  }
+}

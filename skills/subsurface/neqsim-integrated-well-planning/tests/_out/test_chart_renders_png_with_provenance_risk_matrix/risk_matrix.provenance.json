@@ -1,0 +1,19 @@
+{
+  "schema": "iwp_figure_provenance.v1",
+  "figure_id": "risk_matrix",
+  "title": "risk_matrix",
+  "caption": "test caption",
+  "generator": "integrated_well_planning.iwp_graphics.risk_matrix",
+  "inputs_sha256_16": "1139ea922517401e",
+  "created": "2026-11-20T11:19:06+00:00",
+  "synthetic": true,
+  "sources": [],
+  "ledger_refs": [],
+  "drawing_no": "",
+  "font": "Segoe UI",
+  "matplotlib": "3.11.2",
+  "python": "3.13.13",
+  "files": {
+    "png": "risk_matrix.png"
+  }
+}

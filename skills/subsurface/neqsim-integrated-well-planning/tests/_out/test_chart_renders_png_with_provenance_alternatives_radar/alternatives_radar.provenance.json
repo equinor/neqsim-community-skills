@@ -1,0 +1,19 @@
+{
+  "schema": "iwp_figure_provenance.v1",
+  "figure_id": "alternatives_radar",
+  "title": "alternatives_radar",
+  "caption": "test caption",
+  "generator": "integrated_well_planning.iwp_graphics.alternatives_radar",
+  "inputs_sha256_16": "c250538bfd9ac55a",
+  "created": "2026-11-20T11:19:03+00:00",
+  "synthetic": true,
+  "sources": [],
+  "ledger_refs": [],
+  "drawing_no": "",
+  "font": "Segoe UI",
+  "matplotlib": "3.11.2",
+  "python": "3.13.13",
+  "files": {
+    "png": "alternatives_radar.png"
+  }
+}

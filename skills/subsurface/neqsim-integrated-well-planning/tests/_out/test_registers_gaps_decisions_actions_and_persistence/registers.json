@@ -1,0 +1,254 @@
+{
+  "schema": "iwp_registers.v1",
+  "items": [
+    {
+      "key": "reservoir.pressure_bara",
+      "value": {
+        "low": 235.0,
+        "base": 250.0,
+        "high": 262.0
+      },
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "reservoir.temperature_C",
+      "value": 90.0,
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "reservoir.permeability_md",
+      "value": {
+        "low": 90.0,
+        "base": 150.0,
+        "high": 220.0
+      },
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "reservoir.thickness_m",
+      "value": 25.0,
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "reservoir.skin",
+      "value": {
+        "low": 0.0,
+        "base": 2.0,
+        "high": 8.0
+      },
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "reservoir.drainage_radius_m",
+      "value": 400.0,
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "reservoir.water_cut",
+      "value": {
+        "low": 0.0,
+        "base": 0.2,
+        "high": 0.5
+      },
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "fluid.components",
+      "value": [
+        {
+          "name": "methane",
+          "mole_fraction": 0.35,
+          "origin": "synthetic"
+        },
+        {
+          "name": "ethane",
+          "mole_fraction": 0.05,
+          "origin": "synthetic"
+        },
+        {
+          "name": "propane",
+          "mole_fraction": 0.04,
+          "origin": "synthetic"
+        },
+        {
+          "name": "n-butane",
+          "mole_fraction": 0.03,
+          "origin": "synthetic"
+        },
+        {
+          "name": "n-hexane",
+          "mole_fraction": 0.08,
+          "origin": "synthetic"
+        },
+        {
+          "name": "n-decane",
+          "mole_fraction": 0.45,
+          "origin": "synthetic"
+        }
+      ],
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "completion.tubing.id_m",
+      "value": 0.1,
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "facility.host_pressure_bara",
+      "value": {
+        "low": 22.0,
+        "base": 25.0,
+        "high": 30.0
+      },
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "targets.rate",
+      "value": {
+        "kind": "oil_sm3d",
+        "low": 1200.0,
+        "base": 1500.0,
+        "high": 1800.0
+      },
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "trajectory.md_m",
+      "value": 2500.0,
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "trajectory.tvd_m",
+      "value": 2500.0,
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    },
+    {
+      "key": "datums.reference_elevation_msl_m",
+      "value": 25.0,
+      "unit": "",
+      "provenance": "ASSUMED",
+      "source": "synthetic demonstration assumption (no field data)",
+      "date": "2026-11-20",
+      "synthetic": true,
+      "note": ""
+    }
+  ],
+  "gaps": [
+    {
+      "key": "fluid.pvt_measurements",
+      "description": "no laboratory PVT supplied",
+      "consequence": "EOS is uncalibrated; saturation pressure, GOR and viscosity carry EOS error",
+      "severity": "MINOR",
+      "owner": "",
+      "resolution": "",
+      "status": "OPEN"
+    },
+    {
+      "key": "fluid.water_chemistry",
+      "description": "no water analysis supplied",
+      "consequence": "scale, compatibility and corrosion assessments are NOT_PERFORMED",
+      "severity": "MINOR",
+      "owner": "",
+      "resolution": "",
+      "status": "OPEN"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D-001",
+      "title": "Tubing",
+      "decision": "100 mm",
+      "rationale": "meets target",
+      "alternatives_considered": [
+        "85 mm"
+      ],
+      "status": "PROPOSED",
+      "decided_by": "",
+      "date": "2026-11-20",
+      "evidence": []
+    }
+  ],
+  "actions": [
+    {
+      "id": "A-001",
+      "description": "get PVT",
+      "owner": "pvt lead",
+      "due": "",
+      "status": "CLOSED",
+      "linked_gap": "",
+      "discipline": ""
+    }
+  ],
+  "provenance_counts": {
+    "SUPPLIED": 0,
+    "MEASURED": 0,
+    "FITTED": 0,
+    "CALCULATED": 0,
+    "ASSUMED": 14
+  }
+}

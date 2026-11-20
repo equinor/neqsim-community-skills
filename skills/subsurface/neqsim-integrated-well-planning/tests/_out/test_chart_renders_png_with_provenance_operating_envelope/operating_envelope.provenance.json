@@ -1,0 +1,19 @@
+{
+  "schema": "iwp_figure_provenance.v1",
+  "figure_id": "operating_envelope",
+  "title": "operating_envelope",
+  "caption": "test caption",
+  "generator": "integrated_well_planning.iwp_graphics.operating_envelope_chart",
+  "inputs_sha256_16": "08c94b0e9061dbc5",
+  "created": "2026-11-20T11:19:05+00:00",
+  "synthetic": true,
+  "sources": [],
+  "ledger_refs": [],
+  "drawing_no": "",
+  "font": "Segoe UI",
+  "matplotlib": "3.11.2",
+  "python": "3.13.13",
+  "files": {
+    "png": "operating_envelope.png"
+  }
+}

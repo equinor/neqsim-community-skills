@@ -1,0 +1,21 @@
+{
+  "schema": "iwp_figure_provenance.v1",
+  "figure_id": "bar",
+  "title": "barrier_schematic",
+  "caption": "barrier sheet",
+  "generator": "integrated_well_planning.iwp_drawings.barrier_schematic",
+  "inputs_sha256_16": "b6296db15ab26946",
+  "created": "2026-11-20T11:19:29+00:00",
+  "synthetic": true,
+  "sources": [],
+  "ledger_refs": [],
+  "drawing_no": "T-003",
+  "font": "Segoe UI",
+  "matplotlib": "3.11.2",
+  "python": "3.13.13",
+  "files": {
+    "png": "bar.png",
+    "pdf": "bar.pdf",
+    "svg": "bar.svg"
+  }
+}

@@ -266,3 +266,14 @@ def test_analogues_prefer_formation_then_distance():
     )
     assert all(a["match"] == "same formation" for a in an)
     assert [a["distance_km"] for a in an] == sorted(a["distance_km"] for a in an)
+
+
+def test_unknown_reservoir_age_highlights_no_tests(tmp_path):
+    rows = synthetic_tests()
+    registry, _, _ = registry_from(rows)
+    res = estimate_prospect({"name": "Epsilon", "res_T_C": 120.0}, registry, rows)
+    files = write_report(res, str(tmp_path), registry=registry, tests=rows)
+    with open(files["markdown"], encoding="utf-8") as handle:
+        text = handle.read()
+    assert "no tests are highlighted" in text
+    assert "same reservoir age class are highlighted" not in text

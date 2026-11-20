@@ -39,18 +39,10 @@ def _figures(
     t_res = p.get("res_T_C")
     if tests:
         fig, ax = plt.subplots(figsize=(8.0, 5.0))
-        same = [
-            t
-            for t in tests
-            if t.get("source_class") == p.get("source_class")
-            and t.get("res_T_C") not in (None, "")
-        ]
-        other = [
-            t
-            for t in tests
-            if t.get("source_class") != p.get("source_class")
-            and t.get("res_T_C") not in (None, "")
-        ]
+        cls = p.get("source_class")
+        plotted = [t for t in tests if t.get("res_T_C") not in (None, "")]
+        same = [t for t in plotted if cls and t.get("source_class") == cls]
+        other = [t for t in plotted if not cls or t.get("source_class") != cls]
         ax.scatter(
             [float(t["res_T_C"]) for t in other],
             [float(t["hg"]) for t in other],
@@ -58,18 +50,23 @@ def _figures(
             c="#bdc3c7",
             edgecolor="grey",
             linewidth=0.3,
-            label=f"tests, other reservoir age ({len(other)})",
+            label=(
+                f"tests, other reservoir age ({len(other)})"
+                if cls
+                else f"tests, all reservoir ages ({len(other)})"
+            ),
         )
-        ax.scatter(
-            [float(t["res_T_C"]) for t in same],
-            [float(t["hg"]) for t in same],
-            s=34,
-            c="#e67e22",
-            edgecolor="k",
-            linewidth=0.4,
-            label=f"tests, same reservoir age class ({len(same)})",
-            zorder=3,
-        )
+        if same:
+            ax.scatter(
+                [float(t["res_T_C"]) for t in same],
+                [float(t["hg"]) for t in same],
+                s=34,
+                c="#e67e22",
+                edgecolor="k",
+                linewidth=0.4,
+                label=f"tests, same reservoir age class ({len(same)})",
+                zorder=3,
+            )
         curves = (registry or {}).get("limit_curves") or []
         if curves:
             ts = [c["T_C"] for c in curves]
@@ -121,7 +118,12 @@ def _figures(
             {
                 "file": path,
                 "caption": f"Estimate for {name} (red) against mercury in gas of the tests on the shelf and the "
-                "mineral limits. Tests of the same reservoir age class are highlighted.",
+                "mineral limits."
+                + (
+                    " Tests of the same reservoir age class are highlighted."
+                    if same
+                    else " The reservoir age class is not known, so no tests are highlighted."
+                ),
             }
         )
     an = [a for a in result.get("analogues", []) if a.get("mercury")]

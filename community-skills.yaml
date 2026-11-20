@@ -296,6 +296,14 @@ skills:
     tags: [h2s, souring, waterflood, seawater-fraction, correlation, reservoir, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-reservoir-mercury-estimation
+    version: "0.1.0"
+    description: "Screening estimate of elemental mercury in the gas of a reservoir, prospect or discovery: shrinkage model calibrated on tested wells (reservoir age class, province, temperature), analogue tests, NeqSim mineral limits (cinnabar and liquid mercury) and a report with P10/P50/P90. USE WHEN: asked what mercury to expect from a new reservoir, how certain it is, whether a measured value is plausible, or which mineral reaction limits mercury."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-reservoir-mercury-estimation/SKILL.md"
+    tags: [mercury, reservoir, prospect, mineral-equilibrium, cinnabar, uncertainty, screening, report]
+    min_neqsim_version: "3.30.0"
   - name: neqsim-reservoir-h2s-mineral-buffer
     version: "0.1.0"
     description: "Original (pre-souring) H2S in reservoir fluids from mineral buffering: pyrite + Fe-carbonate with the CH4/CO2 of the fluid fixes the H2S fugacity, which explains the exponential rise of H2S with reservoir temperature (Haaland 1999 correlation, about 54 kJ/mol). USE WHEN: a task asks what H2S to expect in a new reservoir or discovery, why H2S rises with temperature, whether a measured H2S is natural or souring, or which mineral reaction controls H2S."

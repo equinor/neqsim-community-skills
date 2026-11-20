@@ -1212,10 +1212,10 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-flare-helideck-dispersion
-    version: "1.0.0"
-    description: "Screening dispersion of unignited flare-tip gas to a helideck and its flight paths: choked tip and notional jet, Briggs rise with stable-air caps, Gaussian plume, wind-weighted conditional exceedance of 10 and 20 % LFL, tilt scan, tornado, Monte Carlo, house-style figures, results.json. USE WHEN: asking whether PSV or blowdown gas from a flare tip can reach a helideck or helicopter approach and departure paths."
+    version: "1.1.0"
+    description: "Screening dispersion of unignited release gas (flare tip, cold vent, PSV tail pipe, vent) from any source on a facility to any receptor - helideck and flight paths, air intakes, accommodation, muster areas, escape routes, crane cabs, ignition sources - with Briggs rise, Gaussian plume, wind-weighted conditional exceedance of 10 and 20 % LFL, tilt scan, figures and results.json. USE WHEN: asking whether gas from a release point can reach a place on a facility."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/safety/neqsim-flare-helideck-dispersion/SKILL.md"
-    tags: [safety, dispersion, flare, helideck, flight-path, unignited-gas, lfl, psv, api520, screening, sensitivity, reporting]
+    tags: [safety, dispersion, flare, vent, helideck, flight-path, air-intake, muster-area, escape-route, receptor, facility, unignited-gas, lfl, psv, api520, screening, sensitivity, reporting]
     min_neqsim_version: "3.7.0"

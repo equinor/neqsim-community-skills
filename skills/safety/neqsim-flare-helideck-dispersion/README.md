@@ -1,10 +1,15 @@
-# Flare-tip Gas Dispersion to a Helideck and Flight Paths
+# Unignited Release Gas Dispersion to Any Place on a Facility
 
-Screening-level dispersion of unignited flare-tip gas (rated PSV flow or blowdown peak)
-to a helideck and its approach and departure paths. It combines a choked tip with a
+Screening-level dispersion of unignited gas (flare tip, cold vent, PSV tail pipe or other
+vent; rated PSV flow or blowdown peak) from any release source to any receptor on a
+facility: helideck and flight paths, air intakes, accommodation, muster areas, escape
+routes, crane cabs, ignition sources and so on. It combines a choked tip with a
 notional jet, Briggs plume rise with stable-air limits, and a Gaussian plume, sweeps the
 wind climate, and reports the share of wind hours in which 10 % and 20 % of the lower
 flammability limit (LFL) are exceeded **given that a release is ongoing**.
+
+The helideck study (flare tip, helideck, flight paths) is a preset of the same model; the
+package name `flare_helideck_dispersion` is kept for compatibility.
 
 It also produces the report material from the same run: house-style figures (7.2 in
 wide), a schematic overlay on a user-supplied image, and a `results.json` fragment with
@@ -42,12 +47,20 @@ apart, obstacle-free sector 135-345 deg) and a synthetic wind record.
 ## Command line
 
 ```bash
+python -m flare_helideck_dispersion facility config.json --figures
+python -m flare_helideck_dispersion section config.json
 python -m flare_helideck_dispersion run config.json
 python -m flare_helideck_dispersion figures config.json
 python -m flare_helideck_dispersion overlay config.json
 ```
 
-Minimal `config.json` (paths are relative to this file):
+`facility` takes any number of `sources` and `receptors` (see
+`examples/facility_example.json`); `run`, `figures` and `overlay` are the helideck preset.
+A receptor `shape` is `point`, `disc`, `rectangle`, `polyline`, `fan`, `into_wind_path` or
+`points`; each receptor can carry its own `thresholds_pct_lfl` and `criterion_source`.
+Coordinates are east/north/up metres in one true-north frame, height above sea level.
+
+Minimal helideck `config.json` (paths are relative to this file):
 
 ```json
 {
@@ -80,6 +93,8 @@ without it.
 | `model.py` | choked tip, notional jet, Briggs rise, Gaussian plume, free-jet cross-check |
 | `wind.py` | joint wind table, hourly CSV binning, Pasquill schemes |
 | `receptors.py` | geometry, helideck points, flight paths, obstacle-free sector, into-wind logic |
+| `facility.py` | sources, receptors of any shape, facility study, ranking, tilt scan, tornado, helideck preset |
+| `facility_results.py`, `facility_figures.py` | facility `results.json` fragment and figures |
 | `study.py` | wind sweep, conditional exceedance, annualisation helper, benchmark helper |
 | `sensitivity.py` | tilt scan, tornado, seeded Monte Carlo |
 | `sources.py` | composition to LFL and molar mass, API 520 rated flow, optional NeqSim PSV sizing |

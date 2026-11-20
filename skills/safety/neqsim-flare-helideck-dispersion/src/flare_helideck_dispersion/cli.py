@@ -1,6 +1,13 @@
-"""Command line: ``<python> -m flare_helideck_dispersion run|figures|overlay config.json``.
+"""Command line: ``<python> -m flare_helideck_dispersion run|figures|overlay|facility config.json``.
 
-* ``run`` - wind sweep, optional sensitivity, ``results_fragment.json``.
+* ``section`` - vertical section of the plume through a source (JSON of ``s``, ``z``,
+  ``values`` in percent of the limit) and the receptors in that plane, for a schematic
+  overlay on a picture of the facility (config key ``section``).
+* ``facility`` - any release sources against any receptors (air intakes, muster areas,
+  escape routes, crane cabs, helideck and flight paths, ...), optional ``--figures``,
+  ``facility_fragment.json``. See :func:`facility_inputs` for the configuration keys.
+* ``run`` - helideck and flight-path wind sweep, optional sensitivity,
+  ``results_fragment.json``.
 * ``figures`` - house-style figures from the saved run, and the fragment with captions
   and discussion.
 * ``overlay`` - schematic overlay of a plume section on a user-supplied image.
@@ -21,6 +28,19 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+from .facility import (
+    FacilityRelease,
+    FacilityStudyResult,
+    Receptor,
+    Source,
+    build_release,
+    facility_section,
+    facility_tilt_scan,
+    helideck_facility,
+    run_facility_study,
+    write_facility_section,
+)
+from .facility_results import build_facility_results
 from .model import ReleaseCase
 from .receptors import PlatformGeometry
 from .results import build_results, validate_fragment, write_results_json
@@ -248,6 +268,147 @@ def cmd_overlay(inp: Inputs) -> int:
     return 1 if res.problems else 0
 
 
+def facility_inputs(inp: Inputs) -> tuple[list[FacilityRelease], list[Receptor]]:
+    """Build the sources, release cases and receptors of a facility configuration.
+
+    The configuration holds ``sources`` (mappings for :meth:`Source.from_dict`),
+    ``receptors`` (mappings for :meth:`Receptor.from_dict`), optionally ``helideck``
+    (platform geometry fields plus ``source``, which adds the helideck, any flight path
+    and into-wind path receptors around the named source) and ``releases`` whose
+    ``source`` key names the source of each case (default: the first source).
+
+    Args:
+        inp: Parsed configuration.
+
+    Returns:
+        Tuple ``(releases, receptors)``.
+
+    Raises:
+        ValueError: If no source is defined or a release names an unknown source.
+    """
+    sources = [Source.from_dict(s) for s in inp.cfg.get("sources", [])]
+    receptors = [Receptor.from_dict(r) for r in inp.cfg.get("receptors", [])]
+    deck = inp.cfg.get("helideck")
+    if deck is not None:
+        spec = dict(deck)
+        name = spec.pop("source", None)
+        geometry = PlatformGeometry.from_dict(spec)
+        known = {s.name: s for s in sources}
+        if name and name in known:
+            tip = known[name]
+            preset_source, preset = helideck_facility(
+                geometry, tip.name, (tip.east_m, tip.north_m)
+            )
+        else:
+            preset_source, preset = helideck_facility(geometry, name or "flare_tip")
+            sources.append(preset_source)
+        receptors.extend(preset)
+    if not sources:
+        raise ValueError("a facility configuration needs sources or a helideck preset")
+    by_name = {s.name: s for s in sources}
+    releases = []
+    for case, raw in zip(inp.cases, inp.cfg["releases"]):
+        key = raw.get("source", sources[0].name)
+        if key not in by_name:
+            raise ValueError(f"release {case.name!r} names unknown source {key!r}")
+        releases.append(FacilityRelease(case, by_name[key]))
+    return releases, receptors
+
+
+def cmd_facility(inp: Inputs, with_figures: bool = False) -> int:
+    """Run the facility study, optional figures and the results fragment."""
+    releases, receptors = facility_inputs(inp)
+    study = run_facility_study(releases, inp.wind, receptors, inp.settings)
+    study.save(inp.out)
+    spec = inp.cfg.get("sensitivity") or {}
+    scans: dict[str, Any] | None = None
+    if spec:
+        tilts = spec.get("tilts", (20.0, 30.0, 40.0, 55.0, 70.0, 90.0))
+        scans = {
+            fr.case.name: facility_tilt_scan(
+                fr, inp.wind, receptors, inp.settings, tilts
+            )
+            for fr in releases
+            if fr.case.name in spec.get("tilt_scan_cases", [f.case.name for f in releases])
+        }
+        (inp.out / "facility_sensitivity.json").write_text(
+            json.dumps(scans, indent=1, default=float), encoding="utf-8"
+        )
+    records: list[Any] = []
+    bad = 0
+    if with_figures:
+        from .facility_figures import make_facility_figures
+
+        records = make_facility_figures(study, str(inp.out / "figures"))
+        for r in records:
+            sys.stdout.write(
+                "{} {}\n".format(
+                    r.name,
+                    "OK" if not r.problems else "LAYOUT: " + "; ".join(r.problems),
+                )
+            )
+            bad += bool(r.problems)
+    flame = inp.cfg.get("flameout", {})
+    fragment = build_facility_results(
+        study,
+        records,
+        scans,
+        inp.cfg.get("criteria"),
+        flame.get("frequency_per_year"),
+        flame.get("hours_per_release"),
+    )
+    write_results_json(inp.out / "facility_fragment.json", fragment, merge=False)
+    for row in study.ranking(20.0)[:10]:
+        sys.stdout.write(
+            "{} -> {}: peak {:.2f} % LFL, >=20 % LFL on {:.2f} % of wind hours (given a release)\n".format(
+                row["case"], row["receptor"], row["peak_pct_lfl"], row["exceed_pct_hours"]
+            )
+        )
+    for p in validate_fragment(fragment):
+        sys.stdout.write(f"results fragment problem: {p}\n")
+    sys.stdout.write(f"wrote {inp.out}\n")
+    return 1 if bad else 0
+
+
+def cmd_section(inp: Inputs) -> int:
+    """Write the vertical section JSON (and the receptor marks) of one case and wind."""
+    spec = inp.cfg["section"]
+    releases, receptors = facility_inputs(inp)
+    sources = list({fr.source.name: fr.source for fr in releases}.values())
+    study = FacilityStudyResult(
+        inp.settings,
+        inp.wind,
+        sources,
+        receptors,
+        {fr.case.name: build_release(fr, inp.settings) for fr in releases},
+        releases,
+        {},
+        {},
+        [],
+    )
+    section = facility_section(
+        study,
+        spec["case"],
+        float(spec["wind_from_deg"]),
+        float(spec["speed_m_s"]),
+        tuple(spec.get("s_range_m", (-50.0, 600.0))),
+        tuple(spec.get("z_range_m", (2.0, 200.0))),
+        float(spec.get("ds_m", 5.0)),
+        float(spec.get("dz_m", 2.0)),
+        spec.get("azimuth_deg"),
+        lateral_tolerance_m=float(spec.get("tolerance_m", 15.0)),
+    )
+    out = write_facility_section(_resolve(inp.base, spec.get("out", str(inp.out / "section.json"))), section)
+    sys.stdout.write(f"wrote {out} (peak {section['peak_pct_lfl']:.1f} % LFL in the plane)\n")
+    for m in section["marks"]:
+        sys.stdout.write(
+            "mark: {:.0f},{:.0f},{} (schematic; {:.0f} m off the plane, {:.1f} % LFL there)\n".format(
+                m["s_m"], m["z_m"], m["label"], m["lateral_offset_m"], m["peak_pct_lfl_here"]
+            )
+        )
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Entry point.
 
@@ -260,10 +421,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="flare_helideck_dispersion", description=__doc__.splitlines()[0]
     )
-    parser.add_argument("command", choices=["run", "figures", "overlay"])
+    parser.add_argument(
+        "command", choices=["run", "figures", "overlay", "facility", "section"]
+    )
     parser.add_argument("config", help="JSON configuration file")
+    parser.add_argument(
+        "--figures",
+        action="store_true",
+        help="facility: also write the plan and exceedance figures",
+    )
     args = parser.parse_args(argv)
     inp = Inputs(Path(args.config))
+    if args.command == "facility":
+        return cmd_facility(inp, args.figures)
+    if args.command == "section":
+        return cmd_section(inp)
     return {"run": cmd_run, "figures": cmd_figures, "overlay": cmd_overlay}[
         args.command
     ](inp)

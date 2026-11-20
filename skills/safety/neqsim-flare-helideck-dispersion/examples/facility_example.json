@@ -1,0 +1,48 @@
+{
+  "output_dir": "facility_out",
+  "wind": {
+    "table": {
+      "sectors": ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
+      "speed_bins": ["0-2", "2-6", ">6"],
+      "table": {
+        "N": {"0-2": 0.6, "2-6": 3.2, ">6": 8.0},
+        "NE": {"0-2": 0.5, "2-6": 2.4, ">6": 4.5},
+        "E": {"0-2": 0.5, "2-6": 2.2, ">6": 3.3},
+        "SE": {"0-2": 0.6, "2-6": 2.8, ">6": 4.6},
+        "S": {"0-2": 0.8, "2-6": 4.0, ">6": 11.5},
+        "SW": {"0-2": 0.8, "2-6": 4.4, ">6": 15.0},
+        "W": {"0-2": 0.7, "2-6": 4.0, ">6": 13.8},
+        "NW": {"0-2": 0.6, "2-6": 3.2, ">6": 8.0}
+      }
+    }
+  },
+  "sources": [
+    {"name": "HP flare", "east_m": 0, "north_m": 0, "height_asl_m": 45, "kind": "flare_tip", "tilt_deg": 30},
+    {"name": "Cold vent", "east_m": 140, "north_m": 35, "height_asl_m": 40, "kind": "cold_vent", "tilt_deg": 90}
+  ],
+  "receptors": [
+    {"name": "Combustion-air intake", "kind": "air_intake", "shape": "point",
+     "east_m": 55, "north_m": -30, "height_asl_m": 40, "criterion_source": "project design basis"},
+    {"name": "Muster area", "kind": "muster_area", "shape": "rectangle",
+     "east_min_m": 60, "north_min_m": -90, "east_max_m": 90, "north_max_m": -60,
+     "heights_asl_m": 12, "spacing_m": 5, "criterion_source": "project design basis"},
+    {"name": "Escape route", "kind": "escape_route", "shape": "polyline",
+     "vertices": [[0, -60, 20], [80, -60, 20], [80, 20, 20]], "spacing_m": 5,
+     "thresholds_pct_lfl": [10, 20]},
+    {"name": "Crane cab", "kind": "crane_cab", "shape": "point",
+     "east_m": -40, "north_m": 20, "height_asl_m": 35}
+  ],
+  "releases": [
+    {"name": "Cold blowdown", "source": "HP flare", "mass_flow_kg_s": 60.0,
+     "composition": {"methane": 0.7, "ethane": 0.2, "propane": 0.1},
+     "gamma": 1.25, "t0_k": 190.0, "tip_diameter_m": 0.4},
+    {"name": "Cold vent release", "source": "Cold vent", "mass_flow_kg_s": 8.0,
+     "mw_kg_mol": 0.0215, "gamma": 1.25, "t0_k": 230.0,
+     "lfl_vol_frac": 0.04, "fuel_mole_frac": 0.96, "tip_diameter_m": 0.15}
+  ],
+  "settings": {"params": {"tilt_deg": 45.0}},
+  "sensitivity": {"tilts": [20, 40, 70, 90]},
+  "section": {"case": "Cold blowdown", "wind_from_deg": 315, "speed_m_s": 1.5,
+              "s_range_m": [-20, 200], "z_range_m": [2, 100], "out": "facility_out/section.json"},
+  "flameout": {"frequency_per_year": null, "hours_per_release": null}
+}

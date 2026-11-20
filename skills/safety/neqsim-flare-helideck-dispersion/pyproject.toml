@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-flare-helideck-dispersion"
-version = "1.0.0"
-description = "Screening dispersion of unignited flare-tip gas to a helideck and its flight paths: wind-weighted conditional exceedance, sensitivity, house-style figures and results.json fragments."
+version = "1.1.0"
+description = "Screening dispersion of unignited release gas from any source on a facility to any receptor (helideck and flight paths, air intakes, muster areas, escape routes, ...): wind-weighted conditional exceedance, sensitivity, house-style figures and results.json fragments."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }

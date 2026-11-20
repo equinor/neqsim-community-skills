@@ -125,7 +125,11 @@ def composition_to_release_properties(
     if fuel_total <= 0.0:
         raise ValueError("composition has no combustible component")
     lfl = 1.0 / sum((v / fuel_total) / FUEL_LFL_VOL_FRAC[c] for c, v in fuel.items())
-    return {"mw_kg_mol": mw, "fuel_mole_frac": fuel_total, "lfl_vol_frac": lfl}
+    return {
+        "mw_kg_mol": mw,
+        "fuel_mole_frac": min(fuel_total, 1.0),
+        "lfl_vol_frac": lfl,
+    }
 
 
 def release_case_from_composition(

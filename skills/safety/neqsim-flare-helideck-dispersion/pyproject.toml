@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-flare-helideck-dispersion"
+version = "1.0.0"
+description = "Screening dispersion of unignited flare-tip gas to a helideck and its flight paths: wind-weighted conditional exceedance, sensitivity, house-style figures and results.json fragments."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+figures = ["matplotlib>=3.7"]
+test = ["pytest>=7.4", "matplotlib>=3.7"]
+neqsim = ["neqsim"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

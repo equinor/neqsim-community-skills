@@ -421,6 +421,33 @@ skills:
     tags: [subsea, surf, umbilical, hydraulics, chemical-injection, power-cable, visualization, screening]
     min_neqsim_version: "3.29.0"
 
+  - name: neqsim-marine-operations-weather-window
+    version: "1.0.0"
+    description: "Educational weather-window planning for offshore marine campaigns: a sequence of Hs and wind restricted operations simulated over every start date of a hindcast gives P10/P50/P90 duration including waiting on weather, a monthly view, probability of finishing inside a budget, and a cost ranking of vessel options. USE WHEN: a tie-back, survey, lay, installation or intervention concept needs campaign duration, season choice or vessel option screening before a marine contractor study."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/neqsim-marine-operations-weather-window/SKILL.md"
+    tags: [subsea, marine-operations, weather-window, vessel, installation, tie-back, screening]
+    min_neqsim_version: "3.29.0"
+
+  - name: neqsim-polymeric-flowline-screening
+    version: "1.0.0"
+    description: "Educational screening of thermoplastic (polymeric) subsea flowlines: hoop pressure from a vendor table or thin-wall relation, external collapse, gas permeation against annulus vent capacity, steady arrival temperature against bare steel, and bend radius from a strain limit; missing evidence is reported as data gaps. USE WHEN: a tie-back concept considers polymeric or reinforced thermoplastic flowlines instead of steel or flexibles and needs a first screen before vendor qualification."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/neqsim-polymeric-flowline-screening/SKILL.md"
+    tags: [subsea, surf, polymeric, thermoplastic, flowline, permeation, collapse, screening]
+    min_neqsim_version: "3.29.0"
+
+  - name: neqsim-subsea-hot-tap-screening
+    version: "1.0.0"
+    description: "Educational screening of a mechanical-clamp hot tap on a live subsea pipeline: branch-to-run ratio, tee pressure and temperature rating, remaining wall against a hoop minimum, line velocity during cutting, hydrate margin and branch bending moment, with missing evidence reported as data gaps. USE WHEN: a tie-in concept proposes tapping an existing flowline or pipeline instead of a planned tie-in spool and needs a first go/no-go screen before a hot-tap contractor study."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/neqsim-subsea-hot-tap-screening/SKILL.md"
+    tags: [subsea, tie-in, hot-tap, pipeline, hydrate, screening]
+    min_neqsim_version: "3.29.0"
+
   - name: neqsim-flow-induced-vibration-screening
     version: "1.0.0"
     description: "Educational flow-induced vibration (FIV) screening using a public fluid kinetic-energy (rho v^2) likelihood-of-failure index. USE WHEN: a task needs a public, screening-level check of whether a main-line flow velocity and density produce a kinetic-energy level that warrants a detailed Energy Institute style FIV assessment before piping vibration design."

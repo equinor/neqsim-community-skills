@@ -1,7 +1,7 @@
 ---
 name: neqsim-uncertainty-quantification
 calculation_basis: "advisory"
-version: "1.0.0"
+version: "1.0.1"
 description: "Monte Carlo uncertainty, tornado and global sensitivity for NeqSim tasks: P10/P90 marginals, LHS/Halton sampling, a cached technical/economic split, ascending p10<=p50<=p90 percentiles, convergence check, optional SALib Sobol/Morris and chaospy surrogate, and the uncertainty block the report and CI gate consume. USE WHEN: reporting P10/P50/P90, a tornado or a probability of a negative outcome, wrapping an expensive simulation, ranking parameters, or auditing an uncertainty block."
 last_verified: "2026-08-08"
 requires:
@@ -231,6 +231,10 @@ sample = sample_surrogate(fit, 100000)      # percentiles from a cheap sample
 
 ## Related NeqSim Functionality
 
+- When each NeqSim run takes seconds and the study needs thousands, build the
+  model with `neqsim-active-learning-surrogate` and pass
+  `surrogate.as_model(output)` as `model=`; validate the surrogate against fresh
+  NeqSim runs before reporting.
 - `neqsim.process.automation.ProcessAutomation#evaluateBatchJson` scores a list
   of setpoint candidates, on a `ProcessSystem.copy()` per thread when
   `maxParallel > 1` — the natural way to evaluate a Monte Carlo or Saltelli

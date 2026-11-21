@@ -47,18 +47,20 @@ For this multi-skill repository, each skill is cataloged by a path such as `skil
 
 ## Skill Catalog
 
-The complete source of truth is [`community-skills.yaml`](community-skills.yaml). The catalog currently contains 60 community skills across these public domains:
+The complete source of truth is [`community-skills.yaml`](community-skills.yaml). The catalog currently contains 139 community skills across these public domains:
 
 | Domain | Folder | Skills |
 | --- | --- | ---: |
-| Environment | [skills/environment](skills/environment) | 2 |
-| Field development | [skills/field-development](skills/field-development) | 7 |
-| Flow assurance | [skills/flow-assurance](skills/flow-assurance) | 7 |
-| Process | [skills/process](skills/process) | 25 |
-| PVT | [skills/pvt](skills/pvt) | 2 |
-| Reporting | [skills/reporting](skills/reporting) | 3 |
-| Safety | [skills/safety](skills/safety) | 8 |
-| Subsea | [skills/subsea](skills/subsea) | 6 |
+| Engineering data | [skills/engineering-data](skills/engineering-data) | 4 |
+| Environment | [skills/environment](skills/environment) | 3 |
+| Field development | [skills/field-development](skills/field-development) | 24 |
+| Flow assurance | [skills/flow-assurance](skills/flow-assurance) | 9 |
+| PVT | [skills/pvt](skills/pvt) | 9 |
+| Process | [skills/process](skills/process) | 35 |
+| Reporting | [skills/reporting](skills/reporting) | 5 |
+| Safety | [skills/safety](skills/safety) | 12 |
+| Subsea | [skills/subsea](skills/subsea) | 19 |
+| Subsurface | [skills/subsurface](skills/subsurface) | 19 |
 
 Representative skills include:
 
@@ -67,6 +69,8 @@ Representative skills include:
 | [skills/process/neqsim-separator-modelling](skills/process/neqsim-separator-modelling) | `neqsim-separator-modelling` | Educational gas/liquid separator screening indicators |
 | [skills/pvt/neqsim-e300-fluid-io](skills/pvt/neqsim-e300-fluid-io) | `neqsim-e300-fluid-io` | Eclipse E300 fluid import/export and public water-parameter handling |
 | [skills/flow-assurance/neqsim-produced-water-scale-screening](skills/flow-assurance/neqsim-produced-water-scale-screening) | `neqsim-produced-water-scale-screening` | Public produced-water brine builder and scale screening |
+| [skills/flow-assurance/neqsim-fluid-commingling-compatibility](skills/flow-assurance/neqsim-fluid-commingling-compatibility) | `neqsim-fluid-commingling-compatibility` | Blend-sweep screening of two commingled fluids (asphaltene, gas breakout, hydrate, sour gas) |
+| [skills/process/neqsim-active-learning-surrogate](skills/process/neqsim-active-learning-surrogate) | `neqsim-active-learning-surrogate` | Active-learning surrogate of a NeqSim flowsheet; learns where a capacity limit binds |
 | [skills/process/neqsim-teg-dehydration-modeling](skills/process/neqsim-teg-dehydration-modeling) | `neqsim-teg-dehydration-modeling` | Runnable NeqSim TEG dehydration flowsheet guidance |
 | [skills/safety/neqsim-vacuum-collapse-screening](skills/safety/neqsim-vacuum-collapse-screening) | `neqsim-vacuum-collapse-screening` | Public cooldown and external-pressure screening for blocked-in vessels |
 | [skills/subsea/neqsim-subsea-layout-geometry](skills/subsea/neqsim-subsea-layout-geometry) | `neqsim-subsea-layout-geometry` | Public subsea layout geometry and step-out screening |

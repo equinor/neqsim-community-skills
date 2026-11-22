@@ -29,14 +29,51 @@ class PseudoComponent:
         amount: Mole amount on the same basis as the defined components.
         molar_mass_kg_mol: Molar mass in kg/mol (for example 0.140).
         density_g_cm3: Standard-condition liquid density in g/cm3.
+        critical_temperature_k: Optional critical temperature, K. Give the three
+            critical properties together to override the TBP correlations, for
+            example for an asphaltene pseudo-component.
+        critical_pressure_bar: Optional critical pressure, bar.
+        acentric_factor: Optional acentric factor.
     """
 
     name: str
     amount: float
     molar_mass_kg_mol: float
     density_g_cm3: float
+    critical_temperature_k: float | None = None
+    critical_pressure_bar: float | None = None
+    acentric_factor: float | None = None
+
+    @property
+    def has_critical_properties(self) -> bool:
+        """True when Tc, Pc and the acentric factor are given."""
+        return self.critical_temperature_k is not None
 
     def __post_init__(self) -> None:
+        given = [
+            v is not None
+            for v in (
+                self.critical_temperature_k,
+                self.critical_pressure_bar,
+                self.acentric_factor,
+            )
+        ]
+        if any(given) and not all(given):
+            raise FluidSpecError(
+                f"{self.name}: give critical temperature, pressure and acentric factor "
+                "together"
+            )
+        if all(given):
+            if not 300.0 <= self.critical_temperature_k <= 2000.0:
+                raise FluidSpecError(
+                    f"{self.name}: critical temperature must be 300-2000 K"
+                )
+            if not 1.0 <= self.critical_pressure_bar <= 100.0:
+                raise FluidSpecError(
+                    f"{self.name}: critical pressure must be 1-100 bar"
+                )
+            if not 0.0 <= self.acentric_factor <= 3.0:
+                raise FluidSpecError(f"{self.name}: acentric factor must be 0-3")
         if not self.name:
             raise FluidSpecError("pseudo-component needs a name")
         if not math.isfinite(self.amount) or self.amount < 0:
@@ -105,6 +142,9 @@ class BlendedPseudo:
     mole_fraction: float
     molar_mass_kg_mol: float
     density_g_cm3: float
+    critical_temperature_k: float | None = None
+    critical_pressure_bar: float | None = None
+    acentric_factor: float | None = None
 
 
 @dataclass(frozen=True)
@@ -134,6 +174,9 @@ class Blend:
                     p.mole_fraction / total,
                     p.molar_mass_kg_mol,
                     p.density_g_cm3,
+                    p.critical_temperature_k,
+                    p.critical_pressure_bar,
+                    p.acentric_factor,
                 )
                 for p in self.pseudo_components
             ),
@@ -174,6 +217,9 @@ def blend(fluid_a: FluidSpec, fluid_b: FluidSpec, fraction_b: float) -> Blend:
                         mole_fraction=weight * pseudo.amount / total,
                         molar_mass_kg_mol=pseudo.molar_mass_kg_mol,
                         density_g_cm3=pseudo.density_g_cm3,
+                        critical_temperature_k=pseudo.critical_temperature_k,
+                        critical_pressure_bar=pseudo.critical_pressure_bar,
+                        acentric_factor=pseudo.acentric_factor,
                     )
                 )
     names = [p.name for p in pseudos]

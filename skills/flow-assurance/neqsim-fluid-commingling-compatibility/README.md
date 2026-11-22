@@ -154,6 +154,43 @@ conditions = replace(
   pH 6.0, 100 mg/L). Lower separator pressure means more CO2 flashing, a
   higher pH and a higher risk.
 
+### 3c. Calibrated asphaltene onset (optional, needs a measured onset)
+
+With a measured onset of the asphaltenic fluid (HPM or light-scattering
+depressurisation test), the screen also gives the onset pressure of every
+blend:
+
+```python
+from dataclasses import replace
+from fluid_commingling_compatibility import (
+    CalibratedAsphalteneModel, MeasuredOnset, PseudoComponent,
+)
+
+# Asphaltene pseudo-component: amount, kg/mol, g/cm3, Tc (K), Pc (bar), omega
+host = replace(host, pseudo_components=[
+    *host.pseudo_components,
+    PseudoComponent("Asphaltene", 0.4, 1.0, 1.15, 1015.0, 15.7, 1.5),
+])
+model = CalibratedAsphalteneModel(host, MeasuredOnset(temperature_c=80.0, pressure_bara=150.0))
+report = screen_commingling(host, tiein, conditions, evaluator,
+                            fractions=(0.2, 0.4, 0.6, 0.8), asphaltene_model=model)
+```
+
+- The model is calibrated on the host alone. A measured lower onset
+  (`MeasuredOnset(..., lower_pressure_bara=...)`) also fits the solid volume.
+- The `AOP (bara)` column shows each blend's upper onset; `>max` means the
+  blend precipitates at the top of the scan.
+- Light diluents raise the onset pressure. In
+  `examples/calibrated_asphaltene_onset.py` (host onset 150 bara at 80 C) the
+  onset rises to 166, 179, 187 and 208 bara at 20, 40, 60 and 80 mol %
+  condensate, and the 80 % blend precipitates at the 200 bara commingling
+  pressure (high finding).
+- Keep the asphaltene acentric factor at 1.2-1.5 for about 1000 g/mol; much
+  higher values split the asphaltene into its own liquid.
+- `model.backend` is `java` when the installed NeqSim has
+  `AsphalteneSolidModel`, otherwise `python` (same equations and results,
+  about three times slower).
+
 ### 4. Run the sweep
 
 ```python
@@ -216,11 +253,15 @@ What to do with each `high` finding:
 | Minimum RI not near the bubble point | Increase `path_points` |
 | Slow sweeps | Fewer `fractions`, fewer `path_points`, or skip the hydrate check (it is the slowest step) |
 | WAT shows `-` with "no wax appearance above -60 C" | The blend has no wax formers in its C7+ cuts (typical for light condensate) |
+| `asphaltene pseudo-component ... critical temperature` | Give Tc, Pc and acentric factor to the `Asphaltene` pseudo-component |
+| Onset table shows `>max` for the host | The measured onset is above the scan; check the onset value and units |
 
-**Why there is no tuned asphaltene onset model:** NeqSim's equation-of-state
-asphaltene onset can be calibrated to the host oil. But on 3.29.0 every
-calibration predicted that condensate stabilises the blend, which contradicts
-laboratory evidence. The details are in SKILL.md, Limitations.
+**Calibrated asphaltene onset vs refractive index:** the refractive-index
+check needs no measured onset and ranks blends; the calibrated model needs one
+measured onset and gives pressures. Earlier versions did not offer the
+calibrated model because tuning NeqSim's database asphaltene by its
+interaction parameters gave the wrong blend trend; the solid model fixes that
+(SKILL.md, Engineering Method step 10).
 
 ## Extending
 

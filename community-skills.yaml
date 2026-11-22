@@ -422,8 +422,8 @@ skills:
     min_neqsim_version: "3.29.0"
 
   - name: neqsim-fluid-commingling-compatibility
-    version: "0.2.0"
-    description: "Blend-sweep screening of two commingled fluids with NeqSim: asphaltene destabilisation by dilution (live-oil refractive index, onset margin, de Boer), gas breakout on mixing, blend hydrate and wax appearance temperature, calcium naphthenate risk, separator H2S/CO2. USE WHEN: a tie-in, commingled well or shared flowline mixes a new fluid with a host fluid and the question is whether the mixture behaves worse than either fluid alone, or which blend ratio is worst."
+    version: "0.3.0"
+    description: "Blend-sweep screening of two commingled fluids with NeqSim: asphaltene destabilisation (live-oil refractive index, de Boer, blend onset pressure from a solid model calibrated to a measured onset), gas breakout, blend hydrate and wax appearance temperature, calcium naphthenates, separator H2S/CO2. USE WHEN: a tie-in, commingled well or shared flowline mixes a new fluid with a host fluid and the question is whether the mixture behaves worse than either fluid alone, or which blend ratio is worst."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/flow-assurance/neqsim-fluid-commingling-compatibility/SKILL.md"

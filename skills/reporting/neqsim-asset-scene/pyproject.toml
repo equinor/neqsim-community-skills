@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-asset-scene"
+version = "0.1.0"
+description = "One 3D scene contract for process equipment, SURF and wells (existing and proposed) with GLB, offline HTML and PNG renderers."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=7.4", "matplotlib>=3.5"]
+plot = ["matplotlib>=3.5"]
+neqsim = ["neqsim"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

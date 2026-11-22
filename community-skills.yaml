@@ -1212,6 +1212,14 @@ skills:
     path: "skills/reporting/neqsim-task-grill/SKILL.md"
     tags: [reporting, intake, planning, workflow]
     min_neqsim_version: "3.7.0"
+  - name: neqsim-asset-scene
+    version: "0.1.0"
+    description: "One 3D scene contract (neqsim_asset_scene.v1) for process equipment, SURF and wells, existing and proposed, coloured by NeqSim results or live values, with nozzle-to-nozzle routed piping, span/slope/clash screening and B31.3 pipe stress in NeqSim PipeStressModel. Renders GLB, an offline HTML viewer and report PNGs with provenance. USE WHEN: a study needs a 3D figure of a plant, tie-back, well path or modification option from NeqSim models, layouts, subsea layouts or trajectories."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/reporting/neqsim-asset-scene/SKILL.md"
+    tags: [reporting, visualisation, 3d, glb, process, surf, wells, illustration]
+    min_neqsim_version: "3.7.0"
   - name: neqsim-jurisdiction-regulatory-basis
     version: "1.0.0"
     description: "Identifies the country and regulatory regime of the evaluated asset and records authorities, governing laws, regulation families, recognised standards and fiscal basis, with NO, GB, US, BR, AO, CA and EU profiles and a per-topic well and SURF register. USE WHEN: any study, design, safety, emissions, layout, well-planning, SURF or economics task evaluates an asset in a specific country, or the country is not stated and must be asked or declared as an assumption."

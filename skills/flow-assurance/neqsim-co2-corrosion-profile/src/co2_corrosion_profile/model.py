@@ -18,6 +18,7 @@ from typing import Protocol
 
 NAN = float("nan")
 CHLORIDE_MOLAR_MASS_MG = 35453.0
+GLYCOLS = ("MEG", "DEG", "TEG")
 
 
 class CorrosionInputError(ValueError):
@@ -290,6 +291,8 @@ class PointChemistry:
     gas_h2s_mole_fraction: float
     co2_fugacity_eos_bar: float = NAN
     has_gas_phase: bool = True
+    glycol_weight_fraction: float = 0.0
+    water_vapour_mass_fraction: float = NAN
     notes: list[str] = field(default_factory=list)
 
 
@@ -367,6 +370,36 @@ class NeqSimChemistry:
         if gas is None:
             notes.append("no gas phase: CO2 fugacity from the equation of state")
         free_water = aqueous is not None
+        glycol = 0.0
+        if free_water:
+            phase = aqueous[0]
+            total_mass = sum(
+                float(phase.getComponent(i).getx())
+                * float(phase.getComponent(i).getMolarMass())
+                for i in range(phase.getNumberOfComponents())
+            )
+            glycol_mass = sum(
+                float(phase.getComponent(name).getx())
+                * float(phase.getComponent(name).getMolarMass())
+                for name in GLYCOLS
+                if phase.hasComponent(name)
+            )
+            glycol = glycol_mass / total_mass if total_mass > 0 else 0.0
+        vapour = NAN
+        if gas is not None:
+            system_mass = float(system.getMolarMass()) * float(
+                system.getTotalNumberOfMoles()
+            )
+            gas_mass = float(gas.getMolarMass()) * float(gas.getNumberOfMolesInPhase())
+            water = gas.getComponent("water")
+            water_in_gas = (
+                float(water.getx())
+                * float(water.getMolarMass())
+                / float(gas.getMolarMass())
+            )
+            vapour = gas_mass / system_mass * water_in_gas if system_mass > 0 else NAN
+        elif carrier is not None:
+            vapour = 0.0
         ph = NAN
         source = ""
         if free_water:
@@ -397,5 +430,7 @@ class NeqSimChemistry:
             gas_h2s_mole_fraction=y_h2s,
             co2_fugacity_eos_bar=eos_fugacity,
             has_gas_phase=gas is not None,
+            glycol_weight_fraction=glycol,
+            water_vapour_mass_fraction=vapour,
             notes=notes,
         )

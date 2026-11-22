@@ -1,8 +1,8 @@
 ---
 name: neqsim-co2-corrosion-profile
 calculation_basis: "hybrid"
-version: "0.1.0"
-description: "CO2 corrosion rates along a flowline with NeqSim: profile from the Beggs-Brill pipe model or your own, free water and gas CO2/H2S from a CPA flash, M-506 pH, NORSOK M-506 Rev. 2 rate, inhibitor availability, wall loss vs allowance; dense-phase CO2 lines via DensePhaseCO2Corrosion; worst points through MaterialsReviewEngine and NORSOK M-001. USE WHEN: screening internal corrosion, corrosion allowance or carbon steel vs CRA for a flowline, tie-in or CO2 line."
+version: "0.2.0"
+description: "CO2 corrosion along a flowline with NeqSim: Beggs-Brill or own profile, CPA-flash free water and acid gas, M-506 pH, NORSOK M-506 Rev. 2 rate with glycol correction and inhibitor availability, wall loss vs allowance, top-of-line condensation screen, H2S regime and ISO 15156 region, dense-phase CO2, NeqSim materials review. USE WHEN: screening internal corrosion, allowance or carbon steel vs CRA for a flowline, tie-in or CO2 line."
 last_verified: "2026-11-22"
 requires:
   python_packages: [neqsim]
@@ -48,7 +48,10 @@ materials review.
 - `DesignBasis`: `design_life_years` (25), `corrosion_allowance_mm` (3),
   `inhibitor_availability` (0-1, default 0), `inhibited_rate_mm_y` (0.1),
   `inner_diameter_m`, `roughness_m`, `default_wall_shear_pa`,
-  `existing_material`.
+  `existing_material`, `mass_flow_kg_h` (enables the top-of-line screen),
+  `apply_glycol_correction` (default true).
+- Glycol: add `MEG`, `DEG` or `TEG` to the composition; its weight fraction
+  in the water phase comes from the flash.
 - `chemistry`: `NeqSimChemistry()` (default) or `NeqSimChemistry(ph=5.6)` to
   fix a measured pH.
 
@@ -58,14 +61,18 @@ materials review.
 
 - `stations`: per station `free_water`, `in_situ_ph`, `ph_source`, gas
   `CO2`/`H2S` mole fractions, `co2_fugacity_bar`, `wall_shear_pa`,
-  `bare_rate_mm_y`, `design_rate_mm_y`, `wall_loss_mm`, `flags` (range
+  `bare_rate_mm_y`, `glycol_weight_fraction`, `glycol_factor`,
+  `design_rate_mm_y`, `wall_loss_mm`, `condensation_g_m2_s`, `tlc_risk`,
+  `h2s_partial_pressure_bar`, `sour_regime`, `iso15156` (region and risks),
+  `flags` (range
   clamps, no water, upper-bound rates), and `dense_phase` (NeqSim output) for
   CO2 lines.
 - `summary`: maximum design rate and where, maximum wall loss, allowance
   needed, wet share of the line.
 - `findings` (`info`/`warning`/`high`): `allowance-exceeded`,
   `allowance-margin`, `water-dropout`, `dry-line`, `outside-correlation`,
-  `low-fugacity`, `sour-service`, `dense-phase-free-water`,
+  `low-fugacity`, `sour-service`, `h2s-regime`, `top-of-line-corrosion`,
+  `tlc-not-assessed`, `glycol-correction`, `dense-phase-free-water`,
   `dense-phase-impurities`, `dense-phase-summary`, `materials-review-fail`.
 - `m001_recommendation`: NORSOK M-001 material and allowance from the Rev. 2
   design rate at the worst station.
@@ -92,13 +99,26 @@ materials review.
    reference port tested against that class to 1e-12. Inputs outside the
    validity ranges (5-150 C, 0.1-10 bar, pH 3.5-6.5, 1-150 Pa) are moved to the
    nearest bound and flagged; below 0.1 bar the rate is an upper bound.
-6. **Design rate and wall loss.**
-   `CR = A min(CR_inh, CR_bare) + (1 - A) CR_bare`; wall loss =
+6. **Glycol.** The rate is multiplied by the glycol factor for the MEG/DEG/TEG
+   weight fraction w in the water phase: `1 - w` below 50 wt %,
+   `0.5 (1 - w)^2 + 0.05` to 80 wt %, 0.05 above (NeqSim
+   `NorsokM506CorrosionRate#calculateGlycolCorrectionFactor`).
+7. **Design rate and wall loss.**
+   `CR = A min(CR_inh, CR_glycol) + (1 - A) CR_glycol`; wall loss =
    `CR x design life`, compared with the allowance.
-7. **Dense-phase CO2.** When dry CO2 exceeds 50 mol %, NeqSim
+8. **Top-of-line corrosion.** The water carried as vapour (kg per kg of
+   stream, from the flash) times the mass flow gives the vapour flow; its
+   drop between stations over the inner wall area is the condensation rate.
+   In stratified or unknown flow, above 0.25 g/m2/s is high risk and 0.15-0.25
+   moderate (commonly used critical-rate screening). A screen only: no TLC rate
+   is predicted.
+9. **H2S.** pCO2/pH2S above 500 or pH2S below 0.3 kPa is sweet, 20-500 mixed,
+   below 20 sour (M-506 not valid). Where pH2S is at least 0.3 kPa, NeqSim
+   `SourServiceAssessment` gives the ISO 15156-2 region and SSC/HIC risk.
+10. **Dense-phase CO2.** When dry CO2 exceeds 50 mol %, NeqSim
    `DensePhaseCO2Corrosion` replaces M-506 at each station: phase state, water
    solubility margin, impurity checks, wet corrosion rate.
-8. **Materials.** NeqSim `MaterialsReviewEngine` (NORSOK M-001 selection, CO2
+11. **Materials.** NeqSim `MaterialsReviewEngine` (NORSOK M-001 selection, CO2
    corrosion with its own legacy de Waard-Milliams rate, sour service, chloride
    SCC, dense CO2, hydrogen, oxygen and more) on the inlet, outlet and worst
    station; plus `NorsokM001MaterialSelection` driven by the Rev. 2 rate.
@@ -141,7 +161,12 @@ print(report.to_markdown())
 - [ ] Inhibitor availability and inhibited rate are stated as design
       assumptions with their source.
 - [ ] Wall shear comes from the profile or a stated default, not a guess.
-- [ ] Sour-service warnings were passed to an ISO 15156 review.
+- [ ] Sour-service warnings were passed to an ISO 15156 review; stations with a
+      `sour` H2S regime are not judged on the M-506 rate.
+- [ ] `mass_flow_kg_h` was set so that top-of-line corrosion was screened, and
+      the flow regime at flagged stations was checked.
+- [ ] Glycol credit matches the injection philosophy (no credit where MEG is
+      not present, e.g. after a separator).
 - [ ] The materials review's legacy CO2 rate is not mixed up with the Rev. 2
       design rate.
 - [ ] For CO2 lines, the dense-phase result is treated as screening, not
@@ -161,8 +186,9 @@ print(report.to_markdown())
 ## Limitations
 
 - NORSOK M-506 Rev. 2 covers sweet CO2 corrosion of carbon steel in water-wet
-  conditions; it does not cover H2S-dominated corrosion, top-of-line
-  corrosion, under-deposit or microbial corrosion, or erosion.
+  conditions. H2S-dominated corrosion is flagged, not rated; top-of-line
+  corrosion is screened by condensation rate only; under-deposit, microbial
+  corrosion and erosion are not covered.
 - Free water is from an equilibrium flash; water accumulation at low points,
   stratified flow and condensation rates are not modelled.
 - Wall shear uses homogeneous mixture properties.
@@ -181,6 +207,8 @@ print(report.to_markdown())
 - `neqsim.process.materials.MaterialsReviewEngine` with
   `MaterialsReviewInput.fromJson(...)`.
 - `neqsim.process.corrosion.NorsokM001MaterialSelection`.
+- `neqsim.process.corrosion.SourServiceAssessment` (ISO 15156-2 region).
+- `NorsokM506CorrosionRate#calculateGlycolCorrectionFactor()`.
 - `neqsim.process.equipment.pipeline.PipeBeggsAndBrills` segment getters.
 - `neqsim.thermo.system.SystemSrkCPAstatoil` with
   `ThermodynamicOperations#TPflash()`.
@@ -195,6 +223,12 @@ print(report.to_markdown())
 
 - NORSOK M-506 Rev. 2 (2005). CO2 corrosion rate calculation model.
 - NORSOK M-001 (Materials selection).
+- ISO 15156-2. Petroleum and natural gas industries - Materials for use in
+  H2S-containing environments - Part 2: cracking-resistant carbon and low-alloy
+  steels.
+- Pots, B.F.M. et al. (2002). Improvements on de Waard-Milliams corrosion
+  prediction and applications to corrosion management. CORROSION 2002, paper
+  02235 (CO2/H2S ratio regimes).
 - Haaland, S.E. (1983). Simple and explicit formulas for the friction factor in
   turbulent pipe flow. J. Fluids Eng. 105(1), 89-90.
 - NeqSim repository: https://github.com/equinor/neqsim

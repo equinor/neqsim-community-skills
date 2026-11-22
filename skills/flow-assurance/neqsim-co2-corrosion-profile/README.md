@@ -133,11 +133,40 @@ What to do with each finding:
 | `dry-line` (info) | No free water anywhere | Confirm water dew-point margin and upset cases |
 | `outside-correlation` (warning) | T, pH, fugacity or shear outside M-506 ranges | Read the station flags; the nearest bound was used |
 | `low-fugacity` (info) | fCO2 < 0.1 bar | Rates are upper bounds |
-| `sour-service` (warning) | H2S partial pressure > 0.3 mbar with water | ISO 15156 review; M-506 does not cover sour corrosion |
+| `sour-service` (warning) | H2S partial pressure at or above 0.3 kPa with water; ISO 15156-2 region given | Sour-service qualification of the steel (hardness, HIC) |
+| `h2s-regime` (warning/high) | pCO2/pH2S 20-500 (mixed) or below 20 (sour) | Below 20 the M-506 rate does not apply; use a sour-corrosion assessment |
+| `top-of-line-corrosion` (high/warning) | Water condenses faster than 0.25 (0.15) g/m2/s in stratified or unknown flow | Insulation, condensation control, TLC-specific study; inhibitor injection does not protect the top |
+| `tlc-not-assessed` (info) | No mass flow given | Set `DesignBasis.mass_flow_kg_h` |
+| `glycol-correction` (info) | MEG/DEG/TEG in the water reduces the rate | Check the glycol is present at those stations in operation |
 | `materials-review-fail` (warning) | NeqSim materials review flags a mechanism | Read the mechanism; its CO2 rate is NeqSim's legacy model |
 | `dense-phase-*` | CO2 line results | Water specification, dehydration and impurity limits |
 
-### 5. Use a measured pH or a CO2 line
+### 5. Glycol, top-of-line and H2S
+
+```python
+fluid = CorrosionFluid(
+    {"methane": 85.0, "CO2": 3.0, "H2S": 0.01, "water": 4.0, "MEG": 1.5},
+)
+basis = DesignBasis(corrosion_allowance_mm=3.0, inner_diameter_m=0.254,
+                    mass_flow_kg_h=90000.0)     # enables the top-of-line screen
+report = assess_corrosion_profile(fluid, profile, basis)
+for s in report.stations:
+    print(s.distance_m, s.glycol_factor, s.condensation_g_m2_s, s.tlc_risk,
+          s.sour_regime, s.iso15156)
+```
+
+- **Glycol** comes from the composition: the flash puts it in the water
+  phase. Its weight fraction there sets the rate factor (40 wt % MEG gives
+  0.6). Turn it off with `apply_glycol_correction=False`.
+- **Top-of-line corrosion** needs the mass flow. The condensation rate is
+  computed from the water vapour lost between stations. Above 0.25 g/m2/s in
+  stratified flow is high risk. Beggs and Brill profiles carry the flow regime
+  ("SEGREGATED" = stratified); for your own profile set
+  `ProfilePoint.flow_regime`, or it is treated as stratified.
+- **H2S** at or above 0.3 kPa gives the ISO 15156-2 region from NeqSim. The
+  pCO2/pH2S ratio tells you whether the M-506 rate still applies.
+
+### 6. Use a measured pH or a CO2 line
 
 ```python
 from co2_corrosion_profile import NeqSimChemistry

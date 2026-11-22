@@ -97,3 +97,25 @@ def test_dense_phase_mode():
     assert all(s.dense_phase for s in report.stations)
     codes = {f.code for f in report.findings}
     assert "dense-phase-summary" in codes and "dense-phase-impurities" in codes
+
+
+def test_meg_reduces_rate_and_sour_region_is_reported():
+    from co2_corrosion_profile import NeqSimChemistry
+
+    meg = CorrosionFluid(
+        {"methane": 85.0, "ethane": 5.0, "CO2": 3.0, "water": 4.0, "MEG": 1.5},
+    )
+    chem = NeqSimChemistry().evaluate(meg, 100.0, 20.0)
+    assert 0.3 < chem.glycol_weight_fraction < 0.8
+    point = [ProfilePoint(0, 100, 20, wall_shear_pa=10)]
+    with_meg = assess_corrosion_profile(
+        meg, point, DesignBasis(), materials_review=False
+    )
+    assert with_meg.stations[0].glycol_factor < 0.7
+    sour = CorrosionFluid({"methane": 90.0, "CO2": 3.0, "H2S": 0.2, "water": 3.0})
+    report = assess_corrosion_profile(
+        sour, point, DesignBasis(), materials_review=False
+    )
+    station = report.stations[0]
+    assert station.sour_regime in ("mixed", "sour")
+    assert station.iso15156 and station.iso15156["region"] >= 1

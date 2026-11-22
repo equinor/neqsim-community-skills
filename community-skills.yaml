@@ -395,8 +395,8 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-co2-corrosion-profile
-    version: "0.1.0"
-    description: "CO2 corrosion rates along a flowline with NeqSim: profile from the Beggs-Brill pipe model or your own, free water and gas CO2/H2S from a CPA flash, M-506 pH, NORSOK M-506 Rev. 2 rate, inhibitor availability, wall loss vs allowance; dense-phase CO2 lines via DensePhaseCO2Corrosion; worst points through MaterialsReviewEngine and NORSOK M-001. USE WHEN: screening internal corrosion, corrosion allowance or carbon steel vs CRA for a flowline, tie-in or CO2 line."
+    version: "0.2.0"
+    description: "CO2 corrosion along a flowline with NeqSim: Beggs-Brill or own profile, CPA-flash free water and acid gas, M-506 pH, NORSOK M-506 Rev. 2 rate with glycol correction and inhibitor availability, wall loss vs allowance, top-of-line condensation screen, H2S regime and ISO 15156 region, dense-phase CO2, NeqSim materials review. USE WHEN: screening internal corrosion, allowance or carbon steel vs CRA for a flowline, tie-in or CO2 line."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/flow-assurance/neqsim-co2-corrosion-profile/SKILL.md"

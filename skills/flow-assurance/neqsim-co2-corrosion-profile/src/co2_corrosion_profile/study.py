@@ -20,6 +20,14 @@ from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from . import m506
+from .mechanisms import (
+    ISO15156_H2S_THRESHOLD_BAR,
+    condensation_rates,
+    glycol_factor,
+    iso15156_region,
+    sour_regime,
+    tlc_risk,
+)
 from .model import (
     NAN,
     ChemistryModel,
@@ -46,6 +54,9 @@ class DesignBasis:
         roughness_m: Wall roughness for shear stress.
         default_wall_shear_pa: Shear used where a station gives no flow data.
         existing_material: Material for the materials review.
+        mass_flow_kg_h: Total mass rate, kg/h. Enables the top-of-line
+            corrosion (condensation rate) screen.
+        apply_glycol_correction: Reduce the rate for glycol in the water.
     """
 
     design_life_years: float = 25.0
@@ -56,6 +67,8 @@ class DesignBasis:
     roughness_m: float = 5e-5
     default_wall_shear_pa: float | None = None
     existing_material: str = "Carbon Steel"
+    mass_flow_kg_h: float | None = None
+    apply_glycol_correction: bool = True
 
     def __post_init__(self) -> None:
         if self.design_life_years <= 0 or self.corrosion_allowance_mm < 0:
@@ -91,6 +104,14 @@ class StationResult:
     design_rate_mm_y: float = 0.0
     wall_loss_mm: float = 0.0
     rate_upper_bound_only: bool = False
+    glycol_weight_fraction: float = 0.0
+    glycol_factor: float = 1.0
+    water_vapour_mass_fraction: float = NAN
+    condensation_g_m2_s: float = NAN
+    tlc_risk: str | None = None
+    h2s_partial_pressure_bar: float = NAN
+    sour_regime: str | None = None
+    iso15156: dict[str, Any] | None = None
     flow_regime: str | None = None
     dense_phase: dict[str, Any] | None = None
     flags: list[str] = field(default_factory=list)
@@ -219,9 +240,13 @@ class CorrosionProfileReport:
             "",
             (
                 "| km | P (bara) | T (C) | Water | pH | fCO2 (bar) | Shear (Pa) | "
-                "Bare (mm/y) | Design (mm/y) | Loss (mm) | Flags |"
+                "Bare (mm/y) | Design (mm/y) | Loss (mm) | Cond (g/m2/s) | Regime "
+                "| Flags |"
             ),
-            "| ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+            (
+                "| ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: "
+                "| ---: | --- | --- |"
+            ),
         ]
 
         def fmt(value: float, digits: int = 2) -> str:
@@ -234,6 +259,7 @@ class CorrosionProfileReport:
                 f"{fmt(st.in_situ_ph)} | {fmt(st.co2_fugacity_bar)} | "
                 f"{fmt(st.wall_shear_pa, 1)} | {fmt(st.bare_rate_mm_y)} | "
                 f"{fmt(st.design_rate_mm_y)} | {fmt(st.wall_loss_mm)} | "
+                f"{fmt(st.condensation_g_m2_s, 3)} | {st.sour_regime or '-'} | "
                 f"{len(st.flags) or ''} |"
             )
         return "\n".join(lines) + "\n"
@@ -332,6 +358,16 @@ def assess_corrosion_profile(
             stations.append(_dense_station(fluid, point, basis))
         else:
             stations.append(_m506_station(fluid, point, basis, chemistry))
+    if basis.mass_flow_kg_h and not dense:
+        rates = condensation_rates(
+            [s.distance_m for s in stations],
+            [s.water_vapour_mass_fraction for s in stations],
+            basis.mass_flow_kg_h,
+            basis.inner_diameter_m,
+        )
+        for station, rate in zip(stations, rates):
+            station.condensation_g_m2_s = rate
+            station.tlc_risk = tlc_risk(rate, station.flow_regime)
     report = CorrosionProfileReport(
         stations=stations,
         basis=basis,
@@ -362,6 +398,8 @@ def _m506_station(
         gas_h2s_mole_fraction=chem.gas_h2s_mole_fraction,
         flow_regime=point.flow_regime,
         flags=list(chem.notes),
+        glycol_weight_fraction=chem.glycol_weight_fraction,
+        water_vapour_mass_fraction=chem.water_vapour_mass_fraction,
     )
     if not chem.free_water:
         station.flags.append("no free water: no CO2 corrosion")
@@ -386,10 +424,29 @@ def _m506_station(
     station.co2_fugacity_bar = rate.co2_fugacity_bar
     station.wall_shear_pa = shear
     station.bare_rate_mm_y = rate.rate_mm_y
-    station.design_rate_mm_y = basis.design_rate(rate.rate_mm_y)
+    if basis.apply_glycol_correction and chem.glycol_weight_fraction > 0:
+        station.glycol_factor = glycol_factor(chem.glycol_weight_fraction)
+    station.design_rate_mm_y = basis.design_rate(rate.rate_mm_y * station.glycol_factor)
     station.wall_loss_mm = station.design_rate_mm_y * basis.design_life_years
     station.rate_upper_bound_only = rate.upper_bound_only
     station.flags += rate.flags
+    p_h2s = chem.gas_h2s_mole_fraction * point.pressure_bara
+    p_co2 = chem.gas_co2_mole_fraction * point.pressure_bara
+    station.h2s_partial_pressure_bar = p_h2s
+    station.sour_regime = sour_regime(p_co2, p_h2s)
+    if p_h2s >= ISO15156_H2S_THRESHOLD_BAR:
+        try:
+            station.iso15156 = iso15156_region(
+                p_h2s,
+                p_co2,
+                point.pressure_bara,
+                station.in_situ_ph,
+                point.temperature_c,
+                fluid.chloride_mg_l,
+                basis.existing_material,
+            )
+        except Exception as exc:  # noqa: BLE001
+            station.flags.append(f"ISO 15156 check failed ({type(exc).__name__})")
     return station
 
 
@@ -501,15 +558,80 @@ def _summarise(report: CorrosionProfileReport) -> None:
                 "station flags.",
             )
         )
-    sour = [s for s in wet if s.gas_h2s_mole_fraction * s.pressure_bara > 0.0003]
+    _mechanism_findings(report, wet)
+
+
+def _mechanism_findings(
+    report: CorrosionProfileReport, wet: list[StationResult]
+) -> None:
+    findings = report.findings
+    sour = [s for s in wet if s.h2s_partial_pressure_bar >= ISO15156_H2S_THRESHOLD_BAR]
     if sour:
+        regions = sorted({s.iso15156["region"] for s in sour if s.iso15156})
         findings.append(
             Finding(
                 "warning",
                 "sour-service",
-                "H2S partial pressure exceeds 0.3 mbar where water is present: M-506 "
-                "does not cover sour corrosion; check ISO 15156 in the materials "
-                "review.",
+                f"H2S partial pressure is at or above 0.3 kPa (ISO 15156) at {len(sour)} "
+                f"wet stations (max {max(s.h2s_partial_pressure_bar for s in sour) * 100:.2f}"
+                " kPa)"
+                + (
+                    f"; ISO 15156-2 region {', '.join(map(str, regions))}"
+                    if regions
+                    else ""
+                )
+                + ". Carbon steel needs sour-service qualification (hardness, HIC).",
+            )
+        )
+    regimes = {s.sour_regime for s in wet if s.sour_regime}
+    if regimes & {"mixed", "sour"}:
+        worst = "sour" if "sour" in regimes else "mixed"
+        findings.append(
+            Finding(
+                "high" if worst == "sour" else "warning",
+                "h2s-regime",
+                f"pCO2/pH2S indicates {worst} corrosion at some stations"
+                + (
+                    " (ratio < 20): iron-sulfide films control corrosion and NORSOK "
+                    "M-506 does not apply there."
+                    if worst == "sour"
+                    else " (ratio 20-500): H2S modifies CO2 corrosion; treat M-506 "
+                    "rates with caution."
+                ),
+            )
+        )
+    tlc = [s for s in report.stations if s.tlc_risk in ("high", "moderate")]
+    if tlc:
+        worst_tlc = max(tlc, key=lambda s: s.condensation_g_m2_s)
+        level = "high" if any(s.tlc_risk == "high" for s in tlc) else "warning"
+        findings.append(
+            Finding(
+                level,
+                "top-of-line-corrosion",
+                f"Water condenses at up to {worst_tlc.condensation_g_m2_s:.2f} g/m2/s "
+                f"({worst_tlc.distance_m / 1000:.2f} km) in stratified or unknown flow, "
+                f"above {'0.25' if level == 'high' else '0.15'} g/m2/s at {len(tlc)} "
+                "stations. Continuous inhibitor injection does not protect the top of "
+                "the line; consider insulation, pH stabilisation limits or CRA.",
+            )
+        )
+    elif report.basis.mass_flow_kg_h is None and not report.mode.startswith("dense"):
+        findings.append(
+            Finding(
+                "info",
+                "tlc-not-assessed",
+                "Top-of-line corrosion not screened: set DesignBasis.mass_flow_kg_h.",
+            )
+        )
+    glycol = [s for s in wet if s.glycol_factor < 1.0]
+    if glycol:
+        findings.append(
+            Finding(
+                "info",
+                "glycol-correction",
+                f"Glycol in the water reduces the CO2 rate at {len(glycol)} stations "
+                f"(factor {min(s.glycol_factor for s in glycol):.2f}-"
+                f"{max(s.glycol_factor for s in glycol):.2f}).",
             )
         )
 

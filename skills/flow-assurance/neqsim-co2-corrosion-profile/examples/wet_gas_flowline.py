@@ -57,6 +57,7 @@ BASIS = DesignBasis(
     inhibitor_availability=0.9,
     inhibited_rate_mm_y=0.1,
     inner_diameter_m=PIPE.inner_diameter_m,
+    mass_flow_kg_h=PIPE.mass_flow_kg_h,  # enables the top-of-line screen
 )
 
 

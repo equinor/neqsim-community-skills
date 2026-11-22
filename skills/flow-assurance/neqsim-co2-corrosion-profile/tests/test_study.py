@@ -22,6 +22,10 @@ FLUID = CorrosionFluid({"methane": 90.0, "CO2": 3.0, "water": 2.0, "H2S": 0.0})
 class FakeChemistry:
     """Water drops out below 70 C; pH falls as the line cools."""
 
+    def __init__(self, h2s=0.0, glycol=0.0):
+        self.h2s = h2s
+        self.glycol = glycol
+
     def evaluate(self, fluid, pressure_bara, temperature_c):
         wet = temperature_c < 70.0
         return PointChemistry(
@@ -29,7 +33,10 @@ class FakeChemistry:
             in_situ_ph=4.0 + 0.01 * temperature_c if wet else math.nan,
             ph_source="fake",
             gas_co2_mole_fraction=0.03,
-            gas_h2s_mole_fraction=0.0,
+            gas_h2s_mole_fraction=self.h2s,
+            glycol_weight_fraction=self.glycol if wet else 0.0,
+            # water vapour carried per kg of stream falls as the line cools
+            water_vapour_mass_fraction=2e-5 * temperature_c,
         )
 
 
@@ -47,12 +54,12 @@ def profile(n=6, flow=True):
     ]
 
 
-def run(basis=None, points=None, **kwargs):
+def run(basis=None, points=None, chemistry=None, **kwargs):
     return assess_corrosion_profile(
         FLUID,
         profile() if points is None else points,
         basis or DesignBasis(corrosion_allowance_mm=3.0),
-        chemistry=FakeChemistry(),
+        chemistry=chemistry or FakeChemistry(),
         materials_review=False,
         **kwargs,
     )
@@ -163,3 +170,41 @@ def test_co2_rich_streams_switch_mode():
     assert rich.is_co2_rich()
     assert not FLUID.is_co2_rich()
     assert rich.dry_co2_fraction() == pytest.approx(0.95)
+
+
+def test_top_of_line_screen_needs_mass_flow():
+    assert any(f.code == "tlc-not-assessed" for f in run().findings)
+    report = run(DesignBasis(mass_flow_kg_h=4.0e6, inner_diameter_m=0.254))
+    rates = [s.condensation_g_m2_s for s in report.stations]
+    # 4e6 kg/h * 2e-4 kg/kg per 10 C drop over 1 km of 0.254 m pipe = 0.28 g/m2/s
+    assert rates[1] == pytest.approx(
+        4.0e6 / 3600 * 2e-4 * 1000 / (math.pi * 0.254 * 1000)
+    )
+    assert report.stations[1].tlc_risk == "high"  # unknown regime treated as stratified
+    assert any(
+        f.code == "top-of-line-corrosion" and f.severity == "high"
+        for f in report.findings
+    )
+
+
+def test_glycol_reduces_design_rate():
+    plain = run().worst_station()
+    with_meg = run(chemistry=FakeChemistry(glycol=0.4)).worst_station()
+    assert with_meg.glycol_factor == pytest.approx(0.6)
+    assert with_meg.design_rate_mm_y == pytest.approx(plain.design_rate_mm_y * 0.6)
+    off = run(
+        DesignBasis(apply_glycol_correction=False), chemistry=FakeChemistry(glycol=0.4)
+    )
+    assert off.worst_station().glycol_factor == 1.0
+
+
+def test_h2s_regime_and_iso_threshold():
+    # 0.0002 mol fraction at ~95 bara = 0.019 bar H2S; pCO2 2.9 bar -> ratio ~150
+    report = run(chemistry=FakeChemistry(h2s=0.0002))
+    codes = {f.code: f for f in report.findings}
+    assert codes["h2s-regime"].severity == "warning"
+    assert "sour-service" in codes
+    sour = run(chemistry=FakeChemistry(h2s=0.01))
+    assert {f.code: f for f in sour.findings}["h2s-regime"].severity == "high"
+    trace = run(chemistry=FakeChemistry(h2s=0.00002))  # 1.9 mbar: below 0.3 kPa
+    assert not any(f.code in ("sour-service", "h2s-regime") for f in trace.findings)

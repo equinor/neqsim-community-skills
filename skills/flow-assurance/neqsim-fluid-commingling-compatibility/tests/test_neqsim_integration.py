@@ -16,6 +16,21 @@ from fluid_commingling_compatibility import (
     screen_commingling,
 )
 
+
+@pytest.fixture(scope="module", autouse=True)
+def _keep_jvm_alive_at_exit():
+    """Skip JVM teardown at interpreter exit.
+
+    JPype can segfault in its exit-time JVM shutdown after NeqSim has run in
+    the same pytest session as other test directories. The tests have finished
+    by then; this only avoids a spurious non-zero exit code.
+    """
+    import jpype.config
+
+    jpype.config.destroy_jvm = False
+    yield
+
+
 HOST = FluidSpec(
     "host",
     {"methane": 18.0, "ethane": 6.0, "propane": 5.0, "n-butane": 3.0, "CO2": 1.0},

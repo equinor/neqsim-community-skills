@@ -9,6 +9,21 @@ pytest.importorskip("neqsim")
 
 from active_learning_surrogate import ActiveLearner, Parameter, validate
 
+
+@pytest.fixture(scope="module", autouse=True)
+def _keep_jvm_alive_at_exit():
+    """Skip JVM teardown at interpreter exit.
+
+    JPype can segfault in its exit-time JVM shutdown after NeqSim has run in
+    the same pytest session as other test directories. The tests have finished
+    by then; this only avoids a spurious non-zero exit code.
+    """
+    import jpype.config
+
+    jpype.config.destroy_jvm = False
+    yield
+
+
 EXAMPLE = (
     Path(__file__).resolve().parents[1]
     / "examples"

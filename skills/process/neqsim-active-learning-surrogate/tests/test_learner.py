@@ -178,3 +178,58 @@ def test_max_feasible_brackets_the_true_limit():
         result.surrogate.max_feasible("rate", {})
     with pytest.raises(SurrogateError):
         result.surrogate.max_feasible("missing", {"pressure": 40.0})
+
+
+def test_batch_selection_picks_distinct_points_and_runs_in_parallel():
+    calls = []
+
+    def counting_model(values):
+        calls.append(dict(values))
+        return power_model(values)
+
+    learner = ActiveLearner(
+        counting_model,
+        PARAMS,
+        ["power"],
+        mode="limit_state",
+        limit_output="power",
+        threshold=6000.0,
+        pool_size=800,
+        max_evaluations=40,
+        batch_size=4,
+        n_workers=4,
+    )
+    result = learner.run()
+    assert result.converged
+    assert len(calls) == result.evaluations
+    keys = {(round(c["rate"], 9), round(c["pressure"], 9)) for c in calls}
+    assert len(keys) == len(calls)  # believer step keeps batch points apart
+    report = validate(result.surrogate, power_model, n=30, seed=4)
+    assert report.classification_agreement >= 0.95
+
+
+def test_custom_map_fn_is_used():
+    used = []
+
+    def my_map(func, items):
+        used.append(len(items))
+        return [func(item) for item in items]
+
+    ActiveLearner(
+        power_model,
+        PARAMS,
+        ["power"],
+        pool_size=200,
+        max_evaluations=16,
+        batch_size=3,
+        map_fn=my_map,
+    ).run()
+    assert used[0] == 5  # initial design after the single warm-up call
+    assert all(n <= 3 for n in used[1:])
+
+
+def test_batch_validation():
+    with pytest.raises(SurrogateError):
+        ActiveLearner(power_model, PARAMS, ["power"], batch_size=0)
+    with pytest.raises(SurrogateError):
+        ActiveLearner(power_model, PARAMS, ["power"], n_workers=0)

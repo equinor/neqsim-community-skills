@@ -169,6 +169,48 @@ surrogate.to_json("host_surrogate.json")
 - Confirm the decision value (for example the maximum rate) with one direct
   NeqSim run, and report both numbers.
 
+### 6. Run NeqSim in parallel
+
+```python
+learner = ActiveLearner(
+    host_model, parameters, ["compressor_power_kw"],
+    mode="limit_state", limit_output="compressor_power_kw", threshold=6500.0,
+    batch_size=4,      # four new points per iteration
+    n_workers=4,       # run them in four threads
+)
+```
+
+On the example flowsheet (two inputs) this took 2.2 s instead of 5.9 s, with
+18 NeqSim runs instead of 13 and the same validation result. Each call must
+build its own fluid and process, as in step 1. For a process pool or cluster,
+pass `map_fn=executor.map`.
+
+The learner always makes the first model call alone. When several threads
+made the very first NeqSim call of a Python session at the same time, the
+process deadlocked while JPype loaded NeqSim's Java packages (NeqSim 3.29.0,
+JPype 1.7). After one call, parallel runs are safe. Do the same warm-up if you
+run NeqSim in threads yourself.
+
+### 7. Use the surrogate from NeqSim (Java)
+
+```python
+from active_learning_surrogate import predict_with_fallback, register_in_neqsim
+
+registry = register_in_neqsim(result.surrogate, "host-compressor",
+                              outputs=["compressor_power_kw"])
+# Inside the trained bounds: surrogate. Outside: the physics function.
+names = ["tiein_rate_kgh", "separator_pressure_bara", "inlet_temperature_c"]
+power = predict_with_fallback(
+    "host-compressor", [30000.0, 40.0, 50.0],
+    lambda x: [host_model(dict(zip(names, x)))["compressor_power_kw"]],
+)
+```
+
+`register_in_neqsim` puts the surrogate in NeqSim's `SurrogateModelRegistry`
+with its input bounds and expected accuracy, so Java code in the same JVM can
+call it. The registry counts predictions, failures and extrapolations. Inputs
+are in engineering units, in parameter order.
+
 ## Choosing Settings
 
 | Setting | Default | When to change |
@@ -179,6 +221,7 @@ surrogate.to_json("host_surrogate.json")
 | `u_stop` (limit state) | 2.0 (97.7 % side-of-limit confidence) | 3.0 for a stricter boundary |
 | `pool_size` | 3000 | Raise above 3000 for 6+ inputs |
 | `seed` | 42 | Change to check the result is not seed-dependent |
+| `batch_size`, `n_workers` | 1, 1 | Set both to 2-8 when NeqSim runs take more than a second |
 
 ## Troubleshooting
 

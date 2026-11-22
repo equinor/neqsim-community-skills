@@ -26,7 +26,8 @@ from __future__ import annotations
 import json
 import math
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -309,6 +310,13 @@ class ActiveLearner:
         pool_size: Candidate points the next sample is chosen from.
         patience: Consecutive iterations the stop criterion must hold.
         seed: Random seed (designs and pool are reproducible).
+        batch_size: Points chosen per iteration (kriging believer: each pick
+            is added to the surrogate at its predicted mean before the next).
+        n_workers: Threads that run the model in parallel. NeqSim models that
+            build their own fluid and process per call are thread-safe.
+        map_fn: Optional ``map``-like callable ``(func, items) -> results`` to
+            run evaluations elsewhere (process pool, cluster); overrides
+            ``n_workers``.
     """
 
     model: Model
@@ -324,8 +332,12 @@ class ActiveLearner:
     pool_size: int = 3000
     patience: int = 2
     seed: int = 42
+    batch_size: int = 1
+    n_workers: int = 1
+    map_fn: Callable[[Callable, Iterable], Iterable] | None = None
     callback: Callable[[IterationRecord], None] | None = None
     _gps: dict[str, GaussianProcess] = field(default_factory=dict, init=False)
+    _warmed: bool = field(default=False, init=False)
 
     def __post_init__(self) -> None:
         self.parameters = list(self.parameters)
@@ -358,8 +370,76 @@ class ActiveLearner:
             raise SurrogateError("max_evaluations must be >= initial_samples")
         if self.pool_size < 100:
             raise SurrogateError("pool_size must be >= 100")
+        if self.batch_size < 1 or self.n_workers < 1:
+            raise SurrogateError("batch_size and n_workers must be >= 1")
 
     # ----------------------------------------------------------------------
+    def _map(self, func: Callable, items: Sequence) -> Iterator:
+        items = list(items)
+        parallel = self.map_fn is not None or (self.n_workers > 1 and len(items) > 1)
+        if not parallel:
+            return iter([func(item) for item in items])
+        results = []
+        if not self._warmed and items:
+            # First call alone: several threads making the first NeqSim call at once
+            # can deadlock while JPype loads the Java packages.
+            results.append(func(items[0]))
+            items = items[1:]
+        self._warmed = True
+        if not items:
+            return iter(results)
+        if self.map_fn is not None:
+            return iter(results + list(self.map_fn(func, items)))
+        with ThreadPoolExecutor(max_workers=min(self.n_workers, len(items))) as pool:
+            return iter(results + list(pool.map(func, items)))
+
+    def _min_u(self, candidates: np.ndarray) -> float:
+        mean, std = self._gps[self.limit_output].predict(candidates)
+        u = np.abs(mean - self.threshold) / np.maximum(std, 1e-300)
+        return float(np.min(u))
+
+    def _score(self, candidates: np.ndarray, spreads: dict[str, float]) -> np.ndarray:
+        """Acquisition score, larger is better."""
+        if self.mode == "limit_state":
+            mean, std = self._gps[self.limit_output].predict(candidates)
+            return -np.abs(mean - self.threshold) / np.maximum(std, 1e-300)
+        score = np.zeros(len(candidates))
+        for name in self.outputs:
+            _, std = self._gps[name].predict(candidates)
+            score += std / spreads[name]
+        return score
+
+    def _select_batch(
+        self,
+        candidates: np.ndarray,
+        x: np.ndarray,
+        y: dict[str, list[float]],
+        size: int,
+    ) -> list[np.ndarray]:
+        """Pick ``size`` points; kriging believer between picks."""
+        spreads = {name: float(np.std(y[name])) or 1.0 for name in self.outputs}
+        chosen: list[np.ndarray] = []
+        saved = {name: gp.log_params.copy() for name, gp in self._gps.items()}
+        x_work, y_work = x, {name: list(v) for name, v in y.items()}
+        try:
+            for k in range(size):
+                score = self._score(candidates, spreads)
+                best = candidates[int(np.argmax(score))]
+                chosen.append(best)
+                candidates = candidates[~np.all(candidates == best, axis=1)]
+                if k == size - 1 or len(candidates) == 0:
+                    break
+                # Believe the prediction at the pick, so the next pick goes elsewhere.
+                x_work = np.vstack([x_work, best])
+                for name, gp in self._gps.items():
+                    y_work[name].append(float(gp.predict(best[None, :])[0][0]))
+                    gp.fit(x_work, np.array(y_work[name]), optimise=False)
+        finally:
+            for name, gp in self._gps.items():
+                gp.log_params = saved[name]
+                gp.fit(x, np.array(y[name]), optimise=False)
+        return chosen
+
     def _values(self, unit_point: np.ndarray) -> dict[str, float]:
         return {
             p.name: p.from_unit(float(u)) for p, u in zip(self.parameters, unit_point)
@@ -384,6 +464,7 @@ class ActiveLearner:
     def run(self) -> LearningResult:
         """Run the learning loop until converged or out of budget."""
         self._gps = {}
+        self._warmed = False
         rng = np.random.default_rng(self.seed)
         dim = len(self.parameters)
         pool = latin_hypercube(self.pool_size, dim, rng)
@@ -398,25 +479,28 @@ class ActiveLearner:
         start = time.perf_counter()
         evaluations = 0
 
-        def evaluate(point: np.ndarray) -> None:
+        def evaluate_batch(points: Sequence[np.ndarray]) -> None:
             nonlocal model_time, evaluations
-            values = self._values(point)
+            batch = [self._values(p) for p in points]
             t0 = time.perf_counter()
-            response = self._call(values)
+            results = list(self._map(self._call, batch))
             model_time += time.perf_counter() - t0
-            evaluations += 1
-            if response is None:
-                failed.append(values)
-                x_failed.append(point)
-                return
-            x_ok.append(point)
-            samples.append(values)
-            responses.append(response)
-            for name in self.outputs:
-                y_ok[name].append(response[name])
+            for point, values, response in zip(points, batch, results):
+                evaluations += 1
+                if response is None:
+                    failed.append(values)
+                    x_failed.append(point)
+                    continue
+                x_ok.append(point)
+                samples.append(values)
+                responses.append(response)
+                for name in self.outputs:
+                    y_ok[name].append(response[name])
 
-        for point in latin_hypercube(self.initial_samples, dim, rng):
-            evaluate(point)
+        def evaluate(point: np.ndarray) -> None:
+            evaluate_batch([point])
+
+        evaluate_batch(list(latin_hypercube(self.initial_samples, dim, rng)))
 
         streak = 0
         converged, reason = False, "budget exhausted"
@@ -446,18 +530,9 @@ class ActiveLearner:
 
             min_u = None
             if self.mode == "limit_state":
-                mean, std = self._gps[self.limit_output].predict(candidates)
-                u = np.abs(mean - self.threshold) / np.maximum(std, 1e-300)
-                best = int(np.argmin(u))
-                min_u = float(u[best])
+                min_u = self._min_u(candidates)
                 satisfied = min_u >= self.u_stop
             else:
-                score = np.zeros(len(candidates))
-                for name in self.outputs:
-                    _, std = self._gps[name].predict(candidates)
-                    spread = float(np.std(y_ok[name])) or 1.0
-                    score += std / spread
-                best = int(np.argmax(score))
                 satisfied = min(q2.values()) >= 1.0 - self.tolerance
 
             record = IterationRecord(
@@ -482,9 +557,11 @@ class ActiveLearner:
                 break
             if evaluations >= self.max_evaluations:
                 break
-            chosen = candidates[best]
-            pool = pool[~np.all(pool == chosen, axis=1)]
-            evaluate(chosen)
+            size = min(self.batch_size, self.max_evaluations - evaluations)
+            chosen = self._select_batch(candidates, x, y_ok, size)
+            for point in chosen:
+                pool = pool[~np.all(pool == point, axis=1)]
+            evaluate_batch(chosen)
 
         surrogate = Surrogate(
             parameters=list(self.parameters),

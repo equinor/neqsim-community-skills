@@ -110,7 +110,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-active-learning-surrogate
-    version: "0.1.0"
+    version: "0.2.0"
     description: "Active-learning Gaussian-process surrogate of a NeqSim flowsheet: runs NeqSim only where the surrogate is least certain, learns where a capacity or spec limit binds (AK-MCS), survives failed runs and feeds neqsim-uncertainty-quantification. USE WHEN: a study needs thousands of NeqSim runs (Monte Carlo, sensitivity, envelope maps) but each takes seconds, or the question is where a limit such as compressor power or a product spec starts to bind."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"

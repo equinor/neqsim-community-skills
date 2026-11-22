@@ -1,9 +1,9 @@
 ---
 name: neqsim-fluid-commingling-compatibility
 calculation_basis: "hybrid"
-version: "0.2.0"
-description: "Blend-sweep screening of two commingled fluids with NeqSim: asphaltene destabilisation by dilution (live-oil refractive index, onset margin, de Boer), gas breakout on mixing, blend hydrate and wax appearance temperature, calcium naphthenate risk, separator H2S/CO2. USE WHEN: a tie-in, commingled well or shared flowline mixes a new fluid with a host fluid and the question is whether the mixture behaves worse than either fluid alone, or which blend ratio is worst."
-last_verified: "2026-11-21"
+version: "0.3.0"
+description: "Blend-sweep screening of two commingled fluids with NeqSim: asphaltene destabilisation (live-oil refractive index, de Boer, blend onset pressure from a solid model calibrated to a measured onset), gas breakout, blend hydrate and wax appearance temperature, calcium naphthenates, separator H2S/CO2. USE WHEN: a tie-in, commingled well or shared flowline mixes a new fluid with a host fluid and the question is whether the mixture behaves worse than either fluid alone, or which blend ratio is worst."
+last_verified: "2026-11-22"
 requires:
   python_packages: [neqsim]
   java_packages: [neqsim]
@@ -42,8 +42,8 @@ Do not use it for water-water scale mixing; use
 - `FluidSpec`: `label` (alphanumeric), `components` keyed by NeqSim component
   names on any consistent molar basis (mol %, mole fraction, kmol/h),
   optional `pseudo_components` (`PseudoComponent(name, amount, molar mass
-  kg/mol, density g/cm3)`), and `asphaltenic=True` on the fluid that carries
-  the asphaltenes of concern.
+  kg/mol, density g/cm3[, Tc K, Pc bar, acentric factor])`), and
+  `asphaltenic=True` on the fluid that carries the asphaltenes of concern.
 - `EvaluationConditions`:
   - `commingling_pressure_bara`, `commingling_temperature_c`: where the
     streams meet.
@@ -71,6 +71,11 @@ Do not use it for water-water scale mixing; use
   `naphthenate_ph` (6.0) and `naphthenate_calcium_mg_l` (100).
 - `sara`: optional SARA weight fractions of the asphaltenic fluid, used to
   estimate the onset RI when it was not measured.
+- `asphaltene_model`: optional `CalibratedAsphalteneModel(fluid,
+  MeasuredOnset(temperature_c, pressure_bara, lower_pressure_bara=None),
+  kij_exponent=1.0)`. The asphaltenic fluid then needs one pseudo-component
+  named `Asphaltene...` with critical properties (for example
+  `PseudoComponent("Asphaltene", 0.4, 1.0, 1.15, 1015.0, 15.7, 1.5)`).
 
 ## Outputs
 
@@ -81,14 +86,18 @@ Do not use it for water-water scale mixing; use
   `min_live_oil_ri` and the pressure where it occurs, `de_boer_risk`,
   `hydrate_temperature_c`, `free_water_assumed`, `separator_gas_h2s_ppm`,
   `separator_gas_co2_mol_pct`, `wax_appearance_temperature_c`,
-  `separator_water_ph`, `notes`.
+  `separator_water_ph`, `asphaltene_onset_bara` and
+  `asphaltene_lower_onset_bara` (with an asphaltene model; `inf` if unstable
+  at the top of the scan), `notes`.
 - `findings`: `Finding(severity, code, message)` with severity `info`,
   `warning` or `high`. Codes: `asphaltene-onset-crossed`,
   `asphaltene-marginal`, `asphaltene-dilution`, `de-boer-worse-than-host`,
   `free-gas-at-commingling`, `saturation-nonlinear`, `hydrate-blend-maximum`,
   `hydrate-margin`, `wax-margin`, `wax-blend-maximum`, `calcium-naphthenate`,
-  `naphthenate-not-assessed`, `h2s-limit`, `co2-limit` and informational
-  notes.
+  `naphthenate-not-assessed`, `h2s-limit`, `co2-limit`,
+  `asphaltene-eos-onset-at-commingling`, `asphaltene-eos-onset-raised`,
+  `asphaltene-eos-reference-unstable`, `asphaltene-eos-temperature`,
+  `asphaltene-eos-model` and informational notes.
 - `worst_cases`: the worst blend per check.
 - `to_markdown()` and `to_dict()` (JSON-safe, `calculation_basis: screening`).
 
@@ -125,6 +134,19 @@ Do not use it for water-water scale mixing; use
    (separator-gas CO2, bicarbonate, chloride ionic strength). A blend is at
    risk when TAN, pH and calcium all exceed the screening thresholds; high when
    TAN exceeds twice the threshold.
+10. **Calibrated asphaltene onset (optional).** Nghiem-Coombe solid model:
+    the solid asphaltene fugacity is anchored at the measured onset of the
+    asphaltenic fluid, `ln f_s = ln f_L(T*, P*) + v_s (P - P*) / RT`, with
+    `v_s` from the asphaltene molar mass and density, or fitted to a measured
+    lower onset. The asphaltene interaction parameters follow a
+    size-asymmetry correlation on the co-volume (`b ~ Tc/Pc`), large for
+    N2/CO2/C1 and about 0 for heavy cuts. Each blend's upper and lower onset
+    is found by scanning down from above the commingling pressure and
+    bisecting. Uses NeqSim's `AsphalteneSolidModel` when the installed NeqSim
+    has it, otherwise a Python implementation of the same equations on NeqSim
+    SRK flashes (identical results; `model.backend` tells which). High when a
+    blend's onset reaches the commingling pressure, warning when blending
+    raises the onset by more than 10 bar.
 
 ## Python Usage Pattern
 
@@ -204,19 +226,23 @@ Eight blends take about 15 s.
   the appearance temperature only, not a deposition rate.
 - The naphthenate screen uses fixed thresholds on TAN, pH and calcium; it
   does not model naphthenic acid partitioning or soap formation.
-- A tuned equation-of-state asphaltene onset model is not offered. NeqSim's
-  single-pseudo-component asphaltene model (`asphalteneOnsetPressure`) can be
-  calibrated to a measured host onset by the asphaltene binary interaction
-  parameters. But in testing on NeqSim 3.29.0, every calibration predicted that
-  adding a light condensate lowers the onset pressure. Dilution of the
-  asphaltene concentration dominated, which contradicts titration and
-  refractive-index evidence that light diluents destabilise. Use the
-  refractive-index result, and laboratory onset tests on the actual blends.
+- The calibrated onset model needs a measured onset of the asphaltenic
+  fluid; the asphaltene properties (molar mass, density, Tc, Pc, acentric
+  factor) and the interaction exponent are assumptions unless fitted. Without
+  a temperature term the onset is extrapolated from the test temperature.
+  Do not calibrate NeqSim's database asphaltene by its interaction parameters
+  alone (the route tried before 0.3.0): it needs negative values that make
+  light components good asphaltene solvents, and then predicts that
+  condensate lowers the onset, the wrong sign. The solid model anchors the
+  solid fugacity instead and predicts that light diluents raise the onset.
+  Confirm flagged blends with onset tests on the actual blends.
 - Public, synthetic examples only. Not a substitute for laboratory
   compatibility testing or engineering judgement.
 
 ## Related NeqSim Functionality
 
+- `neqsim.pvtsimulation.flowassurance.AsphalteneSolidModel` (NeqSim after
+  3.29.0): calibrated solid asphaltene model used by `CalibratedAsphalteneModel`.
 - `neqsim.thermo.system.SystemSrkEos`, `SystemPrEos`, `SystemSrkCPAstatoil`
   with `addTBPfraction`, `useVolumeCorrection`.
 - `neqsim.thermodynamicoperations.ThermodynamicOperations#TPflash()`,

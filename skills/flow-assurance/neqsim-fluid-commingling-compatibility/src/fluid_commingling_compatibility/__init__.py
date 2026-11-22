@@ -1,5 +1,11 @@
 """Screening of two commingled fluids for mixture-only incompatibilities."""
 
+from .asphaltene_onset import (
+    CalibratedAsphalteneModel,
+    MeasuredOnset,
+    OnsetResult,
+    size_asymmetry_kij,
+)
 from .evaluator import (
     BlendEvaluator,
     BlendProperties,
@@ -35,13 +41,16 @@ __all__ = [
     "Blend",
     "BlendEvaluator",
     "BlendProperties",
+    "CalibratedAsphalteneModel",
     "CommingleReport",
     "EvaluationConditions",
     "Finding",
     "FluidSpec",
     "FluidSpecError",
+    "MeasuredOnset",
     "NeqSimBlendEvaluator",
     "NeqSimUnavailableError",
+    "OnsetResult",
     "PseudoComponent",
     "ScreeningLimits",
     "WaterChemistry",
@@ -54,4 +63,5 @@ __all__ = [
     "mole_fraction_from_rates",
     "refractive_index_from_density",
     "screen_commingling",
+    "size_asymmetry_kij",
 ]

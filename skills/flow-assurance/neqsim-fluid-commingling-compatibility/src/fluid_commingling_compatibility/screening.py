@@ -220,10 +220,10 @@ class CommingleReport:
             "",
             (
                 "| x_B | Psat (bara) | Phases | rho_oil (kg/m3) | min RI (at bara) "
-                "| RI class | de Boer | HFT (C) | WAT (C) | H2S (ppm) | CO2 (%) "
-                "| Water pH |"
+                "| RI class | de Boer | AOP (bara) | HFT (C) | WAT (C) | H2S (ppm) "
+                "| CO2 (%) | Water pH |"
             ),
-            "| ---: | ---: | --- | ---: | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
+            "| ---: | ---: | --- | ---: | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
 
         def fmt(value: float, digits: int = 1) -> str:
@@ -233,6 +233,12 @@ class CommingleReport:
             if not self.carries_asphaltenes(props):
                 return "n/a"
             return classify_ri_margin(self.ri_margin(props))
+
+        def aop(props: BlendProperties) -> str:
+            value = props.asphaltene_onset_bara
+            if value == math.inf:
+                return ">max"
+            return fmt(value)
 
         def de_boer(props: BlendProperties) -> str:
             if not self.carries_asphaltenes(props):
@@ -249,7 +255,7 @@ class CommingleReport:
                 f"| {p.fraction_b:.2f} | {fmt(p.saturation_pressure_bara)} | "
                 f"{'+'.join(p.phases_at_commingling) or '-'} | "
                 f"{fmt(p.liquid_density_kg_m3)} | {ri} | "
-                f"{ri_class(p)} | {de_boer(p)} | "
+                f"{ri_class(p)} | {de_boer(p)} | {aop(p)} | "
                 f"{fmt(p.hydrate_temperature_c)} | {fmt(p.wax_appearance_temperature_c)} | "
                 f"{fmt(p.separator_gas_h2s_ppm, 0)} | {fmt(p.separator_gas_co2_mol_pct, 2)} | "
                 f"{fmt(p.separator_water_ph, 2)} |"
@@ -269,6 +275,7 @@ def screen_commingling(
     fractions: Sequence[float] = DEFAULT_FRACTIONS,
     limits: ScreeningLimits | None = None,
     sara: tuple[float, float, float, float] | None = None,
+    asphaltene_model: Any | None = None,
 ) -> CommingleReport:
     """Sweep blend fractions and flag mixture-only incompatibilities.
 
@@ -282,6 +289,10 @@ def screen_commingling(
         limits: Optional acceptance limits.
         sara: Optional SARA weight fractions of the asphaltenic fluid, used to
             estimate the onset RI when ``limits.onset_ri`` is not given.
+        asphaltene_model: Optional
+            :class:`~fluid_commingling_compatibility.asphaltene_onset.CalibratedAsphalteneModel`
+            calibrated to a measured onset of the asphaltenic fluid; adds the
+            equation-of-state onset pressure of every asphaltene-carrying blend.
 
     Returns:
         A :class:`CommingleReport`.
@@ -311,6 +322,8 @@ def screen_commingling(
         ),
     )
     _check_asphaltenes(report, fluid_a, fluid_b)
+    if asphaltene_model is not None:
+        _check_asphaltene_eos(report, asphaltene_model, fluid_a, fluid_b, grid)
     _check_free_gas(report)
     _check_saturation_linearity(report)
     _check_hydrate(report)
@@ -442,6 +455,116 @@ def _check_asphaltenes(report: CommingleReport, a: FluidSpec, b: FluidSpec) -> N
                     f"{reference.de_boer_risk}).",
                 )
             )
+
+
+def _check_asphaltene_eos(
+    report: CommingleReport,
+    model: Any,
+    a: FluidSpec,
+    b: FluidSpec,
+    grid: Sequence[float],
+) -> None:
+    """Calibrated equation-of-state onset pressure of every asphaltene-carrying blend."""
+    findings = report.findings
+    if report.asphaltenic_side is None:
+        findings.append(
+            Finding(
+                "info",
+                "asphaltene-eos-not-assessed",
+                "An asphaltene model was given but neither fluid is marked asphaltenic.",
+            )
+        )
+        return
+    cond = report.conditions
+    measured = model.measured
+    p_comm = cond.commingling_pressure_bara
+    p_max = min(1000.0, max(2.0 * p_comm, measured.pressure_bara + 200.0, 300.0))
+    p_min = cond.path_end_pressure_bara
+    by_fraction = {p.fraction_b: p for p in report.blends}
+    for f in grid:
+        props = by_fraction[f]
+        if not report.carries_asphaltenes(props):
+            continue
+        result = model.onset(
+            blend(a, b, f), cond.commingling_temperature_c, p_max, p_min, 5.0
+        )
+        props.asphaltene_onset_bara = (
+            math.inf if result.unstable_at_max else result.upper_bara
+        )
+        props.asphaltene_lower_onset_bara = result.lower_bara
+    reference_fraction = 0.0 if report.asphaltenic_side == "a" else 1.0
+    reference = by_fraction[reference_fraction].asphaltene_onset_bara
+    carriers = [p for p in report.blends if report.carries_asphaltenes(p)]
+    known = [p for p in carriers if not math.isnan(p.asphaltene_onset_bara)]
+    if abs(cond.commingling_temperature_c - measured.temperature_c) > 10.0:
+        findings.append(
+            Finding(
+                "info",
+                "asphaltene-eos-temperature",
+                f"Onsets are at {cond.commingling_temperature_c:.0f} C; the model is calibrated "
+                f"at {measured.temperature_c:.0f} C without a temperature term. Measure the "
+                "onset nearer the commingling temperature for a design value.",
+            )
+        )
+    findings.append(
+        Finding(
+            "info",
+            "asphaltene-eos-model",
+            f"Asphaltene onset from a solid model calibrated to {measured.pressure_bara:.0f} "
+            f"bara at {measured.temperature_c:.0f} C ({getattr(model, 'backend', 'model')} "
+            "backend).",
+        )
+    )
+    if not known:
+        return
+    worst = max(known, key=lambda p: p.asphaltene_onset_bara)
+    report.worst_cases["asphaltene_eos"] = {
+        "fraction_b": worst.fraction_b,
+        "onset_bara": worst.asphaltene_onset_bara,
+        "reference_onset_bara": reference,
+    }
+    ref_text = f"{reference:.0f} bara" if math.isfinite(reference) else "none in range"
+    if reference == math.inf or (math.isfinite(reference) and reference >= p_comm):
+        findings.append(
+            Finding(
+                "warning",
+                "asphaltene-eos-reference-unstable",
+                f"The asphaltenic fluid alone precipitates at the commingling pressure "
+                f"(onset {ref_text}).",
+            )
+        )
+        return
+    above = [p for p in known if p.asphaltene_onset_bara >= p_comm]
+    if above:
+        span = (
+            f"{above[0].fraction_b:.2f}"
+            if len(above) == 1
+            else f"{above[0].fraction_b:.2f}-{above[-1].fraction_b:.2f}"
+        )
+        onset = worst.asphaltene_onset_bara
+        onset_text = (
+            f"{onset:.0f} bara" if math.isfinite(onset) else f"above {p_max:.0f} bara"
+        )
+        findings.append(
+            Finding(
+                "high",
+                "asphaltene-eos-onset-at-commingling",
+                f"Calibrated onset pressure reaches the commingling pressure {p_comm:.0f} bara "
+                f"for x_B {span} (worst {onset_text} at x_B={worst.fraction_b:.2f}; "
+                f"asphaltenic fluid alone {ref_text}): asphaltene precipitates where the "
+                "streams meet. Confirm with an onset test on the blend.",
+            )
+        )
+    elif math.isfinite(reference) and worst.asphaltene_onset_bara - reference > 10.0:
+        findings.append(
+            Finding(
+                "warning",
+                "asphaltene-eos-onset-raised",
+                f"Blending raises the onset pressure from {ref_text} to "
+                f"{worst.asphaltene_onset_bara:.0f} bara (x_B={worst.fraction_b:.2f}): "
+                "asphaltene starts to precipitate earlier on the way down to the separator.",
+            )
+        )
 
 
 def _check_free_gas(report: CommingleReport) -> None:

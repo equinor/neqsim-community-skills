@@ -145,6 +145,8 @@ class BlendProperties:
     separator_gas_co2_mol_pct: float = NAN
     wax_appearance_temperature_c: float = NAN
     separator_water_ph: float = NAN
+    asphaltene_onset_bara: float = NAN
+    asphaltene_lower_onset_bara: float = NAN
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -159,6 +161,24 @@ class BlendEvaluator(Protocol):
     def evaluate(
         self, blend: Blend, conditions: EvaluationConditions
     ) -> BlendProperties: ...
+
+
+def add_pseudo_components(system, blend: Blend) -> None:
+    """Add a blend's pseudo-components to a NeqSim system (critical properties if given)."""
+    for pseudo in blend.pseudo_components:
+        args = [
+            pseudo.name,
+            float(pseudo.mole_fraction),
+            float(pseudo.molar_mass_kg_mol),
+            float(pseudo.density_g_cm3),
+        ]
+        if pseudo.critical_temperature_k is not None:
+            args += [
+                float(pseudo.critical_temperature_k),
+                float(pseudo.critical_pressure_bar),
+                float(pseudo.acentric_factor),
+            ]
+        system.addTBPfraction(*args)
 
 
 class NeqSimUnavailableError(RuntimeError):
@@ -216,13 +236,7 @@ class NeqSimBlendEvaluator:
         system = cls(273.15 + temperature_c, pressure_bara)
         for name, x in blend.components.items():
             system.addComponent(name, float(x))
-        for pseudo in blend.pseudo_components:
-            system.addTBPfraction(
-                pseudo.name,
-                float(pseudo.mole_fraction),
-                float(pseudo.molar_mass_kg_mol),
-                float(pseudo.density_g_cm3),
-            )
+        add_pseudo_components(system, blend)
         system.setMixingRule(10 if eos == "cpa" else "classic")
         system.setMultiPhaseCheck(True)
         if self.volume_correction:

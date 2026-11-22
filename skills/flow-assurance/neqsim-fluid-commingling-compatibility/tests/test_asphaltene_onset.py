@@ -4,6 +4,8 @@ import math
 
 import pytest
 from fluid_commingling_compatibility import (
+    BlendProperties,
+    EvaluationConditions,
     FluidSpec,
     FluidSpecError,
     MeasuredOnset,
@@ -13,7 +15,39 @@ from fluid_commingling_compatibility import (
     screen_commingling,
     size_asymmetry_kij,
 )
-from test_screening import CONDITIONS, FakeEvaluator, tiein
+
+CONDITIONS = EvaluationConditions(
+    commingling_pressure_bara=200.0,
+    commingling_temperature_c=70.0,
+)
+
+
+def host():
+    return FluidSpec(
+        "host",
+        {"methane": 20.0},
+        [PseudoComponent("C20", 80.0, 0.28, 0.88)],
+        asphaltenic=True,
+    )
+
+
+def tiein():
+    return FluidSpec("tiein", {"methane": 95.0})
+
+
+class FakeEvaluator:
+    """Minimal analytic blend properties."""
+
+    def evaluate(self, blend, conditions):
+        f = blend.fraction_b
+        return BlendProperties(
+            fraction_b=f,
+            saturation_pressure_bara=100.0 + 150.0 * f,
+            phases_at_commingling=["oil"],
+            liquid_density_kg_m3=820.0 - 160.0 * f,
+            min_live_oil_ri=1.48 - 0.05 * f,
+            min_live_oil_ri_pressure_bara=100.0 + 150.0 * f,
+        )
 
 
 def asph_host(with_critical=True):
@@ -68,8 +102,6 @@ class FakeModel:
 
 
 def run(model, fractions=(0.25, 0.5, 0.75)):
-    from test_screening import host
-
     return screen_commingling(
         host(), tiein(), CONDITIONS, FakeEvaluator(), fractions, asphaltene_model=model
     )

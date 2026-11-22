@@ -10,6 +10,13 @@ from .m506 import (
     rate_mm_per_year,
     rate_mm_per_year_reference,
 )
+from .mechanisms import (
+    condensation_rates,
+    glycol_factor,
+    iso15156_region,
+    sour_regime,
+    tlc_risk,
+)
 from .model import (
     ChemistryModel,
     CorrosionFluid,
@@ -49,11 +56,16 @@ __all__ = [
     "assess_corrosion_profile",
     "assess_rate",
     "assess_rate_at_fugacity",
+    "condensation_rates",
     "engine_name",
     "fugacity_bar",
     "fugacity_bar_reference",
+    "glycol_factor",
+    "iso15156_region",
     "neqsim_pipeline_profile",
     "rate_mm_per_year",
     "rate_mm_per_year_reference",
+    "sour_regime",
+    "tlc_risk",
     "wall_shear_stress_pa",
 ]

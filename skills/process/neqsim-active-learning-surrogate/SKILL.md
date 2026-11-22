@@ -30,9 +30,9 @@ one new point at a time where it is least certain about what the study needs:
 
 In the bundled example a three-input host flowsheet needs 21 NeqSim runs to
 find where the export compressor exceeds its 6.5 MW driver. The surrogate then
-gives the exceedance probability over 20,000 operating cases in 0.1 s, and its
-predicted maximum tie-in rate (28.3 t/h at the worst corner) matches a direct
-NeqSim check to within 1 kW of the limit.
+gives the exceedance probability over 20,000 operating cases in 0.1 s. Its
+maximum tie-in rate at the worst corner, 28.2 t/h, gives 6,492 kW in a direct
+NeqSim run, just under the 6,500 kW limit.
 
 ## When to Use
 
@@ -70,6 +70,8 @@ the limit being learned.
 - `Surrogate`: `predict(values)` (mean and standard deviation per output, one
   or many input sets), `predict_mean`, `as_model(output)` (a `dict -> float`
   callable for `UncertaintyStudy(model=...)`), `exceedance_probability(samples)`,
+  `max_feasible(parameter, fixed)` (largest input value that keeps the output
+  below the threshold: best estimate and mean + 2 sigma conservative value),
   `extrapolating(values)`, `to_json()` / `from_json()`.
 - `validate(surrogate, model, n)` -> `ValidationReport` with RMSE, maximum
   error, normalised RMSE, 2-sigma coverage and, in limit-state mode, the
@@ -114,6 +116,8 @@ result = ActiveLearner(
 ).run()
 print(result.summary())
 check = validate(result.surrogate, host_model, n=8)    # always spot-check
+limit = result.surrogate.max_feasible("tiein_rate_kgh", {"separator_pressure_bara": 40})
+# confirm limit["best_estimate"] with one direct NeqSim run
 
 # Feed the existing UQ skill with a millisecond model
 from uncertainty_quantification import Triangular, Uniform, UncertaintyStudy
@@ -143,6 +147,8 @@ The complete case is `examples/host_compressor_capacity_boundary.py`
       from the surrogate ranges.
 - [ ] The NeqSim model behind the surrogate was itself checked against data
       or a reference case.
+- [ ] A decision value from `max_feasible` was confirmed with a direct NeqSim
+      run, and both numbers are reported.
 
 ## Common Mistakes
 

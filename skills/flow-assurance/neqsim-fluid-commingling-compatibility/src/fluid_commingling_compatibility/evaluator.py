@@ -12,7 +12,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from .fluids import Blend
+from .fluids import Blend, FluidSpec, as_blend
 
 NAN = float("nan")
 
@@ -196,6 +196,12 @@ class NeqSimBlendEvaluator:
         if self.volume_correction:
             system.useVolumeCorrection(True)
         return system
+
+    def molar_mass_kg_mol(self, fluid: FluidSpec) -> float:
+        """Molar mass of one fluid from its NeqSim characterisation, kg/mol."""
+        system = self.build_system(as_blend(fluid), 15.0, 1.01325)
+        system.init(0)
+        return float(system.getMolarMass())
 
     def _flash(self, system):
         ops = self._j.thermodynamicoperations.ThermodynamicOperations(system)

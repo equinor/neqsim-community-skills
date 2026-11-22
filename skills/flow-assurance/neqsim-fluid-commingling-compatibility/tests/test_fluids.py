@@ -80,3 +80,22 @@ def test_mole_fraction_from_rates():
         mole_fraction_from_rates(0.0, 0.0)
     with pytest.raises(FluidSpecError):
         mole_fraction_from_rates(-1.0, 1.0)
+
+
+def test_mole_fraction_from_mass_rates():
+    from fluid_commingling_compatibility import mole_fraction_from_mass_rates
+
+    # 150 t/h of 0.170 kg/mol oil and 25 t/h of 0.029 kg/mol condensate
+    x_b = mole_fraction_from_mass_rates(150.0, 0.170, 25.0, 0.029)
+    assert math.isclose(x_b, (25 / 0.029) / (150 / 0.170 + 25 / 0.029))
+    with pytest.raises(FluidSpecError):
+        mole_fraction_from_mass_rates(1.0, 0.0, 1.0, 0.1)
+
+
+def test_as_blend_is_the_fluid_alone():
+    from fluid_commingling_compatibility import as_blend
+
+    single = as_blend(oil())
+    assert single.fraction_b == 0.0
+    assert math.isclose(single.components["methane"], 0.2)
+    assert [p.name for p in single.pseudo_components] == ["C10host"]

@@ -153,3 +153,28 @@ def test_invalid_set_up():
         ActiveLearner(power_model, PARAMS + PARAMS[:1], ["power"])
     with pytest.raises(SurrogateError):
         ActiveLearner(power_model, PARAMS, ["power"], max_evaluations=3)
+
+
+def test_max_feasible_brackets_the_true_limit():
+    result = ActiveLearner(
+        power_model,
+        PARAMS,
+        ["power"],
+        mode="limit_state",
+        limit_output="power",
+        threshold=6000.0,
+        pool_size=1000,
+        max_evaluations=40,
+    ).run()
+    found = result.surrogate.max_feasible("rate", {"pressure": 40.0})
+    # power = 2000 + 60 rate (80/40)^0.6 = 6000  ->  rate = 4000 / (60 * 2^0.6)
+    true_rate = 4000.0 / (60.0 * 2**0.6)
+    assert found["best_estimate"] == pytest.approx(true_rate, rel=0.02)
+    assert found["conservative"] <= found["best_estimate"] + 1e-9
+    assert result.surrogate.max_feasible(
+        "rate", {"pressure": 20.0}, "power", 1000.0
+    ) == {"best_estimate": None, "conservative": None}
+    with pytest.raises(SurrogateError):
+        result.surrogate.max_feasible("rate", {})
+    with pytest.raises(SurrogateError):
+        result.surrogate.max_feasible("missing", {"pressure": 40.0})

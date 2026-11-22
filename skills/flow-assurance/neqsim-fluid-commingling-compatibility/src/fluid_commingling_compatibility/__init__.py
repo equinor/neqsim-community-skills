@@ -13,7 +13,9 @@ from .fluids import (
     FluidSpec,
     FluidSpecError,
     PseudoComponent,
+    as_blend,
     blend,
+    mole_fraction_from_mass_rates,
     mole_fraction_from_rates,
 )
 from .screening import (
@@ -40,9 +42,11 @@ __all__ = [
     "NeqSimUnavailableError",
     "PseudoComponent",
     "ScreeningLimits",
+    "as_blend",
     "blend",
     "classify_ri_margin",
     "estimate_onset_ri_from_sara",
+    "mole_fraction_from_mass_rates",
     "mole_fraction_from_rates",
     "refractive_index_from_density",
     "screen_commingling",

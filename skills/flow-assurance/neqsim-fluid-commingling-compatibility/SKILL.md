@@ -53,7 +53,11 @@ Do not use it for water-water scale mixing; use
     separator-gas H2S (ppm mol) and CO2 (mol %).
   - `hydrate_pressure_bara`: optional, for the blend hydrate temperature.
 - `fractions`: mole fractions of fluid B to evaluate (default 0, 0.1 ... 1).
-  Use `mole_fraction_from_rates(rate_a, rate_b)` to convert molar rates.
+  Include the operating ratio. Convert mass rates with
+  `mole_fraction_from_mass_rates(m_a, M_a, m_b, M_b)`, taking molar masses from
+  `NeqSimBlendEvaluator().molar_mass_kg_mol(fluid)`, or molar rates with
+  `mole_fraction_from_rates(rate_a, rate_b)`. A light fluid takes a large mole
+  fraction for a small mass rate.
 - `ScreeningLimits` (all optional): `onset_ri` (measured asphaltene onset
   refractive index of the asphaltenic fluid), `min_operating_temperature_c`,
   `h2s_limit_ppm`, `co2_limit_mol_pct`.
@@ -107,7 +111,7 @@ Do not use it for water-water scale mixing; use
 ```python
 from fluid_commingling_compatibility import (
     EvaluationConditions, FluidSpec, NeqSimBlendEvaluator, PseudoComponent,
-    ScreeningLimits, screen_commingling,
+    ScreeningLimits, mole_fraction_from_mass_rates, screen_commingling,
 )
 
 host = FluidSpec(
@@ -123,8 +127,14 @@ conditions = EvaluationConditions(
     separator_pressure_bara=40.0, separator_temperature_c=60.0,
     hydrate_pressure_bara=120.0,
 )
+evaluator = NeqSimBlendEvaluator()
+x_op = mole_fraction_from_mass_rates(                 # 150 t/h oil + 25 t/h condensate
+    150_000.0, evaluator.molar_mass_kg_mol(host),
+    25_000.0, evaluator.molar_mass_kg_mol(tiein),
+)
 report = screen_commingling(
-    host, tiein, conditions, NeqSimBlendEvaluator(),
+    host, tiein, conditions, evaluator,
+    fractions=(0.1, 0.2, 0.3, round(x_op, 2), 0.7),
     limits=ScreeningLimits(onset_ri=1.445, h2s_limit_ppm=400.0),
 )
 print(report.to_markdown())
@@ -137,7 +147,8 @@ Eight blends take about 15 s.
 
 - [ ] Component names are NeqSim names; pseudo-component molar masses are in
       kg/mol and densities in g/cm3.
-- [ ] The blend basis is molar. Rates in Sm3/d were converted to molar rates.
+- [ ] The blend basis is molar. Rates were converted to mole fractions and the
+      operating ratio is in the sweep.
 - [ ] The asphaltenic fluid is marked, and an onset RI is measured or its
       source (SARA correlation) is stated in the report.
 - [ ] The minimum RI pressure is near the bubble point for single-phase
@@ -156,6 +167,7 @@ Eight blends take about 15 s.
 | Hydrate temperature too high for a dry gas | Free water was assumed | Give the real water content or treat the value as a water-saturated bound |
 | Pseudo-component error on construction | Molar mass given in g/mol | Divide by 1000 |
 | Saturation linearity missing | One end member is a gas (dew point) | Expected; the comparison only applies to two liquids |
+| Operating point looks "safe" on the sweep | Blend axis read as mass or volume fraction | Convert with `mole_fraction_from_mass_rates`; light fluids take a large mole fraction |
 
 ## Limitations
 

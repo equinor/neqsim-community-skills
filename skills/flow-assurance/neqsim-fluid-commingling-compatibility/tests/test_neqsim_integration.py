@@ -91,3 +91,10 @@ def test_full_sweep_flags_onset(evaluator):
     )
     assert report.blends[0].min_live_oil_ri > 1.445
     assert any(f.code == "asphaltene-onset-crossed" for f in report.findings)
+
+
+def test_molar_mass_from_neqsim(evaluator):
+    heavy = evaluator.molar_mass_kg_mol(HOST)
+    light = evaluator.molar_mass_kg_mol(CONDENSATE)
+    assert 0.08 < heavy < 0.4
+    assert 0.016 < light < heavy

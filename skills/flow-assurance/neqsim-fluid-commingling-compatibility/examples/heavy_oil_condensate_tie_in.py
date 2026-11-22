@@ -17,6 +17,7 @@ from fluid_commingling_compatibility import (
     NeqSimUnavailableError,
     PseudoComponent,
     ScreeningLimits,
+    mole_fraction_from_mass_rates,
     screen_commingling,
 )
 
@@ -91,12 +92,24 @@ def main() -> int:
     except NeqSimUnavailableError as exc:
         print(f"SKIPPED: {exc}")
         return 0
+    # Where does the planned operating point sit on the blend axis?
+    host_kg_h, tiein_kg_h = 150_000.0, 25_000.0
+    x_operating = mole_fraction_from_mass_rates(
+        host_kg_h,
+        evaluator.molar_mass_kg_mol(HOST_OIL),
+        tiein_kg_h,
+        evaluator.molar_mass_kg_mol(NEW_CONDENSATE),
+    )
+    print(
+        f"{tiein_kg_h / 1000:.0f} t/h condensate into {host_kg_h / 1000:.0f} t/h "
+        f"oil is x_B = {x_operating:.2f} (mole fraction)\n"
+    )
     report = screen_commingling(
         HOST_OIL,
         NEW_CONDENSATE,
         CONDITIONS,
         evaluator,
-        fractions=(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0),
+        fractions=(0.0, 0.1, 0.2, 0.3, 0.4, round(x_operating, 2), 0.7, 1.0),
         limits=LIMITS,
     )
     print(report.to_markdown())

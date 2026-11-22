@@ -157,15 +157,17 @@ def main() -> int:
 
     # Highest tie-in rate that stays below the limit at the worst corner.
     worst = {"separator_pressure_bara": 40.0, "inlet_temperature_c": 60.0}
-    rates = np.linspace(0.0, 60000.0, 601)
-    mean = surrogate.predict([{**worst, "tiein_rate_kgh": r} for r in rates])[
-        "compressor_power_kw"
-    ][0]
-    allowed = rates[mean <= DRIVER_LIMIT_KW]
-    if len(allowed):
+    limit = surrogate.max_feasible("tiein_rate_kgh", worst)
+    if limit["best_estimate"] is not None:
         print(
-            f"Max tie-in rate at 40 bara / 60 C: {allowed.max() / 1000:.1f} t/h "
-            "(surrogate)"
+            f"Max tie-in rate at 40 bara / 60 C: {limit['best_estimate'] / 1000:.1f}"
+            f" t/h (conservative, mean + 2 sigma: "
+            f"{(limit['conservative'] or 0.0) / 1000:.1f} t/h)"
+        )
+        check = host_model({**worst, "tiein_rate_kgh": limit["best_estimate"]})
+        print(
+            f"Direct NeqSim check at that rate: "
+            f"{check['compressor_power_kw']:,.0f} kW"
         )
 
     report = validate(surrogate, host_model, n=8, seed=5)

@@ -177,6 +177,33 @@ def blend(fluid_a: FluidSpec, fluid_b: FluidSpec, fraction_b: float) -> Blend:
     return Blend(fraction_b, components, tuple(pseudos))
 
 
+def as_blend(fluid: FluidSpec) -> Blend:
+    """One fluid on its own, normalised, in the form evaluators accept."""
+    other = FluidSpec(
+        label="Zother" if fluid.label != "Zother" else "Yother",
+        components={"methane": 1.0},
+    )
+    return blend(fluid, other, 0.0)
+
+
+def mole_fraction_from_mass_rates(
+    mass_rate_a: float,
+    molar_mass_a_kg_mol: float,
+    mass_rate_b: float,
+    molar_mass_b_kg_mol: float,
+) -> float:
+    """Mole fraction of fluid B from mass rates and molar masses.
+
+    Any consistent mass-rate unit works. Get molar masses from
+    ``NeqSimBlendEvaluator.molar_mass_kg_mol(fluid)``.
+    """
+    if molar_mass_a_kg_mol <= 0 or molar_mass_b_kg_mol <= 0:
+        raise FluidSpecError("molar masses must be > 0")
+    return mole_fraction_from_rates(
+        mass_rate_a / molar_mass_a_kg_mol, mass_rate_b / molar_mass_b_kg_mol
+    )
+
+
 def mole_fraction_from_rates(molar_rate_a: float, molar_rate_b: float) -> float:
     """Mole fraction of fluid B from the two molar rates (any consistent unit)."""
     if molar_rate_a < 0 or molar_rate_b < 0:

@@ -178,6 +178,46 @@ class Surrogate:
         z = (mean - threshold) / np.maximum(std, 1e-300)
         return float(np.mean(0.5 * (1.0 + erf(z / math.sqrt(2.0)))))
 
+    def max_feasible(
+        self,
+        parameter: str,
+        fixed: Mapping[str, float],
+        output: str | None = None,
+        threshold: float | None = None,
+        points: int = 401,
+        sigmas: float = 2.0,
+    ) -> dict[str, float | None]:
+        """Largest value of one input that keeps an output below a threshold.
+
+        Scans ``parameter`` over its trained range with the other inputs held
+        at ``fixed`` and returns the largest value whose predicted mean is
+        below the threshold (``best_estimate``) and the largest value whose
+        ``mean + sigmas * std`` is below it (``conservative``). ``None`` means
+        no value in the range is feasible. Assumes feasibility shrinks as the
+        parameter grows; inspect ``predict`` along the line if it may not.
+        Confirm the returned value with a direct NeqSim run.
+        """
+        if output is None or threshold is None:
+            if self.threshold is None:
+                raise SurrogateError("give output and threshold")
+            output, threshold = self.threshold
+        names = [p.name for p in self.parameters]
+        if parameter not in names:
+            raise SurrogateError(f"unknown parameter {parameter!r}")
+        missing = [n for n in names if n != parameter and n not in fixed]
+        if missing:
+            raise SurrogateError(f"fixed values missing for {missing}")
+        spec = self.parameters[names.index(parameter)]
+        grid = [spec.from_unit(i / (points - 1)) for i in range(points)]
+        rows = [{**fixed, parameter: value} for value in grid]
+        mean, std = self.predict(rows)[output]
+        best = [v for v, m in zip(grid, mean) if m <= threshold]
+        safe = [v for v, m, s in zip(grid, mean, std) if m + sigmas * s <= threshold]
+        return {
+            "best_estimate": max(best) if best else None,
+            "conservative": max(safe) if safe else None,
+        }
+
     def to_json(self, path: str | Path | None = None) -> str:
         """Serialise to JSON (and write ``path`` when given)."""
         payload = {

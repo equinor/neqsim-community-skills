@@ -12,6 +12,8 @@ worst ratio for each check:
 | Hydrate | The blend hydrate temperature exceeds both end members, or the operating margin | `hydrate-blend-maximum`, `hydrate-margin` |
 | Sour gas | Mixed separator gas exceeds an H2S or CO2 limit | `h2s-limit`, `co2-limit` |
 | PVT | End-member PVT cannot be interpolated for the blend | `saturation-nonlinear` |
+| Wax | The blend wax appearance temperature is above the operating minimum, or above both fluids | `wax-margin`, `wax-blend-maximum` |
+| Naphthenates | An acidic oil meets calcium-rich water whose pH rises as CO2 flashes off | `calcium-naphthenate`, `naphthenate-not-assessed` |
 
 Method, equations, limitations and references are in [SKILL.md](SKILL.md).
 
@@ -129,6 +131,29 @@ asphaltenic fluid:
 | SARA analysis only | `sara=(sat, aro, res, asph)` to `screen_commingling` | Class from a correlation onset; stated in the report |
 | Neither | nothing | Relative drop in RI versus the host alone (`asphaltene-dilution`) |
 
+### 3b. Wax and naphthenates (optional)
+
+```python
+from dataclasses import replace
+from fluid_commingling_compatibility import WaterChemistry
+
+host = replace(host, tan_mg_koh_g=1.5)      # stabilised-oil TAN, mg KOH/g
+tiein = replace(tiein, tan_mg_koh_g=0.05)
+conditions = replace(
+    conditions,
+    wax_pressure_bara=50.0,                 # WAT of each blend at this pressure
+    separator_water=WaterChemistry(calcium_mg_l=800.0, bicarbonate_mg_l=1500.0,
+                                   chloride_mg_l=30000.0),
+)
+```
+
+- The wax check uses NeqSim's TBP wax model on your C7+ cuts. Compare WAT
+  with the coldest point of the line (`min_operating_temperature_c`).
+- The naphthenate screen flags blends where blend TAN, separator water pH and
+  calcium all exceed `ScreeningLimits.naphthenate_*` (defaults 0.5 mg KOH/g,
+  pH 6.0, 100 mg/L). Lower separator pressure means more CO2 flashing, a
+  higher pH and a higher risk.
+
 ### 4. Run the sweep
 
 ```python
@@ -164,6 +189,8 @@ What to do with each `high` finding:
 | `asphaltene-onset-crossed` | Onset titration or HPM test on the blend at the flagged ratio; consider a blending-ratio limit or inhibitor screening |
 | `hydrate-margin` | Hydrate inhibitor dosing for the blend (MEG/methanol), using the worst-blend hydrate temperature |
 | `h2s-limit` / `co2-limit` | Sour-service materials review, export-gas treatment or ratio limit |
+| `wax-margin` | Wax deposition and pigging study for the blend; insulation or heating |
+| `calcium-naphthenate` | Bottle tests on the blend and water; acid or naphthenate-inhibitor dosing; separator pressure strategy |
 
 ## Typical Studies
 
@@ -188,6 +215,12 @@ What to do with each `high` finding:
 | `evaluation-note` findings | A flash failed for that blend; check the composition, or narrow the pressure path |
 | Minimum RI not near the bubble point | Increase `path_points` |
 | Slow sweeps | Fewer `fractions`, fewer `path_points`, or skip the hydrate check (it is the slowest step) |
+| WAT shows `-` with "no wax appearance above -60 C" | The blend has no wax formers in its C7+ cuts (typical for light condensate) |
+
+**Why there is no tuned asphaltene onset model:** NeqSim's equation-of-state
+asphaltene onset can be calibrated to the host oil. But on 3.29.0 every
+calibration predicted that condensate stabilises the blend, which contradicts
+laboratory evidence. The details are in SKILL.md, Limitations.
 
 ## Extending
 

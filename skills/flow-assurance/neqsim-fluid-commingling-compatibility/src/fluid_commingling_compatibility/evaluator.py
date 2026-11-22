@@ -37,6 +37,26 @@ def refractive_index_from_density(density_kg_m3: float) -> float:
 
 
 @dataclass(frozen=True)
+class WaterChemistry:
+    """Produced water at the separator, for the naphthenate screen.
+
+    Attributes:
+        calcium_mg_l: Calcium, mg/L.
+        bicarbonate_mg_l: Bicarbonate, mg/L (buffers the pH upwards).
+        chloride_mg_l: Chloride, mg/L (ionic strength).
+    """
+
+    calcium_mg_l: float = 0.0
+    bicarbonate_mg_l: float = 0.0
+    chloride_mg_l: float = 0.0
+
+    def __post_init__(self) -> None:
+        for name in ("calcium_mg_l", "bicarbonate_mg_l", "chloride_mg_l"):
+            if not 0.0 <= getattr(self, name) <= 300000.0:
+                raise ValueError(f"{name} must be 0-300000 mg/L")
+
+
+@dataclass(frozen=True)
 class EvaluationConditions:
     """Conditions at which each blend is evaluated.
 
@@ -50,6 +70,10 @@ class EvaluationConditions:
         separator_temperature_c: First-stage separator temperature, deg C.
         hydrate_pressure_bara: Pressure for the hydrate equilibrium
             temperature, bara, or None to skip the hydrate check.
+        wax_pressure_bara: Pressure for the wax appearance temperature, bara,
+            or None to skip the wax check.
+        separator_water: Produced-water chemistry at the separator, or None to
+            skip the separator water pH (needed for the naphthenate screen).
     """
 
     commingling_pressure_bara: float
@@ -59,6 +83,8 @@ class EvaluationConditions:
     separator_pressure_bara: float | None = None
     separator_temperature_c: float | None = None
     hydrate_pressure_bara: float | None = None
+    wax_pressure_bara: float | None = None
+    separator_water: WaterChemistry | None = None
 
     def __post_init__(self) -> None:
         if not self.commingling_pressure_bara > 0:
@@ -82,6 +108,10 @@ class EvaluationConditions:
             raise ValueError("separator_pressure_bara must be > 0")
         if self.hydrate_pressure_bara is not None and self.hydrate_pressure_bara <= 0:
             raise ValueError("hydrate_pressure_bara must be > 0")
+        if self.wax_pressure_bara is not None and self.wax_pressure_bara <= 0:
+            raise ValueError("wax_pressure_bara must be > 0")
+        if self.separator_water is not None and self.separator_pressure_bara is None:
+            raise ValueError("separator_water needs separator pressure and temperature")
 
     def path_pressures(self) -> list[float]:
         """Pressures from commingling pressure down to the path end, bara."""
@@ -113,6 +143,8 @@ class BlendProperties:
     free_water_assumed: bool = False
     separator_gas_h2s_ppm: float = NAN
     separator_gas_co2_mol_pct: float = NAN
+    wax_appearance_temperature_c: float = NAN
+    separator_water_ph: float = NAN
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -313,6 +345,8 @@ class NeqSimBlendEvaluator:
                         float(conditions.separator_pressure_bara),
                     )
                 )
+                if conditions.separator_water is not None:
+                    props.separator_water_ph = self._separator_ph(system, conditions)
                 if system.hasPhaseType("gas"):
                     gas = system.getPhase("gas")
                     if "H2S" in blend.components:
@@ -327,7 +361,66 @@ class NeqSimBlendEvaluator:
                     props.notes.append("no gas phase at separator conditions")
             except Exception as exc:  # noqa: BLE001
                 props.notes.append(f"separator flash failed ({type(exc).__name__})")
+        if conditions.wax_pressure_bara is not None:
+            props.wax_appearance_temperature_c = self._wax(
+                dry, conditions.wax_pressure_bara, props.notes
+            )
         return props
+
+    def _separator_ph(self, system, conditions: EvaluationConditions) -> float:
+        """Water pH at separator conditions from the NORSOK M-506 pH model."""
+        water = conditions.separator_water
+        y_co2 = 0.0
+        if system.hasPhaseType("gas") and system.getPhase("gas").hasComponent("CO2"):
+            y_co2 = float(system.getPhase("gas").getComponent("CO2").getx())
+        model = self._j.process.corrosion.NorsokM506CorrosionRate()
+        model.setTemperatureCelsius(float(conditions.separator_temperature_c))
+        model.setTotalPressureBara(float(conditions.separator_pressure_bara))
+        model.setCO2MoleFraction(max(y_co2, 1e-6))
+        model.setBicarbonateConcentrationMgL(float(water.bicarbonate_mg_l))
+        model.setIonicStrengthMolL(float(water.chloride_mg_l / 35453.0))
+        return float(model.calculateEquilibriumPH())
+
+    def _wax(self, dry: Blend, pressure_bara: float, notes: list[str]) -> float:
+        """Wax appearance temperature of the hydrocarbon blend, deg C."""
+        if not dry.pseudo_components:
+            notes.append("no C7+ cuts: wax not assessed")
+            return NAN
+        database = self._j.util.database.NeqSimDataBase
+        database.setCreateTemporaryTables(True)
+        try:
+            system = self._j.thermo.system.SystemSrkEos(
+                273.15 + 40.0, float(pressure_bara)
+            )
+            for name, x in dry.components.items():
+                system.addComponent(name, float(x))
+            for pseudo in dry.pseudo_components:
+                system.addTBPfraction(
+                    pseudo.name,
+                    float(pseudo.mole_fraction),
+                    float(pseudo.molar_mass_kg_mol),
+                    float(pseudo.density_g_cm3),
+                )
+            system.getWaxModel().addTBPWax()
+            system.createDatabase(True)
+            system.setMixingRule(2)
+            system.addSolidComplexPhase("wax")
+            system.setMultiphaseWaxCheck(True)
+            ops = self._j.thermodynamicoperations.ThermodynamicOperations(system)
+            ops.calcWAT()
+            wat = float(system.getTemperature()) - 273.15
+            if wat <= -60.0:
+                notes.append("no wax appearance above -60 C")
+                return NAN
+            if wat >= 150.0:
+                notes.append(f"wax appearance temperature out of range ({wat:.0f} C)")
+                return NAN
+            return wat
+        except Exception as exc:  # noqa: BLE001
+            notes.append(f"wax appearance temperature not found ({type(exc).__name__})")
+            return NAN
+        finally:
+            database.setCreateTemporaryTables(False)
 
     def _hydrate(
         self, blend: Blend, pressure_bara: float, notes: list[str]

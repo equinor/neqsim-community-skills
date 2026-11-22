@@ -63,14 +63,19 @@ class FluidSpec:
             molar basis (mol %, mole fraction, kmol/h) is accepted.
         pseudo_components: Optional plus-fraction cuts on the same basis.
         asphaltenic: True when this fluid carries the asphaltenes of concern.
+        tan_mg_koh_g: Total acid number of the stabilised oil, mg KOH/g, for
+            the naphthenate screen (None if unknown).
     """
 
     label: str
     components: dict[str, float]
     pseudo_components: list[PseudoComponent] = field(default_factory=list)
     asphaltenic: bool = False
+    tan_mg_koh_g: float | None = None
 
     def __post_init__(self) -> None:
+        if self.tan_mg_koh_g is not None and not 0.0 <= self.tan_mg_koh_g <= 20.0:
+            raise FluidSpecError(f"{self.label}: tan_mg_koh_g must be 0-20")
         if not re.fullmatch(r"[A-Za-z][A-Za-z0-9]{0,11}", self.label or ""):
             raise FluidSpecError(
                 "label must be 1-12 alphanumeric characters starting with a letter"

@@ -6,6 +6,7 @@ from .evaluator import (
     EvaluationConditions,
     NeqSimBlendEvaluator,
     NeqSimUnavailableError,
+    WaterChemistry,
     refractive_index_from_density,
 )
 from .fluids import (
@@ -23,6 +24,7 @@ from .screening import (
     CommingleReport,
     Finding,
     ScreeningLimits,
+    blend_tan,
     classify_ri_margin,
     estimate_onset_ri_from_sara,
     screen_commingling,
@@ -42,8 +44,10 @@ __all__ = [
     "NeqSimUnavailableError",
     "PseudoComponent",
     "ScreeningLimits",
+    "WaterChemistry",
     "as_blend",
     "blend",
+    "blend_tan",
     "classify_ri_margin",
     "estimate_onset_ri_from_sara",
     "mole_fraction_from_mass_rates",

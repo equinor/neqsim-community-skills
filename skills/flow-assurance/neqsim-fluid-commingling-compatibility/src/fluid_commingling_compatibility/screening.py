@@ -99,12 +99,24 @@ class ScreeningLimits:
             for the hydrate margin.
         h2s_limit_ppm: Separator-gas H2S limit, ppm(mol).
         co2_limit_mol_pct: Separator-gas CO2 limit, mol %.
+        naphthenate_tan: Blend TAN (mg KOH/g) above which calcium naphthenate
+            is screened as a risk (default 0.5; high at twice this).
+        naphthenate_ph: Separator water pH above which naphthenic acids
+            dissociate enough to form soaps (default 6.0).
+        naphthenate_calcium_mg_l: Calcium above which calcium naphthenate
+            deposits are credible (default 100 mg/L).
+
+    The naphthenate thresholds are screening defaults from published field
+    experience; replace them with operator experience where it exists.
     """
 
     onset_ri: float | None = None
     min_operating_temperature_c: float | None = None
     h2s_limit_ppm: float | None = None
     co2_limit_mol_pct: float | None = None
+    naphthenate_tan: float = 0.5
+    naphthenate_ph: float = 6.0
+    naphthenate_calcium_mg_l: float = 100.0
 
     def __post_init__(self) -> None:
         if self.onset_ri is not None and not 1.3 <= self.onset_ri <= 1.7:
@@ -208,9 +220,10 @@ class CommingleReport:
             "",
             (
                 "| x_B | Psat (bara) | Phases | rho_oil (kg/m3) | min RI (at bara) "
-                "| RI class | de Boer | HFT (C) | H2S (ppm) | CO2 (%) |"
+                "| RI class | de Boer | HFT (C) | WAT (C) | H2S (ppm) | CO2 (%) "
+                "| Water pH |"
             ),
-            "| ---: | ---: | --- | ---: | --- | --- | --- | ---: | ---: | ---: |",
+            "| ---: | ---: | --- | ---: | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |",
         ]
 
         def fmt(value: float, digits: int = 1) -> str:
@@ -237,8 +250,9 @@ class CommingleReport:
                 f"{'+'.join(p.phases_at_commingling) or '-'} | "
                 f"{fmt(p.liquid_density_kg_m3)} | {ri} | "
                 f"{ri_class(p)} | {de_boer(p)} | "
-                f"{fmt(p.hydrate_temperature_c)} | {fmt(p.separator_gas_h2s_ppm, 0)} | "
-                f"{fmt(p.separator_gas_co2_mol_pct, 2)} |"
+                f"{fmt(p.hydrate_temperature_c)} | {fmt(p.wax_appearance_temperature_c)} | "
+                f"{fmt(p.separator_gas_h2s_ppm, 0)} | {fmt(p.separator_gas_co2_mol_pct, 2)} | "
+                f"{fmt(p.separator_water_ph, 2)} |"
             )
         return "\n".join(lines) + "\n"
 
@@ -301,6 +315,8 @@ def screen_commingling(
     _check_saturation_linearity(report)
     _check_hydrate(report)
     _check_sour_gas(report)
+    _check_wax(report)
+    _check_naphthenates(report, fluid_a, fluid_b, grid)
     for props in results:
         for note in props.notes:
             report.findings.append(
@@ -537,6 +553,126 @@ def _check_hydrate(report: CommingleReport) -> None:
                 "info",
                 "hydrate-free-water-assumed",
                 "Free water was assumed for dry blends in the hydrate check.",
+            )
+        )
+
+
+def blend_tan(fluid_a: FluidSpec, fluid_b: FluidSpec, fraction_b: float) -> float:
+    """TAN of the blend's stabilised oil, mass-weighted by each fluid's C7+.
+
+    NaN when a fluid that contributes C7+ has no TAN.
+    """
+    mixture = blend(fluid_a, fluid_b, fraction_b)
+    weights = {fluid_a.label: 0.0, fluid_b.label: 0.0}
+    for pseudo in mixture.pseudo_components:
+        for label in weights:
+            if pseudo.name.endswith(label):
+                weights[label] += pseudo.mole_fraction * pseudo.molar_mass_kg_mol
+    total = sum(weights.values())
+    if total <= 0:
+        return float("nan")
+    tan = 0.0
+    for fluid in (fluid_a, fluid_b):
+        share = weights[fluid.label] / total
+        if share <= 0:
+            continue
+        if fluid.tan_mg_koh_g is None:
+            return float("nan")
+        tan += share * fluid.tan_mg_koh_g
+    return tan
+
+
+def _check_wax(report: CommingleReport) -> None:
+    values = [
+        (p.fraction_b, p.wax_appearance_temperature_c)
+        for p in report.blends
+        if math.isfinite(p.wax_appearance_temperature_c)
+    ]
+    if not values:
+        return
+    worst_f, worst_t = max(values, key=lambda v: v[1])
+    report.worst_cases["wax"] = {
+        "fraction_b": worst_f,
+        "wax_appearance_temperature_c": worst_t,
+    }
+    ends = [t for f, t in values if f in (0.0, 1.0)]
+    if ends and worst_f not in (0.0, 1.0) and worst_t > max(ends) + 0.5:
+        report.findings.append(
+            Finding(
+                "warning",
+                "wax-blend-maximum",
+                f"Wax appearance temperature peaks at {worst_t:.1f} C for "
+                f"x_B={worst_f:.2f}, above both fluids (max {max(ends):.1f} C).",
+            )
+        )
+    t_min = report.limits.min_operating_temperature_c
+    if t_min is not None:
+        waxy = [(f, t) for f, t in values if t > t_min]
+        if waxy:
+            report.findings.append(
+                Finding(
+                    "warning",
+                    "wax-margin",
+                    f"Wax appearance temperature exceeds the minimum operating "
+                    f"temperature {t_min:.1f} C for {len(waxy)} of {len(values)} blends "
+                    f"(up to {worst_t:.1f} C at x_B={worst_f:.2f}). Check wax deposition "
+                    "rate, pigging and insulation for the blend.",
+                )
+            )
+
+
+def _check_naphthenates(
+    report: CommingleReport,
+    fluid_a: FluidSpec,
+    fluid_b: FluidSpec,
+    grid: Sequence[float],
+) -> None:
+    if fluid_a.tan_mg_koh_g is None and fluid_b.tan_mg_koh_g is None:
+        return
+    water = report.conditions.separator_water
+    if water is None:
+        report.findings.append(
+            Finding(
+                "info",
+                "naphthenate-not-assessed",
+                "TAN is given but no separator water chemistry: set "
+                "EvaluationConditions.separator_water for the naphthenate screen.",
+            )
+        )
+        return
+    limits = report.limits
+    risky: list[tuple[float, float, float, str]] = []
+    for props, fraction in zip(report.blends, grid):
+        tan = blend_tan(fluid_a, fluid_b, fraction)
+        ph = props.separator_water_ph
+        if not (math.isfinite(tan) and math.isfinite(ph)):
+            continue
+        if (
+            tan > limits.naphthenate_tan
+            and ph > limits.naphthenate_ph
+            and water.calcium_mg_l > limits.naphthenate_calcium_mg_l
+        ):
+            level = "high" if tan > 2 * limits.naphthenate_tan else "warning"
+            risky.append((fraction, tan, ph, level))
+    if risky:
+        worst = max(risky, key=lambda r: (r[1], r[2]))
+        report.worst_cases["naphthenate"] = {
+            "fraction_b": worst[0],
+            "blend_tan": worst[1],
+            "separator_water_ph": worst[2],
+        }
+        level = "high" if any(r[3] == "high" for r in risky) else "warning"
+        report.findings.append(
+            Finding(
+                level,
+                "calcium-naphthenate",
+                f"Calcium naphthenate risk for {len(risky)} blends: blend TAN up to "
+                f"{worst[1]:.2f} mg KOH/g with separator water pH {worst[2]:.1f} and "
+                f"{water.calcium_mg_l:.0f} mg/L calcium (screening thresholds TAN > "
+                f"{limits.naphthenate_tan:g}, pH > {limits.naphthenate_ph:g}, Ca > "
+                f"{limits.naphthenate_calcium_mg_l:g} mg/L). Lower separator pressure "
+                "and CO2 flashing raise the pH; confirm with bottle tests and consider "
+                "acid or naphthenate inhibitor dosing.",
             )
         )
 

@@ -394,6 +394,15 @@ skills:
     tags: [flow-assurance, hydrate, margin, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-ccs-transport-chain
+    version: "0.1.0"
+    description: "CO2 transport chain screening for CCS with NeqSim: pipeline profile, single-phase margin to the two-phase boundary at every station, water solubility margin, impurity specification (DensePhaseCO2Corrosion), depressurisation temperature and dry ice, and the injection well (CO2InjectionWellAnalyzer) against reservoir and fracture pressure. USE WHEN: screening a CO2 pipeline-to-injector chain, its CO2 specification, operating pressure or blowdown."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/flow-assurance/neqsim-ccs-transport-chain/SKILL.md"
+    tags: [flow-assurance, ccs, co2, dense-phase, pipeline, injection, depressurisation, dry-ice, dnv-rp-f104]
+    min_neqsim_version: "3.29.0"
+
   - name: neqsim-co2-corrosion-profile
     version: "0.2.0"
     description: "CO2 corrosion along a flowline with NeqSim: Beggs-Brill or own profile, CPA-flash free water and acid gas, M-506 pH, NORSOK M-506 Rev. 2 rate with glycol correction and inhibitor availability, wall loss vs allowance, top-of-line condensation screen, H2S regime and ISO 15156 region, dense-phase CO2, NeqSim materials review. USE WHEN: screening internal corrosion, allowance or carbon steel vs CRA for a flowline, tie-in or CO2 line."

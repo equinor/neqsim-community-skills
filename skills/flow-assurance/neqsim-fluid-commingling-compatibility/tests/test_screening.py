@@ -42,7 +42,8 @@ def tiein(asphaltenic=False):
 class FakeEvaluator:
     """Analytic blend properties; the knobs shape each check."""
 
-    def __init__(self, hydrate_peak=0.0, gas_from=0.6, end_gas=True):
+    def __init__(self, hydrate_peak=0.0, gas_from=0.6, end_gas=True, wax_peak=0.0):
+        self.wax_peak = wax_peak
         self.hydrate_peak = hydrate_peak
         self.gas_from = gas_from
         self.end_gas = end_gas
@@ -64,6 +65,10 @@ class FakeEvaluator:
             hydrate_temperature_c=15.0 + 3.0 * f + self.hydrate_peak * 4 * f * (1 - f),
             separator_gas_h2s_ppm=1000.0 * f,
             separator_gas_co2_mol_pct=1.0,
+            wax_appearance_temperature_c=35.0
+            - 20.0 * f
+            + self.wax_peak * 4 * f * (1 - f),
+            separator_water_ph=6.5,
         )
 
 
@@ -235,3 +240,69 @@ def test_invalid_inputs():
 def test_path_pressures_span_the_range():
     pressures = EvaluationConditions(200.0, 60.0, 20.0, 4).path_pressures()
     assert pressures[0] == 200.0 and pressures[-1] == 20.0 and len(pressures) == 4
+
+
+def test_wax_margin_and_blend_maximum():
+    plain = screen_commingling(
+        host(),
+        tiein(),
+        CONDITIONS,
+        FakeEvaluator(),
+        limits=ScreeningLimits(min_operating_temperature_c=25.0),
+    )
+    codes = {f.code for f in plain.findings}
+    assert "wax-margin" in codes and "wax-blend-maximum" not in codes
+    peaked = screen_commingling(
+        host(), tiein(), CONDITIONS, FakeEvaluator(wax_peak=30.0)
+    )
+    assert any(f.code == "wax-blend-maximum" for f in peaked.findings)
+    assert 0.0 < peaked.worst_cases["wax"]["fraction_b"] < 1.0
+
+
+def test_blend_tan_is_c7plus_mass_weighted():
+    from dataclasses import replace
+
+    from fluid_commingling_compatibility import blend_tan
+
+    oil = replace(host(), tan_mg_koh_g=2.0)
+    light = FluidSpec(
+        "cond",
+        {"methane": 90.0},
+        [PseudoComponent("C7", 10.0, 0.1, 0.74)],
+        tan_mg_koh_g=0.0,
+    )
+    assert blend_tan(oil, light, 0.0) == pytest.approx(2.0)
+    # host C7+ mass 80 * 0.28; condensate 10 * 0.1 per unit; 50/50 molar blend
+    expected = 2.0 * (0.5 * 0.8 * 0.28) / (0.5 * 0.8 * 0.28 + 0.5 * 0.1 * 0.1)
+    assert blend_tan(oil, light, 0.5) == pytest.approx(expected)
+    assert math.isnan(blend_tan(oil, replace(light, tan_mg_koh_g=None), 0.5))
+
+
+def test_calcium_naphthenate_screen():
+    from dataclasses import replace
+
+    from fluid_commingling_compatibility import WaterChemistry
+
+    conditions = EvaluationConditions(
+        200.0,
+        70.0,
+        separator_pressure_bara=10.0,
+        separator_temperature_c=50.0,
+        separator_water=WaterChemistry(calcium_mg_l=500.0),
+    )
+    acidic = replace(host(), tan_mg_koh_g=1.5)
+    report = screen_commingling(
+        acidic, replace(tiein(), tan_mg_koh_g=0.0), conditions, FakeEvaluator()
+    )
+    finding = next(f for f in report.findings if f.code == "calcium-naphthenate")
+    assert finding.severity == "high"
+    assert report.worst_cases["naphthenate"]["blend_tan"] == pytest.approx(1.5)
+    low_ca = replace(conditions, separator_water=WaterChemistry(calcium_mg_l=50.0))
+    quiet = screen_commingling(
+        acidic, replace(tiein(), tan_mg_koh_g=0.0), low_ca, FakeEvaluator()
+    )
+    assert not any(f.code == "calcium-naphthenate" for f in quiet.findings)
+    no_water = screen_commingling(acidic, tiein(), CONDITIONS, FakeEvaluator())
+    assert any(f.code == "naphthenate-not-assessed" for f in no_water.findings)
+    with pytest.raises(ValueError):
+        EvaluationConditions(200.0, 70.0, separator_water=WaterChemistry())

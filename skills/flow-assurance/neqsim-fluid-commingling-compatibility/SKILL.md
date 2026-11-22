@@ -1,8 +1,8 @@
 ---
 name: neqsim-fluid-commingling-compatibility
 calculation_basis: "hybrid"
-version: "0.1.0"
-description: "Blend-sweep screening of two commingled fluids with NeqSim: asphaltene destabilisation by dilution (live-oil refractive index, onset margin, de Boer), gas breakout on mixing, blend hydrate temperature, separator H2S/CO2. USE WHEN: a tie-in, commingled well or shared flowline mixes a new fluid with a host fluid and the question is whether the mixture behaves worse than either fluid alone, or which blend ratio is worst."
+version: "0.2.0"
+description: "Blend-sweep screening of two commingled fluids with NeqSim: asphaltene destabilisation by dilution (live-oil refractive index, onset margin, de Boer), gas breakout on mixing, blend hydrate and wax appearance temperature, calcium naphthenate risk, separator H2S/CO2. USE WHEN: a tie-in, commingled well or shared flowline mixes a new fluid with a host fluid and the question is whether the mixture behaves worse than either fluid alone, or which blend ratio is worst."
 last_verified: "2026-11-21"
 requires:
   python_packages: [neqsim]
@@ -52,6 +52,12 @@ Do not use it for water-water scale mixing; use
   - `separator_pressure_bara`, `separator_temperature_c`: optional, for
     separator-gas H2S (ppm mol) and CO2 (mol %).
   - `hydrate_pressure_bara`: optional, for the blend hydrate temperature.
+  - `wax_pressure_bara`: optional, for the blend wax appearance temperature.
+  - `separator_water`: optional `WaterChemistry(calcium_mg_l,
+    bicarbonate_mg_l, chloride_mg_l)` of the produced water at the separator;
+    gives the separator water pH for the naphthenate screen.
+- `FluidSpec.tan_mg_koh_g`: total acid number of each stabilised oil, for the
+  naphthenate screen.
 - `fractions`: mole fractions of fluid B to evaluate (default 0, 0.1 ... 1).
   Include the operating ratio. Convert mass rates with
   `mole_fraction_from_mass_rates(m_a, M_a, m_b, M_b)`, taking molar masses from
@@ -59,8 +65,10 @@ Do not use it for water-water scale mixing; use
   `mole_fraction_from_rates(rate_a, rate_b)`. A light fluid takes a large mole
   fraction for a small mass rate.
 - `ScreeningLimits` (all optional): `onset_ri` (measured asphaltene onset
-  refractive index of the asphaltenic fluid), `min_operating_temperature_c`,
-  `h2s_limit_ppm`, `co2_limit_mol_pct`.
+  refractive index of the asphaltenic fluid), `min_operating_temperature_c`
+  (hydrate and wax margins), `h2s_limit_ppm`, `co2_limit_mol_pct`, and the
+  naphthenate screening thresholds `naphthenate_tan` (0.5 mg KOH/g),
+  `naphthenate_ph` (6.0) and `naphthenate_calcium_mg_l` (100).
 - `sara`: optional SARA weight fractions of the asphaltenic fluid, used to
   estimate the onset RI when it was not measured.
 
@@ -72,12 +80,15 @@ Do not use it for water-water scale mixing; use
   `phases_at_commingling`, `liquid_density_kg_m3`, `gas_volume_fraction`,
   `min_live_oil_ri` and the pressure where it occurs, `de_boer_risk`,
   `hydrate_temperature_c`, `free_water_assumed`, `separator_gas_h2s_ppm`,
-  `separator_gas_co2_mol_pct`, `notes`.
+  `separator_gas_co2_mol_pct`, `wax_appearance_temperature_c`,
+  `separator_water_ph`, `notes`.
 - `findings`: `Finding(severity, code, message)` with severity `info`,
   `warning` or `high`. Codes: `asphaltene-onset-crossed`,
   `asphaltene-marginal`, `asphaltene-dilution`, `de-boer-worse-than-host`,
   `free-gas-at-commingling`, `saturation-nonlinear`, `hydrate-blend-maximum`,
-  `hydrate-margin`, `h2s-limit`, `co2-limit` and informational notes.
+  `hydrate-margin`, `wax-margin`, `wax-blend-maximum`, `calcium-naphthenate`,
+  `naphthenate-not-assessed`, `h2s-limit`, `co2-limit` and informational
+  notes.
 - `worst_cases`: the worst blend per check.
 - `to_markdown()` and `to_dict()` (JSON-safe, `calculation_basis: screening`).
 
@@ -105,6 +116,15 @@ Do not use it for water-water scale mixing; use
    given pressure (free water added to dry blends and flagged). A maximum
    inside the blend range is flagged.
 7. **Sour gas.** Separator-gas H2S and CO2 of each blend against the limits.
+8. **Wax.** NeqSim `ThermodynamicOperations#calcWAT()` on each water-free
+   blend with the TBP wax model (`getWaxModel().addTBPWax()`, SRK, mixing
+   rule 2, solid complex phase, temporary database tables). Compared with the
+   minimum operating temperature; a maximum inside the blend range is flagged.
+9. **Calcium naphthenates.** Blend TAN is the C7+-mass-weighted TAN of the two
+   oils. Separator water pH comes from the NORSOK M-506 pH model in NeqSim
+   (separator-gas CO2, bicarbonate, chloride ionic strength). A blend is at
+   risk when TAN, pH and calcium all exceed the screening thresholds; high when
+   TAN exceeds twice the threshold.
 
 ## Python Usage Pattern
 
@@ -155,8 +175,12 @@ Eight blends take about 15 s.
       blends; if not, increase `path_points`.
 - [ ] Hydrate results with `free_water_assumed` are labelled as such.
 - [ ] `evaluation-note` findings (failed flashes) are reviewed.
-- [ ] Flagged blends are confirmed with an onset titration, HPM test or a
-      tuned asphaltene model before decisions are made.
+- [ ] Flagged blends are confirmed with an onset titration or HPM test on the
+      blend before decisions are made.
+- [ ] Wax results use the same characterisation as the PVT report; WAT is
+      compared with the coldest point of the line, not the arrival temperature.
+- [ ] Naphthenate screening thresholds are replaced with operator experience
+      where it exists; TAN values are for the stabilised oils.
 
 ## Common Mistakes
 
@@ -176,7 +200,18 @@ Eight blends take about 15 s.
   the amount deposited.
 - The cubic equation of state is not tuned to the fluids unless the supplied
   compositions come from a tuned characterisation.
-- Wax and water-water scale are not assessed here (see the related skills).
+- Water-water scale is not assessed here (see the related skills). Wax is
+  the appearance temperature only, not a deposition rate.
+- The naphthenate screen uses fixed thresholds on TAN, pH and calcium; it
+  does not model naphthenic acid partitioning or soap formation.
+- A tuned equation-of-state asphaltene onset model is not offered. NeqSim's
+  single-pseudo-component asphaltene model (`asphalteneOnsetPressure`) can be
+  calibrated to a measured host onset by the asphaltene binary interaction
+  parameters. But in testing on NeqSim 3.29.0, every calibration predicted that
+  adding a light condensate lowers the onset pressure. Dilution of the
+  asphaltene concentration dominated, which contradicts titration and
+  refractive-index evidence that light diluents destabilise. Use the
+  refractive-index result, and laboratory onset tests on the actual blends.
 - Public, synthetic examples only. Not a substitute for laboratory
   compatibility testing or engineering judgement.
 
@@ -186,6 +221,10 @@ Eight blends take about 15 s.
   with `addTBPfraction`, `useVolumeCorrection`.
 - `neqsim.thermodynamicoperations.ThermodynamicOperations#TPflash()`,
   `#bubblePointPressureFlash(boolean)`, `#hydrateFormationTemperature()`.
+- `ThermodynamicOperations#calcWAT()` with `getWaxModel().addTBPWax()` and
+  `addSolidComplexPhase("wax")` (blend wax appearance temperature).
+- `neqsim.process.corrosion.NorsokM506CorrosionRate#calculateEquilibriumPH()`
+  (separator water pH).
 - `neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreening` (called) and
   `RefractiveIndexAsphalteneScreening` (same RI correlation and classes).
 - For design-grade asphaltene work on a characterised fluid:
@@ -205,4 +244,8 @@ Eight blends take about 15 s.
 - de Boer, R.B., Leerlooyer, K., Eigner, M.R.P., van Bergen, A.R.D. (1995).
   Screening of crude oils for asphalt precipitation: theory, practice, and the
   selection of inhibitors. SPE Production & Facilities 10(1), 55-61.
+- Vindstad, J.E. et al. (2003). Fighting naphthenate deposition at the Heidrun
+  field. SPE 80375 (calcium naphthenate field experience and pH dependence).
+- Brandal, O. (2005). Interfacial (o/w) properties of naphthenic acids and
+  metal naphthenates. PhD thesis, NTNU.
 - NeqSim repository: https://github.com/equinor/neqsim

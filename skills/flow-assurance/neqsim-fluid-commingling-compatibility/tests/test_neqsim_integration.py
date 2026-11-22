@@ -113,3 +113,21 @@ def test_molar_mass_from_neqsim(evaluator):
     light = evaluator.molar_mass_kg_mol(CONDENSATE)
     assert 0.08 < heavy < 0.4
     assert 0.016 < light < heavy
+
+
+def test_wax_and_separator_water_ph(evaluator):
+    from fluid_commingling_compatibility import WaterChemistry
+
+    conditions = EvaluationConditions(
+        200.0,
+        80.0,
+        20.0,
+        4,
+        separator_pressure_bara=10.0,
+        separator_temperature_c=60.0,
+        wax_pressure_bara=50.0,
+        separator_water=WaterChemistry(calcium_mg_l=800.0, bicarbonate_mg_l=1500.0),
+    )
+    props = evaluator.evaluate(blend(HOST, CONDENSATE, 0.0), conditions)
+    assert 20.0 < props.wax_appearance_temperature_c < 70.0
+    assert 5.5 < props.separator_water_ph < 7.5

@@ -54,3 +54,29 @@ def test_limit_state_on_neqsim_host_model():
     report = validate(result.surrogate, model, n=6, seed=3)
     assert report.classification_agreement == 1.0
     assert report.max_abs_error["compressor_power_kw"] < 300.0
+
+
+def test_register_in_neqsim_registry_and_fallback():
+    from active_learning_surrogate import (
+        predict_with_fallback,
+        register_in_neqsim,
+    )
+
+    def model(values):
+        return {"y": 2.0 * values["a"] + values["b"]}
+
+    result = ActiveLearner(
+        model,
+        [Parameter("a", 0.0, 1.0), Parameter("b", 0.0, 1.0)],
+        ["y"],
+        pool_size=200,
+    ).run()
+    registry = register_in_neqsim(result.surrogate, "test-linear")
+    java_model = registry.get("test-linear").get()
+    assert float(java_model.predict([0.5, 0.5])[0]) == pytest.approx(1.5, abs=0.01)
+    assert java_model.getInputDimension() == 2
+    inside = predict_with_fallback("test-linear", [0.5, 0.5], lambda x: [-1.0])
+    assert inside[0] == pytest.approx(1.5, abs=0.01)
+    outside = predict_with_fallback("test-linear", [5.0, 0.5], lambda x: [99.0])
+    assert outside == [99.0]
+    registry.unregister("test-linear")

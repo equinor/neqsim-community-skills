@@ -6,7 +6,7 @@
 # To publish a skill, submit the corresponding entry to the main NeqSim repo.
 
 catalog_version: "1.0"
-last_updated: "2026-11-21"
+last_updated: "2026-11-22"
 trust: community
 
 skills:
@@ -393,6 +393,15 @@ skills:
     path: "skills/flow-assurance/neqsim-hydrate-margin-check/SKILL.md"
     tags: [flow-assurance, hydrate, margin, screening, education]
     min_neqsim_version: "3.7.0"
+
+  - name: neqsim-co2-corrosion-profile
+    version: "0.1.0"
+    description: "CO2 corrosion rates along a flowline with NeqSim: profile from the Beggs-Brill pipe model or your own, free water and gas CO2/H2S from a CPA flash, M-506 pH, NORSOK M-506 Rev. 2 rate, inhibitor availability, wall loss vs allowance; dense-phase CO2 lines via DensePhaseCO2Corrosion; worst points through MaterialsReviewEngine and NORSOK M-001. USE WHEN: screening internal corrosion, corrosion allowance or carbon steel vs CRA for a flowline, tie-in or CO2 line."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/flow-assurance/neqsim-co2-corrosion-profile/SKILL.md"
+    tags: [flow-assurance, corrosion, co2, norsok-m-506, materials, norsok-m-001, ccs, flowline, integrity]
+    min_neqsim_version: "3.29.0"
 
   - name: neqsim-fluid-commingling-compatibility
     version: "0.1.0"

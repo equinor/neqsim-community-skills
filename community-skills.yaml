@@ -394,6 +394,15 @@ skills:
     tags: [flow-assurance, hydrate, margin, screening, education]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-meg-loop
+    version: "0.1.0"
+    description: "MEG hydrate-inhibition loop screening with NeqSim (SRK-CPA): lean MEG rate to meet a hydrate margin at the design pressure and coldest temperature, rich MEG and Hammerschmidt cross-check, MEG losses, regeneration water, reboiler temperature and duty, salt build-up and reclaimer slipstream, and lean-quality trade-off. USE WHEN: sizing MEG injection or regeneration for a gas tie-back."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/flow-assurance/neqsim-meg-loop/SKILL.md"
+    tags: [flow-assurance, hydrate, meg, glycol, inhibition, regeneration, reclaimer, salt, tie-back]
+    min_neqsim_version: "3.29.0"
+
   - name: neqsim-ccs-transport-chain
     version: "0.1.0"
     description: "CO2 transport chain screening for CCS with NeqSim: pipeline profile, single-phase margin to the two-phase boundary at every station, water solubility margin, impurity specification (DensePhaseCO2Corrosion), depressurisation temperature and dry ice, and the injection well (CO2InjectionWellAnalyzer) against reservoir and fracture pressure. USE WHEN: screening a CO2 pipeline-to-injector chain, its CO2 specification, operating pressure or blowdown."

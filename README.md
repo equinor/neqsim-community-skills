@@ -47,14 +47,14 @@ For this multi-skill repository, each skill is cataloged by a path such as `skil
 
 ## Skill Catalog
 
-The complete source of truth is [`community-skills.yaml`](community-skills.yaml). The catalog currently contains 141 community skills across these public domains:
+The complete source of truth is [`community-skills.yaml`](community-skills.yaml). The catalog currently contains 142 community skills across these public domains:
 
 | Domain | Folder | Skills |
 | --- | --- | ---: |
 | Engineering data | [skills/engineering-data](skills/engineering-data) | 4 |
 | Environment | [skills/environment](skills/environment) | 3 |
 | Field development | [skills/field-development](skills/field-development) | 24 |
-| Flow assurance | [skills/flow-assurance](skills/flow-assurance) | 11 |
+| Flow assurance | [skills/flow-assurance](skills/flow-assurance) | 12 |
 | PVT | [skills/pvt](skills/pvt) | 9 |
 | Process | [skills/process](skills/process) | 35 |
 | Reporting | [skills/reporting](skills/reporting) | 5 |
@@ -69,6 +69,7 @@ Representative skills include:
 | [skills/process/neqsim-separator-modelling](skills/process/neqsim-separator-modelling) | `neqsim-separator-modelling` | Educational gas/liquid separator screening indicators |
 | [skills/pvt/neqsim-e300-fluid-io](skills/pvt/neqsim-e300-fluid-io) | `neqsim-e300-fluid-io` | Eclipse E300 fluid import/export and public water-parameter handling |
 | [skills/flow-assurance/neqsim-produced-water-scale-screening](skills/flow-assurance/neqsim-produced-water-scale-screening) | `neqsim-produced-water-scale-screening` | Public produced-water brine builder and scale screening |
+| [skills/flow-assurance/neqsim-meg-loop](skills/flow-assurance/neqsim-meg-loop) | `neqsim-meg-loop` | MEG loop sizing: lean MEG rate to a hydrate margin, rich MEG, reboiler duty, salt build-up and reclaimer slipstream |
 | [skills/flow-assurance/neqsim-ccs-transport-chain](skills/flow-assurance/neqsim-ccs-transport-chain) | `neqsim-ccs-transport-chain` | CO2 pipeline-to-injector chain: single-phase and water margins, impurities, blowdown dry ice, bottom-hole vs fracture pressure |
 | [skills/flow-assurance/neqsim-co2-corrosion-profile](skills/flow-assurance/neqsim-co2-corrosion-profile) | `neqsim-co2-corrosion-profile` | NORSOK M-506 Rev. 2 CO2 corrosion along a flowline, wall loss vs allowance, dense-phase CO2 and NeqSim materials review |
 | [skills/flow-assurance/neqsim-fluid-commingling-compatibility](skills/flow-assurance/neqsim-fluid-commingling-compatibility) | `neqsim-fluid-commingling-compatibility` | Blend-sweep screening of two commingled fluids (asphaltene, gas breakout, hydrate, sour gas) |

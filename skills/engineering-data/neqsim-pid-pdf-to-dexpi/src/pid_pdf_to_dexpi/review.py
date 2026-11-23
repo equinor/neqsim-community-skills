@@ -54,6 +54,8 @@ def review_items(records: dict[str, Any]) -> list[dict[str, Any]]:
             add("high" if e["normal_flow"] else "medium", "direction", e["edge_id"],
                 "Flow direction of %s was assumed (outward from equipment); confirm or reverse." % name, where)
         for k, item in enumerate(e.get("inline_items", [])):
+            if item.get("position_source") == "reviewer":
+                continue
             if item.get("normal_position") == "closed":
                 add("high" if item.get("blocks_process_run") else "low", "closed_item", "%s#%d" % (e["edge_id"], k),
                     "%s %s on %s read as normally closed (%s); this run is excluded from the flowsheet."
@@ -100,6 +102,33 @@ def write_review_sheet(records: dict[str, Any], path: str | Path) -> Path:
     return p
 
 
+def _correction_location(op: dict[str, Any], nodes: dict[str, Any], edges: dict[str, Any]) -> list[float]:
+    """Sheet position (pt) of the item a correction changes, for revision marks on the corrected drawing."""
+    if op.get("edge") in edges:
+        edge = edges[op["edge"]]
+        items = edge.get("inline_items", [])
+        if op.get("op") == "set_valve" and 0 <= int(op.get("index", 0)) < len(items):
+            item = items[int(op.get("index", 0))]
+            return [item["x"], item["y"]]
+        path = edge.get("path") or []
+        if path:
+            return list(path[len(path) // 2])
+        op = {"from_node": edge["from_node"], "to_node": edge["to_node"]}
+    if op.get("node") in nodes:
+        node = nodes[op["node"]]
+        port = next((p for p in node.get("ports", []) if p["port_id"] == op.get("port")), None)
+        if port is not None:
+            return [port["x"], port["y"]]
+        b = node["bbox"]
+        return [(b[0] + b[2]) / 2.0, (b[1] + b[3]) / 2.0]
+    if op.get("path"):
+        return list(op["path"][len(op["path"]) // 2])
+    ends = [nodes[n]["bbox"] for n in (op.get("from_node"), op.get("to_node")) if n in nodes]
+    if ends:
+        return [sum((b[0] + b[2]) / 2.0 for b in ends) / len(ends), sum((b[1] + b[3]) / 2.0 for b in ends) / len(ends)]
+    return []
+
+
 def apply_corrections(records: dict[str, Any], corrections: dict[str, Any] | str | Path) -> dict[str, Any]:
     """Applies a reviewer's corrections; returns new records with the review recorded."""
     if not isinstance(corrections, dict):
@@ -119,6 +148,7 @@ def apply_corrections(records: dict[str, Any], corrections: dict[str, Any] | str
             raise ValueError("Correction %d: unknown edge %r" % (k, op.get("edge")))
         if kind in ("set_role", "set_connector", "set_tag") and op.get("node") not in nodes:
             raise ValueError("Correction %d: unknown node %r" % (k, op.get("node")))
+        at = _correction_location(op, nodes, edges)
         if kind == "reverse":
             e = edges[op["edge"]]
             e["from_node"], e["to_node"] = e["to_node"], e["from_node"]
@@ -169,7 +199,7 @@ def apply_corrections(records: dict[str, Any], corrections: dict[str, Any] | str
             out["edges"].append(edge)
             edges[edge["edge_id"]] = edge
         log.append({"op": kind, "ref": op.get("edge") or op.get("node") or op.get("edge_id", ""),
-                    "reason": op.get("reason", "")})
+                    "reason": op.get("reason", ""), "revision": len(log) + 1, "at": at})
     approved = bool(corrections.get("approved"))
     digest = hashlib.sha256(json.dumps(corrections, sort_keys=True).encode("utf-8")).hexdigest()
     out["review"] = {"reviewer": reviewer, "date": str(corrections.get("date") or date.today().isoformat()),

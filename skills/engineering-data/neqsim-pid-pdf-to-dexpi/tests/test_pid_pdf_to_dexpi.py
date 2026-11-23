@@ -138,3 +138,42 @@ def test_corrections_need_a_reviewer_and_record_approval():
     item = next(e for e in out["edges"] if e["edge_id"] == gas)["inline_items"][0]
     assert (item["normal_position"], item["position_source"]) == ("closed", "reviewer")
     assert out["reviewStatus"] == "APPROVED" and out["review"]["correctionCount"] == 2
+
+def test_safety_register_binds_trips_and_valves_and_drafts_hazop():
+    from pid_pdf_to_dexpi.safety import FINAL, INITIATOR, classify_function, hazop_worksheet, safety_register
+
+    assert classify_function("LST")[0] == INITIATOR and classify_function("PSHH") == (INITIATOR, "pressure")
+    assert classify_function("ESV")[0] == FINAL and classify_function("LIC")[0] == "controller"
+    assert classify_function("PSV")[0] == "relief_device" and classify_function("PT") == ("transmitter", "pressure")
+    rec = extract_from_page(_sheet())
+    rec["instruments"] += [{"node_id": "INS-90", "tag": "LST-0175", "function": "LST", "number": "0175",
+                            "x": 450.0, "y": 380.0},
+                           {"node_id": "INS-91", "tag": "LST-0175", "function": "LST", "number": "0175",
+                            "x": 452.0, "y": 380.0}]
+    reg = safety_register(rec)
+    sep = reg["equipment"]["20VA001"]
+    assert sep["initiators"] == {"level": ["LST-0175"]}
+    assert [(f["tag"], f["side"], f["port_role"]) for f in sep["finalElements"]] == [("XV-0100", "outlet",
+                                                                                      "GasOutlet")]
+    gaps = " ".join(g["gap"] for g in reg["gaps"])
+    assert "No relief device" in gaps and "pressure trip initiator" in gaps
+    rows = hazop_worksheet(rec, reg)
+    more_level = next(r for r in rows if r["deviation"] == "MORE LEVEL")
+    assert "LST-0175" in more_level["safeguards"] and "GAS TO COMPRESSOR" in more_level["consequence"]
+
+
+def test_corrections_are_marked_on_the_corrected_drawing(tmp_path):
+    import xml.etree.ElementTree as ET
+
+    from pid_pdf_to_dexpi.pipeline import NS, add_revision_marks
+
+    rec = extract_from_page(_sheet())
+    gas = next(e["edge_id"] for e in rec["edges"] if e["inline_items"])
+    out = apply_corrections(rec, {"reviewer": "A. Reviewer", "corrections": [
+        {"op": "set_valve", "edge": gas, "index": 0, "locking": "LC", "reason": "lock read from sheet"}]})
+    assert out["review"]["corrections"][0]["at"] == [766.0, 200.0]
+    dexpi = tmp_path / "corrected.dexpi.xml"
+    dexpi.write_text('<PlantModel xmlns="%s"/>' % NS, encoding="utf-8")
+    assert add_revision_marks(dexpi, dexpi, out) == 1
+    labels = [e.get("ID") for e in ET.parse(dexpi).getroot()]
+    assert labels == ["REV-1", "REV-TABLE"]

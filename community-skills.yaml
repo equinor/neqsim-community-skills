@@ -48,11 +48,11 @@ skills:
 
   - name: neqsim-pid-pdf-to-dexpi
     version: "1.1.0"
-    description: "P&ID PDF to NeqSim: extracts equipment, nozzle roles, connectors, pipe runs, tees, valves with normal position, flanges, reducers and instruments into drawing records; stitches sheets; reads scanned sheets best-effort; writes DEXPI, builds and runs the flowsheet with side-stream feeds, redraws the P&ID and checks the round trip. Reviewer corrections gate approval. USE WHEN: a P&ID exists only as PDF and must become DEXPI, a simulation or a redrawn sheet."
+    description: "P&ID PDF to NeqSim: extracts equipment, nozzles, connectors, pipe runs, valves with normal position, fittings and instruments; stitches sheets; reads scans best-effort; writes DEXPI, simulates and redraws the P&ID, with revision marks after reviewer corrections. Builds a safeguard register and runs trip tests, blowdown/flare and a HAZOP draft. USE WHEN: a P&ID exists only as PDF and must become DEXPI, a simulation, a safety study or a corrected drawing."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/engineering-data/neqsim-pid-pdf-to-dexpi/SKILL.md"
-    tags: [engineering-data, pid, dexpi, pdf, topology, simulation, process]
+    tags: [engineering-data, pid, dexpi, pdf, topology, simulation, process, safety, hazop, esd, blowdown]
     min_neqsim_version: "3.29.0"
   - name: neqsim-document-intelligence-extraction
     version: "1.0.0"

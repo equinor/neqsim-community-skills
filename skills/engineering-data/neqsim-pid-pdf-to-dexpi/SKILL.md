@@ -2,7 +2,7 @@
 name: neqsim-pid-pdf-to-dexpi
 calculation_basis: "hybrid"
 version: "1.1.0"
-description: "P&ID PDF to NeqSim: extracts equipment, nozzle roles, connectors, pipe runs, tees, valves with normal position, flanges, reducers and instruments into drawing records; stitches sheets; reads scanned sheets best-effort; writes DEXPI, builds and runs the flowsheet with side-stream feeds, redraws the P&ID and checks the round trip. Reviewer corrections gate approval. USE WHEN: a P&ID exists only as PDF and must become DEXPI, a simulation or a redrawn sheet."
+description: "P&ID PDF to NeqSim: extracts equipment, nozzles, connectors, pipe runs, valves with normal position, fittings and instruments; stitches sheets; reads scans best-effort; writes DEXPI, simulates and redraws the P&ID, with revision marks after reviewer corrections. Builds a safeguard register and runs trip tests, blowdown/flare and a HAZOP draft. USE WHEN: a P&ID exists only as PDF and must become DEXPI, a simulation, a safety study or a corrected drawing."
 last_verified: "2026-11-23"
 requires:
   python_packages: [pymupdf, jpype1]
@@ -25,6 +25,8 @@ PDF sheet(s)  (vector; scanned best-effort)
   -> runnable ProcessSystem with side-stream feeds (DexpiSimulationBuilder)       [NeqSim Java]
   -> regenerated P&ID (DexpiXmlSvgRenderer) with stream results on the runs
   -> DEXPI 2.0.1 of the simulated flowsheet + conformance assessment
+  -> safeguard register, trip tests, blowdown/flare, HAZOP draft (safety.py) [Python + NeqSim]
+  -> corrected P&ID with revision clouds after reviewer corrections
 ```
 
 The extracted topology is a **draft** until a named reviewer approves it. The source drawing stays
@@ -38,6 +40,9 @@ and a review checklist of the items most likely to be wrong.
 - "Join these two P&ID sheets and simulate across them."
 - Building a topology (which nozzle goes where, through which valves and tees, which valves are
   normally closed) for routing, isolation or model-build work when no smart P&ID export exists.
+- "Which instruments and shutdown valves protect this vessel, and do the trips act in time?"
+- "Size the blowdown and check flare load and minimum temperature" or "prepare a HAZOP" from a P&ID.
+- "Correct the extracted P&ID and show the changes".
 
 A native DEXPI/Proteus export is always better than extraction; ask the drawing owner first.
 
@@ -148,6 +153,72 @@ Other operations are `set_connector`, `set_tag` and `remove_edge`.
 correction and the SHA-256 of the file. Only `"approved": true` sets `APPROVED`; the writer carries
 `ReviewedBy`/`ReviewDate` into the DEXPI.
 
+### Corrected P&IDs
+
+`run_pipeline(..., corrections=...)` writes the corrected records to DEXPI and regenerates the
+drawing. Every correction gets a red revision cloud and a numbered triangle at the item it
+changed, and the sheet gets a revision table (number, operation, item, reason, reviewer, date
+and approval state). Lock text set by the reviewer (`LC`, `CSO`...) is drawn on the valve.
+Reviewer-confirmed valves drop out of the review checklist. The cloud positions are kept in
+`records["review"]["corrections"][i]["at"]`; `add_revision_marks` can mark any DEXPI file written
+from the records.
+
+## Instrumentation and safety studies
+
+`safety.py` turns the drawing into a safety-study basis and tests it with native NeqSim models:
+
+1. **Safeguard register** (`safety_register`). Each instrument bubble and tagged valve gets a
+   role from its ISA letters:
+   - trip initiator: `PST`, `LST`, `LZT`, `PSHH`...;
+   - final element: `ESV`, `SDV`, `XV`, `BDV`;
+   - relief device: `PSV`, `PRV`;
+   - controller, control valve, transmitter, indicator or sensor element.
+
+   Each item is bound to its vessel (bubble inside the outline), line (nearest run) or valve
+   (inline item). Shutdown valves further along a normal-flow line count as the vessel's isolation
+   valves, through tees and across stitched sheets. Relief valves named on connector labels
+   (`TO PSV0201A/B/C/D`) are read with their nozzle and sheet. Flare and drain connections are
+   traced through tees. Gaps are listed: no PSV, no PAHH, several level trips without HH/LL
+   assignment, or no inlet ESV on the sheet.
+2. **Trip tests** (`run_safety_scenarios`). These run on a transient three-phase separator with
+   the diameter and length from the data block:
+   - blocked gas outlet: PAHH must trip the inlet ESV before the design pressure is reached;
+   - blocked oil outlet: LAHH must trip before liquid reaches the gas nozzle;
+   - loss of inlet: LALL must close the outlet ESVs before gas blows by.
+
+   The native `Detector`, `SafetyInstrumentedFunction` (voting), `ESDLogic`/`TripValveAction` and
+   `ESDValve` (stroke time) are used. Results include the trip time, peak value, margin, the time
+   to the limit without a trip, and PASS/FAIL against the sheet's design data. A trend plot is
+   written per case.
+3. **Blowdown and flare load.** The orifice is sized to reach 6.9 barg in 15 min with
+   `DepressurizationSimulator`. The run gives the peak flare rate and two minimum temperatures over
+   the full blowdown, compared with the design minimum from the data block (MDMT): an adiabatic gas
+   bound, and the wall temperature from a lumped wall with the thickness estimated from the design
+   pressure.
+4. **HAZOP preparation** (`hazop_worksheet`, `write_hazop`). Guide-word rows are drafted per
+   vessel. Causes come from the traced topology and the real line destinations. Safeguards come
+   from the register (initiator -> final element, PSV, controllers). Consequences are quantified
+   from the simulations, and recommendations come from the gaps and failed checks. The rows are
+   written as JSON, CSV and Markdown.
+
+```python
+from pid_pdf_to_dexpi.safety import run_safety_study
+
+summary = run_safety_study("out/drawing_records.json", "out_safety", fluid, 200000.0, jar="neqsim.jar",
+                           setpoints={"PAHH": {"value": 27.0, "unit": "barg", "tag": "PST-0201"}},
+                           cause_effect={"LAHH": {"initiators": ["LST-0175", "LST-0182", "LST-0185"],
+                                                  "final_elements": ["ESV-0101"], "voting": "2oo3"}},
+                           stroke_time_s=12.0)
+```
+
+Trip set points, voting, cause-and-effect links, stroke times and PSV set pressures are not on a
+P&ID. Pass them from the C&E chart, SRS and valve datasheets. Each default is written to
+`assumptions` (PAHH at 93 % of design gauge pressure, LAHH at 80 %, LALL at 10 % of height,
+15 s stroke). Missing initiators and final elements are simulated as clearly named placeholders,
+and `linkSource` records whether a trip link came from the C&E input, the drawing register or a
+placeholder. The results are screening evidence for a review, not SIL verification, a relief
+study or a chaired HAZOP.
+
 ## Python Usage Pattern
 
 ```python
@@ -179,6 +250,13 @@ All outputs go to `out/`:
 - `simulated_flowsheet.dexpi201.xml`;
 - `pipeline_summary.json`.
 
+`run_safety_study` writes to its own folder:
+
+- `safety_register.json`;
+- `safety_scenarios.json` with `trend_*.png`;
+- `hazop_worksheet.json/.csv/.md`;
+- `safety_study_summary.json`.
+
 ## Validation Checklist
 
 - Open `extraction_overlay.png`. Every main nozzle has its role. Every traced run follows a drawn pipe.
@@ -205,6 +283,26 @@ inlet was 205 t/h, all 84 runs round-tripped and all checks pass.
 **Scanned copy.** A 300 dpi raster of the separator sheet found the separator and 30 connectors.
 Against the vector result: process connections recall 0.8, precision 1.0. All pipeline checks pass.
 
+**Safety study** on the two stitched sheets (about 1 minute):
+
+- **Register.** 3 level trip transmitters on the vessel; the oil and water outlet ESVs found on
+  the downstream sheet; 4 PSVs named on a connector label (on a third sheet); 4 flare/relief and
+  17 drain connections. Gaps reported: no PAHH initiator and no inlet ESV on these sheets, the
+  PSV set pressure not on these sheets, and HH/LL assignment of the level trips unknown.
+- **Trip tests** with assumed set points all PASS:
+  - PAHH: trip 464 s after the block, peak 1.9 bar below design (design pressure would be
+    reached in 528 s without a trip);
+  - LAHH: trip after 1,496 s;
+  - LALL: trip after 1,834 s, closing the outlet ESVs found on the drawing.
+- **Blowdown.** A 34 mm orifice reaches 6.9 barg in 888 s with a peak flare rate of 14.4 t/h.
+  The minimum wall temperature is 40 °C against a −46 °C design minimum; the adiabatic gas bound
+  is −86 °C.
+- **HAZOP draft.** 9 rows, with the real line destinations, drawn safeguards and quantified
+  consequences.
+
+**Corrected drawing.** Three demonstration corrections drew three revision clouds, the `LC` lock
+text and a revision table, and the two confirmed valves left the high-severity review items.
+
 ## Common Mistakes
 
 - Treating the extracted topology as the controlled P&ID before a reviewer approves it.
@@ -225,13 +323,20 @@ Against the vector result: process connections recall 0.8, precision 1.0. All pi
   assumed open position.
 - A line crossing drawn as touching strokes reads as a tee. A crossing with a gap or hop reads
   correctly.
-- Instrument bubbles are placed but not tied to signal lines or loops. Twin nozzles are labelled
-  with the role total.
+- Instrument bubbles are bound by proximity, not by tracing signal lines; loops are grouped by
+  loop number. Twin nozzles are labelled with the role total.
+- Safety studies use a single transient separator with the pressure controller idealised, one
+  ESD valve per trip (the first final element's stroke drives all isolated outlets), the gas cap
+  only for blowdown, and no fire case. Closed valves are drawn hollow on the regenerated P&ID;
+  the lock text and revision marks show the corrected state.
 
 ## References
 
 - NeqSim Java: `PidDrawingRecordsDexpiWriter`, `DexpiSimulationBuilder` (`addBoundaryFeed`),
   `DexpiXmlSvgRenderer`, `Dexpi201XmlWriter` (docs: `docs/integration/dexpi-reader.md`).
 - Skills: `neqsim-pid-process-operations` (P&ID-to-simulation),
-  `neqsim-dexpi-conformance-validation`, `neqsim-document-intelligence-extraction`.
+  `neqsim-dexpi-conformance-validation`, `neqsim-document-intelligence-extraction`,
+  `neqsim-process-safety`, `neqsim-depressurization-mdmt`, `neqsim-hazid-fmea-eta-fta`.
+- NeqSim safety classes: `Detector`, `SafetyInstrumentedFunction`, `ESDLogic`, `ESDValve`,
+  `DepressurizationSimulator`; ESD evidence tests: `EmergencyShutdownTestRunner`.
 - Company document-system connectors fetch the sheets; this skill reads them.

@@ -13,6 +13,8 @@ with OCR. The records are written as DEXPI with NeqSim's `PidDrawingRecordsDexpi
 flowsheet is built and run, with side streams as boundary feeds. The P&ID is then regenerated
 with stream results and the round trip is checked.
 
+`safety.py` builds a safeguard register from the drawing (trip initiators, shutdown and relief valves, controllers) and runs trip tests, blowdown/flare loads and a HAZOP preparation worksheet with NeqSim. Reviewer corrections are drawn on the regenerated P&ID as revision clouds.
+
 The extracted topology is a draft. A named reviewer approves it through a corrections file; see
 `SKILL.md`.
 

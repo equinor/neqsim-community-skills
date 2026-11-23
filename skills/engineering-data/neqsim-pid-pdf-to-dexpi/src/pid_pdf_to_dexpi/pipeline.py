@@ -7,6 +7,7 @@ path (pass ``jar=`` or set ``NEQSIM_JAR``). The PDF is read only; every output g
 from __future__ import annotations
 
 import json
+import math
 import os
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
@@ -140,6 +141,8 @@ def run_pipeline(pdf_path: str | Path | list, out_dir: str | Path, fluid: dict[s
     extracted = out / "extracted.dexpi.xml"
     write_result = writer.write(File(str(rec_file)), File(str(extracted)))
     summary["dexpiWrite"] = json.loads(str(write_result.toJson()))
+    if records.get("review", {}).get("corrections"):
+        summary["revisionMarks"] = add_revision_marks(extracted, extracted, records)
     renderer.render(File(str(extracted)), File(str(out / "regenerated_pid.svg")))
     _svg_to_png(out / "regenerated_pid.svg", out / "regenerated_pid.png", dpi)
     summary["files"].update({"dexpi": extracted.name, "regeneratedPid": "regenerated_pid.svg"})
@@ -409,6 +412,55 @@ def annotate_results(src: str | Path, dst: str | Path, records: dict[str, Any], 
         count += 1
     tree.write(str(dst), xml_declaration=True, encoding="utf-8")
     return count
+
+
+def add_revision_marks(src: str | Path, dst: str | Path, records: dict[str, Any]) -> int:
+    """Draws a revision cloud and numbered triangle at every reviewer correction, plus a revision table, so the
+    regenerated P&ID shows what was changed from the extracted drawing. Returns the number of marks."""
+    review = records.get("review") or {}
+    marks = [c for c in review.get("corrections", []) if c.get("at")]
+    ET.register_namespace("", NS)
+    tree = ET.parse(str(src))
+    root = tree.getroot()
+    k = 25.4 / 72.0
+    height = float(records["source"]["pageHeight"])
+    red = {"R": "0.85", "G": "0", "B": "0"}
+
+    def text(parent, string, x, y, size=3.0, just="LeftBottom"):
+        t = ET.SubElement(parent, _Q + "Text", {"String": string, "Font": "Arial", "Height": "%.1f" % size,
+                                                "Width": "0", "Justification": just})
+        ET.SubElement(t, _Q + "Presentation", red)
+        pos = ET.SubElement(t, _Q + "Position")
+        ET.SubElement(pos, _Q + "Location", {"X": "%.3f" % x, "Y": "%.3f" % y, "Z": "0"})
+        ET.SubElement(pos, _Q + "Axis", {"X": "0", "Y": "0", "Z": "1"})
+        ET.SubElement(pos, _Q + "Reference", {"X": "1", "Y": "0", "Z": "0"})
+
+    for c in marks:
+        x, y = c["at"][0] * k, (height - c["at"][1]) * k
+        label = ET.SubElement(root, _Q + "Label", {"ID": "REV-%d" % c["revision"], "ComponentClass": "RevisionMark"})
+        cloud = ET.SubElement(label, _Q + "PolyLine", {"NumPoints": "37"})
+        ET.SubElement(cloud, _Q + "Presentation", dict(red, LineType="0", LineWeight="0.5"))
+        for i in range(37):
+            a = 2 * math.pi * i / 36
+            r = 9.0 + 1.2 * math.sin(6 * a)  # scalloped outline
+            ET.SubElement(cloud, _Q + "Coordinate", {"X": "%.3f" % (x + 1.3 * r * math.cos(a)),
+                                                    "Y": "%.3f" % (y + r * math.sin(a)), "Z": "0"})
+        tx, ty = x + 13.0, y + 9.0
+        tri = ET.SubElement(label, _Q + "PolyLine", {"NumPoints": "4"})
+        ET.SubElement(tri, _Q + "Presentation", dict(red, LineType="0", LineWeight="0.4"))
+        for px, py in ((tx - 3.5, ty - 2.5), (tx + 3.5, ty - 2.5), (tx, ty + 3.8), (tx - 3.5, ty - 2.5)):
+            ET.SubElement(tri, _Q + "Coordinate", {"X": "%.3f" % px, "Y": "%.3f" % py, "Z": "0"})
+        text(label, str(c["revision"]), tx, ty - 2.0, 2.6, "CenterBottom")
+    if marks:
+        table = ET.SubElement(root, _Q + "Label", {"ID": "REV-TABLE", "ComponentClass": "RevisionTable"})
+        x0, y0 = 10.0, 14.0 + 4.0 * len(marks)
+        text(table, "Corrections by %s, %s (%s)" % (review.get("reviewer", ""), review.get("date", ""),
+                                                   "approved" if review.get("approved") else "not yet approved"),
+             x0, y0 + 4.0, 3.2)
+        for i, c in enumerate(marks):
+            text(table, "%d  %s %s  %s" % (c["revision"], c["op"], c["ref"], c.get("reason", "")), x0, y0 - 4.0 * i)
+    tree.write(str(dst), xml_declaration=True, encoding="utf-8")
+    return len(marks)
 
 
 def _label_anchor(path: list[list[float]], page_height: float) -> tuple[float, float]:

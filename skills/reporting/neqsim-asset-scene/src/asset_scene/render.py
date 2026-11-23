@@ -10,8 +10,9 @@ from __future__ import annotations
 import json
 import statistics
 import struct
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any
 
 from .mesh import Mesh, geometry_mesh, scale_z, tube_mesh
 from .routing import ROUTE_WORDS, route_connections, route_length, routing_summary
@@ -33,8 +34,8 @@ def _fmt(value: Any) -> str:
     return str(value)
 
 
-def _info(obj: Dict[str, Any]) -> Dict[str, Any]:
-    info: Dict[str, Any] = {
+def _info(obj: dict[str, Any]) -> dict[str, Any]:
+    info: dict[str, Any] = {
         "Tag": obj.get("tag") or "-",
         "Name": obj.get("name"),
         "Kind": obj.get("kind"),
@@ -48,7 +49,9 @@ def _info(obj: Dict[str, Any]) -> Dict[str, Any]:
     for key, val in obj.get("live", {}).items():
         info[f"Live {key}"] = _fmt(val)
     if obj.get("media"):
-        info["Pictures"] = ", ".join(str(m.get("caption") or m.get("path")) for m in obj["media"])
+        info["Pictures"] = ", ".join(
+            str(m.get("caption") or m.get("path")) for m in obj["media"]
+        )
     return info
 
 
@@ -62,7 +65,7 @@ def _default_connection_diameter(scene: AssetScene) -> float:
     return max(0.05, 0.04 * statistics.median(sizes))
 
 
-def _enlarged(geometry: Dict[str, Any], min_feature: float) -> Dict[str, Any]:
+def _enlarged(geometry: dict[str, Any], min_feature: float) -> dict[str, Any]:
     """Copy of a geometry scaled up to ``min_feature`` (display only, for field-scale views)."""
     geo = dict(geometry)
     shape = geo["shape"]
@@ -86,7 +89,9 @@ def _enlarged(geometry: Dict[str, Any], min_feature: float) -> Dict[str, Any]:
     return geo
 
 
-def auto_min_feature(scene: AssetScene, fraction: float = 0.015, threshold_m: float = 500.0) -> Optional[float]:
+def auto_min_feature(
+    scene: AssetScene, fraction: float = 0.015, threshold_m: float = 500.0
+) -> float | None:
     """Display size floor for field-scale scenes (None when the scene is plant-scale)."""
     b = scene.bounds()
     span = max(b[3] - b[0], b[4] - b[1])
@@ -95,11 +100,11 @@ def auto_min_feature(scene: AssetScene, fraction: float = 0.015, threshold_m: fl
 
 def scene_parts(
     scene: AssetScene,
-    color_by: Optional[ColorBy] = None,
+    color_by: ColorBy | None = None,
     vertical_exaggeration: float = 1.0,
-    min_feature: Optional[float] = None,
+    min_feature: float | None = None,
     routing: str = "auto",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Triangulated, coloured parts (objects first, then routed connections).
 
     ``min_feature`` enlarges objects smaller than that size (metres) so
@@ -110,9 +115,11 @@ def scene_parts(
     """
     if color_by is not None:
         color_by.fit(scene.objects)
-    parts: List[Dict[str, Any]] = []
+    parts: list[dict[str, Any]] = []
     for obj in scene.objects:
-        geo = _enlarged(obj["geometry"], min_feature) if min_feature else obj["geometry"]
+        geo = (
+            _enlarged(obj["geometry"], min_feature) if min_feature else obj["geometry"]
+        )
         b = geometry_bounds(geo)
         top = list(geometry_anchor(geo))
         if geo["shape"] != "polyline":
@@ -147,7 +154,11 @@ def scene_parts(
             offset = len(mesh[0])
             mesh[0].extend(seg[0])
             mesh[1].extend((i + offset, j + offset, k + offset) for i, j, k in seg[1])
-        quality = "verified" if route["mode"] == "supplied" else conn.get("source", {}).get("quality")
+        quality = (
+            "verified"
+            if route["mode"] == "supplied"
+            else conn.get("source", {}).get("quality")
+        )
         probe = {"state": conn["state"], "group": a["group"]}
         parts.append(
             {
@@ -182,7 +193,7 @@ def _pad(data: bytes, fill: bytes) -> bytes:
 def write_glb(
     scene: AssetScene,
     path: Any,
-    color_by: Optional[ColorBy] = None,
+    color_by: ColorBy | None = None,
     vertical_exaggeration: float = 1.0,
     routing: str = "auto",
 ) -> Path:
@@ -194,15 +205,19 @@ def write_glb(
     Coordinates are shifted so the scene centre is at the origin; the offset is
     stored in ``asset.extras.origin_offset_m``.
     """
-    parts = [p for p in scene_parts(scene, color_by, vertical_exaggeration, routing=routing) if p["mesh"][0]]
+    parts = [
+        p
+        for p in scene_parts(scene, color_by, vertical_exaggeration, routing=routing)
+        if p["mesh"][0]
+    ]
     b = scene.bounds()
     origin = [(b[0] + b[3]) / 2.0, (b[1] + b[4]) / 2.0, 0.0]
     buffer = bytearray()
-    views: List[Dict[str, Any]] = []
-    accessors: List[Dict[str, Any]] = []
-    meshes: List[Dict[str, Any]] = []
-    materials: List[Dict[str, Any]] = []
-    nodes: List[Dict[str, Any]] = []
+    views: list[dict[str, Any]] = []
+    accessors: list[dict[str, Any]] = []
+    meshes: list[dict[str, Any]] = []
+    materials: list[dict[str, Any]] = []
+    nodes: list[dict[str, Any]] = []
     for part in parts:
         verts, faces = part["mesh"]
         gl = [(x - origin[0], z - origin[2], -(y - origin[1])) for x, y, z in verts]
@@ -214,8 +229,20 @@ def write_glb(
         ):
             offset = len(buffer)
             buffer.extend(_pad(data, b"\x00"))
-            views.append({"buffer": 0, "byteOffset": offset, "byteLength": len(data), "target": target})
-            acc = {"bufferView": len(views) - 1, "componentType": comp, "count": count, "type": typ}
+            views.append(
+                {
+                    "buffer": 0,
+                    "byteOffset": offset,
+                    "byteLength": len(data),
+                    "target": target,
+                }
+            )
+            acc = {
+                "bufferView": len(views) - 1,
+                "componentType": comp,
+                "count": count,
+                "type": typ,
+            }
             if typ == "VEC3":
                 acc["min"] = [min(v[i] for v in gl) for i in range(3)]
                 acc["max"] = [max(v[i] for v in gl) for i in range(3)]
@@ -223,7 +250,11 @@ def write_glb(
         rgba = list(part["color"])
         material = {
             "name": f"{part['state']}:{part['id']}",
-            "pbrMetallicRoughness": {"baseColorFactor": rgba, "metallicFactor": 0.1, "roughnessFactor": 0.8},
+            "pbrMetallicRoughness": {
+                "baseColorFactor": rgba,
+                "metallicFactor": 0.1,
+                "roughnessFactor": 0.8,
+            },
             "doubleSided": True,
         }
         if rgba[3] < 1.0:
@@ -241,10 +272,17 @@ def write_glb(
                 ],
             }
         )
-        extras = {"id": part["id"], "state": part["state"], "kind": part["kind"], "info": part["info"]}
+        extras = {
+            "id": part["id"],
+            "state": part["state"],
+            "kind": part["kind"],
+            "info": part["info"],
+        }
         if part.get("route"):
             extras["route_mode"] = part["route"]["mode"]
-            extras["route_points_m"] = [[round(c, 3) for c in p] for p in part["route"]["points"]]
+            extras["route_points_m"] = [
+                [round(c, 3) for c in p] for p in part["route"]["points"]
+            ]
         nodes.append(
             {
                 "name": part["label"],
@@ -288,7 +326,7 @@ def write_glb(
     return out
 
 
-def read_glb_json(path: Any) -> Dict[str, Any]:
+def read_glb_json(path: Any) -> dict[str, Any]:
     """Return the JSON chunk of a GLB (used for verification)."""
     data = Path(path).read_bytes()
     magic, version, length = struct.unpack_from("<4sII", data, 0)
@@ -349,12 +387,17 @@ window.onresize=draw;filters();legend();draw();
 """
 
 
-def _legend_entries(scene: AssetScene, color_by: Optional[ColorBy]) -> List[List[str]]:
+def _legend_entries(scene: AssetScene, color_by: ColorBy | None) -> list[list[str]]:
     if color_by is not None:
         unit = f" {color_by.unit}" if color_by.unit and color_by.unit != "-" else ""
-        return [[f"{v:.3g}{unit}", hex_color(c)] for v, c in color_by.legend_stops()] + [["no value", "#d9d9d9"]]
+        return [
+            [f"{v:.3g}{unit}", hex_color(c)] for v, c in color_by.legend_stops()
+        ] + [["no value", "#d9d9d9"]]
     states = [s for s in STATE_LABELS if any(o["state"] == s for o in scene.objects)]
-    return [[STATE_LABELS[s], hex_color(object_color({"state": s, "group": "facility"}))] for s in states]
+    return [
+        [STATE_LABELS[s], hex_color(object_color({"state": s, "group": "facility"}))]
+        for s in states
+    ]
 
 
 LABEL_KINDS = (
@@ -376,11 +419,11 @@ LABEL_KINDS = (
 def write_html(
     scene: AssetScene,
     path: Any,
-    color_by: Optional[ColorBy] = None,
+    color_by: ColorBy | None = None,
     vertical_exaggeration: float = 1.0,
-    caption: Optional[str] = None,
+    caption: str | None = None,
     label_kinds: Sequence[str] = LABEL_KINDS,
-    min_feature: Optional[float] = None,
+    min_feature: float | None = None,
     routing: str = "auto",
 ) -> Path:
     """Write the offline interactive viewer (rotate, pan with Shift, zoom, hover for provenance).
@@ -397,7 +440,7 @@ def write_html(
     payload_parts = []
     for part in parts:
         verts, faces = part["mesh"]
-        flat: List[float] = []
+        flat: list[float] = []
         for f in faces:
             for i in f:
                 v = verts[i]
@@ -415,7 +458,10 @@ def write_html(
                 "lbl": part["kind"] in label_kinds,
             }
         )
-    data = json.dumps({"parts": payload_parts, "legend": _legend_entries(scene, color_by)}, separators=(",", ":"))
+    data = json.dumps(
+        {"parts": payload_parts, "legend": _legend_entries(scene, color_by)},
+        separators=(",", ":"),
+    )
     data = data.replace("</", "<\\/")
     text = caption or scene_caption(
         scene,
@@ -425,7 +471,11 @@ def write_html(
         enlarged=bool(floor),
         routing=routing_summary({p["id"]: p["route"] for p in parts if p.get("route")}),
     )
-    cls = f' <span id="cls">{_escape(scene.classification)}</span>' if scene.classification else ""
+    cls = (
+        f' <span id="cls">{_escape(scene.classification)}</span>'
+        if scene.classification
+        else ""
+    )
     html = (
         _HTML.replace("__DATA__", data)
         .replace("__TITLE__", _escape(scene.name))
@@ -451,15 +501,15 @@ def render_png(
     scene: AssetScene,
     path: Any,
     view: str = "iso",
-    color_by: Optional[ColorBy] = None,
+    color_by: ColorBy | None = None,
     vertical_exaggeration: float = 1.0,
     max_labels: int = 25,
-    title: Optional[str] = None,
+    title: str | None = None,
     dpi: int = 160,
-    min_feature: Optional[float] = None,
+    min_feature: float | None = None,
     label_kinds: Sequence[str] = LABEL_KINDS,
     routing: str = "auto",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Render a PNG with legend and classification mark; returns ``{"path", "caption"}``.
 
     Needs matplotlib (optional dependency). Small objects on field-scale scenes
@@ -482,13 +532,15 @@ def render_png(
     parts = scene_parts(scene, color_by, vertical_exaggeration, floor, routing)
     fig = plt.figure(figsize=(10, 7.5))
     ax = fig.add_subplot(111, projection="3d")
-    all_v: List[Sequence[float]] = []
+    all_v: list[Sequence[float]] = []
     for part in parts:
         verts, faces = part["mesh"]
         if not faces:
             continue
         polys = [[verts[i] for i in f] for f in faces]
-        coll = Poly3DCollection(polys, facecolors=[part["color"]], edgecolors="none", linewidths=0)
+        coll = Poly3DCollection(
+            polys, facecolors=[part["color"]], edgecolors="none", linewidths=0
+        )
         coll.set_alpha(part["color"][3])
         ax.add_collection3d(coll)
         all_v.extend(verts)
@@ -500,18 +552,30 @@ def render_png(
         ax.set_xlim(mins[0] - pad[0], maxs[0] + pad[0])
         ax.set_ylim(mins[1] - pad[1], maxs[1] + pad[1])
         ax.set_zlim(mins[2] - pad[2], maxs[2] + pad[2])
-        ax.set_box_aspect((span[0], span[1], max(span[2], 0.15 * max(span[0], span[1]))))
+        ax.set_box_aspect(
+            (span[0], span[1], max(span[2], 0.15 * max(span[0], span[1])))
+        )
     labelled = [p for p in parts if p["kind"] in label_kinds][:max_labels]
     for part in labelled:
         a = part["anchor"]
-        ax.text(a[0], a[1], a[2] * vertical_exaggeration, " " + str(part["label"]), fontsize=7, zorder=10)
+        ax.text(
+            a[0],
+            a[1],
+            a[2] * vertical_exaggeration,
+            " " + str(part["label"]),
+            fontsize=7,
+            zorder=10,
+        )
     for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
         axis.set_major_locator(MaxNLocator(5))
     elev, azim = VIEWS[view]
     ax.view_init(elev=elev, azim=azim)
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")
-    ax.set_zlabel("z [m]" + (f" (x{vertical_exaggeration:g})" if vertical_exaggeration != 1.0 else ""))
+    ax.set_zlabel(
+        "z [m]"
+        + (f" (x{vertical_exaggeration:g})" if vertical_exaggeration != 1.0 else "")
+    )
     if color_by is not None:
         stops = color_by.legend_stops(7)
         cmap = LinearSegmentedColormap.from_list("asset", [c[:3] for _, c in stops])
@@ -521,7 +585,10 @@ def render_png(
         cb.set_label(color_by.label + (f" [{color_by.unit}]" if color_by.unit else ""))
     else:
         handles = [
-            Patch(facecolor=hex_color(object_color({"state": s, "group": "facility"})), label=STATE_LABELS[s])
+            Patch(
+                facecolor=hex_color(object_color({"state": s, "group": "facility"})),
+                label=STATE_LABELS[s],
+            )
             for s in STATE_LABELS
             if any(o["state"] == s for o in scene.objects)
         ]
@@ -529,8 +596,23 @@ def render_png(
             ax.legend(handles=handles, loc="upper left", fontsize=8)
     ax.set_title(title or scene.name, fontsize=11)
     if scene.classification:
-        fig.text(0.99, 0.99, scene.classification, ha="right", va="top", color="#b00020", fontsize=9, weight="bold")
-    fig.text(0.01, 0.01, "Schematic illustration - not for measurement", fontsize=7, color="#555")
+        fig.text(
+            0.99,
+            0.99,
+            scene.classification,
+            ha="right",
+            va="top",
+            color="#b00020",
+            fontsize=9,
+            weight="bold",
+        )
+    fig.text(
+        0.01,
+        0.01,
+        "Schematic illustration - not for measurement",
+        fontsize=7,
+        color="#555",
+    )
     out = Path(path)
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=dpi, bbox_inches="tight")
@@ -543,7 +625,9 @@ def render_png(
             view=view,
             vertical_exaggeration=vertical_exaggeration,
             enlarged=bool(floor),
-            routing=routing_summary({p["id"]: p["route"] for p in parts if p.get("route")}),
+            routing=routing_summary(
+                {p["id"]: p["route"] for p in parts if p.get("route")}
+            ),
         ),
     }
 
@@ -552,18 +636,30 @@ def render_all(
     scene: AssetScene,
     out_dir: Any,
     stem: str = "asset_scene",
-    color_by: Optional[ColorBy] = None,
+    color_by: ColorBy | None = None,
     views: Sequence[str] = ("iso", "plan"),
     vertical_exaggeration: float = 1.0,
     routing: str = "auto",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Write scene JSON, GLB, HTML and PNG views into ``out_dir``; returns paths and captions."""
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "scene_json": str(scene.save(out / f"{stem}.json")),
-        "glb": str(write_glb(scene, out / f"{stem}.glb", color_by, vertical_exaggeration, routing)),
-        "html": str(write_html(scene, out / f"{stem}.html", color_by, vertical_exaggeration, routing=routing)),
+        "glb": str(
+            write_glb(
+                scene, out / f"{stem}.glb", color_by, vertical_exaggeration, routing
+            )
+        ),
+        "html": str(
+            write_html(
+                scene,
+                out / f"{stem}.html",
+                color_by,
+                vertical_exaggeration,
+                routing=routing,
+            )
+        ),
         "png": [],
     }
     try:
@@ -573,6 +669,13 @@ def render_all(
         return result
     for view in views:
         result["png"].append(
-            render_png(scene, out / f"{stem}_{view}.png", view, color_by, vertical_exaggeration, routing=routing)
+            render_png(
+                scene,
+                out / f"{stem}_{view}.png",
+                view,
+                color_by,
+                vertical_exaggeration,
+                routing=routing,
+            )
         )
     return result

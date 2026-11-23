@@ -280,6 +280,6 @@ def test_closed_vessel_pdrfoam_benchmark(tmp_path):
     spec = ex.closed_vessel_case("v1", h=0.1)
     case = ex.write_case(spec, tmp_path / "v1")
     ex.docker_run(case, ex.explosion_commands(1), cpus=2)
-    t, p = ex.read_probes(case, "p")
+    _t, p = ex.read_probes(case, "p")
     res = ver.verify_closed_vessel(float(p[:, 0].max() / 1e5))
     assert res["status"] in ("pass", "caution"), res

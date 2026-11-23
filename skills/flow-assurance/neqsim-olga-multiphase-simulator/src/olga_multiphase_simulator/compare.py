@@ -77,7 +77,9 @@ def _evaluate(neqsim: float, olga: float, higher_is_worse: bool, tolerance: floa
         return float("inf"), verdict
     ratio = neqsim / olga
     if abs(ratio - 1.0) <= tolerance:
-        return ratio, "CONSISTENT (within +/-%d %%)" % round(tolerance * 100)
+        return ratio, "CONSISTENT (within +/-%d %%)" % round(  # noqa: UP031
+            tolerance * 100
+        )
     neqsim_unsafe_side = (ratio > 1.0) if higher_is_worse else (ratio < 1.0)
     # NeqSim value sits on the SAFE side of OLGA when it is the more severe one
     if neqsim_unsafe_side:
@@ -110,8 +112,8 @@ def _fmt(v: float) -> str:
     if v is None or (isinstance(v, float) and math.isnan(v)):
         return "n/a"
     if abs(v) >= 1000 or (abs(v) < 0.01 and v != 0):
-        return "%.3g" % v
-    return "%.4g" % v
+        return f"{v:.3g}"
+    return f"{v:.4g}"
 
 
 def to_markdown(rows: Sequence[ComparisonRow]) -> str:
@@ -122,16 +124,7 @@ def to_markdown(rows: Sequence[ComparisonRow]) -> str:
     ]
     for r in rows:
         lines.append(
-            "| %s | %s | %s | %s | %s | %s | %s |"
-            % (
-                r.item,
-                r.unit,
-                _fmt(r.neqsim),
-                _fmt(r.olga),
-                _fmt(r.ratio),
-                r.verdict,
-                r.note,
-            )
+            f"| {r.item} | {r.unit} | {_fmt(r.neqsim)} | {_fmt(r.olga)} | {_fmt(r.ratio)} | {r.verdict} | {r.note} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -189,7 +182,7 @@ def dominant_period(t: Sequence[float], y: Sequence[float]) -> float:
         yu.append(y[j] + f * (y[j + 1] - y[j]))
     m = sum(yu) / n
     z = [v - m for v in yu]
-    stride = max(1, int(math.ceil(n / 1500.0)))  # keep the O(n^2) autocorrelation cheap
+    stride = max(1, math.ceil(n / 1500.0))  # keep the O(n^2) autocorrelation cheap
     if stride > 1:
         z = z[::stride]
         dt *= stride

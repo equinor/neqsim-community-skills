@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .routing import describe_routing
 from .schema import AssetScene
@@ -19,7 +19,7 @@ STATE_WORD = {
 }
 
 
-def scene_summary(scene: AssetScene) -> Dict[str, Any]:
+def scene_summary(scene: AssetScene) -> dict[str, Any]:
     """Counts by state, kind, group and geometry quality."""
     return {
         "objects": len(scene.objects),
@@ -37,16 +37,18 @@ def scene_summary(scene: AssetScene) -> Dict[str, Any]:
 
 def scene_caption(
     scene: AssetScene,
-    color_by: Optional[ColorBy] = None,
+    color_by: ColorBy | None = None,
     view: str = "iso",
     vertical_exaggeration: float = 1.0,
     enlarged: bool = False,
-    routing: Optional[Dict[str, int]] = None,
+    routing: dict[str, int] | None = None,
 ) -> str:
     """Provenance caption: what is shown, colour meaning, geometry sources, limits."""
     s = scene_summary(scene)
     q = s["by_quality"]
-    parts = [f"Schematic 3D illustration of {scene.name} ({view} view, {s['objects']} objects)."]
+    parts = [
+        f"Schematic 3D illustration of {scene.name} ({view} view, {s['objects']} objects)."
+    ]
     if color_by is not None:
         parts.append(f"Objects {color_by.describe()}.")
     else:
@@ -59,11 +61,15 @@ def scene_caption(
         )
     )
     if s["with_live"]:
-        parts.append(f"{s['with_live']} objects carry live values (timestamps in the viewer).")
+        parts.append(
+            f"{s['with_live']} objects carry live values (timestamps in the viewer)."
+        )
     if vertical_exaggeration != 1.0:
         parts.append(f"Vertical scale exaggerated x{vertical_exaggeration:g}.")
     if enlarged:
-        parts.append("Small structures are drawn enlarged as symbols so they stay visible at field scale.")
+        parts.append(
+            "Small structures are drawn enlarged as symbols so they stay visible at field scale."
+        )
     routing_text = describe_routing(routing or {})
     if routing_text:
         parts.append(routing_text)
@@ -71,9 +77,9 @@ def scene_caption(
     return " ".join(parts)
 
 
-def coverage_table(scene: AssetScene) -> Dict[str, Any]:
+def coverage_table(scene: AssetScene) -> dict[str, Any]:
     """Per-object provenance table in the ``results.json`` table shape."""
-    rows: List[List[Any]] = []
+    rows: list[list[Any]] = []
     for o in scene.objects:
         rows.append(
             [
@@ -89,14 +95,25 @@ def coverage_table(scene: AssetScene) -> Dict[str, Any]:
         )
     return {
         "title": f"Objects shown in {scene.name} and the source of their geometry",
-        "headers": ["Tag", "Kind", "State", "Geometry quality", "Geometry source", "NeqSim result", "Live value", "Pictures"],
+        "headers": [
+            "Tag",
+            "Kind",
+            "State",
+            "Geometry quality",
+            "Geometry source",
+            "NeqSim result",
+            "Live value",
+            "Pictures",
+        ],
         "rows": rows,
     }
 
 
-def stale_live_values(scene: AssetScene, max_age_s: float, now: Optional[datetime] = None) -> List[str]:
+def stale_live_values(
+    scene: AssetScene, max_age_s: float, now: datetime | None = None
+) -> list[str]:
     """Object ids with a live value older than ``max_age_s`` (ISO 8601 timestamps)."""
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     stale = []
     for o in scene.objects:
         for entry in o.get("live", {}).values():
@@ -104,20 +121,22 @@ def stale_live_values(scene: AssetScene, max_age_s: float, now: Optional[datetim
             if not stamp:
                 continue
             try:
-                t = datetime.fromisoformat(str(stamp).replace("Z", "+00:00"))
+                t = datetime.fromisoformat(str(stamp))
             except ValueError:
                 continue
             if t.tzinfo is None:
-                t = t.replace(tzinfo=timezone.utc)
+                t = t.replace(tzinfo=UTC)
             if (now - t).total_seconds() > max_age_s:
                 stale.append(o["id"])
                 break
     return stale
 
 
-def results_fragment(scene: AssetScene, render_result: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def results_fragment(
+    scene: AssetScene, render_result: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Merge-ready keys for a task ``results.json`` (captions, table, assumptions, gaps)."""
-    captions: Dict[str, str] = {}
+    captions: dict[str, str] = {}
     for png in (render_result or {}).get("png", []):
         captions[Path(png["path"]).name] = png["caption"]
     s = scene_summary(scene)
@@ -147,7 +166,7 @@ def results_fragment(scene: AssetScene, render_result: Optional[Dict[str, Any]] 
     assumptions = list(scene.assumptions) + [
         "3D figures are schematic illustrations built from the listed sources and are not for measurement."
     ]
-    fragment: Dict[str, Any] = {
+    fragment: dict[str, Any] = {
         "figure_captions": captions,
         "tables": [coverage_table(scene)],
         "assumptions": assumptions,
@@ -162,16 +181,24 @@ def results_fragment(scene: AssetScene, render_result: Optional[Dict[str, Any]] 
     return fragment
 
 
-def merge_into_results(results: Dict[str, Any], fragment: Dict[str, Any]) -> Dict[str, Any]:
+def merge_into_results(
+    results: dict[str, Any], fragment: dict[str, Any]
+) -> dict[str, Any]:
     """Merge a fragment into an existing ``results.json`` dict without dropping keys.
 
     A table whose title is already present replaces the old one, so re-packaging a scene updates its
     tables instead of duplicating them.
     """
-    results.setdefault("figure_captions", {}).update(fragment.get("figure_captions", {}))
+    results.setdefault("figure_captions", {}).update(
+        fragment.get("figure_captions", {})
+    )
     tables = results.setdefault("tables", [])
     for table in fragment.get("tables", []):
-        same = [i for i, t in enumerate(tables) if isinstance(t, dict) and t.get("title") == table.get("title")]
+        same = [
+            i
+            for i, t in enumerate(tables)
+            if isinstance(t, dict) and t.get("title") == table.get("title")
+        ]
         if same:
             tables[same[0]] = table
         else:

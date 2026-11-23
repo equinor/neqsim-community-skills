@@ -781,8 +781,8 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-tie-in-pid-sketch
-    version: "1.0.0"
-    description: "Conceptual P&ID sketches (SVG) of both ends of a new tie-in line - source platform end with pump, metering, pig launcher, ESDV and riser; landing end with riser, ESDV, pig receiver, sampling, pressure control, spectacle blind and tie-in to an existing header - plus a completeness check. USE WHEN: a tie-in or export concept needs a drawing of possible connection points and the isolation, pigging and metering philosophy before a controlled P&ID is made."
+    version: "1.1.0"
+    description: "Conceptual P&IDs of a tie-in: one-line oil-export sketches of both line ends, and full subsea sheets (trees, manifold, flowline, riser, topside landing, water injection, umbilical and chemical supply) with symbols, isolation counts, a layout-checker spec and a 48-item tie-in considerations register. USE WHEN: a tie-in or tie-back needs a drawing of isolation, pigging, chemical injection, metering and a checklist of design considerations before a controlled P&ID exists."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/subsea/neqsim-tie-in-pid-sketch/SKILL.md"

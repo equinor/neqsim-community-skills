@@ -1,14 +1,13 @@
+import itertools
 import json
 import math
 
 import pytest
-
 from asset_scene import (
     AssetScene,
+    ColorBy,
     analyse_pipe_stress,
     analyse_piping,
-    stress_fragment,
-    ColorBy,
     attach_values,
     box,
     cylinder,
@@ -21,6 +20,7 @@ from asset_scene import (
     read_glb_json,
     results_fragment,
     stale_live_values,
+    stress_fragment,
     write_glb,
     write_html,
 )
@@ -28,8 +28,20 @@ from asset_scene import (
 
 def _scene():
     s = AssetScene("Test train")
-    s.add_object("V-1", "vessel", cylinder([0, 0, 3], 2.0, 6.0, "z"), tag="20-VA-001", source={"quality": "verified"})
-    s.add_object("K-1", "compressor", box([10, 0, 2], [6, 4, 4]), tag="23-KA-001", state="proposed")
+    s.add_object(
+        "V-1",
+        "vessel",
+        cylinder([0, 0, 3], 2.0, 6.0, "z"),
+        tag="20-VA-001",
+        source={"quality": "verified"},
+    )
+    s.add_object(
+        "K-1",
+        "compressor",
+        box([10, 0, 2], [6, 4, 4]),
+        tag="23-KA-001",
+        state="proposed",
+    )
     s.add_connection("V-1", "K-1", state="proposed")
     return s
 
@@ -54,8 +66,19 @@ def test_round_trip_and_tag_lookup(tmp_path):
 
 def test_auto_layout_follows_flow_and_flags_assumptions():
     records = [
-        {"tag": "K-1", "kind": "compressor", "size_m": [6, 4, 4], "size_quality": "derived"},
-        {"tag": "V-1", "kind": "vessel", "diameter_m": 2.0, "length_m": 6.0, "orientation": "vertical"},
+        {
+            "tag": "K-1",
+            "kind": "compressor",
+            "size_m": [6, 4, 4],
+            "size_quality": "derived",
+        },
+        {
+            "tag": "V-1",
+            "kind": "vessel",
+            "diameter_m": 2.0,
+            "length_m": 6.0,
+            "orientation": "vertical",
+        },
         {"tag": "E-1", "kind": "heat_exchanger"},
     ]
     conns = [{"from": "V-1", "to": "K-1"}, {"from": "K-1", "to": "E-1"}]
@@ -92,8 +115,12 @@ def test_subsea_line_to_host_gets_riser_and_geographic_projection():
         {"name": "HOST", "x": 2.0, "y": 60.0, "water_depth_m": 300, "kind": "host"},
         {"name": "T1", "x": 2.0, "y": 61.0, "water_depth_m": 320, "kind": "template"},
     ]
-    s = from_subsea_nodes(nodes, [{"from": "T1", "to": "HOST", "kind": "flowline"}], coordinate_system="geographic")
-    line = [o for o in s.objects if o["kind"] == "flowline"][0]
+    s = from_subsea_nodes(
+        nodes,
+        [{"from": "T1", "to": "HOST", "kind": "flowline"}],
+        coordinate_system="geographic",
+    )
+    line = next(o for o in s.objects if o["kind"] == "flowline")
     pts = line["geometry"]["points"]
     assert pts[-1][2] == 0.0 and pts[-2][2] == -300.0
     assert abs(pts[0][1] - pts[-1][1]) == pytest.approx(111195, rel=1e-3)
@@ -107,7 +134,9 @@ def test_glb_is_valid_and_tagged(tmp_path):
     names = {n["name"] for n in doc["nodes"]}
     assert {"20-VA-001", "23-KA-001"} <= names
     vessel = next(n for n in doc["nodes"] if n["name"] == "20-VA-001")
-    acc = doc["accessors"][doc["meshes"][vessel["mesh"]]["primitives"][0]["attributes"]["POSITION"]]
+    acc = doc["accessors"][
+        doc["meshes"][vessel["mesh"]]["primitives"][0]["attributes"]["POSITION"]
+    ]
     assert acc["max"][1] == pytest.approx(6.0, abs=1e-4)  # z (height) maps to glTF Y
     assert vessel["extras"]["state"] == "existing"
 
@@ -116,7 +145,9 @@ def test_html_viewer_is_offline(tmp_path):
     s = _scene()
     s.classification = "Internal"
     html = write_html(s, tmp_path / "s.html").read_text(encoding="utf-8")
-    assert "<script src" not in html and "http" not in html.lower().replace("http-equiv", "")
+    assert "<script src" not in html and "http" not in html.lower().replace(
+        "http-equiv", ""
+    )
     assert "20-VA-001" in html and "Internal" in html
 
 
@@ -131,7 +162,9 @@ def test_png_render(tmp_path):
 
 def test_values_colouring_and_results_fragment():
     s = _scene()
-    unmatched = attach_values(s, {"20-VA-001": {"utilisation": 1.1}, "99-XX-999": {"utilisation": 0.2}})
+    unmatched = attach_values(
+        s, {"20-VA-001": {"utilisation": 1.1}, "99-XX-999": {"utilisation": 0.2}}
+    )
     assert unmatched == ["99-XX-999"]
     cb = ColorBy("results", "utilisation", mode="utilisation").fit(s.objects)
     red = cb.color(s.get("V-1"))
@@ -144,13 +177,23 @@ def test_values_colouring_and_results_fragment():
 
 def test_stale_live_values():
     s = _scene()
-    s.get("V-1")["live"]["pressure"] = {"value": 70, "unit": "bara", "timestamp": "2020-01-01T00:00:00Z"}
+    s.get("V-1")["live"]["pressure"] = {
+        "value": 70,
+        "unit": "bara",
+        "timestamp": "2020-01-01T00:00:00Z",
+    }
     assert stale_live_values(s, max_age_s=3600) == ["V-1"]
 
 
 def test_layout_items_use_bounds():
     items = [
-        {"name": "Deck", "tag": "DECK-1", "kind": "deck", "deck": "M10", "bounds_m": [0, 0, 0, 30, 20, 0.5]},
+        {
+            "name": "Deck",
+            "tag": "DECK-1",
+            "kind": "deck",
+            "deck": "M10",
+            "bounds_m": [0, 0, 0, 30, 20, 0.5],
+        },
         {
             "name": "Sep",
             "tag": "20-VA-001",
@@ -238,17 +281,28 @@ class _Process:
 
 def test_neqsim_adapter_reads_design_json_and_bridges_streams():
     design = {
-        "geometry": {"innerDiameter": {"value": 2.4, "unit": "m"}, "tangentLength": {"value": 7.5, "unit": "m"}},
+        "geometry": {
+            "innerDiameter": {"value": 2.4, "unit": "m"},
+            "tangentLength": {"value": 7.5, "unit": "m"},
+        },
         "designBasis": {"maximumDesignPressure": {"value": 8.0e6, "unit": "Pa"}},
         "orientation": "horizontal",
     }
     process = _Process(
-        [_Unit("feed", "Stream"), _Unit("HP sep", "Separator", design), _Unit("gas", "Stream"), _Unit("comp", "Compressor")],
+        [
+            _Unit("feed", "Stream"),
+            _Unit("HP sep", "Separator", design),
+            _Unit("gas", "Stream"),
+            _Unit("comp", "Compressor"),
+        ],
         [_Edge("feed", "HP sep"), _Edge("HP sep", "gas"), _Edge("gas", "comp")],
     )
     records, conns = equipment_records_from_neqsim(process)
     assert [r["tag"] for r in records] == ["HP sep", "comp"]
-    assert records[0]["diameter_m"] == 2.4 and records[0]["attributes"]["neqsim_max_design_pressure_bara"] == 80.0
+    assert (
+        records[0]["diameter_m"] == 2.4
+        and records[0]["attributes"]["neqsim_max_design_pressure_bara"] == 80.0
+    )
     assert conns == [{"from": "HP sep", "to": "comp", "kind": "process"}]
     s = from_equipment_records(records, conns)
     assert s.get("HP sep")["geometry"]["axis"] == "x"
@@ -256,7 +310,7 @@ def test_neqsim_adapter_reads_design_json_and_bridges_streams():
 
 
 def _is_axis_aligned(points):
-    for p, q in zip(points[:-1], points[1:]):
+    for p, q in itertools.pairwise(points):
         changed = sum(1 for i in range(3) if abs(p[i] - q[i]) > 1e-9)
         if changed > 1:
             return False
@@ -269,13 +323,17 @@ def test_orthogonal_route_clears_obstacle_and_starts_at_faces():
     s = AssetScene("Rack")
     s.add_object("A", "vessel", box([0, 0, 2], [4, 2, 4]))
     s.add_object("B", "vessel", box([20, 6, 1.5], [3, 2, 3]))
-    s.add_object("C", "compressor", box([10, 0, 3], [4, 4, 6]))  # tall item under the run
+    s.add_object(
+        "C", "compressor", box([10, 0, 3], [4, 4, 6])
+    )  # tall item under the run
     s.add_connection("A", "B")
     route = route_connections(s, 0.2)["A->B"]
     pts = route["points"]
     assert route["mode"] == "orthogonal" and _is_axis_aligned(pts)
     assert pts[0][0] == pytest.approx(2.0)  # leaves A through its +x face
-    assert pts[-1][1] == pytest.approx(5.0) or pts[-1][0] == pytest.approx(18.5)  # enters a B face
+    assert pts[-1][1] == pytest.approx(5.0) or pts[-1][0] == pytest.approx(
+        18.5
+    )  # enters a B face
     assert max(p[2] for p in pts) >= 6.0 + 1.0  # rack clears C (top at 6 m)
 
 
@@ -298,7 +356,13 @@ def test_supplied_route_is_used_and_validated(tmp_path):
     s.connections.clear()
     with pytest.raises(ValueError):
         s.add_connection("V-1", "K-1", route=[[0, 0, 0]])
-    s.add_connection("V-1", "K-1", route=[[2, 0, 5], [7, 0, 5]], route_reference="ISO-001", line_number="L-1")
+    s.add_connection(
+        "V-1",
+        "K-1",
+        route=[[2, 0, 5], [7, 0, 5]],
+        route_reference="ISO-001",
+        line_number="L-1",
+    )
     r = route_connections(s, 0.2)["V-1->K-1"]
     assert r["mode"] == "supplied" and [2.0, 0.0, 5.0] in r["points"]
     doc = read_glb_json(write_glb(s, tmp_path / "r.glb"))
@@ -329,7 +393,11 @@ def test_field_scale_connections_follow_seabed_and_caption_names_routing(tmp_pat
 def test_span_is_at_or_below_mss_sp69_tables():
     from asset_scene import max_span
 
-    for od, wall, table in ((0.0603, 0.00391, 3.0), (0.1683, 0.00711, 5.2), (0.3239, 0.00953, 7.0)):
+    for od, wall, table in (
+        (0.0603, 0.00391, 3.0),
+        (0.1683, 0.00711, 5.2),
+        (0.3239, 0.00953, 7.0),
+    ):
         span = max_span(od, wall)["span_m"]
         assert 0.85 * table <= span <= 1.05 * table
 
@@ -341,7 +409,9 @@ def test_b313_flexibility_screen():
     assert straight["status"] == "needs_stress_analysis" and straight["ratio"] is None
     loop = b313_flexibility(0.1683, 40.0, 20.0, 100.0)
     # y = 12e-6 * 100 * 20 m = 24 mm; 168.3 * 24 / 20^2 = 10.1 < 208.3
-    assert loop["y_mm"] == pytest.approx(24.0) and loop["ratio"] == pytest.approx(10.1, abs=0.1)
+    assert loop["y_mm"] == pytest.approx(24.0) and loop["ratio"] == pytest.approx(
+        10.1, abs=0.1
+    )
     assert loop["status"] == "pass"
 
 
@@ -349,17 +419,38 @@ def test_nozzles_and_port_conventions_set_pipe_ends():
     from asset_scene import route_connections
 
     s = AssetScene("Nozzles")
-    s.add_object("SEP", "vessel", cylinder([0, 0, 1.5], 3.0, 10.0, "x"),
-                 nozzles={"N2": {"offset_m": [4.0, 0.0, 1.5], "direction": [0, 0, 1], "service": "gas_outlet"}})
+    s.add_object(
+        "SEP",
+        "vessel",
+        cylinder([0, 0, 1.5], 3.0, 10.0, "x"),
+        nozzles={
+            "N2": {
+                "offset_m": [4.0, 0.0, 1.5],
+                "direction": [0, 0, 1],
+                "service": "gas_outlet",
+            }
+        },
+    )
     s.add_object("K", "compressor", box([20, 0, 2], [6, 4, 4]))
     s.add_object("P", "pump", box([20, 8, 0.6], [2, 1, 1.2]))
     s.add_connection("SEP", "K", from_port="gas_outlet", diameter=0.3)
     s.add_connection("SEP", "P", from_port="liquid_outlet", diameter=0.15)
     r = route_connections(s, 0.2)
-    assert r["SEP->K"]["points"][0] == pytest.approx([4.0, 0.0, 3.0]) and r["SEP->K"]["ends"][0] == "nozzle"
-    assert r["SEP->P"]["points"][0][2] == pytest.approx(0.0) and r["SEP->P"]["ends"][0] == "port_convention"
+    assert (
+        r["SEP->K"]["points"][0] == pytest.approx([4.0, 0.0, 3.0])
+        and r["SEP->K"]["ends"][0] == "nozzle"
+    )
+    assert (
+        r["SEP->P"]["points"][0][2] == pytest.approx(0.0)
+        and r["SEP->P"]["ends"][0] == "port_convention"
+    )
     with pytest.raises(ValueError):
-        s.add_object("bad", "vessel", box([0, 0, 0], [1, 1, 1]), nozzles={"N1": {"offset_m": [0, 0]}})
+        s.add_object(
+            "bad",
+            "vessel",
+            box([0, 0, 0], [1, 1, 1]),
+            nozzles={"N1": {"offset_m": [0, 0]}},
+        )
     with pytest.raises(ValueError):
         s.add_connection("SEP", "K", slope=0.01)
 
@@ -372,7 +463,14 @@ def test_slope_is_built_into_auto_routes_and_checked_on_supplied_routes():
     s.add_object("FL", "vessel", box([40, 10, 2], [3, 3, 4]))
     s.add_object("D", "vessel", box([0, 30, 2], [3, 3, 4]))
     s.add_connection("FL", "KO", diameter=0.3, min_slope=0.005, id="auto")
-    s.add_connection("D", "KO", diameter=0.2, min_slope=0.005, id="flat", route=[[0, 26, 8], [0, 5, 8]])
+    s.add_connection(
+        "D",
+        "KO",
+        diameter=0.2,
+        min_slope=0.005,
+        id="flat",
+        route=[[0, 26, 8], [0, 5, 8]],
+    )
     rep = analyse_piping(s)
     rows = {r["id"]: r for r in rep["connections"]}
     assert rows["auto"]["slope"]["status"] == "pass"
@@ -382,10 +480,20 @@ def test_slope_is_built_into_auto_routes_and_checked_on_supplied_routes():
 
 def test_supports_flexibility_from_neqsim_result_and_gaps(tmp_path):
     pytest.importorskip("matplotlib")
-    from asset_scene import add_pipe_supports, analyse_piping, piping_fragment, render_png
+    from asset_scene import (
+        add_pipe_supports,
+        analyse_piping,
+        piping_fragment,
+        render_png,
+    )
 
     s = AssetScene("Train")
-    s.add_object("A", "vessel", box([0, 0, 2], [4, 2, 4]), results={"temperature": {"value": 120.0, "unit": "C"}})
+    s.add_object(
+        "A",
+        "vessel",
+        box([0, 0, 2], [4, 2, 4]),
+        results={"temperature": {"value": 120.0, "unit": "C"}},
+    )
     s.add_object("B", "vessel", box([30, 0, 2], [4, 2, 4]))
     s.add_object("C", "vessel", box([0, 20, 2], [4, 2, 4]))
     s.add_connection("A", "B", diameter=0.1683, line_number="L-1")
@@ -398,7 +506,10 @@ def test_supports_flexibility_from_neqsim_result_and_gaps(tmp_path):
     added = add_pipe_supports(s, rep)
     assert added and s.get(added[0])["kind"] == "support" and s.validate() == []
     gaps = " ".join(g["gap"] for g in piping_fragment(rep, s.name)["data_gaps"])
-    assert "No pipe size for L-2" in gaps and "Nozzle position not supplied for L-1" in gaps
+    assert (
+        "No pipe size for L-2" in gaps
+        and "Nozzle position not supplied for L-1" in gaps
+    )
     assert rep["summary"]["pipe_clashes"] == 0
     render_png(s, tmp_path / "t.png")
 
@@ -434,19 +545,49 @@ def test_bottom_outlet_clears_own_vessel():
     routes = route_connections(s, 0.2)
     assert check_clashes(s, routes, 0.2) == []
     pts = routes["SEP->P"]["points"]
-    risers = [(p, q) for p, q in zip(pts[:-1], pts[1:]) if abs(p[0] - q[0]) < 1e-9 and abs(p[1] - q[1]) < 1e-9]
-    assert all(abs(p[0]) > 5.0 for p, _ in risers if p[2] < 0)  # rises outside the 10 m long shell
+    risers = [
+        (p, q)
+        for p, q in itertools.pairwise(pts)
+        if abs(p[0] - q[0]) < 1e-9 and abs(p[1] - q[1]) < 1e-9
+    ]
+    assert all(
+        abs(p[0]) > 5.0 for p, _ in risers if p[2] < 0
+    )  # rises outside the 10 m long shell
 
 
 def _stress_scene(temperature_c=140.0, allowables=None):
     s = AssetScene("Hot gas train")
-    s.add_object("V", "vessel", cylinder([0, 0, 1.6], 3.2, 10.0, "x"), tag="20-VA-001",
-                 attributes={"design_pressure_barg": 95.0},
-                 nozzles={"N2": {"offset_m": [4.0, 0, 1.6], "direction": [0, 0, 1], "service": "gas_outlet"}})
-    s.add_object("K", "compressor", box([25, 6, 2.25], [7, 4, 4.5]), tag="23-KA-001",
-                 attributes={"nozzle_allowables": allowables} if allowables else {})
-    s.add_connection("V", "K", line_number="20-PG-0101", from_port="gas_outlet", diameter=0.2731,
-                     wall_thickness_m=0.0151, operating_temperature_C=temperature_c, fluid_density_kg_m3=60.0)
+    s.add_object(
+        "V",
+        "vessel",
+        cylinder([0, 0, 1.6], 3.2, 10.0, "x"),
+        tag="20-VA-001",
+        attributes={"design_pressure_barg": 95.0},
+        nozzles={
+            "N2": {
+                "offset_m": [4.0, 0, 1.6],
+                "direction": [0, 0, 1],
+                "service": "gas_outlet",
+            }
+        },
+    )
+    s.add_object(
+        "K",
+        "compressor",
+        box([25, 6, 2.25], [7, 4, 4.5]),
+        tag="23-KA-001",
+        attributes={"nozzle_allowables": allowables} if allowables else {},
+    )
+    s.add_connection(
+        "V",
+        "K",
+        line_number="20-PG-0101",
+        from_port="gas_outlet",
+        diameter=0.2731,
+        wall_thickness_m=0.0151,
+        operating_temperature_C=temperature_c,
+        fluid_density_kg_m3=60.0,
+    )
     return s
 
 
@@ -461,24 +602,31 @@ def _stress_class_or_skip():
     from asset_scene.stress import neqsim_pipe_stress_class
 
     if neqsim_pipe_stress_class() is None:
-        pytest.skip("installed NeqSim has no PipeStressModel (set NEQSIM_JAR to a >= 3.29.0 jar)")
+        pytest.skip(
+            "installed NeqSim has no PipeStressModel (set NEQSIM_JAR to a >= 3.29.0 jar)"
+        )
 
 
 def test_stress_without_neqsim_class_is_reported_as_gap(monkeypatch):
-    import asset_scene.stress as stress
+    from asset_scene import stress
 
     monkeypatch.setattr(stress, "neqsim_pipe_stress_class", lambda: None)
     s = _stress_scene()
     rep = stress.analyse_pipe_stress(s, analyse_piping(s))
     assert rep["connections"][0]["stress"]["status"] == "unavailable"
     frag = stress_fragment(rep, s.name)
-    assert any("PipeStressModel" in g["gap"] or "20-PG-0101" in g["gap"] for g in frag["data_gaps"])
+    assert any(
+        "PipeStressModel" in g["gap"] or "20-PG-0101" in g["gap"]
+        for g in frag["data_gaps"]
+    )
 
 
 def test_stress_runs_in_neqsim_with_friction_lift_off_and_nozzle_check():
     _stress_class_or_skip()
     allow = {"default": {"force_N": 15000.0, "moment_Nm": 12000.0}}
-    cold = analyse_pipe_stress(_stress_scene(60.0, allow), analyse_piping(_stress_scene(60.0, allow)))
+    cold = analyse_pipe_stress(
+        _stress_scene(60.0, allow), analyse_piping(_stress_scene(60.0, allow))
+    )
     s = _stress_scene(250.0, allow)
     hot = analyse_pipe_stress(s, analyse_piping(s), seismic_g=0.1)
     st = hot["connections"][0]["stress"]
@@ -486,7 +634,9 @@ def test_stress_runs_in_neqsim_with_friction_lift_off_and_nozzle_check():
     assert st["pressure_design"] == "pass"
     # expansion stress grows with temperature, sustained stress does not
     assert st["expansion_ratio"] > cold["connections"][0]["stress"]["expansion_ratio"]
-    assert st["sustained_ratio"] == pytest.approx(cold["connections"][0]["stress"]["sustained_ratio"], rel=1e-6)
+    assert st["sustained_ratio"] == pytest.approx(
+        cold["connections"][0]["stress"]["sustained_ratio"], rel=1e-6
+    )
     assert st["occasional_ratio"] > 0.0
     states = {x["state"] for x in st["supports"]}
     assert states <= {"in_contact", "sliding", "lifted_off"}

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-tie-in-pid-sketch"
-version = "1.0.0"
-description = "Conceptual P&ID sketches (SVG) of the source and landing ends of a tie-in line, with completeness checks."
+version = "1.1.0"
+description = "Conceptual P&ID sketches and subsea P&ID sheets (SVG and layout spec) of a tie-in, with completeness checks and a tie-in considerations register."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }

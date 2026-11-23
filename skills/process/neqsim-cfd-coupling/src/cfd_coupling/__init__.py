@@ -20,6 +20,10 @@ Five layers, usable together or separately:
     enhancement factors a one-dimensional model needs.
 """
 
+from . import (
+    explosion,
+    verification,
+)
 from .boundary import (
     C_MU,
     CfdBoundaryConditions,
@@ -91,9 +95,11 @@ __all__ = [
     "derive_boundary_conditions",
     "derive_multiphase_conditions",
     "detect_openfoam",
+    "explosion",
     "fluid_state_from_neqsim",
     "friction_velocity",
     "multiphase_state_from_neqsim",
     "read_case_results",
     "required_fields",
+    "verification",
 ]

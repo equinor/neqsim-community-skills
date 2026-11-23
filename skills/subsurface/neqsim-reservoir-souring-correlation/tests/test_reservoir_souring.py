@@ -105,6 +105,19 @@ def test_mixing_zone_substrate_limits_and_temperature():
         mixing_zone_h2s_mg_l(1.2, 2700.0, 200.0)
 
 
+def test_mixing_zone_donor_floor_keeps_late_souring_alive():
+    # all injected water (f = 1): without a donor floor the bound is zero, with a 50 mg/L donor from oil and rock it is donor limited
+    assert mixing_zone_h2s_mg_l(1.0, 2700.0, 200.0) == 0.0
+    late = mixing_zone_h2s_mg_l(1.0, 2700.0, 200.0, donor_floor_mg_l=50.0)
+    assert late == pytest.approx(0.577 * 50.0, rel=0.01)
+    # the floor adds to (1 - f) * donor and leaves the default untouched
+    assert mixing_zone_h2s_mg_l(
+        0.5, 2700.0, 200.0, donor_floor_mg_l=0.0
+    ) == mixing_zone_h2s_mg_l(0.5, 2700.0, 200.0)
+    with pytest.raises(ValueError):
+        mixing_zone_h2s_mg_l(0.5, 2700.0, 200.0, donor_floor_mg_l=-1.0)
+
+
 def test_mass_balance_helpers():
     assert sulfate_balance_h2s_mg_l(2700.0, 1700.0) == pytest.approx(
         1000.0 * 34.081 / 96.06

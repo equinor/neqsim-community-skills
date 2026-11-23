@@ -35,6 +35,7 @@ pytest
 ```bash
 python examples/pid_to_openfoam_case.py     # P&ID + tag register -> NeqSim -> steady case
 python examples/multiphase_vof_case.py      # two-phase flash -> VOF case
+python examples/explosion_workflow.py       # readiness gate -> PDRFoam module explosion/dispersion case -> verification, GCI
 ```
 
 The first takes a line from a P&ID and a tag register, flashes the fluid in

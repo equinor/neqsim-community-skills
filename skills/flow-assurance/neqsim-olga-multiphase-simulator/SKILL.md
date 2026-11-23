@@ -1,7 +1,7 @@
 ---
 name: neqsim-olga-multiphase-simulator
 calculation_basis: "neqsim-java"
-version: "1.0.0"
+version: "1.1.0"
 description: "Run the OLGA transient multiphase simulator from Python: locate it, build, configure and report its PVT table and hydrate curve from a NeqSim fluid, rule-check a genkey case, launch the batch engine, decode the exit code, and read .tpl/.ppl results. USE WHEN: executing or sweeping OLGA cases, building or documenting an OLGA PVT table or HYDRATECURVE, diagnosing an OLGA failure, or benchmarking OLGA against NeqSim pipe models."
 last_verified: "2026-11-11"
 requires:
@@ -1117,6 +1117,69 @@ pipe.setLocalEquilibriumFlashPerStage(False) # one flash per step instead of fou
 
 and budget for it: the 20 km, 80-cell condensate transient costs about 0.2 s of wall time per simulated second this
 way (0.03 s without phase change), so an 8 h turndown is a 1.5 h run.
+
+## Grimsnes-Style Case Generator and NeqSim-vs-OLGA Comparison (casegen, compare)
+
+`olga_multiphase_simulator.casegen` renders a tie-back transient case (seabed route + inclined riser + topside inlet with ESDV, optional
+choke and blowdown) from a **route profile JSON** (`kp_km` + seabed `depth_m`, the SURF route file format) and a NeqSim PVT table.
+`olga_multiphase_simulator.compare` turns OLGA and NeqSim numbers into a ratio table with a conservatism verdict and extracts slug
+statistics from a liquid-flow trend. Both are plain Python (no JVM, no OLGA licence needed to render or test).
+
+```python
+from olga_multiphase_simulator import (FlowlineCaseSpec, WallLayer, Material, STEEL, build_mesh, equivalent_insulation_thickness,
+                                       load_route_profile, render_genkey, OlgaRunner, read_tpl, slug_statistics,
+                                       ComparisonRow, to_markdown)
+route = load_route_profile("route_profile_A.json")                       # z = -depth
+mesh = build_mesh(route, riser_length_m=150, riser_rise_m=121, target_section_m=250, riser_section_m=10)   # SEA_nn + RIS_01, ratio <= 1.8
+foam = Material("PU_FOAM", 0.12, 600.0, 1800.0)
+t = equivalent_insulation_thickness(2.0, 0.2857, 0.0191, foam, h_outer=100.0)      # wall layers that reproduce a screening U (inner basis)
+layers = [WallLayer(STEEL, 0.0191), WallLayer(foam, t)]
+spec = FlowlineCaseSpec(name="y4", pvt_file="grim_Y4.tab", fluid_label="GRIM_Y4", mesh=mesh, diameter_m=0.2857, layers_seabed=layers,
+                        layers_riser=layers, source_massflow_kg_s=(44.7,), gas_fraction_hc=0.4885, water_fraction=0.4172,
+                        esdv_times_s=(0, 600, 610), esdv_opening=(1, 1, 0), bdv_diameter_m=0.1016, bdv_times_s=(0, 630, 640),
+                        bdv_opening=(0, 0, 1), end_time_s=7200)
+open("y4.genkey", "w").write(render_genkey(spec))                          # then OlgaRunner().rule_check(...) and .run(...)
+```
+
+Options: `topology="single"|"node"` (topside pipe and ESDV inside the production flowpath, or an internal node plus a topside branch),
+`bdv_mode="leak"|"branch"`, `restart_write` / `restart_read` / `start_time_s=None` for a chained shut-in then restart, `pig={...}`,
+`hydrate_curve_block` + `hydrate_curve_label` (adds `HYDRATECHECK` and `DTHYD`), `extra_flowpath` / `trend_extra` for slug tracking.
+`slug_statistics(t, q, p, area)` returns mean and peak liquid flow, the maximum **surge volume** (largest liquid volume above the mean
+accumulated over one continuous period: the separator volume needed at constant drain), the equivalent slug length, the dominant period
+and the pressure amplitude. `ComparisonRow(item, unit, neqsim, olga, higher_is_worse=...)` gives `ratio = NeqSim/OLGA` and one of
+`NEQSIM CONSERVATIVE`, `NEQSIM NON-CONSERVATIVE`, `CONSISTENT (+/-25 %)`, `NOT_COMPARABLE`; mark quantities where a *smaller* value is the
+unsafe direction (time to hydrate, time to reach a limit, minimum temperature margin) with `higher_is_worse=False`.
+
+Keyword rules found with the 2025.1 rules engine and runs while building this generator (each one cost a failed run):
+
+- `SHUTIN` needs `TIME`: `SHUTIN ACTIVATE=AUTOMATIC, TIME=0 s`.
+- A statement separator `;` or a **wrapped comment** turns the tail of a `!` comment into a statement
+  (`WARNING LN(P) is not a Case or Library keyword`). Never wrap comments; avoid `;` in them.
+- External blowdown/leak: `LEAK ... DIAMETER=.., CD=.., TIME=(0, t_open, t_open+stroke) s, BACKPRESSURE=(hold, hold, p_flare) bara`.
+  `CHECKVALVE=YES` makes it an internal leak and demands `TOPOSITION`. Leaks are ignored in the steady-state pre-processor, so use
+  `STEADYSTATE=ON` for the initial state and open the leak later. Output variables `GTLEAK` (negative = out of the pipe), `GGLEAK`,
+  `GLLEAK`, `TLEAK`, `TLEAEX` (temperature after the leak) are case-level `TRENDDATA VARIABLE=(...)`.
+- A blowdown built as a short branch (2 x 2.5 m sections, closed `VALVE`, flare pressure node) **stalled the engine in the initial state
+  for >20 min**; a `LEAK` on the last riser section ran in under a minute. An internal node (`TYPE=INTERNAL`, 0.2 m3 default volume) at
+  the riser top aborted a blowdown with `TEMPERATURE ABOVE TABLE VALUES` (exit 69); putting the topside pipe and the ESDV inside the
+  production flowpath (`topology="single"`) removed the node and the failure.
+- Valve closure: `VALVE ... TIME=(0, t, t+tc) s, OPENING=(1, 1, 0) -`; a fully closed valve is opening 0. Use `MAXDT` <= 0.5 s for a
+  closure shorter than 10 s.
+- **Back-flow at a pressure boundary node is table-equilibrium liquid unless you say otherwise.** In severe slugging the riser-top
+  pressure dips below the host pressure and OLGA pulled liquid back out of the boundary node (`QLT` -1700 m3/h at the topside inlet).
+  A host separator returns gas, so the generator sets `GASFRACTION=1 -` (and `WATERFRACTION=0 -`) on the pressure node.
+- **`QLT` at the last riser section is not the outflow**: in severe slugging liquid falls back and the signal goes negative.
+  Take the liquid outflow at the topside inlet and read the sign before computing a surge volume; a clipped negative trend overstates it.
+- Restart: `RESTART WRITE=APPEND, DTWRITE=...`; the restart case has no `STARTTIME`, reads the last chunk with
+  `RESTART READFILE=ON, FILE="x.rsw"` and **continues the clock**, so valve and source tables must use absolute times.
+- A PVT table from `OLGApropertyTableGeneratorWaterKeywordFormat` on a water-rich lumped fluid had **negative gas Cp** below -55 C and
+  below 26 bara (`isLoadable()` false) and OLGA reports "gas enthalpy decreases with temperature" warnings in the same corner. Start
+  the temperature axis at -50 C unless the case really goes colder, and read the quality report before the first run.
+- `OLGAhydrateCurveGenerator` on a PR78 lumped fluid returned an unphysical curve (-47 C, falling with pressure). Build hydrate curves
+  from an SRK-CPA fluid with database light components, or reuse the study's own hydrate dataset; check the curve against one known
+  hydrate temperature before writing `HYDRATECHECK`.
+- Slug tracking (`SLUGTRACKING HYDRODYNAMIC=ON`, `LSLEXP`, `LSBEXP`) ran with the network licence on 2025.1.0. If no slug is found the
+  `.out` file says "No slugs in pipeline"; that is a result (annular/dispersed flow), not an error.
 
 ## Validation Checklist
 

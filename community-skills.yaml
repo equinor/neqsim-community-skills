@@ -297,12 +297,21 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reservoir-souring-correlation
-    version: "1.0.0"
+    version: "1.1.0"
     description: "Educational reservoir souring screening: seawater fraction from tracers, automatic per-well H2S-versus-seawater-fraction correlations updated from new data, and a substrate-limited mixing-zone H2S bound. USE WHEN: a task asks how well or produced-water H2S develops with seawater breakthrough, needs per-well H2S correlations for a production model, or an upper bound on biogenic souring."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/subsurface/neqsim-reservoir-souring-correlation/SKILL.md"
     tags: [h2s, souring, waterflood, seawater-fraction, correlation, reservoir, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-h2s-safety-impact
+    version: "0.1.0"
+    description: "Screening workflow and helpers for the safety impact of H2S in produced gas: partial pressure and sour-service flag per location, toxic reach of the release scenarios, detector equivalence, SO2 from flare and fuel gas, export-gas blending, scavenger demand and vapour over produced water, with an evidence gate. USE WHEN: a tie-in, SURF or process safety study must say what the H2S content (estimated or measured) changes in materials, detection, consequence and gas quality."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/neqsim-h2s-safety-impact/SKILL.md"
+    tags: [h2s, sour-service, toxic, safety, detection, flare, export-gas, scavenger, screening, evidence-gate]
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-reservoir-mercury-estimation
@@ -536,6 +545,24 @@ skills:
     repo: "equinor/neqsim-community-skills"
     path: "skills/safety/neqsim-psv-orifice-screening/SKILL.md"
     tags: [safety, relief, psv, orifice, screening, education]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-hazop-node-pack
+    version: "1.0.0"
+    description: "Vendor-neutral HAZOP preparation from P&ID layouts. USE WHEN: a facilitator needs a node pack (marked-up P&ID per node, item/mode tables, seeded guide-word deviations incl. well, SURF, riser, HIPPS, pig receiver) with evidence gates, or a P&ID needs a screening check of safeguard placement (thermal relief, pig trap, ESDV, HIPPS voting, EDP orifice, vents, duplicate tags). Prompts for the team, not findings or compliance."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/neqsim-hazop-node-pack/SKILL.md"
+    tags: [safety, hazop, pid, node-pack, placement-rules, screening]
+    min_neqsim_version: "3.7.0"
+
+  - name: neqsim-process-safety-study
+    version: "0.1.0"
+    description: "Vendor-neutral workflow for a full process safety study of a tie-in, modification or new facility: scoping, evidence gates and document register, HAZID, consequence, relief/blowdown/flare, transient and OLGA verification, SIL/LOPA/SRS, explosion CFD, QRA, HAZOP preparation, barriers, ESD cause and effect, reporting. USE WHEN: a safety study needs the order of work, the skill or agent per step, acceptance gates, and the traps found in earlier studies."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/safety/neqsim-process-safety-study/SKILL.md"
+    tags: [safety, process-safety, study-workflow, evidence-gate, hazid, hazop, sil, qra, orchestration]
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-safety-function-coverage-screening
@@ -996,7 +1023,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-olga-multiphase-simulator
-    version: "1.0.0"
+    version: "1.1.0"
     description: "Run the OLGA transient multiphase simulator from Python: locate it, build, configure and report its PVT table and hydrate curve from a NeqSim fluid, rule-check a genkey case, launch the batch engine, decode the exit code, and read .tpl/.ppl results. USE WHEN: executing or sweeping OLGA cases, building or documenting an OLGA PVT table or HYDRATECURVE, diagnosing an OLGA failure, or benchmarking OLGA against NeqSim pipe models."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
@@ -1085,8 +1112,8 @@ skills:
     tags: [field-development, artificial-lift, gas-lift, esp, ipr, screening, education]
     min_neqsim_version: "3.7.0"
   - name: neqsim-cfd-coupling
-    version: "1.0.0"
-    description: "Link NeqSim and engineering documents to single- or multiphase CFD: traceable design basis, NeqSim boundary conditions, runnable OpenFOAM RANS/VOF cases, mesh/wall/turbulence gates and enhancement factors for 1-D models; tonal-noise work fails closed without evidence. USE WHEN: local velocity or shear peaks at bends, welds, tees or bundles, maldistribution, stratified/slug flow, real-geometry pressure drop, CFD/FEM report qualification, or aeroacoustic readiness."
+    version: "1.1.0"
+    description: "Link NeqSim and engineering documents to single- or multiphase CFD: traceable design basis, NeqSim boundary conditions, runnable OpenFOAM RANS/VOF cases, mesh/wall/turbulence gates, enhancement factors for 1-D models, and fail-closed gas dispersion and vapour-cloud explosion cases (PDRFoam) with verification and GCI. USE WHEN: local velocity/shear peaks, maldistribution, stratified/slug flow, CFD/FEM report qualification, gas cloud or explosion in a module, aeroacoustic readiness."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"
     path: "skills/process/neqsim-cfd-coupling/SKILL.md"

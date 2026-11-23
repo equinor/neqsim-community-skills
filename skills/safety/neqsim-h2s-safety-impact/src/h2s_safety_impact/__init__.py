@@ -1,0 +1,41 @@
+"""H2S safety impact screening: partial pressure, sour-service flag, toxic reach, detection, SO2, export blending, scavenger demand."""
+
+from .core import (
+    MG_PER_NM3_PER_PPM,
+    MW_H2S,
+    detector_equivalence,
+    evidence_gate,
+    export_blend_ppm,
+    h2s_safety_impact,
+    mg_nm3_to_ppm,
+    partial_pressure_kpa,
+    ppm_for_partial_pressure,
+    ppm_to_kg_m3,
+    ppm_to_mg_nm3,
+    probit_h2s,
+    removal_and_scavenger,
+    so2_emission_kg_h,
+    sour_service_screen,
+    toxic_reach,
+    vapour_ppm_over_water,
+)
+
+__all__ = [
+    "MG_PER_NM3_PER_PPM",
+    "MW_H2S",
+    "detector_equivalence",
+    "evidence_gate",
+    "export_blend_ppm",
+    "h2s_safety_impact",
+    "mg_nm3_to_ppm",
+    "partial_pressure_kpa",
+    "ppm_for_partial_pressure",
+    "ppm_to_kg_m3",
+    "ppm_to_mg_nm3",
+    "probit_h2s",
+    "removal_and_scavenger",
+    "so2_emission_kg_h",
+    "sour_service_screen",
+    "toxic_reach",
+    "vapour_ppm_over_water",
+]

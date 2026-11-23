@@ -82,29 +82,57 @@ def _role_streams(unit) -> dict[str, Any]:
     return streams
 
 
-def run_pipeline(pdf_path: str | Path, out_dir: str | Path, fluid: dict[str, Any], feed_flow: float,
+def run_pipeline(pdf_path: str | Path | list, out_dir: str | Path, fluid: dict[str, Any], feed_flow: float,
                  feed_flow_unit: str = "kg/hr", feed_pressure: Optional[float] = None,
                  feed_pressure_unit: str = "barg", feed_temperature: Optional[float] = None,
                  page: int = 0, jar: Optional[str | Path] = None, config: Optional[ExtractionConfig] = None,
-                 dpi: int = 60) -> dict[str, Any]:
-    """Runs PDF -> records -> DEXPI -> simulation -> regenerated P&IDs and checks the round trip.
+                 dpi: int = 60, boundary_feeds: Optional[dict[str, dict[str, Any]]] = None,
+                 corrections: Optional[dict[str, Any] | str | Path] = None, raster_dpi: int = 300) -> dict[str, Any]:
+    """Runs sheet(s) -> records -> DEXPI -> simulation -> regenerated P&IDs and checks the round trip.
 
-    Feed pressure and temperature default to the operating values in the equipment data block of the first
-    separator on the sheet; the feed flow and fluid are not on a P&ID and must be given.
+    ``pdf_path`` may be one sheet or a list of sheets (vector PDF, scanned PDF or image); several sheets are
+    stitched through matching off-page connectors. Feed pressure and temperature default to the operating
+    values in the equipment data block of the first separator; fluid and feed rate must be given.
+
+    ``boundary_feeds`` maps an inbound connector (tag, label text or node id) to its own feed:
+    ``{"flow": 5000, "flow_unit": "kg/hr", "fluid": <fluid spec or omitted>, "pressure": 16,
+    "pressure_unit": "barg", "temperature": 55}``. ``corrections`` is a reviewer corrections file
+    (see :mod:`pid_pdf_to_dexpi.review`) applied before DEXPI is written.
     """
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    summary: dict[str, Any] = {"schemaVersion": "neqsim_pid_pdf_pipeline.v1", "pdf": Path(pdf_path).name,
+    paths = [Path(p) for p in (pdf_path if isinstance(pdf_path, (list, tuple)) else [pdf_path])]
+    summary: dict[str, Any] = {"schemaVersion": "neqsim_pid_pdf_pipeline.v1", "pdf": [p.name for p in paths],
                                "files": {}, "checks": {}, "assumptions": [], "warnings": []}
 
-    records = extract_pid_records(pdf_path, page, config)
+    sheets = []
+    for k, p in enumerate(paths):
+        rec = extract_pid_records(p, page, config, dpi=raster_dpi)
+        sheets.append(rec)
+        suffix = "" if len(paths) == 1 else "_sheet%d" % (k + 1)
+        render_overlay(p, rec, out / ("extraction_overlay%s.png" % suffix), dpi=dpi, page_index=page)
+        summary["files"]["overlay" + suffix] = "extraction_overlay%s.png" % suffix
+    if len(sheets) == 1:
+        records = sheets[0]
+    else:
+        from .stitch import stitch_records
+
+        records = stitch_records(sheets)
+        summary["links"] = records["links"]
+    if corrections is not None:
+        from .review import apply_corrections
+
+        records = apply_corrections(records, corrections)
+    from .review import review_items, write_review_sheet
+
+    write_review_sheet(records, out / "review_checklist.md")
+    summary["review"] = {"status": records.get("reviewStatus"), "items": len(review_items(records)),
+                         "highSeverity": len([i for i in review_items(records) if i["severity"] == "high"])}
     rec_file = out / "drawing_records.json"
     rec_file.write_text(json.dumps(records, indent=1), encoding="utf-8")
-    render_overlay(pdf_path, records, out / "extraction_overlay.png", dpi=dpi, page_index=page)
-    summary["files"].update({"records": rec_file.name, "overlay": "extraction_overlay.png"})
-    summary["extraction"] = records["counts"]
+    summary["files"].update({"records": rec_file.name, "reviewChecklist": "review_checklist.md"})
+    summary["extraction"] = records.get("counts", {})
     summary["warnings"].extend(records["warnings"])
-
     J = start_jvm(jar)
     File = J("java.io.File")
     writer = J("neqsim.process.processmodel.dexpi.PidDrawingRecordsDexpiWriter")
@@ -140,11 +168,20 @@ def run_pipeline(pdf_path: str | Path, out_dir: str | Path, fluid: dict[str, Any
     builder = J("neqsim.process.processmodel.dexpi.DexpiSimulationBuilder")(File(str(extracted)))
     builder.setFluidTemplate(make_fluid(J, fluid)).setFeedPressure(float(feed_pressure), feed_pressure_unit) \
         .setFeedTemperature(float(feed_temperature), "C").setFeedFlowRate(float(feed_flow), feed_flow_unit)
+    feeds = resolve_boundary_feeds(records, boundary_feeds or {})
+    for node_id, spec in feeds.items():
+        builder.addBoundaryFeed(node_id, make_fluid(J, spec["fluid"]) if spec.get("fluid") else None,
+                                float(spec["flow"]), spec.get("flow_unit", "kg/hr"),
+                                float(spec.get("pressure", feed_pressure)),
+                                spec.get("pressure_unit", feed_pressure_unit if "pressure" not in spec else "barg"),
+                                float(spec.get("temperature", feed_temperature)), "C")
+        summary["assumptions"].append("Boundary feed at %s: %.6g %s (user input)." % (
+            spec["label"], float(spec["flow"]), spec.get("flow_unit", "kg/hr")))
     process = builder.build()
     process.run()
     diagnostics = [{"severity": str(d.getSeverity()), "code": str(d.getCode()), "element": str(d.getElementId()),
                     "message": str(d.getMessage())} for d in builder.getDiagnostics()]
-    summary["simulation"] = _simulation_results(process, records)
+    summary["simulation"] = _simulation_results(process, records, feeds)
     summary["simulation"]["diagnostics"] = diagnostics
     summary["checks"]["simulation"] = _simulation_checks(process, records, diagnostics)
 
@@ -160,7 +197,7 @@ def run_pipeline(pdf_path: str | Path, out_dir: str | Path, fluid: dict[str, Any
     metadata = J("neqsim.process.processmodel.dexpi.Dexpi20PlantExportMetadata").builder(
         datetime.now(timezone.utc).isoformat(timespec="seconds"), "NeqSim pid_pdf_to_dexpi", "NeqSim",
         "1.0").plantProperty(plant.PLANT_AREA_IDENTIFICATION_CODE,
-                             records["source"].get("drawingNumber") or Path(pdf_path).stem).build()
+                             records["source"].get("drawingNumber") or paths[0].stem).build()
     report = J("neqsim.process.processmodel.dexpi.Dexpi201XmlWriter").writeAndAssess(process, File(str(flowsheet)),
                                                                                      metadata)
     summary["files"]["simulatedFlowsheetDexpi201"] = flowsheet.name
@@ -169,12 +206,28 @@ def run_pipeline(pdf_path: str | Path, out_dir: str | Path, fluid: dict[str, Any
                                                "warnings": [str(w) for w in report.getWarnings()][:20]}
     checks = summary["checks"]
     summary["passed"] = bool(checks["dexpiRoundTrip"]["passed"] and checks["simulation"]["passed"])
-    summary["reviewStatus"] = "REVIEW_REQUIRED"
+    summary["reviewStatus"] = records.get("reviewStatus", "REVIEW_REQUIRED")
     (out / "pipeline_summary.json").write_text(json.dumps(summary, indent=1), encoding="utf-8")
     return summary
 
 
-def _simulation_results(process, records) -> dict[str, Any]:
+def resolve_boundary_feeds(records: dict[str, Any], feeds: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Maps boundary-feed references (node id, connector tag or label text) to inbound connector node ids."""
+    connectors = [n for n in records["nodes"] if n["kind"] == "off_page_connector" and n["direction"] == "in"]
+    out: dict[str, dict[str, Any]] = {}
+    for ref, spec in feeds.items():
+        exact = [n for n in connectors if ref in (n["node_id"], n["tag"], n.get("label"))]
+        partial = [n for n in connectors if ref.upper() in (n.get("label", "") + " " + n["tag"]).upper()]
+        match = exact if len(exact) == 1 else partial if not exact and len(partial) == 1 else []
+        if not match:
+            raise ValueError("Boundary feed %r matches %d inbound connectors; use a node id or a unique label"
+                             % (ref, len(exact) or len(partial)))
+        node = match[0]
+        out[node["node_id"]] = dict(spec, label=node.get("label") or node["tag"])
+    return out
+
+
+def _simulation_results(process, records, feeds: Optional[dict[str, dict[str, Any]]] = None) -> dict[str, Any]:
     units = []
     for unit in process.getUnitOperations():
         units.append({"name": str(unit.getName()), "type": str(unit.getClass().getSimpleName())})
@@ -193,7 +246,13 @@ def _simulation_results(process, records) -> dict[str, Any]:
             roles["Inlet"] = _stream_state(inlets[0])
         equipment[node["tag"]] = {"type": str(unit.getClass().getSimpleName()), "streams": roles}
     feed = process.getUnit("DEXPI-Feed")
-    return {"units": units, "equipment": equipment, "feed": _stream_state(feed) if feed is not None else {}}
+    boundary = {}
+    for node_id, spec in (feeds or {}).items():
+        unit = process.getUnit(spec["label"])
+        if unit is not None:
+            boundary[node_id] = _stream_state(unit)
+    return {"units": units, "equipment": equipment, "feed": _stream_state(feed) if feed is not None else {},
+            "boundaryFeeds": boundary}
 
 
 def _simulation_checks(process, records, diagnostics) -> dict[str, Any]:
@@ -236,6 +295,7 @@ def _simulation_checks(process, records, diagnostics) -> dict[str, Any]:
 def verify_dexpi_topology(records: dict[str, Any], dexpi_file: str | Path) -> dict[str, Any]:
     """Re-reads the written DEXPI independently and compares pipe runs and nozzle roles with the records."""
     root = ET.parse(str(dexpi_file)).getroot()
+    equipment = {n["node_id"] for n in records["nodes"] if n["kind"] not in ("off_page_connector", "tee")}
     owner: dict[str, str] = {}
     roles: dict[str, str] = {}
     for el in root.iter():
@@ -259,9 +319,10 @@ def verify_dexpi_topology(records: dict[str, Any], dexpi_file: str | Path) -> di
         for ga in seg.iter(_Q + "GenericAttribute"):
             if ga.get("Name") == "NormalFlow":
                 normal = ga.get("Value")
-        runs.add((_end(conns[0][0], owner), _end(conns[-1][1], owner), normal == "true", chain_ok))
-    expected = {(e["from_port"] if e["from_node"].startswith("EQ-") else e["from_node"],
-                 e["to_port"] if e["to_node"].startswith("EQ-") else e["to_node"], e["normal_flow"], True)
+        runs.add((_end(conns[0][0], owner, equipment), _end(conns[-1][1], owner, equipment), normal == "true",
+                  chain_ok))
+    expected = {(e["from_port"] if e["from_node"] in equipment and e["from_port"] else e["from_node"],
+                 e["to_port"] if e["to_node"] in equipment and e["to_port"] else e["to_node"], e["normal_flow"], True)
                 for e in records["edges"]}
     port_roles = {p["port_id"]: p["role"] for n in records["nodes"] for p in n.get("ports", []) if p.get("role")}
     role_mismatch = {k: (v, roles.get(k)) for k, v in port_roles.items() if roles.get(k) != v}
@@ -272,10 +333,10 @@ def verify_dexpi_topology(records: dict[str, Any], dexpi_file: str | Path) -> di
             "passed": not missing and not extra and not role_mismatch}
 
 
-def _end(dexpi_id: str, owner: dict[str, str]) -> str:
+def _end(dexpi_id: str, owner: dict[str, str], equipment: set[str]) -> str:
     """Equipment ends compare at nozzle level; connectors, tees and valves at item level."""
     item = owner.get(dexpi_id, "")
-    return dexpi_id if item.startswith("EQ-") else item
+    return dexpi_id if item in equipment else item
 
 
 def annotate_results(src: str | Path, dst: str | Path, records: dict[str, Any], simulation: dict[str, Any]) -> int:
@@ -296,8 +357,11 @@ def annotate_results(src: str | Path, dst: str | Path, records: dict[str, Any], 
             return simulation.get("equipment", {}).get(target["tag"], {}).get("streams", {}).get("Inlet")
         node = nodes[edge["from_node"]]
         if node["kind"] == "off_page_connector":
-            return None  # side-stream rates entering the sheet are not known from the drawing
-        if node["kind"] == "tee":
+            if node["node_id"] in simulation.get("boundaryFeeds", {}):
+                return simulation["boundaryFeeds"][node["node_id"]]
+            if not incoming.get(node["node_id"]):
+                return None  # side-stream rates entering the sheet are not known from the drawing
+        if node["kind"] in ("tee", "off_page_connector"):
             if depth > 50:
                 return None
             for e in incoming.get(node["node_id"], []):
@@ -325,6 +389,9 @@ def annotate_results(src: str | Path, dst: str | Path, records: dict[str, Any], 
                                   ("OperatingFlowValue", state["massFlow_kg_h"], "kg/h")):
             ET.SubElement(attrs, _Q + "GenericAttribute", {"Name": name, "Value": "%.6g" % value, "Unit": unit,
                                                             "Format": "double"})
+        if not e.get("path"):
+            count += 1
+            continue
         x, y = _label_anchor(e["path"], records["source"]["pageHeight"])
         node = nodes[e["from_node"]]
         role = ports.get(e["from_port"], {}).get("role", "")

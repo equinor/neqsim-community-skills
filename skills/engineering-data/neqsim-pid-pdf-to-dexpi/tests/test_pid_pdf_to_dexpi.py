@@ -1,7 +1,11 @@
 """Tests for vector P&ID extraction on a small synthetic sheet (no PDF needed)."""
 
+import pytest
+
 from pid_pdf_to_dexpi.extract import Page, Word, extract_from_page
 from pid_pdf_to_dexpi.geometry import LineGraph, Rect, Segment
+from pid_pdf_to_dexpi.review import apply_corrections
+from pid_pdf_to_dexpi.stitch import stitch_records
 
 
 def _rect(x0, y0, x1, y1, width):
@@ -45,7 +49,8 @@ def _sheet():
              _word("N01", 345, 285, 12), _word("N02", 655, 285, 12), _word("N04", 605, 425, 12),
              _word("XV", 760, 170, 10), _word("0100", 758, 179, 14),
              _word("20L00001A-0600PG-BD100", 680, 190, 80)]
-    fills = [Rect(762, 195, 770, 205)]  # valve body in the gap
+    segs += [Segment(760, 195, 772, 205, 0.48), Segment(760, 205, 772, 195, 0.48)]  # open valve bowtie in the gap
+    fills = []
     return Page(1000, 700, words, segs, [], fills, {"file": "synthetic.pdf"})
 
 
@@ -69,7 +74,7 @@ def test_extracts_separator_topology_with_roles_tee_and_valve():
     assert into_tee == ["CONDENSATE FROM", "WELLSTREAM FROM HEATERS"]
     gas = next(e for e in rec["edges"] if nodes[e["to_node"]].get("label", "").startswith("GAS"))
     assert gas["line_number"] == "20L00001A-0600PG-BD100" and gas["fluid_code"] == "PG"
-    assert [(i["tag"], i["component_class"]) for i in gas["inline_items"]] == [("XV-0100", "BallValve")]
+    assert [(i["tag"], i["component_class"], i["normal_position"]) for i in gas["inline_items"]] == [("XV-0100", "GateValve", "open")]
     assert all(e["normal_flow"] for e in rec["edges"])
 
 
@@ -80,3 +85,56 @@ def test_utility_connector_marks_branch_without_normal_flow():
     nodes = {n["node_id"]: n for n in rec["nodes"]}
     drain = next(e for e in rec["edges"] if "DRAIN" in nodes[e["to_node"]].get("label", ""))
     assert drain["normal_flow"] is False
+
+
+def test_filled_valve_is_normally_closed_and_flange_is_found():
+    page = _sheet()
+    page.segments = [s for s in page.segments if s.width != 0.48 or not (760 <= s.x0 <= 772 and 195 <= s.y0 <= 205)]
+    page.fills = [Rect(760, 196, 766, 204), Rect(766, 196, 772, 204)]  # filled bowtie: two triangles on the axis
+    page.fill_kinds = ["lll", "lll"]
+    page.words.append(_word("NC", 760, 210, 10))
+    # Flange in the water line: two short bars across an 8 pt gap.
+    page.segments = [s for s in page.segments if not (s.y0 == 500 and s.y1 == 500)]
+    page.segments += [Segment(600, 500, 700, 500, 1.44), Segment(708, 500, 860, 500, 1.44),
+                      Segment(701, 495, 701, 505, 0.48), Segment(707, 495, 707, 505, 0.48)]
+    rec = extract_from_page(page)
+    nodes = {n["node_id"]: n for n in rec["nodes"]}
+    gas = next(e for e in rec["edges"] if nodes[e["to_node"]].get("label", "").startswith("GAS"))
+    valve = gas["inline_items"][0]
+    assert (valve["normal_position"], valve.get("locking")) == ("closed", "NC")
+    assert gas["normal_flow"] is False
+    water = next(e for e in rec["edges"] if nodes[e["to_node"]].get("label", "").startswith("WATER"))
+    assert [i["kind"] for i in water["inline_items"]] == ["flange"]
+
+
+def _one_sheet(number, connector_tag, direction):
+    """Hand-made records: one equipment item and one connector to another sheet."""
+    eq = {"node_id": "EQ-1", "tag": "T-" + number, "kind": "vessel", "bbox": [0, 0, 10, 10], "ports": []}
+    opc = {"node_id": "OPC-1", "tag": connector_tag, "kind": "off_page_connector", "direction": direction,
+           "service": "process", "label": "OIL", "bbox": [50, 0, 60, 10]}
+    a, b = ("EQ-1", "OPC-1") if direction == "out" else ("OPC-1", "EQ-1")
+    edge = {"edge_id": "E-1", "from_node": a, "to_node": b, "normal_flow": True, "line_number": "L-100",
+            "fluid_code": "PL", "path": [[10, 5], [50, 5]], "inline_items": []}
+    return {"source": {"file": number + ".pdf", "drawingNumber": number, "pageWidth": 100, "pageHeight": 50},
+            "nodes": [eq, opc], "edges": [edge], "instruments": [], "warnings": []}
+
+
+def test_stitch_links_matching_connectors_of_two_sheets():
+    out = stitch_records([_one_sheet("A-01", "B-01", "out"), _one_sheet("B-01", "A-01", "in")])
+    assert out["counts"]["sheetLinks"] == 1
+    link = next(e for e in out["edges"] if e.get("kind") == "sheet_link")
+    assert (link["from_node"], link["to_node"], link["normal_flow"]) == ("S1-OPC-1", "S2-OPC-1", True)
+    assert out["reviewStatus"] == "REVIEW_REQUIRED"
+
+
+def test_corrections_need_a_reviewer_and_record_approval():
+    rec = extract_from_page(_sheet())
+    gas = next(e["edge_id"] for e in rec["edges"] if e["inline_items"])
+    with pytest.raises(ValueError):
+        apply_corrections(rec, {"corrections": []})
+    out = apply_corrections(rec, {"reviewer": "A. Reviewer", "approved": True, "corrections": [
+        {"op": "set_valve", "edge": gas, "index": 0, "normal_position": "closed", "reason": "checked"},
+        {"op": "set_normal_flow", "edge": gas, "value": False}]})
+    item = next(e for e in out["edges"] if e["edge_id"] == gas)["inline_items"][0]
+    assert (item["normal_position"], item["position_source"]) == ("closed", "reviewer")
+    assert out["reviewStatus"] == "APPROVED" and out["review"]["correctionCount"] == 2

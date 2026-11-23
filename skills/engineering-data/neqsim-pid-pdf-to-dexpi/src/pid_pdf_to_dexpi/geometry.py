@@ -137,12 +137,13 @@ class LineGraph:
     """Connectivity of process line strokes with tee and gap bridging."""
 
     def __init__(self, segments: list[Segment], endpoint_tol: float = 1.6, gap_max: float = 30.0,
-                 lateral_tol: float = 1.0, cell: float = 25.0):
+                 lateral_tol: float = 1.0, cell: float = 25.0, corner_gap: float = 0.0):
         self.segments = _dedupe(segments)
         self.tol = endpoint_tol
         self.gap_max = gap_max
         self.lateral_tol = lateral_tol
         self.cell = cell
+        self.corner_gap = corner_gap
         # adjacency[i][j] = (point on i, point on j, bridge or None)
         self.adjacency: dict[int, dict[int, tuple[Point, Point, Optional[Bridge]]]] = defaultdict(dict)
         self.bridges: list[Bridge] = []
@@ -152,6 +153,32 @@ class LineGraph:
                 self._grid[c].append(i)
         self._connect_touching()
         self._bridge_gaps()
+        if corner_gap > 0:
+            self._bridge_corners()
+
+    def _bridge_corners(self) -> None:
+        """Joins two free ends of perpendicular lines that meet at a common corner across a small gap.
+
+        Raster input loses filled arrowheads and rounded corners, leaving such gaps.
+        """
+        free = []
+        for i, s in enumerate(self.segments):
+            for q in (s.a, s.b):
+                if not any(dist(q, self.adjacency[i][j][0]) <= self.tol for j in self.adjacency[i]):
+                    free.append((i, q))
+        for k, (i, p) in enumerate(free):
+            si = self.segments[i]
+            for j, q in free[k + 1:]:
+                if j == i or j in self.adjacency[i] or dist(p, q) > self.corner_gap:
+                    continue
+                sj = self.segments[j]
+                hi = abs(si.y1 - si.y0) < abs(si.x1 - si.x0)
+                hj = abs(sj.y1 - sj.y0) < abs(sj.x1 - sj.x0)
+                if hi == hj:
+                    continue
+                corner = (q[0], p[1]) if hi else (p[0], q[1])
+                if dist(p, corner) <= self.corner_gap and dist(q, corner) <= self.corner_gap:
+                    self._link(i, j, p, q)
 
     def _cells(self, s: Segment) -> Iterable[tuple[int, int]]:
         x0, x1 = sorted((s.x0, s.x1))

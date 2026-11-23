@@ -9,14 +9,15 @@
     "source": {"type": "object", "properties": {
       "file": {"type": "string"}, "sha256": {"type": "string"}, "page": {"type": "integer"},
       "pageWidth": {"type": "number"}, "pageHeight": {"type": "number"}, "units": {"const": "pt"},
-      "drawingNumber": {"type": "string"}}},
+      "drawingNumber": {"type": "string"}, "raster": {"type": "boolean"}}},
     "nodes": {"type": "array", "items": {"type": "object", "required": ["node_id", "kind", "bbox"], "properties": {
-      "node_id": {"type": "string"}, "tag": {"type": "string"},
+      "node_id": {"type": "string"}, "tag": {"type": "string"}, "sheet": {"type": "string"},
       "kind": {"enum": ["separator", "vessel", "tank", "pump", "compressor", "heat_exchanger", "heater", "filter",
                         "off_page_connector", "tee"]},
       "component_class": {"type": "string", "description": "DEXPI ComponentClass"},
       "bbox": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
       "direction": {"enum": ["in", "out"]}, "service": {"enum": ["process", "utility", "signal"]},
+      "shape": {"enum": ["pentagon", "box"]},
       "label": {"type": "string"}, "confidence": {"type": "number"},
       "ports": {"type": "array", "items": {"type": "object", "required": ["port_id", "x", "y"], "properties": {
         "port_id": {"type": "string"}, "x": {"type": "number"}, "y": {"type": "number"},
@@ -28,14 +29,26 @@
         "edge_id": {"type": "string"}, "from_node": {"type": "string"}, "from_port": {"type": "string"},
         "to_node": {"type": "string"}, "to_port": {"type": "string"}, "line_number": {"type": "string"},
         "fluid_code": {"type": "string"}, "normal_flow": {"type": "boolean"},
+        "kind": {"enum": ["process", "sheet_link"]}, "sheet": {"type": "string"},
+        "direction_source": {"type": "string", "description": "connector, path, tee balance, assumed or reviewer"},
         "path": {"type": "array", "items": {"type": "array", "items": {"type": "number"}, "minItems": 2}},
         "inline_items": {"type": "array", "items": {"type": "object", "properties": {
-          "kind": {"const": "valve"}, "component_class": {"type": "string"}, "tag": {"type": "string"},
-          "x": {"type": "number"}, "y": {"type": "number"}, "orientation": {"enum": ["horizontal", "vertical"]}}}},
+          "kind": {"enum": ["valve", "flange", "reducer", "blind"]}, "component_class": {"type": "string"},
+          "tag": {"type": "string"}, "x": {"type": "number"}, "y": {"type": "number"},
+          "orientation": {"enum": ["horizontal", "vertical"]},
+          "normal_position": {"enum": ["", "open", "closed"]},
+          "locking": {"enum": ["", "NC", "LC", "CSC", "NO", "LO", "CSO"]},
+          "position_source": {"type": "string"}, "confidence": {"type": "number"}}}},
         "confidence": {"type": "number"}}}},
     "instruments": {"type": "array"},
+    "sheets": {"type": "array", "items": {"type": "object"}},
+    "links": {"type": "array", "items": {"type": "object", "properties": {
+      "from": {"type": "string"}, "to": {"type": "string"}, "kind": {"enum": ["process", "signal"]}}}},
     "warnings": {"type": "array", "items": {"type": "string"}},
     "assumptions": {"type": "array", "items": {"type": "string"}},
-    "reviewStatus": {"const": "REVIEW_REQUIRED"}
+    "review": {"type": "object", "properties": {
+      "reviewer": {"type": "string"}, "date": {"type": "string"}, "approved": {"type": "boolean"},
+      "correctionCount": {"type": "integer"}, "correctionsSha256": {"type": "string"}}},
+    "reviewStatus": {"enum": ["REVIEW_REQUIRED", "REVIEW_IN_PROGRESS", "APPROVED"]}
   }
 }

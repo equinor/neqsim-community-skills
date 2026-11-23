@@ -32,11 +32,14 @@ DEFAULT_EQUIPMENT_CODES: dict[str, tuple[str, str]] = {
 # Words in an off-page connector label that mark a branch without flow in normal operation.
 DEFAULT_UTILITY_KEYWORDS: tuple[str, ...] = (
     "DRAIN", "FLARE", "VENT", "SAMPL", "ANTIFOAM", "PILOT", "BLANKET", "PURGE", "CHEMICAL",
-    "METHANOL", "BIOCIDE", "INHIBITOR", "JET WATER", "NITROGEN", "INSTRUMENT AIR", "UTILITY",
+    "METHANOL", "BIOCIDE", "INHIBITOR", "EMULSION BREAKER", "DEMULSIFIER", "SCAVENGER", "DEFOAMER", "JET WATER", "NITROGEN", "INSTRUMENT AIR", "UTILITY",
 )
 
 # Line-number fluid codes that are utility or no-flow services (overridable per project).
 DEFAULT_UTILITY_FLUID_CODES: tuple[str, ...] = ("VF", "DC", "DO", "CH")
+
+# Fluid-code prefixes of utility services (NORSOK Z-DP-002: C* chemicals).
+DEFAULT_UTILITY_FLUID_PREFIXES: tuple[str, ...] = ("C",)
 
 # Instrument function letters that denote an actuated valve, mapped to a DEXPI valve class.
 DEFAULT_VALVE_FUNCTIONS: dict[str, str] = {
@@ -60,8 +63,12 @@ class ExtractionConfig:
     equipment_min_size: tuple[float, float] = (40.0, 25.0)
     boundary_margin: float = 3.0
     nozzle_reach: float = 20.0
+    outline_width_tol: float = 0.05
+    corner_gap: float = 0.0
     nozzle_label_radius: float = 45.0
     valve_tag_radius: float = 70.0
+    lock_text_radius: float = 22.0
+    connector_window: float = 70.0
     equipment_tag_regex: str = r"^(?P<sys>\d{2})-?(?P<code>[A-Z]{2})-?(?P<num>\d{3,4}[A-Z]?)$"
     drawing_ref_regex: str = r"^[A-Z0-9]{2,6}(?:-[A-Z0-9]{1,6}){3,6}$"
     line_number_regex: str = r"(?P<size>\d{3,4})(?P<fluid>[A-Z]{2})-(?P<cls>[A-Z]{2}\d{2,3}[A-Z]?)"
@@ -71,4 +78,5 @@ class ExtractionConfig:
     equipment_codes: dict[str, tuple[str, str]] = field(default_factory=lambda: dict(DEFAULT_EQUIPMENT_CODES))
     utility_keywords: tuple[str, ...] = DEFAULT_UTILITY_KEYWORDS
     utility_fluid_codes: tuple[str, ...] = DEFAULT_UTILITY_FLUID_CODES
+    utility_fluid_prefixes: tuple[str, ...] = DEFAULT_UTILITY_FLUID_PREFIXES
     valve_functions: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_VALVE_FUNCTIONS))

@@ -502,6 +502,15 @@ skills:
     tags: [subsea, surf, polymeric, thermoplastic, flowline, permeation, collapse, screening]
     min_neqsim_version: "3.29.0"
 
+  - name: neqsim-riser-well-assignment
+    version: "1.0.0"
+    description: "Mixed-integer optimisation of which well connects to which riser and manifold: splitter risers (several wells per riser), LP-only and HP-only risers, temperature-limited injection risers, riser reach versus well slot, shared manifold and facility limits, and ROV swap cost, shut-in loss and swap budget over multi-year periods. USE WHEN: planning or reviewing a riser plan, a riser swap campaign or well-riser pairing on a floating host."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsea/neqsim-riser-well-assignment/SKILL.md"
+    tags: [subsea, riser, wells, optimization, milp, swap-campaign, manifold, splitter]
+    min_neqsim_version: "3.29.0"
+
   - name: neqsim-subsea-hot-tap-screening
     version: "1.0.0"
     description: "Educational screening of a mechanical-clamp hot tap on a live subsea pipeline: branch-to-run ratio, tee pressure and temperature rating, remaining wall against a hoop minimum, line velocity during cutting, hydrate margin and branch bending moment, with missing evidence reported as data gaps. USE WHEN: a tie-in concept proposes tapping an existing flowline or pipeline instead of a planned tie-in spool and needs a first go/no-go screen before a hot-tap contractor study."

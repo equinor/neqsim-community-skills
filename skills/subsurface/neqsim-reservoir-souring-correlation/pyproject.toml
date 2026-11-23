@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-reservoir-souring-correlation"
-version = "1.0.0"
+version = "1.1.0"
 description = "Educational reservoir souring screening skill: seawater fraction, per-well H2S correlations and mixing-zone potential for NeqSim community examples."
 readme = "README.md"
 requires-python = ">=3.11"

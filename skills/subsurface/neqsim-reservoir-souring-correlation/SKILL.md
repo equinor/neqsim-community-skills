@@ -1,9 +1,9 @@
 ---
 name: neqsim-reservoir-souring-correlation
 calculation_basis: "screening"
-version: "1.0.0"
+version: "1.1.0"
 description: "Educational reservoir souring screening: seawater fraction from tracers, automatic per-well H2S-versus-seawater-fraction correlations updated from new data, and a substrate-limited mixing-zone H2S bound. USE WHEN: a task asks how well or produced-water H2S develops with seawater breakthrough, needs per-well H2S correlations for a production model, or an upper bound on biogenic souring."
-last_verified: "2026-10-26"
+last_verified: "2026-11-23"
 requires:
   python_packages: []
   java_packages: []
@@ -42,7 +42,8 @@ Combine it with `neqsim-h2s-phase-partitioning`, which converts the measured sep
 1. Seawater fraction by two end-member mixing, `f = (c - c_fw) / (c_sw - c_fw)`, clipped to 0 to 1; several tracers are combined with contrast weights and the residual reported.
 2. Candidate models: `linear` (a f + b), `power` (a f^n), `saturating` (a f / (1 + k f)), `threshold` (a max(f - f0, 0), a breakthrough delay), `mixing_zone` (a min(f/f*, (1-f)/(1-f*)), a peak). Nonlinear parameters by grid search, linear ones by least squares, best by AICc. At least five points per well.
 3. Update by refit on the newest data with optional half-life weighting; compare with the previous correlation and warn on change.
-4. Bound: `H2S <= min(0.355 SO4, 0.577 donor) x efficiency x (1 - sink) x mitigation x thermal`, with `SO4 = f SO4_sw`, `donor = (1 - f) VFA_fw` and a logistic thermal factor around about 80 C. Biogenic H2S stoichiometry: 34.08/96.06 mg H2S per mg sulfate; 34.08/59.04 per mg acetate.
+4. Bound: `H2S <= min(0.355 SO4, 0.577 donor) x efficiency x (1 - sink) x mitigation x thermal`, with `SO4 = f SO4_sw`, `donor = (1 - f) VFA_fw + donor_floor` and a logistic thermal factor around about 80 C. `donor_floor_mg_l` (default 0, added 2026-11-22) is the donor supplied by oil and rock at the contact zone; without it the bound falls to zero when the produced water is all injected water, which understates late-life souring. Biogenic H2S stoichiometry: 34.08/96.06 mg H2S per mg sulfate; 34.08/59.04 per mg acetate.
+5. Hot reservoirs: the thermal factor takes the temperature of the mixing zone, not of the reservoir. Where the reservoir is much hotter than about 80 C (for example 119 C) souring starts only when the cooled zone around the injector reaches the producers; estimate that with the thermal-front retardation (about 0.2 to 0.45 of the water-front speed) and the sand-face injection temperature, and report the injection-water option (raw, nitrate, sulphate removal, produced water) as separate cases.
 
 ## Python Usage Pattern
 

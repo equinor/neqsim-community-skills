@@ -338,13 +338,16 @@ def mixing_zone_h2s_mg_l(
     temperature_c: float | None = None,
     t_cutoff_c: float = 80.0,
     t_width_c: float = 10.0,
+    donor_floor_mg_l: float = 0.0,
 ) -> float:
     """Substrate-limited upper bound for biogenic H2S (mg/L produced water) at seawater fraction f_sw.
 
-    Sulfate in the mixture is f * SO4_sw, electron donor (acetate-equivalent VFA) is (1 - f) * donor_fw.
-    H2S = min(0.355 * SO4, 0.577 * donor) * efficiency * (1 - sink) * mitigation * thermal factor.
-    mitigation_factor scales for sulfate removal or nitrate treatment (1 = none). The thermal
-    factor is a logistic cutoff around t_cutoff_c for the mixing-zone temperature.
+    Sulfate in the mixture is f * SO4_sw, electron donor (acetate-equivalent VFA) is
+    (1 - f) * donor_fw + donor_floor_mg_l. H2S = min(0.355 * SO4, 0.577 * donor) * efficiency * (1 - sink)
+    * mitigation * thermal factor. mitigation_factor scales for sulfate removal or nitrate treatment
+    (1 = none). The thermal factor is a logistic cutoff around t_cutoff_c for the mixing-zone temperature.
+    donor_floor_mg_l is the donor supplied from the oil and rock at the contact zone when the produced water is
+    almost all injected water; without it the bound falls to zero at f_sw = 1 (default 0 keeps that behaviour).
     """
     if not 0.0 <= f_sw <= 1.0:
         raise ValueError("f_sw must be in [0, 1]")
@@ -355,8 +358,10 @@ def mixing_zone_h2s_mg_l(
     ):
         if not 0.0 <= v <= 1.0:
             raise ValueError(f"{name!s} must be in [0, 1]")
+    if donor_floor_mg_l < 0.0:
+        raise ValueError("donor_floor_mg_l must be non-negative")
     so4 = f_sw * sulfate_sw_mg_l
-    donor = (1.0 - f_sw) * donor_fw_mg_l
+    donor = (1.0 - f_sw) * donor_fw_mg_l + donor_floor_mg_l
     thermal = 1.0
     if temperature_c is not None:
         thermal = 1.0 / (

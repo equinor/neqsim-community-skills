@@ -1,8 +1,8 @@
 ---
 name: neqsim-cfd-coupling
 calculation_basis: "hybrid"
-version: "1.0.0"
-description: "Link NeqSim and engineering documents to single- or multiphase CFD: traceable design basis, NeqSim boundary conditions, runnable OpenFOAM RANS/VOF cases, mesh/wall/turbulence gates and enhancement factors for 1-D models; tonal-noise work fails closed without evidence. USE WHEN: local velocity or shear peaks at bends, welds, tees or bundles, maldistribution, stratified/slug flow, real-geometry pressure drop, CFD/FEM report qualification, or aeroacoustic readiness."
+version: "1.1.0"
+description: "Link NeqSim and engineering documents to single- or multiphase CFD: traceable design basis, NeqSim boundary conditions, runnable OpenFOAM RANS/VOF cases, mesh/wall/turbulence gates, enhancement factors for 1-D models, and fail-closed gas dispersion and vapour-cloud explosion cases (PDRFoam) with verification and GCI. USE WHEN: local velocity/shear peaks, maldistribution, stratified/slug flow, CFD/FEM report qualification, gas cloud or explosion in a module, aeroacoustic readiness."
 last_verified: "2026-08-07"
 requires:
   python_packages: []
@@ -352,6 +352,57 @@ something. Quoting the corner value would be the same error as reading a single-
 maximum out of any CFD, which this skill already warns about; it is just harder to see
 because the mesh study on the *reference* quantity looks perfect.
 
+## Gas explosion and gas dispersion in a module (PDRFoam workflow)
+
+`cfd_coupling.explosion` and `cfd_coupling.verification` write, run and read back a congested-module gas explosion or leak dispersion on
+OpenFOAM (ESI v2512 image `opencfd/openfoam-default`): PDRFoam = porosity / distributed-resistance sub-grid obstacles (`PDRsetFields`),
+Xi flame-wrinkling combustion, SCOPE laminar burning velocity (`methane` and `propane` fuel packages in `pdr_templates/`). The same obstacle
+list, mesh and monitor points serve the dispersion run (`r5PDRFoam`, built by `docker/pdr_dispersion/build.sh`, adds an `fvOptions`
+source to the mixture-fraction equation) and the explosion run, as Z-013 Annex F asks. Neither FLACS nor KFX is needed or replaced.
+
+```python
+from cfd_coupling import explosion as ex, verification as ver
+
+gate = ex.assess_explosion_readiness({"geometry": g, "congestion": c, "source": s, "ignition_location": i,
+                                      "vents_confinement": v, "gas_detection": d})      # fail closed
+assert gate.verdict != "not_ready", gate.missing
+dom  = ex.Domain.for_module((22.5, 22.5, 6.5), h=1.0)        # module aligned to cells; deck/roof slab = one blocked cell layer
+spec = ex.PdrCaseSpec(name="E02", domain=dom, obstacles_dict=obstacles_text, fuel="propane",
+                      cloud=ex.Cloud((0, 0, 0), (11.25, 22.5, 6.5), k0=0.5), ignition=ex.Ignition((1.2, 11, 2.5), diameter=1.0, strength=2.0),
+                      monitor_points={"wall": (0.5, 11, 3)}, n_outer=3)
+case = ex.write_case(spec, "cases/E02")
+ex.docker_run(case, ex.explosion_commands(np_procs=1), bin_dir=bin_with_r5PDRFoam)        # serial is faster than MPI on a shared PC
+t, p = ex.read_probes(case, "p"); print(ex.pressure_metrics(t, p[:, 0]))
+```
+
+Gates (a result without them is a data gap, never a pass):
+
+| Gate | Requirement |
+|---|---|
+| Readiness | geometry, congestion, source, ignition location, vents/confinement and gas detection present; assumptions make the result *screening* |
+| Verification | closed-vessel peak pressure ratio vs `verification.aicc_isochoric` (pass within 12 %, caution within 20 %), SCOPE laminar speed vs literature range |
+| Mesh | three grids with constant refinement ratio and `explosion.gci` on the quantity reported (peak pressure, impulse), not on a convenient one |
+| Validation | none is performed here. State "verified, not validated for congested geometry" until a congested-array benchmark with published data is run |
+| Cloud | report flammable volume, volume above UFL, Q9-type equivalent stoichiometric volume (`equivalent_stoich_cloud`, Z-013 F.4.2) and the ignition-time dependence |
+
+Measured lessons (OSS area P22 study, 2026-11): (1) fully blocked cells (`betav = 0` from `PDRsetFields`) crash the solver: remove them
+with `topoSet fieldToCell betav` + `subsetMesh -patch blockedFaces` (done by `explosion_commands`); (2) a sub-grid plate that does not
+fill a cell leaks gas through the deck: make deck and roof exactly one blocked cell layer (`Domain.for_module`); (3) an ignition kernel
+larger than 1-2 cells or with strength 10 drives `b` to -30 and the pressure to 26 bar: use diameter about one cell, strength 2;
+(4) `nOuterCorrectors` 10 (tutorial) is 3x slower than 3 and gave NaN once; (5) several MPI ranks are slower than one serial run when the
+machine is shared; (6) probes in removed cells return -3e296: filter them; (7) the whole-module peak from a 1 m grid is not a mesh-independent
+number until the GCI of the reported quantity is shown; (8) the tutorial scheme `div(phiSt,b) limitedLinear` lets `b` go negative and the flame
+runs away (Xi to 470, 85 kPa spurious): use `limitedLinear01` (shipped in `pdr_templates/fvSchemes`) and report the scheme sensitivity;
+(9) PDRFoam's `rhoEqn` has no `fvOptions` and its `EaEqn` carries `fvOptions(rho, ha)` on the LEFT-hand side: a leak is injected as a passive
+`ft` source (fuel replaces local air, no displacement) and the `ha` source must be `-m_dot (h_fuel - h_air)` (`leak_enthalpy_source`); without it
+the fuel is heated by its heat of formation (+140 K) and the run blows up; (10) a pseudo-source jet of 500 m/s into a wall or obstacle at
+1 m cells can crash the thermo (`T` out of 20-5000 K): ramp the source over 3 s and reduce the thrust (record the factor) for impinging jets;
+(11) PDRsetFields rewrites `0/` without the user patch `inlet`: the run re-applies the wind boundary conditions from `system/inletPatch.sh`
+(forgetting this silently removed the wind: three wind speeds gave identical clouds); (12) a one-cell ignition kernel blew up on a
+`h = 0.7 m` and `h = 0.5 m` grid for reasons not found: the third grid level was taken coarser (`h = 2 m`).
+
+Example: `examples/explosion_workflow.py`; report skeleton: `templates/explosion_study_report_template.md`.
+
 ## Running the case in a container
 
 OpenFOAM has no native Windows build; it is Linux software, so it is usually run
@@ -453,10 +504,16 @@ Multiphase, additionally:
 
 ## Limitations
 
-Single-phase steady RANS and two-phase volume of fluid are what this skill
+Single-phase steady RANS, two-phase volume of fluid and the PDRFoam gas
+explosion/dispersion workflow (ESI OpenFOAM) are what this skill
 generates. Lagrangian parcel clouds and Euler-Euler dispersed models are
-recommended with a reason but not written. Phase change, cavitation, combustion,
+recommended with a reason but not written. Phase change, cavitation,
 conjugate heat transfer and mass transfer across the interface are outside scope,
+and the multiphase case fixes the phase properties at the inlet flash rather than
+re-flashing along the geometry. Combustion exists only as the PDRFoam Xi model:
+it has no gravity or buoyancy, no jet cooling, no aerosol tracking, and congested
+module peaks stay `screening` until validated against a published rig. FLACS/KFX are
+not generated or run (an input package can be prepared by hand).
 and the multiphase case fixes the phase properties at the inlet flash rather than
 re-flashing along the geometry. The quality gate is a screening filter, not a
 verification-and-validation review: a `usable_with_caution` verdict means any
@@ -525,3 +582,4 @@ tested against every intermediate version.
   dynamics of free boundaries. *Journal of Computational Physics*, 39(1), 201–225.
 - Hinze, J. O. (1955). Fundamentals of the hydrodynamic mechanism of splitting in
   dispersion processes. *AIChE Journal*, 1(3), 289–295.
+

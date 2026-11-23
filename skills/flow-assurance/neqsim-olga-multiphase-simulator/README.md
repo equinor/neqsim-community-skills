@@ -34,6 +34,13 @@ python skills/flow-assurance/neqsim-olga-multiphase-simulator/examples/run_olga_
     path/to/case.genkey --endtime "600 s" --nthreads 4
 ```
 
+## Generate a tie-back case and compare with NeqSim
+
+`casegen` renders a flowline + riser + topside-inlet genkey from a route-profile JSON and a PVT table (ESDV closure, blowdown leak,
+hydrate check, restart chaining, pig); `compare` tabulates NeqSim-versus-OLGA numbers with conservatism verdicts and extracts slug
+statistics. Both are plain Python and need no OLGA installation. See `examples/grimsnes_style_case.py` and the SKILL.md section
+"Grimsnes-Style Case Generator and NeqSim-vs-OLGA Comparison".
+
 ## Run Tests
 
 ```bash

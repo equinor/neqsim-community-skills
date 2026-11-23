@@ -395,7 +395,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-meg-loop
-    version: "0.1.0"
+    version: "0.1.1"
     description: "MEG hydrate-inhibition loop screening with NeqSim (SRK-CPA): lean MEG rate to meet a hydrate margin at the design pressure and coldest temperature, rich MEG and Hammerschmidt cross-check, MEG losses, regeneration water, reboiler temperature and duty, salt build-up and reclaimer slipstream, and lean-quality trade-off. USE WHEN: sizing MEG injection or regeneration for a gas tie-back."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"

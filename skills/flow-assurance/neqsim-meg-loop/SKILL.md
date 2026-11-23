@@ -1,7 +1,7 @@
 ---
 name: neqsim-meg-loop
 calculation_basis: "hybrid"
-version: "0.1.0"
+version: "0.1.1"
 description: "MEG hydrate-inhibition loop screening with NeqSim (SRK-CPA): lean MEG rate to meet a hydrate margin at the design pressure and coldest temperature, rich MEG and Hammerschmidt cross-check, MEG losses, regeneration water, reboiler temperature and duty, salt build-up and reclaimer slipstream, and lean-quality trade-off. USE WHEN: sizing MEG injection or regeneration for a gas tie-back."
 last_verified: "2026-11-22"
 requires:
@@ -28,6 +28,7 @@ all three from one NeqSim SRK-CPA model of the well stream.
   salt handling.
 - Comparing lean MEG concentrations (80, 85, 90 wt %).
 - Not for continuous kinetic or anti-agglomerant inhibitors, or methanol.
+- Gate before selecting MEG: check the host for (1) an MEG regeneration plant, (2) an existing continuous MEG injection with spare capacity (storage, pumps, MEG line or umbilical service line) and (3) batch shut-in injection capability (tank, pump, supply route, disposal of used MEG). If (1) and (2) are not confirmed, record a data gap and treat continuous MEG as not available; compare depressurisation, flush with dead oil/diesel, insulation and cooldown (no-touch) time, minimum flowing rate and batch MEG/methanol/LDHI at shut-in instead. If MEG is selected, evaluate the host topside capacity (utilisation of the existing regeneration, storage and pumps) or the installation required (regeneration package, storage, pumps, duty, power, deck space, weight, tie-in points, cost class) and report it as a host modification.
 
 ## Inputs
 

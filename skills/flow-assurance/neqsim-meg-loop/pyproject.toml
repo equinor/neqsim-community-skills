@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neqsim-skill-meg-loop"
-version = "0.1.0"
+version = "0.1.1"
 description = "MEG hydrate-inhibition loop screening: lean MEG injection rate to a hydrate margin, rich MEG, losses, regeneration duty and salt balance, with NeqSim."
 readme = "README.md"
 requires-python = ">=3.11"

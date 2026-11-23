@@ -365,17 +365,16 @@ def render_genkey(spec: FlowlineCaseSpec) -> str:
         "OPTIONS TEMPERATURE=WALL, COMPOSITIONAL=OFF, ELASTICWALL=OFF, DEBUG=OFF, STEADYSTATE=%s"
         % ("ON" if spec.steady_state_start else "OFF"),
         f'FILES PVTFILE="{spec.pvt_file}"',
-        "INTEGRATION ENDTIME=%g s, %sMINDT=%g s, MAXDT=%g s, DTSTART=%g s"
-        % (
+        "INTEGRATION ENDTIME={:g} s, {}MINDT={:g} s, MAXDT={:g} s, DTSTART={:g} s".format(
             spec.end_time_s,
             "STARTTIME=0 s, " if spec.start_time_s is not None else "",
             spec.min_dt_s,
             spec.max_dt_s,
             max(spec.min_dt_s, 0.01),
         ),
-        "OUTPUT DTOUT=%g s" % max(spec.end_time_s, 1.0),
-        "TREND DTPLOT=%g s" % spec.dt_trend_s,
-        "PROFILE DTPLOT=%g s" % spec.dt_profile_s,
+        f"OUTPUT DTOUT={max(spec.end_time_s, 1.0):g} s",
+        f"TREND DTPLOT={spec.dt_trend_s:g} s",
+        f"PROFILE DTPLOT={spec.dt_profile_s:g} s",
     ]
     if spec.restart_write:
         L.append(
@@ -383,20 +382,19 @@ def render_genkey(spec: FlowlineCaseSpec) -> str:
             % (spec.restart_dt_s or spec.end_time_s)
         )
     if spec.restart_read:
-        L.append('RESTART READFILE=ON, FILE="%s"' % spec.restart_read)
+        L.append(f'RESTART READFILE=ON, FILE="{spec.restart_read}"')
     L.extend(spec.extra_global)
-    mats, mat_lines = _material_lines([spec.layers_seabed, spec.layers_riser])
+    _mats, mat_lines = _material_lines([spec.layers_seabed, spec.layers_riser])
     L.extend(mat_lines)
     for tag, layers in (
         ("WALLSEA", spec.layers_seabed),
         ("WALLRIS", spec.layers_riser),
     ):
         L.append(
-            'WALL LABEL="%s", THICKNESS=(%s) m, MATERIAL=(%s)'
-            % (
+            'WALL LABEL="{}", THICKNESS=({}) m, MATERIAL=({})'.format(
                 tag,
                 _lst([ly.thickness_m for ly in layers], "%.5f"),
-                ", ".join('"%s"' % ly.material.label for ly in layers),
+                ", ".join(f'"{ly.material.label}"' for ly in layers),
             )
         )
     if spec.hydrate_curve_block:
@@ -426,12 +424,10 @@ def render_genkey(spec: FlowlineCaseSpec) -> str:
         L.append(top.to_genkey(spec.diameter_m, spec.roughness_m, "WALLRIS"))
     sea_labels = ", ".join(p.label for p in sea_pipes)
     L.append(
-        ' HEATTRANSFER LABEL="SEABED", PIPE=(%s), HOUTEROPTION=HGIVEN, HAMBIENT=%g W/m2-C, TAMBIENT=%g C, HMININNERWALL=10 W/m2-C'
-        % (sea_labels, spec.h_ambient_w_m2k, spec.t_ambient_c)
+        f' HEATTRANSFER LABEL="SEABED", PIPE=({sea_labels}), HOUTEROPTION=HGIVEN, HAMBIENT={spec.h_ambient_w_m2k:g} W/m2-C, TAMBIENT={spec.t_ambient_c:g} C, HMININNERWALL=10 W/m2-C'
     )
     L.append(
-        ' HEATTRANSFER LABEL="RISERWATER", PIPE=(%s), HOUTEROPTION=HGIVEN, HAMBIENT=%g W/m2-C, TAMBIENT=%g C, HMININNERWALL=10 W/m2-C'
-        % (
+        ' HEATTRANSFER LABEL="RISERWATER", PIPE=({}), HOUTEROPTION=HGIVEN, HAMBIENT={:g} W/m2-C, TAMBIENT={:g} C, HMININNERWALL=10 W/m2-C'.format(
             ", ".join(p.label for p in ris_pipes),
             spec.h_ambient_w_m2k,
             spec.t_ambient_c,
@@ -443,27 +439,22 @@ def render_genkey(spec: FlowlineCaseSpec) -> str:
         )
         et, eo = spec.esdv_table()
         L.append(
-            ' VALVE LABEL="ESDV", PIPE=TOP_01, SECTIONBOUNDARY=1, DIAMETER=%.4f m, CD=0.84, TIME=(%s) s, OPENING=(%s) -'
-            % (spec.diameter_m, _lst(et), _lst(eo))
+            f' VALVE LABEL="ESDV", PIPE=TOP_01, SECTIONBOUNDARY=1, DIAMETER={spec.diameter_m:.4f} m, CD=0.84, TIME=({_lst(et)}) s, OPENING=({_lst(eo)}) -'
         )
         if spec.choke_diameter_m:
             L.append(
-                ' VALVE LABEL="CHOKE", PIPE=TOP_01, SECTIONBOUNDARY=3, DIAMETER=%.4f m, CD=0.84, TIME=0 s, OPENING=1 -'
-                % spec.choke_diameter_m
+                f' VALVE LABEL="CHOKE", PIPE=TOP_01, SECTIONBOUNDARY=3, DIAMETER={spec.choke_diameter_m:.4f} m, CD=0.84, TIME=0 s, OPENING=1 -'
             )
     n = len(spec.source_times_s)
-    src = (
-        ' SOURCE LABEL="WELLS", PIPE=%s, SECTION=1, TIME=(%s) s, MASSFLOW=(%s) kg/s, TEMPERATURE=(%s) C, GASFRACTION=(%s) -'
-        % (
-            sea_pipes[0].label,
-            _lst(spec.source_times_s),
-            _lst(spec.source_massflow_kg_s, "%.4f"),
-            _lst([spec.source_temperature_c] * n),
-            _lst([spec.gas_fraction_hc] * n, "%.6f"),
-        )
+    src = ' SOURCE LABEL="WELLS", PIPE={}, SECTION=1, TIME=({}) s, MASSFLOW=({}) kg/s, TEMPERATURE=({}) C, GASFRACTION=({}) -'.format(
+        sea_pipes[0].label,
+        _lst(spec.source_times_s),
+        _lst(spec.source_massflow_kg_s, "%.4f"),
+        _lst([spec.source_temperature_c] * n),
+        _lst([spec.gas_fraction_hc] * n, "%.6f"),
     )
     if spec.water_fraction is not None:
-        src += ", WATERFRACTION=(%s) -" % _lst([spec.water_fraction] * n, "%.6f")
+        src += ", WATERFRACTION=({}) -".format(_lst([spec.water_fraction] * n, "%.6f"))
     L.append(src)
     ic = f" INITIALCONDITIONS PRESSURE={spec.init_pressure_bara:g} bara, TEMPERATURE={spec.init_temperature_c:g} C"
     if spec.init_voidfraction is not None:
@@ -479,12 +470,10 @@ def render_genkey(spec: FlowlineCaseSpec) -> str:
     if spec.pig:
         pg = spec.pig
         L.append(
-            ' POSITION LABEL="PIGLAUNCH", PIPE=%s, SECTIONBOUNDARY=1'
-            % sea_pipes[0].label
+            f' POSITION LABEL="PIGLAUNCH", PIPE={sea_pipes[0].label}, SECTIONBOUNDARY=1'
         )
         L.append(
-            ' PIG LABEL="PIG1", LAUNCHPOSITION="PIGLAUNCH", INSERTTIME=%g s, MASS=%g kg, STATICFORCE=%g N, LEAKAGEFACTOR=%g -, TRACKSLUG=%s'
-            % (
+            ' PIG LABEL="PIG1", LAUNCHPOSITION="PIGLAUNCH", INSERTTIME={:g} s, MASS={:g} kg, STATICFORCE={:g} N, LEAKAGEFACTOR={:g} -, TRACKSLUG={}'.format(
                 pg.get("insert_time_s", 0.0),
                 pg.get("mass_kg", 140.0),
                 pg.get("static_force_n", 1000.0),
@@ -503,7 +492,7 @@ def render_genkey(spec: FlowlineCaseSpec) -> str:
         ]  # start of the opening ramp = last closed point before the first opening
         stroke = max(bt[i_pos] - t_open, 1.0)
         L.append(
-            ' LEAK LABEL="BDV", PIPE=%s, SECTION=%d, DIAMETER=%.4f m, CD=0.84, TIME=(0, %g, %g) s, '
+            ' LEAK LABEL="BDV", PIPE=%s, SECTION=%d, DIAMETER=%.4f m, CD=0.84, TIME=(0, %g, %g) s, '  # noqa: UP031
             "BACKPRESSURE=(%g, %g, %g) bara"
             % (
                 ris_pipes[-1].label,
@@ -518,14 +507,14 @@ def render_genkey(spec: FlowlineCaseSpec) -> str:
         )
     L.extend(spec.extra_flowpath)
     prof = "PT, TM, HOL, ID, UG, UL, USG, USL, ROG, ROHL, GT, GG, GLT" + hyd
-    L.append(" PROFILEDATA VARIABLE=(%s)" % prof)
-    L.append(" OUTPUTDATA VARIABLE=(PT, TM, HOL, GT, GG, GLT%s)" % hyd)
+    L.append(f" PROFILEDATA VARIABLE=({prof})")
+    L.append(f" OUTPUTDATA VARIABLE=(PT, TM, HOL, GT, GG, GLT{hyd})")
     first = sea_pipes[0].label
     rtop = ris_pipes[-1].label
     ntop = ris_pipes[-1].nsegments
     last_sea = sea_pipes[-1].label
     nlast_sea = sea_pipes[-1].nsegments
-    tv = "PT, TM, HOL, GT, GG, GLT, QLT, USG, USL%s" % hyd
+    tv = f"PT, TM, HOL, GT, GG, GLT, QLT, USG, USL{hyd}"
     L.append(f" TRENDDATA PIPE={first}, SECTION=1, VARIABLE=({tv})")
     L.append(f" TRENDDATA PIPE={last_sea}, SECTION={nlast_sea}, VARIABLE=({tv})")
     L.append(
@@ -550,8 +539,7 @@ def render_genkey(spec: FlowlineCaseSpec) -> str:
             ' PARAMETERS LABEL="TOPSIDE"',
             f' BRANCH FLUID="{spec.fluid_label}"',
             f' GEOMETRY LABEL="TOPGEO", XSTART={xs:.3f} m, YSTART={zs:.3f} m, ZSTART=0 m',
-            ' PIPE LABEL=TOP_01, ROUGHNESS=%.6e m, DIAMETER=%.4f m, WALL="WALLRIS", NSEGMENT=4, LSEGMENT=(%s) m, XEND=%.3f m, YEND=%.3f m, ZEND=0 m'
-            % (
+            ' PIPE LABEL=TOP_01, ROUGHNESS={:.6e} m, DIAMETER={:.4f} m, WALL="WALLRIS", NSEGMENT=4, LSEGMENT=({}) m, XEND={:.3f} m, YEND={:.3f} m, ZEND=0 m'.format(
                 spec.roughness_m,
                 spec.diameter_m,
                 _lst([spec.topside_length_m / 4.0] * 4, "%.4f"),
@@ -562,13 +550,11 @@ def render_genkey(spec: FlowlineCaseSpec) -> str:
         ]
         et, eo = spec.esdv_table()
         L.append(
-            ' VALVE LABEL="ESDV", PIPE=TOP_01, SECTIONBOUNDARY=1, DIAMETER=%.4f m, CD=0.84, TIME=(%s) s, OPENING=(%s) -'
-            % (spec.diameter_m, _lst(et), _lst(eo))
+            f' VALVE LABEL="ESDV", PIPE=TOP_01, SECTIONBOUNDARY=1, DIAMETER={spec.diameter_m:.4f} m, CD=0.84, TIME=({_lst(et)}) s, OPENING=({_lst(eo)}) -'
         )
         if spec.choke_diameter_m:
             L.append(
-                ' VALVE LABEL="CHOKE", PIPE=TOP_01, SECTIONBOUNDARY=3, DIAMETER=%.4f m, CD=0.84, TIME=0 s, OPENING=1 -'
-                % spec.choke_diameter_m
+                f' VALVE LABEL="CHOKE", PIPE=TOP_01, SECTIONBOUNDARY=3, DIAMETER={spec.choke_diameter_m:.4f} m, CD=0.84, TIME=0 s, OPENING=1 -'
             )
         L += [
             f" INITIALCONDITIONS PRESSURE={spec.p_outlet_bara:g} bara, TEMPERATURE={spec.init_temperature_c:g} C",
@@ -585,15 +571,9 @@ def render_genkey(spec: FlowlineCaseSpec) -> str:
             ' PARAMETERS LABEL="BDVLINE"',
             f' BRANCH FLUID="{spec.fluid_label}"',
             f' GEOMETRY LABEL="BDVGEO", XSTART={xs:.3f} m, YSTART={zs:.3f} m, ZSTART=0 m',
-            ' PIPE LABEL=BDV_01, ROUGHNESS=%.6e m, DIAMETER=%.4f m, WALL="WALLRIS", NSEGMENT=2, LSEGMENT=(2.5, 2.5) m, XEND=%.3f m, YEND=%.3f m, ZEND=0 m'
-            % (spec.roughness_m, spec.diameter_m, xs + 5.0, zs),
+            f' PIPE LABEL=BDV_01, ROUGHNESS={spec.roughness_m:.6e} m, DIAMETER={spec.diameter_m:.4f} m, WALL="WALLRIS", NSEGMENT=2, LSEGMENT=(2.5, 2.5) m, XEND={xs + 5.0:.3f} m, YEND={zs:.3f} m, ZEND=0 m',
             ' HEATTRANSFER LABEL="BDVHT", PIPE=ALL, HOUTEROPTION=HGIVEN, HAMBIENT=5 W/m2-C, TAMBIENT=10 C, HMININNERWALL=10 W/m2-C',
-            ' VALVE LABEL="BDV", PIPE=BDV_01, SECTIONBOUNDARY=1, DIAMETER=%.4f m, CD=0.84, TIME=(%s) s, OPENING=(%s) -'
-            % (
-                spec.bdv_diameter_m,
-                _lst(spec.bdv_times_s or (0.0,)),
-                _lst(spec.bdv_opening or (0.0,)),
-            ),
+            f' VALVE LABEL="BDV", PIPE=BDV_01, SECTIONBOUNDARY=1, DIAMETER={spec.bdv_diameter_m:.4f} m, CD=0.84, TIME=({_lst(spec.bdv_times_s or (0.0,))}) s, OPENING=({_lst(spec.bdv_opening or (0.0,))}) -',
             f" INITIALCONDITIONS PRESSURE={spec.p_flare_bara:g} bara, TEMPERATURE=10 C",
             " TRENDDATA PIPE=BDV_01, SECTION=1, VARIABLE=(PT, TM, GT, GG, GLT)",
             " TRENDDATA PIPE=BDV_01, SECTION=2, VARIABLE=(PT, TM, GT, GG, GLT)",
@@ -603,44 +583,41 @@ def render_genkey(spec: FlowlineCaseSpec) -> str:
     # --- nodes
     L += [
         "NETWORKCOMPONENT TYPE=NODE, TAG=NODE_IN",
-        ' PARAMETERS LABEL="TEMPLATE", TYPE=CLOSED, X=%.3f m, Y=%.3f m, Z=0 m'
-        % (x0, z0),
+        f' PARAMETERS LABEL="TEMPLATE", TYPE=CLOSED, X={x0:.3f} m, Y={z0:.3f} m, Z=0 m',
         "ENDNETWORKCOMPONENT",
         "",
     ]
     if not single:
         L += [
             "NETWORKCOMPONENT TYPE=NODE, TAG=NODE_TOP",
-            ' PARAMETERS LABEL="RISERTOP", TYPE=INTERNAL, X=%.3f m, Y=%.3f m, Z=0 m, FLUID="%s"'
-            % (xs, zs, spec.fluid_label),
+            f' PARAMETERS LABEL="RISERTOP", TYPE=INTERNAL, X={xs:.3f} m, Y={zs:.3f} m, Z=0 m, FLUID="{spec.fluid_label}"',
             "ENDNETWORKCOMPONENT",
             "",
         ]
     if spec.p_outlet_series_bara and spec.p_outlet_times_s:
-        pr = "PRESSURE=(%s) bara, TIME=(%s) s" % (
-            _lst(spec.p_outlet_series_bara),
-            _lst(spec.p_outlet_times_s),
-        )
+        pr = f"PRESSURE=({_lst(spec.p_outlet_series_bara)}) bara, TIME=({_lst(spec.p_outlet_times_s)}) s"
     else:
-        pr = "PRESSURE=%g bara" % spec.p_outlet_bara
+        pr = f"PRESSURE={spec.p_outlet_bara:g} bara"
     # separator boundary: back-flow (riser-top pressure below the host pressure) is GAS from the separator gas space, not the table-equilibrium liquid
     pr += ", GASFRACTION=1 -" + (
         ", WATERFRACTION=0 -" if spec.water_fraction is not None else ""
     )
     L += [
         "NETWORKCOMPONENT TYPE=NODE, TAG=NODE_SEP",
-        ' PARAMETERS LABEL="SEPARATOR", TYPE=PRESSURE, X=%.3f m, Y=%.3f m, Z=0 m, %s, '
-        'TEMPERATURE=%g C, FLUID="%s"'
-        % (xsep, zs, pr, spec.t_outlet_c, spec.fluid_label),
+        (
+            f' PARAMETERS LABEL="SEPARATOR", TYPE=PRESSURE, X={xsep:.3f} m, Y={zs:.3f} m, Z=0 m, {pr}, '
+            f'TEMPERATURE={spec.t_outlet_c:g} C, FLUID="{spec.fluid_label}"'
+        ),
         "ENDNETWORKCOMPONENT",
         "",
     ]
     if bdv_branch:
         L += [
             "NETWORKCOMPONENT TYPE=NODE, TAG=NODE_FLARE",
-            ' PARAMETERS LABEL="FLARE", TYPE=PRESSURE, X=%.3f m, Y=%.3f m, Z=0 m, PRESSURE=%g bara, '
-            'TEMPERATURE=10 C, FLUID="%s"'
-            % (xs + 5.0, zs, spec.p_flare_bara, spec.fluid_label),
+            (
+                f' PARAMETERS LABEL="FLARE", TYPE=PRESSURE, X={xs + 5.0:.3f} m, Y={zs:.3f} m, Z=0 m, PRESSURE={spec.p_flare_bara:g} bara, '
+                f'TEMPERATURE=10 C, FLUID="{spec.fluid_label}"'
+            ),
             "ENDNETWORKCOMPONENT",
             "",
         ]

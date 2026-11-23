@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import itertools
 import math
-from typing import Any, Dict, List, Sequence, Tuple
+from collections.abc import Sequence
+from typing import Any
 
-Vec = Tuple[float, float, float]
-Mesh = Tuple[List[Vec], List[Tuple[int, int, int]]]
+Vec = tuple[float, float, float]
+Mesh = tuple[list[Vec], list[tuple[int, int, int]]]
 
 
 def _sub(a: Sequence[float], b: Sequence[float]) -> Vec:
@@ -14,7 +16,11 @@ def _sub(a: Sequence[float], b: Sequence[float]) -> Vec:
 
 
 def _cross(a: Vec, b: Vec) -> Vec:
-    return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0])
+    return (
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    )
 
 
 def _norm(a: Vec) -> Vec:
@@ -37,17 +43,29 @@ def box_mesh(center: Sequence[float], size: Sequence[float]) -> Mesh:
         (cx - hx, cy + hy, cz + hz),
     ]
     f = [
-        (0, 2, 1), (0, 3, 2),  # bottom
-        (4, 5, 6), (4, 6, 7),  # top
-        (0, 1, 5), (0, 5, 4),  # -y
-        (1, 2, 6), (1, 6, 5),  # +x
-        (2, 3, 7), (2, 7, 6),  # +y
-        (3, 0, 4), (3, 4, 7),  # -x
+        (0, 2, 1),
+        (0, 3, 2),  # bottom
+        (4, 5, 6),
+        (4, 6, 7),  # top
+        (0, 1, 5),
+        (0, 5, 4),  # -y
+        (1, 2, 6),
+        (1, 6, 5),  # +x
+        (2, 3, 7),
+        (2, 7, 6),  # +y
+        (3, 0, 4),
+        (3, 4, 7),  # -x
     ]
     return v, f
 
 
-def tube_mesh(start: Sequence[float], end: Sequence[float], radius: float, segments: int = 12, caps: bool = True) -> Mesh:
+def tube_mesh(
+    start: Sequence[float],
+    end: Sequence[float],
+    radius: float,
+    segments: int = 12,
+    caps: bool = True,
+) -> Mesh:
     """Cylinder between two points with optional end caps."""
     axis = _sub(end, start)
     if math.sqrt(sum(c * c for c in axis)) == 0.0:
@@ -56,7 +74,7 @@ def tube_mesh(start: Sequence[float], end: Sequence[float], radius: float, segme
     helper = (0.0, 0.0, 1.0) if abs(w[2]) < 0.9 else (1.0, 0.0, 0.0)
     u = _norm(_cross(w, helper))
     vv = _cross(w, u)
-    verts: List[Vec] = []
+    verts: list[Vec] = []
     for base in (start, end):
         for i in range(segments):
             a = 2.0 * math.pi * i / segments
@@ -68,7 +86,7 @@ def tube_mesh(start: Sequence[float], end: Sequence[float], radius: float, segme
                     base[2] + u[2] * ca + vv[2] * sa,
                 )
             )
-    faces: List[Tuple[int, int, int]] = []
+    faces: list[tuple[int, int, int]] = []
     for i in range(segments):
         j = (i + 1) % segments
         faces.append((i, j, segments + j))
@@ -85,9 +103,11 @@ def tube_mesh(start: Sequence[float], end: Sequence[float], radius: float, segme
     return verts, faces
 
 
-def sphere_mesh(center: Sequence[float], radius: float, rings: int = 8, segments: int = 12) -> Mesh:
+def sphere_mesh(
+    center: Sequence[float], radius: float, rings: int = 8, segments: int = 12
+) -> Mesh:
     """Low-poly UV sphere."""
-    verts: List[Vec] = []
+    verts: list[Vec] = []
     for r in range(rings + 1):
         phi = math.pi * r / rings
         for s in range(segments):
@@ -99,7 +119,7 @@ def sphere_mesh(center: Sequence[float], radius: float, rings: int = 8, segments
                     center[2] + radius * math.cos(phi),
                 )
             )
-    faces: List[Tuple[int, int, int]] = []
+    faces: list[tuple[int, int, int]] = []
     for r in range(rings):
         for s in range(segments):
             a = r * segments + s
@@ -115,8 +135,24 @@ def octahedron_mesh(center: Sequence[float], size: float) -> Mesh:
     """Marker for point objects."""
     h = size / 2.0
     cx, cy, cz = center
-    v = [(cx + h, cy, cz), (cx - h, cy, cz), (cx, cy + h, cz), (cx, cy - h, cz), (cx, cy, cz + h), (cx, cy, cz - h)]
-    f = [(0, 2, 4), (2, 1, 4), (1, 3, 4), (3, 0, 4), (2, 0, 5), (1, 2, 5), (3, 1, 5), (0, 3, 5)]
+    v = [
+        (cx + h, cy, cz),
+        (cx - h, cy, cz),
+        (cx, cy + h, cz),
+        (cx, cy - h, cz),
+        (cx, cy, cz + h),
+        (cx, cy, cz - h),
+    ]
+    f = [
+        (0, 2, 4),
+        (2, 1, 4),
+        (1, 3, 4),
+        (3, 0, 4),
+        (2, 0, 5),
+        (1, 2, 5),
+        (3, 1, 5),
+        (0, 3, 5),
+    ]
     return v, f
 
 
@@ -126,7 +162,7 @@ def _append(target: Mesh, part: Mesh) -> None:
     target[1].extend((a + offset, b + offset, c + offset) for a, b, c in part[1])
 
 
-def geometry_mesh(geometry: Dict[str, Any], segments: int = 12) -> Mesh:
+def geometry_mesh(geometry: dict[str, Any], segments: int = 12) -> Mesh:
     """Triangle mesh of one scene geometry."""
     shape = geometry["shape"]
     if shape == "box":
@@ -141,12 +177,14 @@ def geometry_mesh(geometry: Dict[str, Any], segments: int = 12) -> Mesh:
         b[idx] += h
         return tube_mesh(a, b, geometry["diameter"] / 2.0, segments)
     if shape == "sphere":
-        return sphere_mesh(geometry["center"], geometry["diameter"] / 2.0, segments=segments)
+        return sphere_mesh(
+            geometry["center"], geometry["diameter"] / 2.0, segments=segments
+        )
     if shape == "polyline":
         mesh: Mesh = ([], [])
         pts = geometry["points"]
         r = geometry["diameter"] / 2.0
-        for a, b in zip(pts[:-1], pts[1:]):
+        for a, b in itertools.pairwise(pts):
             _append(mesh, tube_mesh(a, b, r, max(6, segments // 2)))
         return mesh
     return octahedron_mesh(geometry["center"], geometry.get("size", 1.0))

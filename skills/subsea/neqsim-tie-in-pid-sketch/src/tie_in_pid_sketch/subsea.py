@@ -20,8 +20,8 @@ from __future__ import annotations
 import json
 import math
 from collections import deque
-from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 from xml.sax.saxutils import escape
 
 INK = "#1b2a3a"
@@ -30,7 +30,7 @@ DECISION = "#c9730a"
 FONT = "Arial, Helvetica, sans-serif"
 
 # service -> (colour, stroke width, dash pattern, legend name)
-SERVICES: Dict[str, Tuple[str, float, str, str]] = {
+SERVICES: dict[str, tuple[str, float, str, str]] = {
     "production": ("#7d5a1e", 3.4, "", "Production (multiphase well stream)"),
     "gas": ("#c0392b", 3.0, "", "Gas"),
     "injection": ("#2471a3", 3.4, "", "Injection water"),
@@ -42,9 +42,29 @@ SERVICES: Dict[str, Tuple[str, float, str, str]] = {
     "signal": ("#222222", 1.0, "3 3", "Instrument connection"),
 }
 
-VALVES = ("gate_valve", "ball_valve", "check_valve", "esdv", "ssiv", "choke", "control_valve", "hydraulic_valve")
+VALVES = (
+    "gate_valve",
+    "ball_valve",
+    "check_valve",
+    "esdv",
+    "ssiv",
+    "choke",
+    "control_valve",
+    "hydraulic_valve",
+)
 ISOLATING = ("gate_valve", "ball_valve", "esdv", "ssiv", "hydraulic_valve", "blind")
-BOXES = ("tree", "box", "manifold", "plet", "vessel", "boundary", "pump", "pig_launcher", "pig_receiver", "connector")
+BOXES = (
+    "tree",
+    "box",
+    "manifold",
+    "plet",
+    "vessel",
+    "boundary",
+    "pump",
+    "pig_launcher",
+    "pig_receiver",
+    "connector",
+)
 KINDS = VALVES + BOXES + ("instrument", "junction", "blind", "note")
 
 KIND_NAMES = {
@@ -108,13 +128,19 @@ class Symbol:
 
     def __post_init__(self) -> None:
         if self.kind not in KINDS:
-            raise ValueError("unknown symbol kind %r; use one of %s" % (self.kind, ", ".join(KINDS)))
+            raise ValueError(
+                "unknown symbol kind {!r}; use one of {}".format(
+                    self.kind, ", ".join(KINDS)
+                )
+            )
         if self.status not in ("existing", "new", "decision"):
             raise ValueError("status must be existing, new or decision")
         if self.rot not in (0, 90):
             raise ValueError("rot must be 0 or 90")
         if self.kind in VALVES:
-            self.w, self.h = (_VALVE_W, _VALVE_H) if self.rot == 0 else (_VALVE_H, _VALVE_W)
+            self.w, self.h = (
+                (_VALVE_W, _VALVE_H) if self.rot == 0 else (_VALVE_H, _VALVE_W)
+            )
         elif self.kind == "instrument":
             self.w = self.h = 2 * _INSTR_R
         elif self.kind == "junction":
@@ -129,16 +155,23 @@ class Symbol:
         elif self.kind == "pump":
             self.w = self.h = self.w or 46.0
         elif self.w <= 0 or self.h <= 0:
-            raise ValueError("%s needs a width and a height" % self.kind)
+            raise ValueError(f"{self.kind} needs a width and a height")
 
     @property
     def shown_tag(self) -> str:
         """Tag as drawn: invented tags carry a trailing asterisk."""
-        return self.tag + ("*" if self.proposed and self.tag and not self.tag.endswith("*") else "")
+        return self.tag + (
+            "*" if self.proposed and self.tag and not self.tag.endswith("*") else ""
+        )
 
-    def bbox(self) -> Tuple[float, float, float, float]:
+    def bbox(self) -> tuple[float, float, float, float]:
         """Return (x0, y0, x1, y1) of the symbol body, including a valve actuator."""
-        x0, y0, x1, y1 = self.x - self.w / 2, self.y - self.h / 2, self.x + self.w / 2, self.y + self.h / 2
+        x0, y0, x1, y1 = (
+            self.x - self.w / 2,
+            self.y - self.h / 2,
+            self.x + self.w / 2,
+            self.y + self.h / 2,
+        )
         if self.kind in ("esdv", "ssiv", "control_valve", "hydraulic_valve"):
             if self.rot == 0:
                 y0 -= 28.0
@@ -146,14 +179,24 @@ class Symbol:
                 x1 += 28.0
         return x0, y0, x1, y1
 
-    def port(self, side: str, off: float = 0.0) -> Tuple[float, float]:
+    def port(self, side: str, off: float = 0.0) -> tuple[float, float]:
         """Connection point on side ``n``, ``s``, ``e`` or ``w``; ``off`` slides along a box edge."""
         if self.kind in VALVES or self.kind in ("blind", "connector"):
             hw, hh = (self.w / 2, self.h / 2)
             if self.rot == 0:
-                pts = {"w": (self.x - hw, self.y), "e": (self.x + hw, self.y), "n": (self.x, self.y - hh), "s": (self.x, self.y + hh)}
+                pts = {
+                    "w": (self.x - hw, self.y),
+                    "e": (self.x + hw, self.y),
+                    "n": (self.x, self.y - hh),
+                    "s": (self.x, self.y + hh),
+                }
             else:
-                pts = {"n": (self.x, self.y - hh), "s": (self.x, self.y + hh), "w": (self.x - hw, self.y), "e": (self.x + hw, self.y)}
+                pts = {
+                    "n": (self.x, self.y - hh),
+                    "s": (self.x, self.y + hh),
+                    "w": (self.x - hw, self.y),
+                    "e": (self.x + hw, self.y),
+                }
             return pts[side]
         if self.kind == "junction":
             return (self.x, self.y)
@@ -174,7 +217,7 @@ class Pipe:
     b: str
     pb: str
     service: str
-    points: List[Tuple[float, float]]
+    points: list[tuple[float, float]]
     label: str = ""
     arrow: bool = False
     flex: bool = False
@@ -186,7 +229,10 @@ class Pipe:
 
     def length(self) -> float:
         """Polyline length in canvas units."""
-        return sum(math.hypot(q[0] - p[0], q[1] - p[1]) for p, q in zip(self.points, self.points[1:]))
+        return sum(
+            math.hypot(q[0] - p[0], q[1] - p[1])
+            for p, q in zip(self.points, self.points[1:])
+        )
 
 
 class PidSheet:
@@ -205,34 +251,55 @@ class PidSheet:
         prepared_by: str = "NeqSim agent-assisted study",
         role: str = "",
     ) -> None:
-        self.drawing_no, self.title, self.revision, self.subtitle = drawing_no, title, revision, subtitle
+        self.drawing_no, self.title, self.revision, self.subtitle = (
+            drawing_no,
+            title,
+            revision,
+            subtitle,
+        )
         self.width, self.height = float(width), float(height)
-        self.status_note, self.date, self.prepared_by, self.role = status_note, date, prepared_by, role
-        self.symbols: Dict[str, Symbol] = {}
-        self.pipes: List[Pipe] = []
-        self.zones: List[Tuple[float, float, float, float, str, str]] = []
-        self.texts: List[Tuple[float, float, str, float, str, str]] = []
-        self.notes: List[str] = []
-        self.waivers: List[Dict[str, str]] = []
-        self.decor: List[str] = []
-        self.basis: List[str] = []
+        self.status_note, self.date, self.prepared_by, self.role = (
+            status_note,
+            date,
+            prepared_by,
+            role,
+        )
+        self.symbols: dict[str, Symbol] = {}
+        self.pipes: list[Pipe] = []
+        self.zones: list[tuple[float, float, float, float, str, str]] = []
+        self.texts: list[tuple[float, float, str, float, str, str]] = []
+        self.notes: list[str] = []
+        self.waivers: list[dict[str, str]] = []
+        self.decor: list[str] = []
+        self.basis: list[str] = []
         self._line_no = 0
 
     # ------------------------------------------------------------------ building
     def add(self, kind: str, tag: str, x: float, y: float, **kw) -> Symbol:
         """Place a symbol and return it. Raises ``ValueError`` on a duplicate tag."""
         if tag in self.symbols:
-            raise ValueError("duplicate tag %r on sheet %s" % (tag, self.drawing_no))
+            raise ValueError(f"duplicate tag {tag!r} on sheet {self.drawing_no}")
         kw.setdefault("proposed", True)
         sym = Symbol(kind, tag, float(x), float(y), **kw)
         self.symbols[tag] = sym
         return sym
 
-    def zone(self, x: float, y: float, w: float, h: float, label: str, where: str = "top") -> None:
+    def zone(
+        self, x: float, y: float, w: float, h: float, label: str, where: str = "top"
+    ) -> None:
         """A dashed grouping frame (for example the template or the platform) drawn behind everything; ``where`` is ``top`` or ``bottom``."""
         self.zones.append((x, y, w, h, label, where))
 
-    def text(self, x: float, y: float, text: str, size: float = 12.0, anchor: str = "start", weight: str = "normal", fill: str = INK) -> None:
+    def text(
+        self,
+        x: float,
+        y: float,
+        text: str,
+        size: float = 12.0,
+        anchor: str = "start",
+        weight: str = "normal",
+        fill: str = INK,
+    ) -> None:
         """Free text on the sheet (not a node)."""
         self.texts.append((x, y, text, size, anchor, weight + "|" + fill))
 
@@ -244,21 +311,36 @@ class PidSheet:
         """Waive a layout-checker finding code with a reason (shown as INFO, recorded in the layout spec)."""
         self.waivers.append({"code": code, "reason": reason})
 
-    def add_table(self, x: float, y: float, headers: Sequence[str], rows: Sequence[Sequence[str]], col_w: Sequence[float], row_h: float = 19.0, title: str = "") -> Tuple[float, float]:
+    def add_table(
+        self,
+        x: float,
+        y: float,
+        headers: Sequence[str],
+        rows: Sequence[Sequence[str]],
+        col_w: Sequence[float],
+        row_h: float = 19.0,
+        title: str = "",
+    ) -> tuple[float, float]:
         """Draw a small data table (decoration, not a node) and return its (width, height)."""
         w = float(sum(col_w))
         top = y + (22.0 if title else 0.0)
-        out: List[str] = []
+        out: list[str] = []
         if title:
             out.append(self._t(x, y + 14, title, 12, bold=True, fill="#44546a"))
-        out.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="#e8eef6" stroke="#8a97a6" stroke-width="1"/>' % (x, top, w, row_h))
+        out.append(
+            f'<rect x="{x:.1f}" y="{top:.1f}" width="{w:.1f}" height="{row_h:.1f}" fill="#e8eef6" stroke="#8a97a6" stroke-width="1"/>'
+        )
         cx = x
         for h, cw in zip(headers, col_w):
             out.append(self._t(cx + 5, top + row_h - 6, h, 10, bold=True))
             cx += cw
         for i, row in enumerate(rows):
             ry = top + row_h * (i + 1)
-            out.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="%s" stroke="#c5ccd6" stroke-width="0.8"/>' % (x, ry, w, row_h, "#ffffff" if i % 2 == 0 else "#f6f8fb"))
+            out.append(
+                '<rect x="{:.1f}" y="{:.1f}" width="{:.1f}" height="{:.1f}" fill="{}" stroke="#c5ccd6" stroke-width="0.8"/>'.format(
+                    x, ry, w, row_h, "#ffffff" if i % 2 == 0 else "#f6f8fb"
+                )
+            )
             cx = x
             for cell, cw in zip(row, col_w):
                 out.append(self._t(cx + 5, ry + row_h - 6, str(cell), 10))
@@ -266,8 +348,21 @@ class PidSheet:
         self.decor.extend(out)
         return w, (top - y) + row_h * (len(rows) + 1)
 
-    def add_profile(self, x: float, y: float, w: float, h: float, xs: Sequence[float], ys: Sequence[float], title: str, xlabel: str, ylabel: str,
-                    markers: Sequence[Tuple[float, str, str]] = (), invert_y: bool = True, y_pad: float = 3.0) -> None:
+    def add_profile(
+        self,
+        x: float,
+        y: float,
+        w: float,
+        h: float,
+        xs: Sequence[float],
+        ys: Sequence[float],
+        title: str,
+        xlabel: str,
+        ylabel: str,
+        markers: Sequence[tuple[float, str, str]] = (),
+        invert_y: bool = True,
+        y_pad: float = 3.0,
+    ) -> None:
         """Draw a line profile (for example seabed depth against KP) with axes and labelled vertical markers (decoration)."""
         x0, x1 = min(xs), max(xs)
         lo, hi = min(ys) - y_pad, max(ys) + y_pad
@@ -282,43 +377,57 @@ class PidSheet:
             return y + py + (f if invert_y else 1.0 - f) * ph
 
         out = [self._t(x, y + 14, title, 12, bold=True, fill="#44546a")]
-        out.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="#ffffff" stroke="#8a97a6" stroke-width="1"/>' % (x + px, y + py, pw, ph))
+        out.append(
+            f'<rect x="{x + px:.1f}" y="{y + py:.1f}" width="{pw:.1f}" height="{ph:.1f}" fill="#ffffff" stroke="#8a97a6" stroke-width="1"/>'
+        )
         for k in range(5):
             gv = lo + (hi - lo) * k / 4.0
             gy = sy(gv)
-            out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#dde3ea" stroke-width="0.8"/>' % (x + px, gy, x + px + pw, gy))
-            out.append(self._t(x + px - 5, gy + 3.5, "%.0f" % gv, 9.5, "end"))
+            out.append(
+                f'<line x1="{x + px:.1f}" y1="{gy:.1f}" x2="{x + px + pw:.1f}" y2="{gy:.1f}" stroke="#dde3ea" stroke-width="0.8"/>'
+            )
+            out.append(self._t(x + px - 5, gy + 3.5, f"{gv:.0f}", 9.5, "end"))
         for k in range(0, int(x1) + 1, 3):
-            out.append(self._t(sx(k), y + py + ph + 14, "%d" % k, 9.5, "middle"))
+            out.append(
+                self._t(sx(k), y + py + ph + 14, "%d" % k, 9.5, "middle")  # noqa: UP031
+            )
         out.append(self._t(x + px + pw / 2, y + h - 4, xlabel, 10, "middle"))
-        out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="10" text-anchor="middle" fill="%s" transform="rotate(-90 %.1f %.1f)">%s</text>' % (x + 12, y + py + ph / 2, FONT, INK, x + 12, y + py + ph / 2, escape(ylabel)))
-        pts = " ".join("%.1f,%.1f" % (sx(a), sy(b)) for a, b in zip(xs, ys))
-        out.append('<polyline points="%s" fill="none" stroke="#7d5a1e" stroke-width="2"/>' % pts)
+        out.append(
+            f'<text x="{x + 12:.1f}" y="{y + py + ph / 2:.1f}" font-family="{FONT}" font-size="10" text-anchor="middle" fill="{INK}" transform="rotate(-90 {x + 12:.1f} {y + py + ph / 2:.1f})">{escape(ylabel)}</text>'
+        )
+        pts = " ".join(f"{sx(a):.1f},{sy(b):.1f}" for a, b in zip(xs, ys))
+        out.append(
+            f'<polyline points="{pts}" fill="none" stroke="#7d5a1e" stroke-width="2"/>'
+        )
         for mx, text, col in markers:
-            out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="1.4" stroke-dasharray="5 3"/>' % (sx(mx), y + py, sx(mx), y + py + ph, col))
+            out.append(
+                f'<line x1="{sx(mx):.1f}" y1="{y + py:.1f}" x2="{sx(mx):.1f}" y2="{y + py + ph:.1f}" stroke="{col}" stroke-width="1.4" stroke-dasharray="5 3"/>'
+            )
             out.append(self._t(sx(mx) - 4, y + py + 12, text, 9.5, "end", fill=col))
         self.decor.extend(out)
 
-    def _pt(self, ref: Union[str, Tuple[float, float]], side: str, off: float) -> Tuple[float, float]:
+    def _pt(
+        self, ref: str | tuple[float, float], side: str, off: float
+    ) -> tuple[float, float]:
         if isinstance(ref, tuple):
             return (float(ref[0]), float(ref[1]))
         if ref not in self.symbols:
-            raise KeyError("unknown tag %r on sheet %s" % (ref, self.drawing_no))
+            raise KeyError(f"unknown tag {ref!r} on sheet {self.drawing_no}")
         return self.symbols[ref].port(side, off)
 
     def pipe(
         self,
-        a: Union[str, Tuple[float, float]],
+        a: str | tuple[float, float],
         pa: str,
-        b: Union[str, Tuple[float, float]],
+        b: str | tuple[float, float],
         pb: str,
         service: str = "production",
-        via: Optional[Sequence[Tuple[float, float]]] = None,
-        mid: Optional[float] = None,
+        via: Sequence[tuple[float, float]] | None = None,
+        mid: float | None = None,
         offa: float = 0.0,
         offb: float = 0.0,
         label: str = "",
-        arrow: Optional[bool] = None,
+        arrow: bool | None = None,
         flex: bool = False,
         dashed: bool = False,
         status: str = "new",
@@ -331,12 +440,16 @@ class PidSheet:
         ``arrow=False``; instrument connections never do.
         """
         if service not in SERVICES:
-            raise ValueError("unknown service %r; use one of %s" % (service, ", ".join(SERVICES)))
+            raise ValueError(
+                "unknown service {!r}; use one of {}".format(
+                    service, ", ".join(SERVICES)
+                )
+            )
         if arrow is None:
             arrow = service != "signal"
         p0 = self._pt(a, pa, offa)
         p1 = self._pt(b, pb, offb)
-        pts: List[Tuple[float, float]] = [p0]
+        pts: list[tuple[float, float]] = [p0]
         if via:
             pts += [(float(v[0]), float(v[1])) for v in via]
         else:
@@ -351,9 +464,9 @@ class PidSheet:
         pts.append(p1)
         self._line_no += 1
         pipe = Pipe(
-            a if isinstance(a, str) else "pt%d_a" % self._line_no,
+            a if isinstance(a, str) else "pt%d_a" % self._line_no,  # noqa: UP031
             pa,
-            b if isinstance(b, str) else "pt%d_b" % self._line_no,
+            b if isinstance(b, str) else "pt%d_b" % self._line_no,  # noqa: UP031
             pb,
             service,
             pts,
@@ -364,14 +477,16 @@ class PidSheet:
             dashed,
             label_dy,
             label_dx,
-            "L%02d" % self._line_no,
+            "L%02d" % self._line_no,  # noqa: UP031
         )
         self.pipes.append(pipe)
         return pipe
 
-    def chain(self, tags: Sequence[str], service: str = "production", label: str = "", **kw) -> List[Pipe]:
+    def chain(
+        self, tags: Sequence[str], service: str = "production", label: str = "", **kw
+    ) -> list[Pipe]:
         """Connect consecutive tags with the facing ports (east-west or north-south, from their positions), in flow order."""
-        out: List[Pipe] = []
+        out: list[Pipe] = []
         for i in range(len(tags) - 1):
             s0, s1 = self.symbols[tags[i]], self.symbols[tags[i + 1]]
             dx, dy = s1.x - s0.x, s1.y - s0.y
@@ -379,17 +494,36 @@ class PidSheet:
                 pa, pb = ("e", "w") if dx >= 0 else ("w", "e")
             else:
                 pa, pb = ("s", "n") if dy >= 0 else ("n", "s")
-            out.append(self.pipe(tags[i], pa, tags[i + 1], pb, service, label=label if i == 0 else "", **kw))
+            out.append(
+                self.pipe(
+                    tags[i],
+                    pa,
+                    tags[i + 1],
+                    pb,
+                    service,
+                    label=label if i == 0 else "",
+                    **kw,
+                )
+            )
         return out
 
-    def tap(self, instrument: str, target: str, side: str = "n", target_side: str = "s", via: Optional[Sequence[Tuple[float, float]]] = None) -> Pipe:
+    def tap(
+        self,
+        instrument: str,
+        target: str,
+        side: str = "n",
+        target_side: str = "s",
+        via: Sequence[tuple[float, float]] | None = None,
+    ) -> Pipe:
         """Instrument connection (thin dashed) from a transmitter to a symbol or a junction."""
-        return self.pipe(instrument, side, target, target_side, service="signal", via=via)
+        return self.pipe(
+            instrument, side, target, target_side, service="signal", via=via
+        )
 
     # ------------------------------------------------------------------ analysis
-    def graph(self) -> Dict[str, List[str]]:
+    def graph(self) -> dict[str, list[str]]:
         """Adjacency of tags through pipes (signal lines excluded)."""
-        g: Dict[str, List[str]] = {t: [] for t in self.symbols}
+        g: dict[str, list[str]] = {t: [] for t in self.symbols}
         for p in self.pipes:
             if p.service == "signal" or p.a not in g or p.b not in g:
                 continue
@@ -402,7 +536,7 @@ class PidSheet:
         g = self.graph()
         if a not in g or b not in g:
             raise KeyError("unknown tag")
-        prev: Dict[str, Optional[str]] = {a: None}
+        prev: dict[str, str | None] = {a: None}
         queue = deque([a])
         while queue:
             cur = queue.popleft()
@@ -422,125 +556,209 @@ class PidSheet:
             node = prev[node]
         return count
 
-    def validate(self, required_kinds: Iterable[str] = (), min_isolation: Optional[Dict[Tuple[str, str], int]] = None) -> List[str]:
+    def validate(
+        self,
+        required_kinds: Iterable[str] = (),
+        min_isolation: dict[tuple[str, str], int] | None = None,
+    ) -> list[str]:
         """Completeness findings; an empty list means the sheet is internally consistent.
 
         Checks: every symbol with a flow axis is on a line, tags are unique (enforced by :meth:`add`), every required kind is
         present, and every ``(a, b)`` in ``min_isolation`` has at least that many isolating valves in series.
         """
-        findings: List[str] = []
+        findings: list[str] = []
         g = self.graph()
-        signalled = {p.a for p in self.pipes if p.service == "signal"} | {p.b for p in self.pipes if p.service == "signal"}
+        signalled = {p.a for p in self.pipes if p.service == "signal"} | {
+            p.b for p in self.pipes if p.service == "signal"
+        }
         for tag, sym in self.symbols.items():
             if sym.kind in ("note", "boundary"):
                 continue
-            if not g[tag] and tag not in signalled and not any(p.a == tag or p.b == tag for p in self.pipes):
-                findings.append("%s (%s) is not connected to any line" % (tag, sym.kind))
+            if (
+                not g[tag]
+                and tag not in signalled
+                and not any(p.a == tag or p.b == tag for p in self.pipes)
+            ):
+                findings.append(f"{tag} ({sym.kind}) is not connected to any line")
         present = {s.kind for s in self.symbols.values()}
         for kind in required_kinds:
             if kind not in present:
-                findings.append("no %s on the sheet" % KIND_NAMES.get(kind, kind))
+                findings.append(f"no {KIND_NAMES.get(kind, kind)} on the sheet")
         for (a, b), need in (min_isolation or {}).items():
             have = self.isolation_count(a, b)
             if have < need:
-                findings.append("%s to %s has %d isolating valve(s) in series, %d required" % (a, b, max(have, 0), need))
+                findings.append(
+                    "%s to %s has %d isolating valve(s) in series, %d required"  # noqa: UP031
+                    % (a, b, max(have, 0), need)
+                )
         return findings
 
     # ------------------------------------------------------------------ drawing
     @staticmethod
-    def _style(status: str) -> Tuple[str, float, str]:
+    def _style(status: str) -> tuple[str, float, str]:
         if status == "existing":
             return INK, 1.7, ""
         if status == "decision":
             return DECISION, 2.4, "7 4"
         return NEW, 2.8, ""
 
-    def _draw_symbol(self, s: Symbol) -> List[str]:
+    def _draw_symbol(self, s: Symbol) -> list[str]:
         col, sw, dash = self._style(s.status)
-        da = ' stroke-dasharray="%s"' % dash if dash else ""
-        base = 'stroke="%s" stroke-width="%.1f" fill="#ffffff"%s' % (col, sw, da)
-        out: List[str] = []
+        da = f' stroke-dasharray="{dash}"' if dash else ""
+        base = f'stroke="{col}" stroke-width="{sw:.1f}" fill="#ffffff"{da}'
+        out: list[str] = []
         x, y = s.x, s.y
         k = s.kind
         if k in VALVES:
-            tf = ' transform="rotate(90 %.1f %.1f)"' % (x, y) if s.rot == 90 else ""
-            out.append('<g%s>' % tf)
-            out.append('<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f" %s/>' % (x - 14, y - 11, x + 14, y + 11, x + 14, y - 11, x - 14, y + 11, base))
+            tf = f' transform="rotate(90 {x:.1f} {y:.1f})"' if s.rot == 90 else ""
+            out.append(f"<g{tf}>")
+            out.append(
+                f'<polygon points="{x - 14:.1f},{y - 11:.1f} {x + 14:.1f},{y + 11:.1f} {x + 14:.1f},{y - 11:.1f} {x - 14:.1f},{y + 11:.1f}" {base}/>'
+            )
             if k == "ball_valve":
-                out.append('<circle cx="%.1f" cy="%.1f" r="3.6" fill="%s"/>' % (x, y, col))
+                out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3.6" fill="{col}"/>')
             elif k == "check_valve":
-                out.append('<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="%s"/>' % (x - 6, y - 6, x + 7, y, x - 6, y + 6, col))
+                out.append(
+                    f'<polygon points="{x - 6:.1f},{y - 6:.1f} {x + 7:.1f},{y:.1f} {x - 6:.1f},{y + 6:.1f}" fill="{col}"/>'
+                )
             elif k == "choke":
-                out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="%.1f"/>' % (x - 12, y + 16, x + 12, y - 16, col, sw))
-                out.append('<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="%s"/>' % (x + 12, y - 16, x + 5, y - 14, x + 10, y - 9, col))
+                out.append(
+                    f'<line x1="{x - 12:.1f}" y1="{y + 16:.1f}" x2="{x + 12:.1f}" y2="{y - 16:.1f}" stroke="{col}" stroke-width="{sw:.1f}"/>'
+                )
+                out.append(
+                    f'<polygon points="{x + 12:.1f},{y - 16:.1f} {x + 5:.1f},{y - 14:.1f} {x + 10:.1f},{y - 9:.1f}" fill="{col}"/>'
+                )
             elif k in ("esdv", "ssiv", "control_valve", "hydraulic_valve"):
-                out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="%.1f"/>' % (x, y, x, y - 14, col, sw))
+                out.append(
+                    f'<line x1="{x:.1f}" y1="{y:.1f}" x2="{x:.1f}" y2="{y - 14:.1f}" stroke="{col}" stroke-width="{sw:.1f}"/>'
+                )
                 if k == "control_valve":
-                    out.append('<path d="M%.1f,%.1f A12,12 0 0 1 %.1f,%.1f Z" %s/>' % (x - 12, y - 14, x + 12, y - 14, base))
+                    out.append(
+                        f'<path d="M{x - 12:.1f},{y - 14:.1f} A12,12 0 0 1 {x + 12:.1f},{y - 14:.1f} Z" {base}/>'
+                    )
                 else:
-                    out.append('<rect x="%.1f" y="%.1f" width="22" height="14" %s/>' % (x - 11, y - 28, base))
+                    out.append(
+                        f'<rect x="{x - 11:.1f}" y="{y - 28:.1f}" width="22" height="14" {base}/>'
+                    )
                     letter = {"esdv": "S", "ssiv": "S", "hydraulic_valve": "H"}[k]
-                    out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="11" font-weight="bold" text-anchor="middle" fill="%s">%s</text>' % (x, y - 17.5, FONT, col, letter))
+                    out.append(
+                        f'<text x="{x:.1f}" y="{y - 17.5:.1f}" font-family="{FONT}" font-size="11" font-weight="bold" text-anchor="middle" fill="{col}">{letter}</text>'
+                    )
             out.append("</g>")
         elif k == "instrument":
-            out.append('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (x, y, _INSTR_R, base))
-            out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="1"/>' % (x - _INSTR_R, y, x + _INSTR_R, y, col))
+            out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{_INSTR_R:.1f}" {base}/>')
+            out.append(
+                f'<line x1="{x - _INSTR_R:.1f}" y1="{y:.1f}" x2="{x + _INSTR_R:.1f}" y2="{y:.1f}" stroke="{col}" stroke-width="1"/>'
+            )
             letters, _, number = s.shown_tag.partition("-")
-            out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="10.5" font-weight="bold" text-anchor="middle" fill="%s">%s</text>' % (x, y - 3.5, FONT, INK, escape(letters)))
-            out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="9" text-anchor="middle" fill="%s">%s</text>' % (x, y + 11, FONT, INK, escape(number)))
+            out.append(
+                f'<text x="{x:.1f}" y="{y - 3.5:.1f}" font-family="{FONT}" font-size="10.5" font-weight="bold" text-anchor="middle" fill="{INK}">{escape(letters)}</text>'
+            )
+            out.append(
+                f'<text x="{x:.1f}" y="{y + 11:.1f}" font-family="{FONT}" font-size="9" text-anchor="middle" fill="{INK}">{escape(number)}</text>'
+            )
         elif k == "junction":
-            out.append('<circle cx="%.1f" cy="%.1f" r="3.5" fill="%s"/>' % (x, y, INK))
+            out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3.5" fill="{INK}"/>')
         elif k == "blind":
             if s.rot == 0:
-                out.append('<circle cx="%.1f" cy="%.1f" r="7" %s/><circle cx="%.1f" cy="%.1f" r="7" fill="%s" stroke="%s" stroke-width="%.1f"/>' % (x - 8, y, base, x + 8, y, col, col, sw))
+                out.append(
+                    f'<circle cx="{x - 8:.1f}" cy="{y:.1f}" r="7" {base}/><circle cx="{x + 8:.1f}" cy="{y:.1f}" r="7" fill="{col}" stroke="{col}" stroke-width="{sw:.1f}"/>'
+                )
             else:
-                out.append('<circle cx="%.1f" cy="%.1f" r="7" %s/><circle cx="%.1f" cy="%.1f" r="7" fill="%s" stroke="%s" stroke-width="%.1f"/>' % (x, y - 8, base, x, y + 8, col, col, sw))
+                out.append(
+                    f'<circle cx="{x:.1f}" cy="{y - 8:.1f}" r="7" {base}/><circle cx="{x:.1f}" cy="{y + 8:.1f}" r="7" fill="{col}" stroke="{col}" stroke-width="{sw:.1f}"/>'
+                )
         elif k == "connector":
             if s.rot == 0:
-                out.append('<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f" %s/><polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f" %s/>' % (x - 13, y - 8, x - 2, y - 5, x - 2, y + 5, x - 13, y + 8, base, x + 13, y - 8, x + 2, y - 5, x + 2, y + 5, x + 13, y + 8, base))
+                out.append(
+                    f'<polygon points="{x - 13:.1f},{y - 8:.1f} {x - 2:.1f},{y - 5:.1f} {x - 2:.1f},{y + 5:.1f} {x - 13:.1f},{y + 8:.1f}" {base}/><polygon points="{x + 13:.1f},{y - 8:.1f} {x + 2:.1f},{y - 5:.1f} {x + 2:.1f},{y + 5:.1f} {x + 13:.1f},{y + 8:.1f}" {base}/>'
+                )
             else:
-                out.append('<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f" %s/><polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f %.1f,%.1f" %s/>' % (x - 8, y - 13, x - 5, y - 2, x + 5, y - 2, x + 8, y - 13, base, x - 8, y + 13, x - 5, y + 2, x + 5, y + 2, x + 8, y + 13, base))
+                out.append(
+                    f'<polygon points="{x - 8:.1f},{y - 13:.1f} {x - 5:.1f},{y - 2:.1f} {x + 5:.1f},{y - 2:.1f} {x + 8:.1f},{y - 13:.1f}" {base}/><polygon points="{x - 8:.1f},{y + 13:.1f} {x - 5:.1f},{y + 2:.1f} {x + 5:.1f},{y + 2:.1f} {x + 8:.1f},{y + 13:.1f}" {base}/>'
+                )
         elif k == "pump":
             r = s.w / 2
-            out.append('<circle cx="%.1f" cy="%.1f" r="%.1f" %s/>' % (x, y, r, base))
-            out.append('<path d="M%.1f,%.1f L%.1f,%.1f L%.1f,%.1f" fill="none" stroke="%s" stroke-width="%.1f"/>' % (x - r * 0.62, y + r * 0.62, x + r, y, x - r * 0.62, y - r * 0.62, col, sw))
+            out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" {base}/>')
+            out.append(
+                f'<path d="M{x - r * 0.62:.1f},{y + r * 0.62:.1f} L{x + r:.1f},{y:.1f} L{x - r * 0.62:.1f},{y - r * 0.62:.1f}" fill="none" stroke="{col}" stroke-width="{sw:.1f}"/>'
+            )
         elif k in ("pig_launcher", "pig_receiver"):
             x0, y0 = x - s.w / 2, y - s.h / 2
-            out.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="6" %s/>' % (x0, y0, s.w, s.h, base))
+            out.append(
+                f'<rect x="{x0:.1f}" y="{y0:.1f}" width="{s.w:.1f}" height="{s.h:.1f}" rx="6" {base}/>'
+            )
             door = x0 if k == "pig_launcher" else x0 + s.w
-            out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="%.1f"/>' % (door, y0 - 4, door, y0 + s.h + 4, col, sw + 1))
-            out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="%.1f"/>' % (x, y0, x, y0 - 12, col, sw))
+            out.append(
+                f'<line x1="{door:.1f}" y1="{y0 - 4:.1f}" x2="{door:.1f}" y2="{y0 + s.h + 4:.1f}" stroke="{col}" stroke-width="{sw + 1:.1f}"/>'
+            )
+            out.append(
+                f'<line x1="{x:.1f}" y1="{y0:.1f}" x2="{x:.1f}" y2="{y0 - 12:.1f}" stroke="{col}" stroke-width="{sw:.1f}"/>'
+            )
         elif k == "boundary":
             x0, y0 = x - s.w / 2, y - s.h / 2
-            out.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="4" fill="#f7f7f7" stroke="#555555" stroke-width="1.4" stroke-dasharray="8 4"/>' % (x0, y0, s.w, s.h))
+            out.append(
+                f'<rect x="{x0:.1f}" y="{y0:.1f}" width="{s.w:.1f}" height="{s.h:.1f}" rx="4" fill="#f7f7f7" stroke="#555555" stroke-width="1.4" stroke-dasharray="8 4"/>'
+            )
         else:  # tree, box, manifold, plet, vessel
             x0, y0 = x - s.w / 2, y - s.h / 2
             rx = 14 if k == "vessel" else 3
-            out.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="%d" %s/>' % (x0, y0, s.w, s.h, rx, base.replace('fill="#ffffff"', 'fill="%s"' % s.fill)))
+            out.append(
+                '<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="%d" %s/>'  # noqa: UP031
+                % (
+                    x0,
+                    y0,
+                    s.w,
+                    s.h,
+                    rx,
+                    base.replace('fill="#ffffff"', f'fill="{s.fill}"'),
+                )
+            )
             if k == "tree":
-                out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="1"/>' % (x0, y0 + 20, x0 + s.w, y0 + 20, col))
+                out.append(
+                    f'<line x1="{x0:.1f}" y1="{y0 + 20:.1f}" x2="{x0 + s.w:.1f}" y2="{y0 + 20:.1f}" stroke="{col}" stroke-width="1"/>'
+                )
             if k == "manifold":
                 for off in (-0.3, 0.3):
-                    out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="1"/>' % (x0 - 0.0, y + off * s.h, x0 + 8, y + off * s.h, col))
-                    out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="1"/>' % (x0 + s.w - 8, y + off * s.h, x0 + s.w, y + off * s.h, col))
+                    out.append(
+                        f'<line x1="{x0 - 0.0:.1f}" y1="{y + off * s.h:.1f}" x2="{x0 + 8:.1f}" y2="{y + off * s.h:.1f}" stroke="{col}" stroke-width="1"/>'
+                    )
+                    out.append(
+                        f'<line x1="{x0 + s.w - 8:.1f}" y1="{y + off * s.h:.1f}" x2="{x0 + s.w:.1f}" y2="{y + off * s.h:.1f}" stroke="{col}" stroke-width="1"/>'
+                    )
             if k == "plet":
-                out.append('<rect x="%.1f" y="%.1f" width="8" height="14" fill="%s"/>' % (x0 - 8, y - 7, col))
+                out.append(
+                    f'<rect x="{x0 - 8:.1f}" y="{y - 7:.1f}" width="8" height="14" fill="{col}"/>'
+                )
         return out
 
-    def _label_lines(self, s: Symbol) -> List[str]:
-        out: List[str] = []
+    def _label_lines(self, s: Symbol) -> list[str]:
+        out: list[str] = []
         tag = "" if s.kind == "boundary" else s.shown_tag
         lines = [ln for ln in s.label.split("\n") if ln]
         k = s.kind
         if k == "instrument":
             for i, ln in enumerate(lines):
-                out.append(self._t(s.x + _INSTR_R + 6, s.y + 4 + 11 * i - 5.5 * (len(lines) - 1), ln, 9.5, "start"))
+                out.append(
+                    self._t(
+                        s.x + _INSTR_R + 6,
+                        s.y + 4 + 11 * i - 5.5 * (len(lines) - 1),
+                        ln,
+                        9.5,
+                        "start",
+                    )
+                )
             return out
         if k == "junction":
             return out
-        if k in BOXES and k not in ("pump", "pig_launcher", "pig_receiver", "connector"):
+        if k in BOXES and k not in (
+            "pump",
+            "pig_launcher",
+            "pig_receiver",
+            "connector",
+        ):
             x0, y0 = s.x - s.w / 2, s.y - s.h / 2
-            top = y0 + 15 if k == "tree" else s.y - 7 * (len(lines)) - (7 if tag else 0)
+            y0 + 15 if k == "tree" else s.y - 7 * (len(lines)) - (7 if tag else 0)
             if k == "tree":
                 if tag:
                     out.append(self._t(s.x, y0 + 14, tag, 11.5, "middle", bold=True))
@@ -556,11 +774,17 @@ class PidSheet:
             return out
         x0, y0, x1, y1 = s.bbox()
         if s.label_pos == "above":
-            ty, ly = y0 - 6, y0 - 6 - 12.5 * len(lines) if tag else y0 - 6
+            _ty, _ly = y0 - 6, y0 - 6 - 12.5 * len(lines) if tag else y0 - 6
             if tag:
-                out.append(self._t(s.x, y0 - 6 - 12.5 * len(lines), tag, 11, "middle", bold=True))
+                out.append(
+                    self._t(
+                        s.x, y0 - 6 - 12.5 * len(lines), tag, 11, "middle", bold=True
+                    )
+                )
             for i, ln in enumerate(lines):
-                out.append(self._t(s.x, y0 - 6 - 12.5 * (len(lines) - 1 - i), ln, 10, "middle"))
+                out.append(
+                    self._t(s.x, y0 - 6 - 12.5 * (len(lines) - 1 - i), ln, 10, "middle")
+                )
             return out
         anchor = "middle"
         tx = s.x
@@ -583,17 +807,30 @@ class PidSheet:
         return out
 
     @staticmethod
-    def _t(x: float, y: float, text: str, size: float = 11.0, anchor: str = "start", bold: bool = False, fill: str = INK) -> str:
-        return '<text x="%.1f" y="%.1f" font-family="%s" font-size="%.1f" text-anchor="%s" font-weight="%s" fill="%s">%s</text>' % (
-            x, y, FONT, size, anchor, "bold" if bold else "normal", fill, escape(text))
+    def _t(
+        x: float,
+        y: float,
+        text: str,
+        size: float = 11.0,
+        anchor: str = "start",
+        bold: bool = False,
+        fill: str = INK,
+    ) -> str:
+        return '<text x="{:.1f}" y="{:.1f}" font-family="{}" font-size="{:.1f}" text-anchor="{}" font-weight="{}" fill="{}">{}</text>'.format(
+            x, y, FONT, size, anchor, "bold" if bold else "normal", fill, escape(text)
+        )
 
-    def _draw_pipe(self, p: Pipe) -> List[str]:
+    def _draw_pipe(self, p: Pipe) -> list[str]:
         col, sw, dash, _ = SERVICES[p.service]
-        da = ' stroke-dasharray="%s"' % dash if dash else (' stroke-dasharray="9 5"' if p.dashed else "")
+        da = (
+            f' stroke-dasharray="{dash}"'
+            if dash
+            else (' stroke-dasharray="9 5"' if p.dashed else "")
+        )
         if p.status == "decision" and not dash:
             da = ' stroke-dasharray="9 5"'
             col = DECISION
-        out: List[str] = []
+        out: list[str] = []
         if p.flex and len(p.points) == 2:
             (x0, y0), (x1, y1) = p.points
             n = 14
@@ -606,23 +843,42 @@ class PidSheet:
                     py += amp
                 else:
                     px += amp
-                seg.append("%.1f,%.1f" % (px, py))
-            out.append('<polyline points="%s" fill="none" stroke="%s" stroke-width="%.1f"%s stroke-linejoin="round"/>' % (" ".join(seg), col, sw, da))
+                seg.append(f"{px:.1f},{py:.1f}")
+            out.append(
+                '<polyline points="{}" fill="none" stroke="{}" stroke-width="{:.1f}"{} stroke-linejoin="round"/>'.format(
+                    " ".join(seg), col, sw, da
+                )
+            )
         else:
-            pts = " ".join("%.1f,%.1f" % q for q in p.points)
-            out.append('<polyline points="%s" fill="none" stroke="%s" stroke-width="%.1f"%s stroke-linejoin="round" stroke-linecap="butt"/>' % (pts, col, sw, da))
+            pts = " ".join("{:.1f},{:.1f}".format(*q) for q in p.points)
+            out.append(
+                f'<polyline points="{pts}" fill="none" stroke="{col}" stroke-width="{sw:.1f}"{da} stroke-linejoin="round" stroke-linecap="butt"/>'
+            )
         if p.arrow and p.service != "signal":
             out.append(self._arrowhead(p, col))
         if p.label:
             (lx, ly), horiz = self._label_anchor(p)
             if horiz:
-                out.append(self._t(lx + p.label_dx, ly + p.label_dy, p.label, 10.5, "middle", fill=col if col != "#222222" else INK))
+                out.append(
+                    self._t(
+                        lx + p.label_dx,
+                        ly + p.label_dy,
+                        p.label,
+                        10.5,
+                        "middle",
+                        fill=col if col != "#222222" else INK,
+                    )
+                )
             else:
-                out.append(self._t(lx + 8 + p.label_dx, ly + 4, p.label, 10.5, "start", fill=col))
+                out.append(
+                    self._t(
+                        lx + 8 + p.label_dx, ly + 4, p.label, 10.5, "start", fill=col
+                    )
+                )
         return out
 
     @staticmethod
-    def _longest(p: Pipe) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    def _longest(p: Pipe) -> tuple[tuple[float, float], tuple[float, float]]:
         best, bl = (p.points[0], p.points[-1]), -1.0
         for q0, q1 in zip(p.points, p.points[1:]):
             ln = math.hypot(q1[0] - q0[0], q1[1] - q0[1])
@@ -630,7 +886,7 @@ class PidSheet:
                 best, bl = (q0, q1), ln
         return best
 
-    def _label_anchor(self, p: Pipe) -> Tuple[Tuple[float, float], bool]:
+    def _label_anchor(self, p: Pipe) -> tuple[tuple[float, float], bool]:
         q0, q1 = self._longest(p)
         horiz = abs(q1[0] - q0[0]) >= abs(q1[1] - q0[1])
         return (((q0[0] + q1[0]) / 2, (q0[1] + q1[1]) / 2), horiz)
@@ -644,34 +900,52 @@ class PidSheet:
         tipx, tipy = q1[0] - ux * back, q1[1] - uy * back
         bx, by = tipx - ux * 10, tipy - uy * 10
         nx, ny = -uy * 5.5, ux * 5.5
-        return '<polygon points="%.1f,%.1f %.1f,%.1f %.1f,%.1f" fill="%s"/>' % (tipx, tipy, bx + nx, by + ny, bx - nx, by - ny, col)
+        return f'<polygon points="{tipx:.1f},{tipy:.1f} {bx + nx:.1f},{by + ny:.1f} {bx - nx:.1f},{by - ny:.1f}" fill="{col}"/>'
 
-    def _legend_size(self) -> Tuple[float, float]:
+    def _legend_size(self) -> tuple[float, float]:
         used_services = {p.service for p in self.pipes}
-        used_kinds = [k for k in KIND_NAMES if any(s.kind == k for s in self.symbols.values())]
+        used_kinds = [
+            k for k in KIND_NAMES if any(s.kind == k for s in self.symbols.values())
+        ]
         rows1 = len(used_services) + 3
         rows2 = (len(used_kinds) + 2) // 3
         return 980.0, 30 + max(rows1 * 21, rows2 * 46 + 14) + 10
 
-    def _legend(self, x0: Optional[float] = None, y0: Optional[float] = None) -> Tuple[List[str], Tuple[float, float, float, float]]:
+    def _legend(
+        self, x0: float | None = None, y0: float | None = None
+    ) -> tuple[list[str], tuple[float, float, float, float]]:
         w, h = self._legend_size()
         x0 = 24.0 if x0 is None else x0
         y0 = self.height - 24.0 - h if y0 is None else y0
-        used_services = sorted({p.service for p in self.pipes}, key=lambda s: list(SERVICES).index(s))
-        used_kinds = [k for k in KIND_NAMES if any(s.kind == k for s in self.symbols.values())]
-        out = ['<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="#ffffff" stroke="#555555" stroke-width="1"/>' % (x0, y0, w, h)]
+        used_services = sorted(
+            {p.service for p in self.pipes}, key=lambda s: list(SERVICES).index(s)
+        )
+        used_kinds = [
+            k for k in KIND_NAMES if any(s.kind == k for s in self.symbols.values())
+        ]
+        out = [
+            f'<rect x="{x0:.1f}" y="{y0:.1f}" width="{w:.1f}" height="{h:.1f}" fill="#ffffff" stroke="#555555" stroke-width="1"/>'
+        ]
         out.append(self._t(x0 + 10, y0 + 20, "Legend", 12, bold=True))
         yy = y0 + 42
         for sv in used_services:
             col, sw, dash, name = SERVICES[sv]
-            da = ' stroke-dasharray="%s"' % dash if dash else ""
-            out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-width="%.1f"%s/>' % (x0 + 12, yy - 4, x0 + 62, yy - 4, col, sw, da))
+            da = f' stroke-dasharray="{dash}"' if dash else ""
+            out.append(
+                f'<line x1="{x0 + 12:.1f}" y1="{yy - 4:.1f}" x2="{x0 + 62:.1f}" y2="{yy - 4:.1f}" stroke="{col}" stroke-width="{sw:.1f}"{da}/>'
+            )
             out.append(self._t(x0 + 72, yy, name, 10.5))
             yy += 21
-        for status, name in (("existing", "Existing (thin, dark)"), ("new", "New scope (bold, green)"), ("decision", "Option or open decision (dashed)")):
+        for status, name in (
+            ("existing", "Existing (thin, dark)"),
+            ("new", "New scope (bold, green)"),
+            ("decision", "Option or open decision (dashed)"),
+        ):
             col, sw, dash = self._style(status)
-            da = ' stroke-dasharray="%s"' % dash if dash else ""
-            out.append('<rect x="%.1f" y="%.1f" width="50" height="11" fill="#ffffff" stroke="%s" stroke-width="%.1f"%s/>' % (x0 + 12, yy - 12, col, sw, da))
+            da = f' stroke-dasharray="{dash}"' if dash else ""
+            out.append(
+                f'<rect x="{x0 + 12:.1f}" y="{yy - 12:.1f}" width="50" height="11" fill="#ffffff" stroke="{col}" stroke-width="{sw:.1f}"{da}/>'
+            )
             out.append(self._t(x0 + 72, yy - 2, name, 10.5))
             yy += 21
         half = (len(used_kinds) + 2) // 3
@@ -679,49 +953,90 @@ class PidSheet:
             col, row = divmod(idx, half)
             cx = x0 + 300 + col * 225
             yy = y0 + 70 + row * 46
-            demo = Symbol(k, "PT-" if k == "instrument" else "", cx + 30, yy - 5, w=44, h=16, status="new", proposed=False)
-            if k in BOXES and k not in ("pump", "pig_launcher", "pig_receiver", "connector"):
+            demo = Symbol(
+                k,
+                "PT-" if k == "instrument" else "",
+                cx + 30,
+                yy - 5,
+                w=44,
+                h=16,
+                status="new",
+                proposed=False,
+            )
+            if k in BOXES and k not in (
+                "pump",
+                "pig_launcher",
+                "pig_receiver",
+                "connector",
+            ):
                 demo.w, demo.h = 40.0, 14.0
             out += self._draw_symbol(demo)
             out.append(self._t(cx + 62, yy - 1, KIND_NAMES[k], 10))
         return out, (x0, y0, w, h)
 
-    def _title_block(self) -> Tuple[List[str], Tuple[float, float, float, float]]:
+    def _title_block(self) -> tuple[list[str], tuple[float, float, float, float]]:
         w, h = 470.0, 112.0
         x0, y0 = self.width - w - 20, self.height - h - 20
-        out = ['<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="#ffffff" stroke="#1b2a3a" stroke-width="2"/>' % (x0, y0, w, h)]
+        out = [
+            f'<rect x="{x0:.1f}" y="{y0:.1f}" width="{w:.1f}" height="{h:.1f}" fill="#ffffff" stroke="#1b2a3a" stroke-width="2"/>'
+        ]
         out.append(self._t(x0 + 10, y0 + 22, self.title, 14, bold=True))
         if self.subtitle:
             out.append(self._t(x0 + 10, y0 + 40, self.subtitle, 10.5))
-        out.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#1b2a3a" stroke-width="1"/>' % (x0, y0 + 50, x0 + w, y0 + 50))
-        out.append(self._t(x0 + 10, y0 + 68, "Drawing %s    Revision %s    %s" % (self.drawing_no, self.revision, self.date), 11, bold=True))
-        out.append(self._t(x0 + 10, y0 + 85, self.status_note, 9.5, fill="#c0392b", bold=True))
-        out.append(self._t(x0 + 10, y0 + 102, "Prepared by: %s. A qualified engineer must review." % self.prepared_by, 9.5))
+        out.append(
+            f'<line x1="{x0:.1f}" y1="{y0 + 50:.1f}" x2="{x0 + w:.1f}" y2="{y0 + 50:.1f}" stroke="#1b2a3a" stroke-width="1"/>'
+        )
+        out.append(
+            self._t(
+                x0 + 10,
+                y0 + 68,
+                f"Drawing {self.drawing_no}    Revision {self.revision}    {self.date}",
+                11,
+                bold=True,
+            )
+        )
+        out.append(
+            self._t(x0 + 10, y0 + 85, self.status_note, 9.5, fill="#c0392b", bold=True)
+        )
+        out.append(
+            self._t(
+                x0 + 10,
+                y0 + 102,
+                f"Prepared by: {self.prepared_by}. A qualified engineer must review.",
+                9.5,
+            )
+        )
         return out, (x0, y0, w, h)
 
-    def _notes_lines(self, w: float) -> List[str]:
-        lines: List[str] = []
+    def _notes_lines(self, w: float) -> list[str]:
+        lines: list[str] = []
         for i, n in enumerate(self.notes, 1):
             cur, first = "", True
             for wd in n.split():
                 if len(cur) + len(wd) + 1 > int(w / 5.3):
-                    lines.append((("%d. " % i) if first else "    ") + cur)
+                    lines.append(
+                        (("%d. " % i) if first else "    ") + cur  # noqa: UP031
+                    )
                     cur, first = wd, False
                 else:
                     cur = (cur + " " + wd).strip()
-            lines.append((("%d. " % i) if first else "    ") + cur)
+            lines.append((("%d. " % i) if first else "    ") + cur)  # noqa: UP031
         return lines
 
-    def _notes_block(self, x0: float, y0: float, w: float) -> Tuple[List[str], Tuple[float, float, float, float]]:
+    def _notes_block(
+        self, x0: float, y0: float, w: float
+    ) -> tuple[list[str], tuple[float, float, float, float]]:
         lines = self._notes_lines(w)
         h = 30 + 13 * len(lines) + 8
-        out = ['<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="#ffffff" stroke="#555555" stroke-width="1"/>' % (x0, y0, w, h)]
+        out = [
+            f'<rect x="{x0:.1f}" y="{y0:.1f}" width="{w:.1f}" height="{h:.1f}" fill="#ffffff" stroke="#555555" stroke-width="1"/>'
+        ]
         out.append(self._t(x0 + 10, y0 + 20, "Notes", 12, bold=True))
         for i, ln in enumerate(lines):
             out.append(self._t(x0 + 10, y0 + 38 + 13 * i, ln, 9.5))
         return out, (x0, y0, w, h)
 
-    def _notes_box(self) -> Optional[Tuple[float, float, float, float]]:
+    def _notes_box(self) -> tuple[float, float, float, float] | None:
         if not self.notes:
             return None
         _, tb = self._title_block()
@@ -729,31 +1044,51 @@ class PidSheet:
         h = 30 + 13 * len(self._notes_lines(w)) + 8
         return (tb[0], tb[1] - 12.0 - h, w, h)
 
-    def layout(self) -> Dict[str, Tuple[float, float, float, float]]:
+    def layout(self) -> dict[str, tuple[float, float, float, float]]:
         """Bounding boxes of the legend, notes, title block and the free drawing area above them."""
         _, lb = self._legend()
         _, tb = self._title_block()
         nb = self._notes_box()
         top = min(lb[1], nb[1] if nb else lb[1])
-        return {"legend": lb, "title_block": tb, "notes": nb or (0.0, 0.0, 0.0, 0.0), "band_top": (0.0, top, 0.0, 0.0)}
+        return {
+            "legend": lb,
+            "title_block": tb,
+            "notes": nb or (0.0, 0.0, 0.0, 0.0),
+            "band_top": (0.0, top, 0.0, 0.0),
+        }
 
     def to_svg(self) -> str:
         """Render the sheet as a standalone SVG string."""
-        body: List[str] = []
-        body.append('<rect width="%.0f" height="%.0f" fill="#ffffff"/>' % (self.width, self.height))
-        body.append('<rect x="8" y="8" width="%.0f" height="%.0f" fill="none" stroke="#1b2a3a" stroke-width="2.5"/>' % (self.width - 16, self.height - 16))
-        for (x, y, w, h, label, where) in self.zones:
-            body.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="10" fill="#fafbfd" stroke="#8a97a6" stroke-width="1.4" stroke-dasharray="14 6"/>' % (x, y, w, h))
-            body.append(self._t(x + 14, y + 22 if where == "top" else y + h - 12, label, 13, bold=True, fill="#44546a"))
+        body: list[str] = []
+        body.append(
+            f'<rect width="{self.width:.0f}" height="{self.height:.0f}" fill="#ffffff"/>'
+        )
+        body.append(
+            f'<rect x="8" y="8" width="{self.width - 16:.0f}" height="{self.height - 16:.0f}" fill="none" stroke="#1b2a3a" stroke-width="2.5"/>'
+        )
+        for x, y, w, h, label, where in self.zones:
+            body.append(
+                f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" rx="10" fill="#fafbfd" stroke="#8a97a6" stroke-width="1.4" stroke-dasharray="14 6"/>'
+            )
+            body.append(
+                self._t(
+                    x + 14,
+                    y + 22 if where == "top" else y + h - 12,
+                    label,
+                    13,
+                    bold=True,
+                    fill="#44546a",
+                )
+            )
         for p in self.pipes:
             body += self._draw_pipe(p)
         body += self.decor
         for s in self.symbols.values():
-            body.append('<g data-tag="%s">' % escape(s.tag))
+            body.append(f'<g data-tag="{escape(s.tag)}">')
             body += self._draw_symbol(s)
             body += self._label_lines(s)
             body.append("</g>")
-        for (x, y, text, size, anchor, wf) in self.texts:
+        for x, y, text, size, anchor, wf in self.texts:
             weight, _, fill = wf.partition("|")
             body.append(self._t(x, y, text, size, anchor, weight == "bold", fill))
         tb, _ = self._title_block()
@@ -764,8 +1099,9 @@ class PidSheet:
         if nbox:
             nb, _ = self._notes_block(nbox[0], nbox[1], nbox[2])
             body += nb
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="%.0f" height="%.0f" viewBox="0 0 %.0f %.0f">\n%s\n</svg>\n' % (
-            self.width, self.height, self.width, self.height, "\n".join(body))
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="{:.0f}" height="{:.0f}" viewBox="0 0 {:.0f} {:.0f}">\n{}\n</svg>\n'.format(
+            self.width, self.height, self.width, self.height, "\n".join(body)
+        )
 
     # ------------------------------------------------------------------ layout checker export
     def layout_spec(self, intended_width_mm: float = 420.0) -> dict:
@@ -781,46 +1117,152 @@ class PidSheet:
             tag = s.shown_tag
             lines = [ln for ln in s.label.split("\n") if ln]
             if s.kind == "instrument":
-                texts.append({"text": tag, "x": s.x, "y": s.y, "font_size": 10.0, "anchor": "middle", "kind": "inside"})
+                texts.append(
+                    {
+                        "text": tag,
+                        "x": s.x,
+                        "y": s.y,
+                        "font_size": 10.0,
+                        "anchor": "middle",
+                        "kind": "inside",
+                    }
+                )
                 for i, ln in enumerate(lines):
-                    texts.append({"text": ln, "x": s.x + _INSTR_R + 6, "y": s.y + 4 + 11 * i - 5.5 * (len(lines) - 1), "font_size": 9.5, "anchor": "start", "kind": "outside"})
-            elif s.kind in BOXES and s.kind not in ("pump", "pig_launcher", "pig_receiver", "connector", "boundary"):
-                yy = s.y - (len(lines) * 6.5 + (7 if tag else 0)) + 4 if s.kind != "tree" else y0 + 14
+                    texts.append(
+                        {
+                            "text": ln,
+                            "x": s.x + _INSTR_R + 6,
+                            "y": s.y + 4 + 11 * i - 5.5 * (len(lines) - 1),
+                            "font_size": 9.5,
+                            "anchor": "start",
+                            "kind": "outside",
+                        }
+                    )
+            elif s.kind in BOXES and s.kind not in (
+                "pump",
+                "pig_launcher",
+                "pig_receiver",
+                "connector",
+                "boundary",
+            ):
+                yy = (
+                    s.y - (len(lines) * 6.5 + (7 if tag else 0)) + 4
+                    if s.kind != "tree"
+                    else y0 + 14
+                )
                 if tag:
-                    texts.append({"text": tag, "x": s.x, "y": yy, "font_size": 11.5, "anchor": "middle", "kind": "inside", "bold": True})
+                    texts.append(
+                        {
+                            "text": tag,
+                            "x": s.x,
+                            "y": yy,
+                            "font_size": 11.5,
+                            "anchor": "middle",
+                            "kind": "inside",
+                            "bold": True,
+                        }
+                    )
                     yy += 15 if s.kind != "tree" else 22
                 for i, ln in enumerate(lines):
-                    texts.append({"text": ln, "x": s.x, "y": yy + 12.5 * i, "font_size": 10.5, "anchor": "middle", "kind": "inside"})
+                    texts.append(
+                        {
+                            "text": ln,
+                            "x": s.x,
+                            "y": yy + 12.5 * i,
+                            "font_size": 10.5,
+                            "anchor": "middle",
+                            "kind": "inside",
+                        }
+                    )
             elif s.kind == "boundary":
                 for i, ln in enumerate(lines):
-                    texts.append({"text": ln, "x": s.x, "y": s.y + 12.5 * i - 6 * len(lines) + 6, "font_size": 10.5, "anchor": "middle", "kind": "inside"})
+                    texts.append(
+                        {
+                            "text": ln,
+                            "x": s.x,
+                            "y": s.y + 12.5 * i - 6 * len(lines) + 6,
+                            "font_size": 10.5,
+                            "anchor": "middle",
+                            "kind": "inside",
+                        }
+                    )
             elif s.kind != "junction":
                 if s.label_pos in ("left", "right"):
                     anchor = "end" if s.label_pos == "left" else "start"
                     tx = x0 - 7 if s.label_pos == "left" else x1 + 7
                     yy = s.y - 6 * len(lines)
                     if tag:
-                        texts.append({"text": tag, "x": tx, "y": yy, "font_size": 11.0, "anchor": anchor, "kind": "outside"})
+                        texts.append(
+                            {
+                                "text": tag,
+                                "x": tx,
+                                "y": yy,
+                                "font_size": 11.0,
+                                "anchor": anchor,
+                                "kind": "outside",
+                            }
+                        )
                         yy += 13
                     for i, ln in enumerate(lines):
-                        texts.append({"text": ln, "x": tx, "y": yy + 12 * i + 4, "font_size": 10.0, "anchor": anchor, "kind": "outside"})
+                        texts.append(
+                            {
+                                "text": ln,
+                                "x": tx,
+                                "y": yy + 12 * i + 4,
+                                "font_size": 10.0,
+                                "anchor": anchor,
+                                "kind": "outside",
+                            }
+                        )
                 else:
                     yy = y1 + 15
                     if s.label_pos == "above":
                         yy = y0 - 6 - 12.5 * len(lines)
                     if tag:
-                        texts.append({"text": tag, "x": s.x, "y": yy, "font_size": 11.0, "anchor": "middle", "kind": "outside"})
+                        texts.append(
+                            {
+                                "text": tag,
+                                "x": s.x,
+                                "y": yy,
+                                "font_size": 11.0,
+                                "anchor": "middle",
+                                "kind": "outside",
+                            }
+                        )
                         yy += 13
                     for i, ln in enumerate(lines):
-                        texts.append({"text": ln, "x": s.x, "y": yy + 12 * i, "font_size": 10.0, "anchor": "middle", "kind": "outside"})
+                        texts.append(
+                            {
+                                "text": ln,
+                                "x": s.x,
+                                "y": yy + 12 * i,
+                                "font_size": 10.0,
+                                "anchor": "middle",
+                                "kind": "outside",
+                            }
+                        )
             nodes.append(
                 {
                     "id": s.tag,
-                    "kind": {"junction": "junction", "boundary": "boundary", "tree": "vessel", "manifold": "equipment", "plet": "equipment", "box": "equipment", "vessel": "vessel", "pump": "pump", "instrument": "instrument"}.get(s.kind, s.kind if s.kind in VALVES else "equipment"),
+                    "kind": {
+                        "junction": "junction",
+                        "boundary": "boundary",
+                        "tree": "vessel",
+                        "manifold": "equipment",
+                        "plet": "equipment",
+                        "box": "equipment",
+                        "vessel": "vessel",
+                        "pump": "pump",
+                        "instrument": "instrument",
+                    }.get(s.kind, s.kind if s.kind in VALVES else "equipment"),
                     "tag": tag if s.kind != "boundary" else None,
                     "bbox": [x0, y0, x1 - x0, y1 - y0],
                     "texts": texts,
-                    "style": {"shape": s.kind, "fill": s.fill, "dash": "dashed" if s.status == "decision" else ""},
+                    "style": {
+                        "shape": s.kind,
+                        "fill": s.fill,
+                        "dash": "dashed" if s.status == "decision" else "",
+                    },
                 }
             )
         edges = []
@@ -830,7 +1272,17 @@ class PidSheet:
             frm = p.a if p.a in self.symbols else None
             to = p.b if p.b in self.symbols else None
             role = ""
-            fluid = {"production": "mixed", "injection": "water", "service": "glycol", "gas": "gas", "chemical": "chemical", "hydraulic": "hydraulic", "electrical": "electrical", "vent": "vent", "signal": "sensing"}[p.service]
+            fluid = {
+                "production": "mixed",
+                "injection": "water",
+                "service": "glycol",
+                "gas": "gas",
+                "chemical": "chemical",
+                "hydraulic": "hydraulic",
+                "electrical": "electrical",
+                "vent": "vent",
+                "signal": "sensing",
+            }[p.service]
             if p.service == "signal":
                 # a sensing line runs from the process to the instrument in the checker's model
                 pts, frm, to, role = pts[::-1], to, frm, "sensing"
@@ -848,33 +1300,84 @@ class PidSheet:
                     "stream": "",
                     "role": role,
                     "style": {"color": col, "dash": dash, "width": str(sw)},
-                    **({"label": {"text": p.label, "x": self._label_anchor(p)[0][0] + p.label_dx, "y": self._label_anchor(p)[0][1] + p.label_dy, "font_size": 10.5, "anchor": "middle", "kind": "annotation"}} if p.label else {}),
+                    **(
+                        {
+                            "label": {
+                                "text": p.label,
+                                "x": self._label_anchor(p)[0][0] + p.label_dx,
+                                "y": self._label_anchor(p)[0][1] + p.label_dy,
+                                "font_size": 10.5,
+                                "anchor": "middle",
+                                "kind": "annotation",
+                            }
+                        }
+                        if p.label
+                        else {}
+                    ),
                 }
             )
         lay = self.layout()
         waivers = list(self.waivers)
         if any(s.status == "decision" for s in self.symbols.values()):
-            waivers.append({"code": "SYMBOL_INCONSISTENT", "reason": "a dashed outline marks an option or open decision (explained in the legend)"})
+            waivers.append(
+                {
+                    "code": "SYMBOL_INCONSISTENT",
+                    "reason": "a dashed outline marks an option or open decision (explained in the legend)",
+                }
+            )
         if any(s.kind == "instrument" for s in self.symbols.values()):
-            waivers.append({"code": "PRODUCT_POSITION", "reason": "transmitters are sinks of sensing lines, not products"})
+            waivers.append(
+                {
+                    "code": "PRODUCT_POSITION",
+                    "reason": "transmitters are sinks of sensing lines, not products",
+                }
+            )
         tbx = lay["title_block"]
         nbx = lay["notes"]
         if nbx[2] > 0:
             x0u, y0u = min(tbx[0], nbx[0]), min(tbx[1], nbx[1])
-            tbx = (x0u, y0u, max(tbx[0] + tbx[2], nbx[0] + nbx[2]) - x0u, max(tbx[1] + tbx[3], nbx[1] + nbx[3]) - y0u)
+            tbx = (
+                x0u,
+                y0u,
+                max(tbx[0] + tbx[2], nbx[0] + nbx[2]) - x0u,
+                max(tbx[1] + tbx[3], nbx[1] + nbx[3]) - y0u,
+            )
         band_top = lay["band_top"][1]
         return {
             "schema": "neqsim.pfd_layout.v1",
             "kind": "pid",
             "name": self.drawing_no,
-            "canvas": {"width": self.width, "height": self.height, "unit": "px", "intended_width_mm": intended_width_mm},
+            "canvas": {
+                "width": self.width,
+                "height": self.height,
+                "unit": "px",
+                "intended_width_mm": intended_width_mm,
+            },
             "drawing_area": [16.0, 16.0, self.width - 32.0, band_top - 32.0],
             "nodes": nodes,
             "edges": edges,
             "labels": [
-                {"text": t[2], "x": t[0], "y": t[1], "font_size": t[3], "anchor": t[4], "kind": "annotation"} for t in self.texts
+                {
+                    "text": t[2],
+                    "x": t[0],
+                    "y": t[1],
+                    "font_size": t[3],
+                    "anchor": t[4],
+                    "kind": "annotation",
+                }
+                for t in self.texts
             ]
-            + [{"text": z[4], "x": z[0] + 14, "y": z[1] + 22 if z[5] == "top" else z[1] + z[3] - 12, "font_size": 13.0, "anchor": "start", "kind": "annotation"} for z in self.zones],
+            + [
+                {
+                    "text": z[4],
+                    "x": z[0] + 14,
+                    "y": z[1] + 22 if z[5] == "top" else z[1] + z[3] - 12,
+                    "font_size": 13.0,
+                    "anchor": "start",
+                    "kind": "annotation",
+                }
+                for z in self.zones
+            ],
             "junctions": [],
             "title": True,
             "footer": True,
@@ -887,7 +1390,7 @@ class PidSheet:
             "arrow_length": 9.0,
         }
 
-    def write(self, base_path: str) -> Dict[str, str]:
+    def write(self, base_path: str) -> dict[str, str]:
         """Write ``<base>.svg`` and ``<base>.layout.json`` and return their paths."""
         svg_path, spec_path = base_path + ".svg", base_path + ".layout.json"
         with open(svg_path, "w", encoding="utf-8") as fh:

@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import json
 import math
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from collections.abc import Iterable, Sequence
+from typing import Any
 
 from .schema import (
     PIPING_KEYS,
@@ -24,7 +25,7 @@ from .schema import (
 )
 
 # NeqSim class names and layout kinds mapped to scene kinds; None = not physical.
-KIND_ALIASES: Dict[str, Optional[str]] = {
+KIND_ALIASES: dict[str, str | None] = {
     "separator": "vessel",
     "threephaseseparator": "vessel",
     "gasscrubber": "vessel",
@@ -67,7 +68,7 @@ KIND_ALIASES: Dict[str, Optional[str]] = {
 }
 
 # Placeholder sizes used only when no design data exists (recorded as assumed).
-DEFAULT_SIZES: Dict[str, Dict[str, Any]] = {
+DEFAULT_SIZES: dict[str, dict[str, Any]] = {
     "vessel": {"diameter": 2.0, "length": 6.0, "orientation": "horizontal"},
     "column": {"diameter": 2.5, "length": 20.0, "orientation": "vertical"},
     "compressor": {"size": [6.0, 4.0, 4.0]},
@@ -87,7 +88,7 @@ def worst_quality(*qualities: str) -> str:
     return max(qualities, key=lambda q: QUALITY_ORDER.get(q, 2))
 
 
-def kind_for(name: Any) -> Optional[str]:
+def kind_for(name: Any) -> str | None:
     """Scene kind for a NeqSim class name or layout kind (None when not physical)."""
     key = str(name or "").replace("_", "").replace(" ", "").lower()
     if key in KIND_ALIASES:
@@ -98,7 +99,7 @@ def kind_for(name: Any) -> Optional[str]:
     return "equipment"
 
 
-def _num(value: Any) -> Optional[float]:
+def _num(value: Any) -> float | None:
     if isinstance(value, dict):
         value = value.get("value")
     try:
@@ -110,8 +111,8 @@ def _num(value: Any) -> Optional[float]:
 
 # ------------------------------------------------------------ plant layout
 def from_layout_items(
-    items: Iterable[Dict[str, Any]],
-    scene: Optional[AssetScene] = None,
+    items: Iterable[dict[str, Any]],
+    scene: AssetScene | None = None,
     state: str = "proposed",
     reference: str = "neqsim layout-study",
 ) -> AssetScene:
@@ -129,9 +130,16 @@ def from_layout_items(
         elif layout_kind == "obstacle":
             kind, group = "obstacle", "structure"
         else:
-            kind, group = kind_for(item.get("equipment_kind") or "equipment") or "equipment", "facility"
+            kind, group = (
+                kind_for(item.get("equipment_kind") or "equipment") or "equipment",
+                "facility",
+            )
         dim_source = str(item.get("dimension_source") or "layout envelope")
-        quality = "derived" if "neqsim" in dim_source.lower() or "datasheet" in dim_source.lower() else "assumed"
+        quality = (
+            "derived"
+            if "neqsim" in dim_source.lower() or "datasheet" in dim_source.lower()
+            else "assumed"
+        )
         scene.add_object(
             id=str(item.get("tag") or item["name"]),
             kind=kind,
@@ -147,17 +155,19 @@ def from_layout_items(
 
 
 # ---------------------------------------------------------- NeqSim process
-def _collapse(edges: Sequence[Tuple[str, ...]], keep: set) -> List[Tuple[str, str, str, Optional[str]]]:
+def _collapse(
+    edges: Sequence[tuple[str, ...]], keep: set
+) -> list[tuple[str, str, str, str | None]]:
     """Bridge edges through non-physical nodes (streams, mixers, recycles).
 
     Edges are ``(source, target, kind[, port])``; the port of the first edge
     out of the source equipment is kept (it names the outlet nozzle).
     """
-    out_map: Dict[str, List[Tuple[str, str, Optional[str]]]] = {}
+    out_map: dict[str, list[tuple[str, str, str | None]]] = {}
     for e in edges:
         s, t, k = e[0], e[1], e[2]
         out_map.setdefault(s, []).append((t, k, e[3] if len(e) > 3 else None))
-    result: Dict[Tuple[str, str], Tuple[str, Optional[str]]] = {}
+    result: dict[tuple[str, str], tuple[str, str | None]] = {}
     for start in keep:
         stack = [(t, k, p) for t, k, p in out_map.get(start, [])]
         seen = set()
@@ -174,7 +184,7 @@ def _collapse(edges: Sequence[Tuple[str, ...]], keep: set) -> List[Tuple[str, st
     return sorted((s, t, k, p) for (s, t), (k, p) in result.items())
 
 
-def _outlet_port(unit: Any, stream: Any) -> Optional[str]:
+def _outlet_port(unit: Any, stream: Any) -> str | None:
     """Outlet name for a NeqSim stream leaving a separator-like unit (gas, liquid or water)."""
     if unit is None or stream is None:
         return None
@@ -187,24 +197,24 @@ def _outlet_port(unit: Any, stream: Any) -> Optional[str]:
         try:
             if getattr(unit, getter)() == stream:
                 return port
-        except Exception:
+        except Exception:  # noqa: BLE001, S112
             continue
     return None
 
 
-def _design_data(unit: Any) -> Dict[str, Any]:
+def _design_data(unit: Any) -> dict[str, Any]:
     """Mechanical design snapshot: ``toDesignDataJson()`` or, on older NeqSim jars, the getters."""
     try:
         design = unit.getMechanicalDesign()
-    except Exception:  # equipment without a mechanical design
+    except Exception:  # equipment without a mechanical design  # noqa: BLE001
         return {}
     if design is None:
         return {}
     try:
         return json.loads(str(design.toDesignDataJson()))
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
-    geometry: Dict[str, Any] = {}
+    geometry: dict[str, Any] = {}
     for key, getter in (
         ("innerDiameter", "getInnerDiameter"),
         ("outerDiameter", "getOuterDiameter"),
@@ -215,22 +225,27 @@ def _design_data(unit: Any) -> Dict[str, Any]:
     ):
         try:
             geometry[key] = {"value": float(getattr(design, getter)()), "unit": "m"}
-        except Exception:
+        except Exception:  # noqa: BLE001, S112
             continue
-    basis: Dict[str, Any] = {}
+    basis: dict[str, Any] = {}
     try:
-        basis["maximumDesignPressure"] = {"value": float(design.getMaxDesignPressure()) * 1e5, "unit": "Pa"}
-    except Exception:
+        basis["maximumDesignPressure"] = {
+            "value": float(design.getMaxDesignPressure()) * 1e5,
+            "unit": "Pa",
+        }
+    except Exception:  # noqa: BLE001, S110
         pass
-    data: Dict[str, Any] = {"geometry": geometry, "designBasis": basis}
+    data: dict[str, Any] = {"geometry": geometry, "designBasis": basis}
     try:
         data["orientation"] = str(unit.getOrientation())
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
     return data
 
 
-def equipment_records_from_neqsim(process: Any) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+def equipment_records_from_neqsim(
+    process: Any,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Equipment records and connections from a run NeqSim ``ProcessSystem``.
 
     Sizes come from ``MechanicalDesign.toDesignDataJson()`` (metres, Pa, K). Run
@@ -239,20 +254,29 @@ def equipment_records_from_neqsim(process: Any) -> Tuple[List[Dict[str, Any]], L
     come from ``ProcessSystem.buildGraph()`` with streams, mixers, splitters and
     recycles bridged.
     """
-    records: List[Dict[str, Any]] = []
+    records: list[dict[str, Any]] = []
     for unit in process.getUnitOperations():
         name = str(unit.getName())
         cls = str(unit.getClass().getSimpleName())
         kind = kind_for(cls)
         if kind is None:
             continue
-        rec: Dict[str, Any] = {"tag": name, "kind": kind, "neqsim_class": cls, "attributes": {}}
+        rec: dict[str, Any] = {
+            "tag": name,
+            "kind": kind,
+            "neqsim_class": cls,
+            "attributes": {},
+        }
         data = _design_data(unit)
         geo = data.get("geometry", {}) or {}
         basis = data.get("designBasis", {}) or {}
         diameter = _num(geo.get("outerDiameter")) or _num(geo.get("innerDiameter"))
         length = _num(geo.get("tangentLength"))
-        module = [_num(geo.get("moduleLength")), _num(geo.get("moduleWidth")), _num(geo.get("moduleHeight"))]
+        module = [
+            _num(geo.get("moduleLength")),
+            _num(geo.get("moduleWidth")),
+            _num(geo.get("moduleHeight")),
+        ]
         cylindrical = kind in ("vessel", "column", "heat_exchanger", "line", "pipeline")
         if cylindrical and diameter and length:
             rec["diameter_m"] = diameter
@@ -269,14 +293,18 @@ def equipment_records_from_neqsim(process: Any) -> Tuple[List[Dict[str, Any]], L
         # NeqSim returns configured-or-default design values; the key name says so.
         pressure = _num(basis.get("maximumDesignPressure"))
         if pressure:
-            rec["attributes"]["neqsim_max_design_pressure_bara"] = round(pressure / 1e5, 2)
+            rec["attributes"]["neqsim_max_design_pressure_bara"] = round(
+                pressure / 1e5, 2
+            )
         temperature = _num(basis.get("maximumDesignTemperature"))
         if temperature:
-            rec["attributes"]["neqsim_max_design_temperature_C"] = round(temperature - 273.15, 1)
+            rec["attributes"]["neqsim_max_design_temperature_C"] = round(
+                temperature - 273.15, 1
+            )
         records.append(rec)
     keep = {r["tag"] for r in records}
     units = {str(u.getName()): u for u in process.getUnitOperations()}
-    edges: List[Tuple[str, ...]] = []
+    edges: list[tuple[str, ...]] = []
     try:
         graph = process.buildGraph()
         for edge in graph.getEdges():
@@ -286,14 +314,27 @@ def equipment_records_from_neqsim(process: Any) -> Tuple[List[Dict[str, Any]], L
             src = str(edge.getSource().getName())
             try:
                 stream = edge.getStream()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 stream = None
-            edges.append((src, str(edge.getTarget().getName()), kind, _outlet_port(units.get(src), stream)))
-    except Exception:
+            edges.append(
+                (
+                    src,
+                    str(edge.getTarget().getName()),
+                    kind,
+                    _outlet_port(units.get(src), stream),
+                )
+            )
+    except Exception:  # noqa: BLE001
         try:
             for conn in process.getConnections():
-                edges.append((str(conn.getSourceEquipment()), str(conn.getTargetEquipment()), "material"))
-        except Exception:
+                edges.append(
+                    (
+                        str(conn.getSourceEquipment()),
+                        str(conn.getTargetEquipment()),
+                        "material",
+                    )
+                )
+        except Exception:  # noqa: BLE001
             edges = []
     connections = []
     for s, t, k, port in _collapse(edges, keep):
@@ -307,22 +348,28 @@ def equipment_records_from_neqsim(process: Any) -> Tuple[List[Dict[str, Any]], L
     return records, connections
 
 
-def _outlet_temperature(unit: Any, port: Optional[str]) -> Optional[float]:
+def _outlet_temperature(unit: Any, port: str | None) -> float | None:
     """Outlet temperature in C of the stream leaving ``unit`` (for the flexibility screen)."""
     if unit is None:
         return None
-    getters = {"gas_outlet": "getGasOutStream", "liquid_outlet": "getLiquidOutStream", "water_outlet": "getWaterOutStream"}
+    getters = {
+        "gas_outlet": "getGasOutStream",
+        "liquid_outlet": "getLiquidOutStream",
+        "water_outlet": "getWaterOutStream",
+    }
     for getter in ([getters[port]] if port in getters else []) + ["getOutletStream"]:
         try:
             value = float(getattr(unit, getter)().getTemperature("C"))
             if math.isfinite(value):
                 return round(value, 2)
-        except Exception:
+        except Exception:  # noqa: BLE001, S112
             continue
     return None
 
 
-def _levels(tags: Sequence[str], connections: Sequence[Dict[str, Any]]) -> Dict[str, int]:
+def _levels(
+    tags: Sequence[str], connections: Sequence[dict[str, Any]]
+) -> dict[str, int]:
     """Flow-order column for each tag (longest path, recycles ignored)."""
     level = {t: 0 for t in tags}
     forward = [(c["from"], c["to"]) for c in connections if c.get("kind") != "recycle"]
@@ -337,7 +384,9 @@ def _levels(tags: Sequence[str], connections: Sequence[Dict[str, Any]]) -> Dict[
     return level
 
 
-def _record_geometry(rec: Dict[str, Any], base: Sequence[float]) -> Tuple[Dict[str, Any], float, float, str, str]:
+def _record_geometry(
+    rec: dict[str, Any], base: Sequence[float]
+) -> tuple[dict[str, Any], float, float, str, str]:
     """Geometry for one record placed with its footprint centre at ``base`` (x, y, deck z)."""
     kind = rec.get("kind", "equipment")
     default = DEFAULT_SIZES.get(kind, DEFAULT_SIZES["equipment"])
@@ -354,18 +403,28 @@ def _record_geometry(rec: Dict[str, Any], base: Sequence[float]) -> Tuple[Dict[s
     if diameter and length:
         orientation = rec.get("orientation") or default.get("orientation", "vertical")
         if orientation.startswith("v"):
-            geo = cylinder([base[0], base[1], base[2] + length / 2.0], diameter, length, "z")
+            geo = cylinder(
+                [base[0], base[1], base[2] + length / 2.0], diameter, length, "z"
+            )
             return geo, diameter, diameter, size_quality, size_source
-        geo = cylinder([base[0], base[1], base[2] + diameter / 2.0], diameter, length, "x")
+        geo = cylinder(
+            [base[0], base[1], base[2] + diameter / 2.0], diameter, length, "x"
+        )
         return geo, length, diameter, size_quality, size_source
     sx, sy, sz = [float(v) for v in size]
-    return box([base[0], base[1], base[2] + sz / 2.0], [sx, sy, sz]), sx, sy, size_quality, size_source
+    return (
+        box([base[0], base[1], base[2] + sz / 2.0], [sx, sy, sz]),
+        sx,
+        sy,
+        size_quality,
+        size_source,
+    )
 
 
 def from_equipment_records(
-    records: Sequence[Dict[str, Any]],
-    connections: Sequence[Dict[str, Any]] = (),
-    scene: Optional[AssetScene] = None,
+    records: Sequence[dict[str, Any]],
+    connections: Sequence[dict[str, Any]] = (),
+    scene: AssetScene | None = None,
     state: str = "existing",
     origin: Sequence[float] = (0.0, 0.0, 0.0),
     spacing_m: float = 4.0,
@@ -382,10 +441,10 @@ def from_equipment_records(
     scene = scene or AssetScene("Process equipment")
     tags = [r["tag"] for r in records]
     level = _levels(tags, connections)
-    cursor_x: Dict[int, float] = {}
-    col_x: Dict[int, float] = {}
+    cursor_x: dict[int, float] = {}
+    col_x: dict[int, float] = {}
     x = float(origin[0])
-    by_level: Dict[int, List[Dict[str, Any]]] = {}
+    by_level: dict[int, list[dict[str, Any]]] = {}
     for rec in records:
         by_level.setdefault(level.get(rec["tag"], 0), []).append(rec)
     for lvl in sorted(by_level):
@@ -460,16 +519,20 @@ def from_equipment_records(
     return scene
 
 
-def scene_from_neqsim_process(process: Any, name: str = "NeqSim process", **kwargs: Any) -> AssetScene:
+def scene_from_neqsim_process(
+    process: Any, name: str = "NeqSim process", **kwargs: Any
+) -> AssetScene:
     """Convenience: ``equipment_records_from_neqsim`` + ``from_equipment_records``."""
     records, connections = equipment_records_from_neqsim(process)
-    scene = from_equipment_records(records, connections, scene=AssetScene(name), **kwargs)
+    scene = from_equipment_records(
+        records, connections, scene=AssetScene(name), **kwargs
+    )
     scene.provenance.append({"source": "NeqSim ProcessSystem", "objects": len(records)})
     return scene
 
 
 # ------------------------------------------------------------------ subsea
-SUBSEA_SIZES: Dict[str, List[float]] = {
+SUBSEA_SIZES: dict[str, list[float]] = {
     "well": [4.0, 4.0, 4.0],
     "template": [20.0, 15.0, 6.0],
     "manifold": [12.0, 8.0, 5.0],
@@ -491,16 +554,14 @@ NODE_KINDS = {
 }
 
 
-def local_projector(
-    lons: Sequence[float], lats: Sequence[float]
-) -> Tuple[Any, str]:
+def local_projector(lons: Sequence[float], lats: Sequence[float]) -> tuple[Any, str]:
     """Equirectangular projection about the mean point (screening accuracy, metres)."""
     lat0 = sum(lats) / len(lats)
     lon0 = sum(lons) / len(lons)
     k = math.pi / 180.0 * 6371000.0
     coslat = math.cos(math.radians(lat0))
 
-    def project(lon: float, lat: float) -> Tuple[float, float]:
+    def project(lon: float, lat: float) -> tuple[float, float]:
         return ((float(lon) - lon0) * k * coslat, (float(lat) - lat0) * k)
 
     note = (
@@ -510,18 +571,24 @@ def local_projector(
     return project, note
 
 
-def _to_local(nodes: Sequence[Dict[str, Any]], coordinate_system: str) -> Tuple[Any, Optional[str]]:
+def _to_local(
+    nodes: Sequence[dict[str, Any]], coordinate_system: str
+) -> tuple[Any, str | None]:
     if coordinate_system == "cartesian":
         return (lambda x, y: (float(x), float(y))), None
     if coordinate_system != "geographic":
-        raise ValueError("coordinate_system must be cartesian (metres) or geographic (lon/lat degrees)")
-    return local_projector([float(n["x"]) for n in nodes], [float(n["y"]) for n in nodes])
+        raise ValueError(
+            "coordinate_system must be cartesian (metres) or geographic (lon/lat degrees)"
+        )
+    return local_projector(
+        [float(n["x"]) for n in nodes], [float(n["y"]) for n in nodes]
+    )
 
 
 def from_subsea_nodes(
-    nodes: Sequence[Dict[str, Any]],
-    lines: Sequence[Dict[str, Any]] = (),
-    scene: Optional[AssetScene] = None,
+    nodes: Sequence[dict[str, Any]],
+    lines: Sequence[dict[str, Any]] = (),
+    scene: AssetScene | None = None,
     coordinate_system: str = "cartesian",
     host_size_m: Sequence[float] = (60.0, 40.0, 30.0),
     default_state: str = "existing",
@@ -570,7 +637,9 @@ def from_subsea_nodes(
             group=group,
             geometry=geo,
             source={
-                "geometry": n.get("geometry_source", "supplied coordinates; envelope size typical"),
+                "geometry": n.get(
+                    "geometry_source", "supplied coordinates; envelope size typical"
+                ),
                 "quality": n.get("quality", default_quality),
                 "reference": n.get("reference", reference),
             },
@@ -591,7 +660,15 @@ def from_subsea_nodes(
             zs = [float(p[2]) if len(p) > 2 else None for p in route]
             n_pts = len(pts2)
             pts = [
-                [pts2[j][0], pts2[j][1], zs[j] if zs[j] is not None else za + (zb - za) * j / max(1, n_pts - 1)]
+                [
+                    pts2[j][0],
+                    pts2[j][1],
+                    (
+                        zs[j]
+                        if zs[j] is not None
+                        else za + (zb - za) * j / max(1, n_pts - 1)
+                    ),
+                ]
                 for j in range(n_pts)
             ]
         else:
@@ -610,13 +687,20 @@ def from_subsea_nodes(
             name=line.get("name") or f"{kind} {a}-{b}",
             state=line.get("state", default_state),
             group="subsea",
-            geometry=polyline(pts, float(line.get("diameter_m") or (0.15 if kind == "umbilical" else 0.3))),
+            geometry=polyline(
+                pts,
+                float(line.get("diameter_m") or (0.15 if kind == "umbilical" else 0.3)),
+            ),
             source={
                 "geometry": "routed survey" if route else "straight link between nodes",
                 "quality": line.get("quality", default_quality if route else "assumed"),
                 "reference": line.get("reference", reference),
             },
-            attributes={k: line[k] for k in ("function", "status", "length_km", "from_inst", "to_inst") if k in line},
+            attributes={
+                k: line[k]
+                for k in ("function", "status", "length_km", "from_inst", "to_inst")
+                if k in line
+            },
         )
     return scene
 
@@ -632,14 +716,16 @@ _ALIASES = {
 }
 
 
-def _pick(station: Dict[str, Any], key: str) -> Optional[float]:
+def _pick(station: dict[str, Any], key: str) -> float | None:
     for alias in _ALIASES[key]:
         if alias in station and station[alias] is not None:
             return float(station[alias])
     return None
 
 
-def minimum_curvature(md: Sequence[float], inc_deg: Sequence[float], azi_deg: Sequence[float]) -> List[Tuple[float, float, float]]:
+def minimum_curvature(
+    md: Sequence[float], inc_deg: Sequence[float], azi_deg: Sequence[float]
+) -> list[tuple[float, float, float]]:
     """(north, east, tvd) in metres from a survey by the minimum-curvature method."""
     n, e, v = 0.0, 0.0, 0.0
     out = [(0.0, 0.0, 0.0)]
@@ -647,11 +733,17 @@ def minimum_curvature(md: Sequence[float], inc_deg: Sequence[float], azi_deg: Se
         dmd = md[i] - md[i - 1]
         i1, i2 = math.radians(inc_deg[i - 1]), math.radians(inc_deg[i])
         a1, a2 = math.radians(azi_deg[i - 1]), math.radians(azi_deg[i])
-        cos_dl = math.cos(i2 - i1) - math.sin(i1) * math.sin(i2) * (1.0 - math.cos(a2 - a1))
+        cos_dl = math.cos(i2 - i1) - math.sin(i1) * math.sin(i2) * (
+            1.0 - math.cos(a2 - a1)
+        )
         dl = math.acos(max(-1.0, min(1.0, cos_dl)))
         rf = 1.0 if dl < 1e-9 else 2.0 / dl * math.tan(dl / 2.0)
-        n += dmd / 2.0 * (math.sin(i1) * math.cos(a1) + math.sin(i2) * math.cos(a2)) * rf
-        e += dmd / 2.0 * (math.sin(i1) * math.sin(a1) + math.sin(i2) * math.sin(a2)) * rf
+        n += (
+            dmd / 2.0 * (math.sin(i1) * math.cos(a1) + math.sin(i2) * math.cos(a2)) * rf
+        )
+        e += (
+            dmd / 2.0 * (math.sin(i1) * math.sin(a1) + math.sin(i2) * math.sin(a2)) * rf
+        )
         v += dmd / 2.0 * (math.cos(i1) + math.cos(i2)) * rf
         out.append((n, e, v))
     return out
@@ -659,15 +751,15 @@ def minimum_curvature(md: Sequence[float], inc_deg: Sequence[float], azi_deg: Se
 
 def from_well_trajectory(
     name: str,
-    stations: Sequence[Dict[str, Any]],
+    stations: Sequence[dict[str, Any]],
     wellhead_xy: Sequence[float],
     datum_z: float,
-    scene: Optional[AssetScene] = None,
+    scene: AssetScene | None = None,
     state: str = "existing",
     quality: str = "verified",
     diameter_m: float = 0.3,
     reference: str = "well survey",
-    tag: Optional[str] = None,
+    tag: str | None = None,
 ) -> AssetScene:
     """Well path from survey stations.
 
@@ -679,7 +771,12 @@ def from_well_trajectory(
     scene = scene or AssetScene(f"Well {name}")
     if len(stations) < 2:
         raise ValueError("a trajectory needs at least two stations")
-    explicit = all(_pick(s, "north") is not None and _pick(s, "east") is not None and _pick(s, "tvd") is not None for s in stations)
+    explicit = all(
+        _pick(s, "north") is not None
+        and _pick(s, "east") is not None
+        and _pick(s, "tvd") is not None
+        for s in stations
+    )
     if explicit:
         neu = [(_pick(s, "north"), _pick(s, "east"), _pick(s, "tvd")) for s in stations]
         method = "supplied north/east/TVD"
@@ -709,10 +806,10 @@ def from_well_trajectory(
 # ------------------------------------------------------------------ values
 def attach_values(
     scene: AssetScene,
-    values: Dict[str, Dict[str, Any]],
+    values: dict[str, dict[str, Any]],
     channel: str = "results",
     match: str = "tag",
-) -> List[str]:
+) -> list[str]:
     """Attach NeqSim results (``channel='results'``) or live data (``'live'``) per object.
 
     ``values`` maps a tag (or id) to ``{quantity: number | {"value", "unit", ...}}``.
@@ -731,40 +828,45 @@ def attach_values(
     return unmatched
 
 
-def neqsim_results(process: Any, quantities: Sequence[str] = ("utilisation",)) -> Dict[str, Dict[str, Any]]:
+def neqsim_results(
+    process: Any, quantities: Sequence[str] = ("utilisation",)
+) -> dict[str, dict[str, Any]]:
     """Per-equipment values from a run ``ProcessSystem`` for ``attach_values``.
 
     ``utilisation`` uses ``getMaxUtilization()`` (highest ratio over the enabled
     capacity constraints; 0.0 means no constraint is defined and is skipped).
     Pressure and temperature use the outlet stream when present.
     """
-    out: Dict[str, Dict[str, Any]] = {}
+    out: dict[str, dict[str, Any]] = {}
     for unit in process.getUnitOperations():
         name = str(unit.getName())
         if kind_for(unit.getClass().getSimpleName()) is None:
             continue
-        entry: Dict[str, Any] = {}
+        entry: dict[str, Any] = {}
         if "utilisation" in quantities:
             try:
                 val = float(unit.getMaxUtilization())
                 if math.isfinite(val) and val > 0.0:
                     entry["utilisation"] = {"value": val, "unit": "-"}
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
-        for q, getter, unit_name in (("pressure", "getPressure", "bara"), ("temperature", "getTemperature", "C")):
+        for q, getter, unit_name in (
+            ("pressure", "getPressure", "bara"),
+            ("temperature", "getTemperature", "C"),
+        ):
             if q not in quantities:
                 continue
             try:
                 stream = unit.getOutletStream()
                 val = float(getattr(stream, getter)(unit_name))
                 entry[q] = {"value": val, "unit": unit_name}
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
         if entry:
             out[name] = entry
     return out
 
 
-def tags_in(scene: AssetScene) -> List[str]:
+def tags_in(scene: AssetScene) -> list[str]:
     """Normalised tags present in a scene."""
     return [normalise_tag(o["tag"]) for o in scene.objects if o.get("tag")]

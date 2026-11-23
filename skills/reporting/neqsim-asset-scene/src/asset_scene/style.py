@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import itertools
 import math
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import Any
 
-RGBA = Tuple[float, float, float, float]
+RGBA = tuple[float, float, float, float]
 
-STATE_COLORS: Dict[str, RGBA] = {
+STATE_COLORS: dict[str, RGBA] = {
     "existing": (0.62, 0.64, 0.67, 1.0),
     "proposed": (0.05, 0.45, 0.85, 1.0),
     "modified": (0.95, 0.55, 0.10, 1.0),
@@ -23,7 +25,7 @@ STATE_LABELS = {
 
 # Existing objects get a slightly different grey per group so topside, subsea
 # and wells stay readable while all "existing" items remain neutral.
-GROUP_TINT: Dict[str, Tuple[float, float, float]] = {
+GROUP_TINT: dict[str, tuple[float, float, float]] = {
     "facility": (0.62, 0.64, 0.67),
     "subsea": (0.50, 0.55, 0.58),
     "well": (0.45, 0.38, 0.30),
@@ -34,14 +36,14 @@ GROUP_TINT: Dict[str, Tuple[float, float, float]] = {
 NO_VALUE_COLOR: RGBA = (0.85, 0.85, 0.85, 0.6)
 
 # Traffic light for utilisation-type quantities (fraction of a limit).
-UTILISATION_STOPS: List[Tuple[float, Tuple[float, float, float]]] = [
+UTILISATION_STOPS: list[tuple[float, tuple[float, float, float]]] = [
     (0.0, (0.10, 0.60, 0.30)),
     (0.8, (0.95, 0.80, 0.15)),
     (1.0, (0.90, 0.25, 0.15)),
 ]
 
 # Perceptual sequential ramp (viridis-like) for any other quantity.
-SEQUENTIAL_STOPS: List[Tuple[float, Tuple[float, float, float]]] = [
+SEQUENTIAL_STOPS: list[tuple[float, tuple[float, float, float]]] = [
     (0.0, (0.27, 0.00, 0.33)),
     (0.25, (0.23, 0.32, 0.55)),
     (0.5, (0.13, 0.57, 0.55)),
@@ -50,17 +52,19 @@ SEQUENTIAL_STOPS: List[Tuple[float, Tuple[float, float, float]]] = [
 ]
 
 
-def _ramp(stops: Sequence[Tuple[float, Tuple[float, float, float]]], t: float) -> Tuple[float, float, float]:
+def _ramp(
+    stops: Sequence[tuple[float, tuple[float, float, float]]], t: float
+) -> tuple[float, float, float]:
     if t <= stops[0][0]:
         return stops[0][1]
-    for (t0, c0), (t1, c1) in zip(stops[:-1], stops[1:]):
+    for (t0, c0), (t1, c1) in itertools.pairwise(stops):
         if t <= t1:
             f = (t - t0) / (t1 - t0) if t1 > t0 else 0.0
             return tuple(c0[i] + f * (c1[i] - c0[i]) for i in range(3))  # type: ignore[return-value]
     return stops[-1][1]
 
 
-def state_color(obj: Dict[str, Any]) -> RGBA:
+def state_color(obj: dict[str, Any]) -> RGBA:
     """Colour by state; existing objects use the group tint."""
     state = obj.get("state", "existing")
     if state == "existing":
@@ -69,7 +73,7 @@ def state_color(obj: Dict[str, Any]) -> RGBA:
     return STATE_COLORS.get(state, STATE_COLORS["existing"])
 
 
-def object_value(obj: Dict[str, Any], channel: str, key: str) -> Optional[float]:
+def object_value(obj: dict[str, Any], channel: str, key: str) -> float | None:
     """Numeric value of ``obj[channel][key]`` (accepts a bare number or ``{"value": ...}``)."""
     entry = obj.get(channel, {}).get(key)
     if isinstance(entry, dict):
@@ -93,10 +97,10 @@ class ColorBy:
         channel: str,
         key: str,
         mode: str = "sequential",
-        vmin: Optional[float] = None,
-        vmax: Optional[float] = None,
+        vmin: float | None = None,
+        vmax: float | None = None,
         unit: str = "",
-        label: Optional[str] = None,
+        label: str | None = None,
     ) -> None:
         if channel not in ("results", "live", "attributes"):
             raise ValueError("channel must be results, live or attributes")
@@ -110,9 +114,13 @@ class ColorBy:
         self.unit = unit
         self.label = label or key
 
-    def fit(self, objects: Sequence[Dict[str, Any]]) -> "ColorBy":
+    def fit(self, objects: Sequence[dict[str, Any]]) -> ColorBy:
         """Set the range from the data when not given."""
-        vals = [v for v in (object_value(o, self.channel, self.key) for o in objects) if v is not None]
+        vals = [
+            v
+            for v in (object_value(o, self.channel, self.key) for o in objects)
+            if v is not None
+        ]
         if self.mode == "utilisation":
             self.vmin = 0.0 if self.vmin is None else self.vmin
             self.vmax = 1.2 if self.vmax is None else self.vmax
@@ -121,7 +129,7 @@ class ColorBy:
             self.vmax = max(vals) if self.vmax is None else self.vmax
         return self
 
-    def color(self, obj: Dict[str, Any]) -> RGBA:
+    def color(self, obj: dict[str, Any]) -> RGBA:
         """Colour for an object (``NO_VALUE_COLOR`` when missing)."""
         val = object_value(obj, self.channel, self.key)
         if val is None:
@@ -136,7 +144,7 @@ class ColorBy:
         alpha = STATE_COLORS["removed"][3] if obj.get("state") == "removed" else 1.0
         return (rgb[0], rgb[1], rgb[2], alpha)
 
-    def legend_stops(self, n: int = 5) -> List[Tuple[float, RGBA]]:
+    def legend_stops(self, n: int = 5) -> list[tuple[float, RGBA]]:
         """Values and colours for a legend bar."""
         lo = self.vmin if self.vmin is not None else 0.0
         hi = self.vmax if self.vmax is not None else 1.0
@@ -150,15 +158,21 @@ class ColorBy:
     def describe(self) -> str:
         """Caption text."""
         unit = f" [{self.unit}]" if self.unit else ""
-        src = {"results": "NeqSim result", "live": "live value", "attributes": "attribute"}[self.channel]
+        src = {
+            "results": "NeqSim result",
+            "live": "live value",
+            "attributes": "attribute",
+        }[self.channel]
         return f"coloured by {src} '{self.label}'{unit}; light grey = no value"
 
 
-def object_color(obj: Dict[str, Any], color_by: Optional[ColorBy] = None) -> RGBA:
+def object_color(obj: dict[str, Any], color_by: ColorBy | None = None) -> RGBA:
     """Final colour for an object."""
     return color_by.color(obj) if color_by else state_color(obj)
 
 
 def hex_color(rgba: RGBA) -> str:
     """``#rrggbb`` string."""
-    return "#%02x%02x%02x" % tuple(int(round(max(0.0, min(1.0, c)) * 255)) for c in rgba[:3])
+    return "#{:02x}{:02x}{:02x}".format(
+        *tuple(round(max(0.0, min(1.0, c)) * 255) for c in rgba[:3])
+    )

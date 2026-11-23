@@ -14,13 +14,13 @@ from .templates import landing_end_oil_header, pair_sketch, source_end_oil_expor
 
 __all__ = [
     "CATEGORIES",
-    "Element",
     "ISOLATING",
     "KIND_NAMES",
-    "PidSheet",
-    "Pipe",
     "SERVICES",
     "STATUSES",
+    "Element",
+    "PidSheet",
+    "Pipe",
     "Symbol",
     "TieInEndSketch",
     "considerations_register",

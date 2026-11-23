@@ -24,12 +24,14 @@ was used so the report can say how many nozzle positions are real.
 
 from __future__ import annotations
 
+import itertools
 import math
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
+from typing import Any
 
 from .schema import AssetScene, geometry_bounds
 
-Point = List[float]
+Point = list[float]
 
 FIELD_SCALE_M = 500.0
 CLEARANCE_M = 1.0
@@ -38,7 +40,16 @@ CLASH_GAP_M = 0.05
 MAX_LANE_TRIES = 8
 
 TOP_WORDS = ("gas", "vapour", "vapor", "overhead", "vent", "top", "steam")
-BOTTOM_WORDS = ("liquid", "oil", "water", "condensate", "drain", "bottom", "bottoms", "sump")
+BOTTOM_WORDS = (
+    "liquid",
+    "oil",
+    "water",
+    "condensate",
+    "drain",
+    "bottom",
+    "bottoms",
+    "sump",
+)
 NOT_OBSTACLES = ("deck", "area", "reservoir", "support")
 
 
@@ -48,17 +59,27 @@ def _unit(v: Sequence[float]) -> Point:
     return [c / n for c in v] if n > 0 else [0.0, 0.0, 1.0]
 
 
-def _face_point(bounds: Sequence[float], toward: Sequence[float]) -> Tuple[Point, Point]:
+def _face_point(
+    bounds: Sequence[float], toward: Sequence[float]
+) -> tuple[Point, Point]:
     """Point on the box face that looks toward ``toward`` (mid-height) and its outward direction."""
     cx, cy = (bounds[0] + bounds[3]) / 2.0, (bounds[1] + bounds[4]) / 2.0
     cz = (bounds[2] + bounds[5]) / 2.0
     dx, dy = toward[0] - cx, toward[1] - cy
     if abs(dx) >= abs(dy):
-        return [bounds[3] if dx >= 0 else bounds[0], cy, cz], [1.0 if dx >= 0 else -1.0, 0.0, 0.0]
-    return [cx, bounds[4] if dy >= 0 else bounds[1], cz], [0.0, 1.0 if dy >= 0 else -1.0, 0.0]
+        return [bounds[3] if dx >= 0 else bounds[0], cy, cz], [
+            1.0 if dx >= 0 else -1.0,
+            0.0,
+            0.0,
+        ]
+    return [cx, bounds[4] if dy >= 0 else bounds[1], cz], [
+        0.0,
+        1.0 if dy >= 0 else -1.0,
+        0.0,
+    ]
 
 
-def _find_nozzle(obj: Dict[str, Any], port: Optional[str]) -> Optional[Dict[str, Any]]:
+def _find_nozzle(obj: dict[str, Any], port: str | None) -> dict[str, Any] | None:
     if not port:
         return None
     key = str(port).lower()
@@ -69,8 +90,12 @@ def _find_nozzle(obj: Dict[str, Any], port: Optional[str]) -> Optional[Dict[str,
 
 
 def end_point(
-    obj: Dict[str, Any], port: Optional[str], toward: Sequence[float], slot: int = 0, spacing: float = 0.5
-) -> Dict[str, Any]:
+    obj: dict[str, Any],
+    port: str | None,
+    toward: Sequence[float],
+    slot: int = 0,
+    spacing: float = 0.5,
+) -> dict[str, Any]:
     """Pipe end on an object: ``{"point", "direction", "basis"}`` (basis: nozzle, port_convention, face).
 
     ``slot`` spreads several pipes that would use the same face or port
@@ -85,7 +110,11 @@ def end_point(
             p = [float(c) for c in noz["position_m"]]
         else:
             p = [centre[i] + float(noz["offset_m"][i]) for i in range(3)]
-        d = _unit(noz["direction"]) if noz.get("direction") else _unit([p[i] - centre[i] for i in range(3)])
+        d = (
+            _unit(noz["direction"])
+            if noz.get("direction")
+            else _unit([p[i] - centre[i] for i in range(3)])
+        )
         return {"point": p, "direction": d, "basis": "nozzle"}
     word = str(port or "").lower()
     if any(w in word for w in TOP_WORDS):
@@ -105,12 +134,12 @@ def end_point(
     return {"point": p, "direction": d, "basis": basis}
 
 
-def _standoff(end: Dict[str, Any], distance: float = STANDOFF_M) -> Point:
+def _standoff(end: dict[str, Any], distance: float = STANDOFF_M) -> Point:
     return [end["point"][i] + end["direction"][i] * distance for i in range(3)]
 
 
-def _dedupe(points: List[Point]) -> List[Point]:
-    out: List[Point] = []
+def _dedupe(points: list[Point]) -> list[Point]:
+    out: list[Point] = []
     for p in points:
         if not out or any(abs(p[i] - out[-1][i]) > 1e-6 for i in range(3)):
             out.append([float(c) for c in p])
@@ -122,14 +151,23 @@ def _overlaps(a0: float, a1: float, b0: float, b1: float) -> bool:
     return max(a0, b0) <= min(a1, b1)
 
 
-def _footprint_hits(bounds: Sequence[float], p: Sequence[float], q: Sequence[float], pad: float) -> bool:
-    xmin, ymin, xmax, ymax = bounds[0] - pad, bounds[1] - pad, bounds[3] + pad, bounds[4] + pad
+def _footprint_hits(
+    bounds: Sequence[float], p: Sequence[float], q: Sequence[float], pad: float
+) -> bool:
+    xmin, ymin, xmax, ymax = (
+        bounds[0] - pad,
+        bounds[1] - pad,
+        bounds[3] + pad,
+        bounds[4] + pad,
+    )
     return _overlaps(min(p[0], q[0]), max(p[0], q[0]), xmin, xmax) and _overlaps(
         min(p[1], q[1]), max(p[1], q[1]), ymin, ymax
     )
 
 
-def segment_distance(p1: Sequence[float], q1: Sequence[float], p2: Sequence[float], q2: Sequence[float]) -> float:
+def segment_distance(
+    p1: Sequence[float], q1: Sequence[float], p2: Sequence[float], q2: Sequence[float]
+) -> float:
     """Minimum distance between two 3D segments."""
     d1 = [q1[i] - p1[i] for i in range(3)]
     d2 = [q2[i] - p2[i] for i in range(3)]
@@ -158,7 +196,9 @@ def segment_distance(p1: Sequence[float], q1: Sequence[float], p2: Sequence[floa
     return math.sqrt(sum(c * c for c in diff))
 
 
-def segment_hits_box(p: Sequence[float], q: Sequence[float], bounds: Sequence[float], pad: float = 0.0) -> bool:
+def segment_hits_box(
+    p: Sequence[float], q: Sequence[float], bounds: Sequence[float], pad: float = 0.0
+) -> bool:
     """Slab test: does segment p-q pass through the (padded) box?"""
     t0, t1 = 0.0, 1.0
     for i in range(3):
@@ -180,13 +220,13 @@ def segment_hits_box(p: Sequence[float], q: Sequence[float], bounds: Sequence[fl
 # -------------------------------------------------------------------- routers
 def orthogonal_route(
     scene: AssetScene,
-    source: Dict[str, Any],
-    target: Dict[str, Any],
+    source: dict[str, Any],
+    target: dict[str, Any],
     diameter: float,
     lane: int = 0,
-    conn: Optional[Dict[str, Any]] = None,
-    slots: Tuple[int, int] = (0, 0),
-) -> Dict[str, Any]:
+    conn: dict[str, Any] | None = None,
+    slots: tuple[int, int] = (0, 0),
+) -> dict[str, Any]:
     """Pipe-rack route between two objects; returns ``{"points", "ends"}``."""
     conn = conn or {}
     sb = geometry_bounds(source["geometry"])
@@ -231,15 +271,23 @@ def orthogonal_route(
     return {"points": points, "ends": [s_end["basis"], t_end["basis"]]}
 
 
-def _escape(end: Dict[str, Any], out: Point, bounds: Sequence[float], toward: Sequence[float]) -> List[Point]:
+def _escape(
+    end: dict[str, Any], out: Point, bounds: Sequence[float], toward: Sequence[float]
+) -> list[Point]:
     """For a downward (bottom) nozzle, step sideways clear of the envelope before the riser."""
     if end["direction"][2] > -0.5:
         return []
     face, d = _face_point(bounds, toward)
-    return [[face[0] + d[0] * STANDOFF_M if d[0] else out[0], face[1] + d[1] * STANDOFF_M if d[1] else out[1], out[2]]]
+    return [
+        [
+            face[0] + d[0] * STANDOFF_M if d[0] else out[0],
+            face[1] + d[1] * STANDOFF_M if d[1] else out[1],
+            out[2],
+        ]
+    ]
 
 
-def seabed_route(source: Dict[str, Any], target: Dict[str, Any]) -> Dict[str, Any]:
+def seabed_route(source: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
     """Field-scale route along the seabed between object bases."""
     sb = geometry_bounds(source["geometry"])
     tb = geometry_bounds(target["geometry"])
@@ -253,17 +301,23 @@ def seabed_route(source: Dict[str, Any], target: Dict[str, Any]) -> Dict[str, An
 
 
 def supplied_route(
-    source: Dict[str, Any], target: Dict[str, Any], route: Sequence[Sequence[float]], conn: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+    source: dict[str, Any],
+    target: dict[str, Any],
+    route: Sequence[Sequence[float]],
+    conn: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Supplied route joined to the nozzle (or nearest face) of each end object."""
     conn = conn or {}
     pts = [[float(c) for c in p] for p in route]
     start = end_point(source, conn.get("from_port"), pts[0])
     end = end_point(target, conn.get("to_port"), pts[-1])
-    return {"points": _dedupe([start["point"]] + pts + [end["point"]]), "ends": [start["basis"], end["basis"]]}
+    return {
+        "points": _dedupe([start["point"]] + pts + [end["point"]]),
+        "ends": [start["basis"], end["basis"]],
+    }
 
 
-def route_mode(scene: AssetScene, conn: Dict[str, Any], routing: str = "auto") -> str:
+def route_mode(scene: AssetScene, conn: dict[str, Any], routing: str = "auto") -> str:
     """Routing mode for one connection."""
     if conn.get("route"):
         return "supplied"
@@ -274,23 +328,27 @@ def route_mode(scene: AssetScene, conn: Dict[str, Any], routing: str = "auto") -
 
 
 # --------------------------------------------------------------------- clashes
-def _segments(points: Sequence[Sequence[float]], skip_ends: bool) -> List[Tuple[Sequence[float], Sequence[float]]]:
-    segs = list(zip(points[:-1], points[1:]))
+def _segments(
+    points: Sequence[Sequence[float]], skip_ends: bool
+) -> list[tuple[Sequence[float], Sequence[float]]]:
+    segs = list(itertools.pairwise(points))
     if skip_ends:
         return segs[1:-1] if len(segs) > 2 else []
     return segs
 
 
 def pipe_clashes(
-    routes: Dict[str, Dict[str, Any]], radii: Dict[str, float], ends: Dict[str, Tuple[str, str]]
-) -> List[Dict[str, Any]]:
+    routes: dict[str, dict[str, Any]],
+    radii: dict[str, float],
+    ends: dict[str, tuple[str, str]],
+) -> list[dict[str, Any]]:
     """Pipe-to-pipe clashes closer than the sum of radii plus a gap.
 
     Pipes that share an equipment item may meet at its nozzle stubs, so their
     first and last segments are not compared.
     """
     ids = list(routes)
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for i, a in enumerate(ids):
         for b in ids[i + 1 :]:
             limit = radii[a] + radii[b] + CLASH_GAP_M
@@ -304,15 +362,26 @@ def pipe_clashes(
                 default=float("inf"),
             )
             if best < limit:
-                out.append({"type": "pipe", "a": a, "b": b, "distance_m": round(best, 3), "required_m": round(limit, 3)})
+                out.append(
+                    {
+                        "type": "pipe",
+                        "a": a,
+                        "b": b,
+                        "distance_m": round(best, 3),
+                        "required_m": round(limit, 3),
+                    }
+                )
     return out
 
 
 def object_clashes(
-    scene: AssetScene, routes: Dict[str, Dict[str, Any]], radii: Dict[str, float], ends: Dict[str, Tuple[str, str]]
-) -> List[Dict[str, Any]]:
+    scene: AssetScene,
+    routes: dict[str, dict[str, Any]],
+    radii: dict[str, float],
+    ends: dict[str, tuple[str, str]],
+) -> list[dict[str, Any]]:
     """Pipes passing through equipment: any other item, or their own end items beyond the nozzle stubs."""
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for cid, route in routes.items():
         all_segs = list(zip(route["points"][:-1], route["points"][1:]))
         inner = _segments(route["points"], True)
@@ -331,8 +400,11 @@ def object_clashes(
 
 # ------------------------------------------------------------------ top level
 def route_connections(
-    scene: AssetScene, diameter: float, routing: str = "auto", resolve_clashes: bool = True
-) -> Dict[str, Dict[str, Any]]:
+    scene: AssetScene,
+    diameter: float,
+    routing: str = "auto",
+    resolve_clashes: bool = True,
+) -> dict[str, dict[str, Any]]:
     """Route every connection; returns ``{connection id: {"points", "mode", "ends", "lane"}}``.
 
     Automatic rack routes get their own lane in order; with ``resolve_clashes``
@@ -340,12 +412,12 @@ def route_connections(
     moved up lane by lane (up to ``MAX_LANE_TRIES``). Remaining clashes are
     reported by ``check_clashes``.
     """
-    out: Dict[str, Dict[str, Any]] = {}
-    radii: Dict[str, float] = {}
-    ends: Dict[str, Tuple[str, str]] = {}
-    used: Dict[Tuple[str, Tuple[float, ...]], int] = {}
+    out: dict[str, dict[str, Any]] = {}
+    radii: dict[str, float] = {}
+    ends: dict[str, tuple[str, str]] = {}
+    used: dict[tuple[str, tuple[float, ...]], int] = {}
 
-    def slot_for(obj: Dict[str, Any], port: Optional[str], toward: Sequence[float]) -> int:
+    def slot_for(obj: dict[str, Any], port: str | None, toward: Sequence[float]) -> int:
         base = end_point(obj, port, toward)
         if base["basis"] == "nozzle":
             return 0
@@ -369,8 +441,16 @@ def route_connections(
         elif mode == "orthogonal":
             sbb, tbb = geometry_bounds(a["geometry"]), geometry_bounds(b["geometry"])
             slots = (
-                slot_for(a, conn.get("from_port"), [(tbb[i] + tbb[i + 3]) / 2.0 for i in range(3)]),
-                slot_for(b, conn.get("to_port"), [(sbb[i] + sbb[i + 3]) / 2.0 for i in range(3)]),
+                slot_for(
+                    a,
+                    conn.get("from_port"),
+                    [(tbb[i] + tbb[i + 3]) / 2.0 for i in range(3)],
+                ),
+                slot_for(
+                    b,
+                    conn.get("to_port"),
+                    [(sbb[i] + sbb[i + 3]) / 2.0 for i in range(3)],
+                ),
             )
             tries = MAX_LANE_TRIES if resolve_clashes else 1
             first = None
@@ -385,7 +465,11 @@ def route_connections(
                     break
                 trial = dict(out)
                 trial[cid] = cand
-                own = [c for c in pipe_clashes(trial, radii, ends) if cid in (c["a"], c["b"])]
+                own = [
+                    c
+                    for c in pipe_clashes(trial, radii, ends)
+                    if cid in (c["a"], c["b"])
+                ]
                 own += object_clashes(scene, {cid: cand}, radii, ends)
                 if not own:
                     chosen = cand
@@ -397,7 +481,10 @@ def route_connections(
         else:
             sb, tb = geometry_bounds(a["geometry"]), geometry_bounds(b["geometry"])
             r = {
-                "points": [[(sb[i] + sb[i + 3]) / 2.0 for i in range(3)], [(tb[i] + tb[i + 3]) / 2.0 for i in range(3)]],
+                "points": [
+                    [(sb[i] + sb[i + 3]) / 2.0 for i in range(3)],
+                    [(tb[i] + tb[i + 3]) / 2.0 for i in range(3)],
+                ],
                 "ends": ["centre", "centre"],
             }
         r["mode"] = mode
@@ -405,25 +492,32 @@ def route_connections(
     return out
 
 
-def check_clashes(scene: AssetScene, routes: Dict[str, Dict[str, Any]], diameter: float) -> List[Dict[str, Any]]:
+def check_clashes(
+    scene: AssetScene, routes: dict[str, dict[str, Any]], diameter: float
+) -> list[dict[str, Any]]:
     """All remaining pipe-to-pipe and pipe-to-equipment clashes for routed connections."""
-    radii: Dict[str, float] = {}
-    ends: Dict[str, Tuple[str, str]] = {}
+    radii: dict[str, float] = {}
+    ends: dict[str, tuple[str, str]] = {}
     for conn in scene.connections:
         if conn["id"] in routes:
             radii[conn["id"]] = float(conn.get("diameter") or diameter) / 2.0
             ends[conn["id"]] = (conn["from"], conn["to"])
-    return pipe_clashes(routes, radii, ends) + object_clashes(scene, routes, radii, ends)
+    return pipe_clashes(routes, radii, ends) + object_clashes(
+        scene, routes, radii, ends
+    )
 
 
 def route_length(points: Sequence[Sequence[float]]) -> float:
     """Length of a route in metres."""
-    return sum(sum((q[i] - p[i]) ** 2 for i in range(3)) ** 0.5 for p, q in zip(points[:-1], points[1:]))
+    return sum(
+        sum((q[i] - p[i]) ** 2 for i in range(3)) ** 0.5
+        for p, q in itertools.pairwise(points)
+    )
 
 
-def routing_summary(routes: Dict[str, Dict[str, Any]]) -> Dict[str, int]:
+def routing_summary(routes: dict[str, dict[str, Any]]) -> dict[str, int]:
     """Count of connections per routing mode."""
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     for r in routes.values():
         counts[r["mode"]] = counts.get(r["mode"], 0) + 1
     return counts
@@ -437,9 +531,13 @@ ROUTE_WORDS = {
 }
 
 
-def describe_routing(counts: Dict[str, int]) -> Optional[str]:
+def describe_routing(counts: dict[str, int]) -> str | None:
     """Caption sentence for the routing used."""
     if not counts:
         return None
     parts = [f"{n} {ROUTE_WORDS[m]}" for m, n in sorted(counts.items())]
-    return "Connections: " + ", ".join(parts) + "; auto routes are illustrative, not the as-built path."
+    return (
+        "Connections: "
+        + ", ".join(parts)
+        + "; auto routes are illustrative, not the as-built path."
+    )

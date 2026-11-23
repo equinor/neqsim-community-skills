@@ -13,8 +13,9 @@ from __future__ import annotations
 import copy
 import json
 import math
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any
 
 SCHEMA = "neqsim_asset_scene.v1"
 
@@ -80,12 +81,16 @@ def _finite(values: Iterable[Any]) -> bool:
         return False
 
 
-def box(center: Sequence[float], size: Sequence[float]) -> Dict[str, Any]:
+def box(center: Sequence[float], size: Sequence[float]) -> dict[str, Any]:
     """Axis-aligned box geometry, centre and full size in metres."""
-    return {"shape": "box", "center": [float(v) for v in center], "size": [float(v) for v in size]}
+    return {
+        "shape": "box",
+        "center": [float(v) for v in center],
+        "size": [float(v) for v in size],
+    }
 
 
-def box_from_bounds(bounds: Sequence[float]) -> Dict[str, Any]:
+def box_from_bounds(bounds: Sequence[float]) -> dict[str, Any]:
     """Box geometry from ``[xmin, ymin, zmin, xmax, ymax, zmax]`` in metres."""
     xmin, ymin, zmin, xmax, ymax, zmax = [float(v) for v in bounds]
     return box(
@@ -94,7 +99,9 @@ def box_from_bounds(bounds: Sequence[float]) -> Dict[str, Any]:
     )
 
 
-def cylinder(center: Sequence[float], diameter: float, length: float, axis: str = "z") -> Dict[str, Any]:
+def cylinder(
+    center: Sequence[float], diameter: float, length: float, axis: str = "z"
+) -> dict[str, Any]:
     """Cylinder geometry: centre, outer diameter and length in metres along ``axis``."""
     return {
         "shape": "cylinder",
@@ -105,22 +112,30 @@ def cylinder(center: Sequence[float], diameter: float, length: float, axis: str 
     }
 
 
-def sphere(center: Sequence[float], diameter: float) -> Dict[str, Any]:
+def sphere(center: Sequence[float], diameter: float) -> dict[str, Any]:
     """Sphere geometry (spherical tanks, markers)."""
-    return {"shape": "sphere", "center": [float(v) for v in center], "diameter": float(diameter)}
+    return {
+        "shape": "sphere",
+        "center": [float(v) for v in center],
+        "diameter": float(diameter),
+    }
 
 
-def polyline(points: Sequence[Sequence[float]], diameter: float) -> Dict[str, Any]:
+def polyline(points: Sequence[Sequence[float]], diameter: float) -> dict[str, Any]:
     """Tube along a 3D path (lines, risers, wells); diameter in metres."""
-    return {"shape": "polyline", "points": [[float(c) for c in p] for p in points], "diameter": float(diameter)}
+    return {
+        "shape": "polyline",
+        "points": [[float(c) for c in p] for p in points],
+        "diameter": float(diameter),
+    }
 
 
-def point(center: Sequence[float], size: float = 1.0) -> Dict[str, Any]:
+def point(center: Sequence[float], size: float = 1.0) -> dict[str, Any]:
     """Small marker at a location (a tag with a position but no size)."""
     return {"shape": "point", "center": [float(v) for v in center], "size": float(size)}
 
 
-def geometry_anchor(geometry: Dict[str, Any]) -> List[float]:
+def geometry_anchor(geometry: dict[str, Any]) -> list[float]:
     """Representative point of a geometry (centre, or path midpoint)."""
     if geometry.get("shape") == "polyline":
         pts = geometry["points"]
@@ -128,20 +143,29 @@ def geometry_anchor(geometry: Dict[str, Any]) -> List[float]:
     return list(geometry["center"])
 
 
-def geometry_bounds(geometry: Dict[str, Any]) -> List[float]:
+def geometry_bounds(geometry: dict[str, Any]) -> list[float]:
     """Axis-aligned bounds ``[xmin, ymin, zmin, xmax, ymax, zmax]`` of a geometry."""
     shape = geometry.get("shape")
     if shape == "polyline":
         r = geometry.get("diameter", 0.0) / 2.0
         xs, ys, zs = zip(*geometry["points"])
-        return [min(xs) - r, min(ys) - r, min(zs) - r, max(xs) + r, max(ys) + r, max(zs) + r]
+        return [
+            min(xs) - r,
+            min(ys) - r,
+            min(zs) - r,
+            max(xs) + r,
+            max(ys) + r,
+            max(zs) + r,
+        ]
     cx, cy, cz = geometry["center"]
     if shape == "box":
         dx, dy, dz = [v / 2.0 for v in geometry["size"]]
     elif shape == "cylinder":
         r = geometry["diameter"] / 2.0
         h = geometry["length"] / 2.0
-        dx, dy, dz = {"x": (h, r, r), "y": (r, h, r), "z": (r, r, h)}[geometry.get("axis", "z")]
+        dx, dy, dz = {"x": (h, r, r), "y": (r, h, r), "z": (r, r, h)}[
+            geometry.get("axis", "z")
+        ]
     elif shape == "sphere":
         dx = dy = dz = geometry["diameter"] / 2.0
     else:
@@ -149,13 +173,13 @@ def geometry_bounds(geometry: Dict[str, Any]) -> List[float]:
     return [cx - dx, cy - dy, cz - dz, cx + dx, cy + dy, cz + dz]
 
 
-def _validate_geometry(geometry: Any) -> List[str]:
+def _validate_geometry(geometry: Any) -> list[str]:
     if not isinstance(geometry, dict):
         return ["geometry must be a dict"]
     shape = geometry.get("shape")
     if shape not in SHAPES:
         return [f"unknown shape {shape!r}"]
-    issues: List[str] = []
+    issues: list[str] = []
     if shape == "polyline":
         pts = geometry.get("points") or []
         if len(pts) < 2:
@@ -178,9 +202,10 @@ def _validate_geometry(geometry: Any) -> List[str]:
                 issues.append(f"cylinder {key} must be positive")
         if geometry.get("axis", "z") not in AXES:
             issues.append("cylinder axis must be x, y or z")
-    elif shape == "sphere":
-        if not _finite([geometry.get("diameter")]) or geometry.get("diameter", 0) <= 0:
-            issues.append("sphere diameter must be positive")
+    elif shape == "sphere" and (
+        not _finite([geometry.get("diameter")]) or geometry.get("diameter", 0) <= 0
+    ):
+        issues.append("sphere diameter must be positive")
     return issues
 
 
@@ -190,37 +215,42 @@ class AssetScene:
     def __init__(
         self,
         name: str,
-        frame: Optional[Dict[str, Any]] = None,
-        classification: Optional[str] = None,
+        frame: dict[str, Any] | None = None,
+        classification: str | None = None,
     ) -> None:
         self.name = name
-        self.frame = {"crs": "local", "units": "m", "z_up": True, "description": "local engineering frame"}
+        self.frame = {
+            "crs": "local",
+            "units": "m",
+            "z_up": True,
+            "description": "local engineering frame",
+        }
         if frame:
             self.frame.update(frame)
         self.classification = classification
-        self.objects: List[Dict[str, Any]] = []
-        self.connections: List[Dict[str, Any]] = []
-        self.assumptions: List[str] = []
-        self.data_gaps: List[Dict[str, Any]] = []
-        self.provenance: List[Dict[str, Any]] = []
+        self.objects: list[dict[str, Any]] = []
+        self.connections: list[dict[str, Any]] = []
+        self.assumptions: list[str] = []
+        self.data_gaps: list[dict[str, Any]] = []
+        self.provenance: list[dict[str, Any]] = []
 
     # ----------------------------------------------------------------- objects
     def add_object(
         self,
         id: str,
         kind: str,
-        geometry: Dict[str, Any],
+        geometry: dict[str, Any],
         state: str = "existing",
-        tag: Optional[str] = None,
-        name: Optional[str] = None,
+        tag: str | None = None,
+        name: str | None = None,
         group: str = "facility",
-        source: Optional[Dict[str, Any]] = None,
-        attributes: Optional[Dict[str, Any]] = None,
-        results: Optional[Dict[str, Any]] = None,
-        live: Optional[Dict[str, Any]] = None,
-        media: Optional[List[Dict[str, Any]]] = None,
-        nozzles: Optional[Dict[str, Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+        source: dict[str, Any] | None = None,
+        attributes: dict[str, Any] | None = None,
+        results: dict[str, Any] | None = None,
+        live: dict[str, Any] | None = None,
+        media: list[dict[str, Any]] | None = None,
+        nozzles: dict[str, dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """Add an object and return it; raises ``ValueError`` on invalid input.
 
         ``nozzles`` maps a nozzle id or service (``N1``, ``gas_outlet``) to
@@ -241,14 +271,22 @@ class AssetScene:
         for nid, noz in (nozzles or {}).items():
             vec = noz.get("offset_m", noz.get("position_m"))
             if vec is None or len(vec) != 3 or not _finite(vec):
-                raise ValueError(f"object {id!r} nozzle {nid!r}: needs finite offset_m or position_m [x, y, z]")
-            if noz.get("direction") is not None and (len(noz["direction"]) != 3 or not _finite(noz["direction"])):
-                raise ValueError(f"object {id!r} nozzle {nid!r}: direction must be [ux, uy, uz]")
+                raise ValueError(
+                    f"object {id!r} nozzle {nid!r}: needs finite offset_m or position_m [x, y, z]"
+                )
+            if noz.get("direction") is not None and (
+                len(noz["direction"]) != 3 or not _finite(noz["direction"])
+            ):
+                raise ValueError(
+                    f"object {id!r} nozzle {nid!r}: direction must be [ux, uy, uz]"
+                )
         src = {"geometry": "unspecified", "quality": "assumed", "reference": None}
         if source:
             src.update(source)
         if src["quality"] not in QUALITIES:
-            raise ValueError(f"unknown source quality {src['quality']!r}; use one of {QUALITIES}")
+            raise ValueError(
+                f"unknown source quality {src['quality']!r}; use one of {QUALITIES}"
+            )
         obj = {
             "id": id,
             "tag": tag,
@@ -274,15 +312,15 @@ class AssetScene:
         target: str,
         kind: str = "process",
         state: str = "existing",
-        id: Optional[str] = None,
-        line_number: Optional[str] = None,
-        diameter: Optional[float] = None,
+        id: str | None = None,
+        line_number: str | None = None,
+        diameter: float | None = None,
         quality: str = "assumed",
-        reference: Optional[str] = None,
-        route: Optional[Sequence[Sequence[float]]] = None,
-        route_reference: Optional[str] = None,
+        reference: str | None = None,
+        route: Sequence[Sequence[float]] | None = None,
+        route_reference: str | None = None,
         **piping: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Connect two objects.
 
         ``route`` is the pipe path in the scene frame ([[x, y, z], ...], at least
@@ -319,19 +357,21 @@ class AssetScene:
             conn["route_reference"] = route_reference
         for key, val in (piping or {}).items():
             if key not in PIPING_KEYS:
-                raise ValueError(f"unknown piping key {key!r}; use one of {PIPING_KEYS}")
+                raise ValueError(
+                    f"unknown piping key {key!r}; use one of {PIPING_KEYS}"
+                )
             conn[key] = val
         self.connections.append(conn)
         return conn
 
-    def get(self, object_id: str) -> Optional[Dict[str, Any]]:
+    def get(self, object_id: str) -> dict[str, Any] | None:
         """Object by id, or ``None``."""
         for obj in self.objects:
             if obj["id"] == object_id:
                 return obj
         return None
 
-    def find_by_tag(self, tag: str) -> Optional[Dict[str, Any]]:
+    def find_by_tag(self, tag: str) -> dict[str, Any] | None:
         """Object by tag (case-insensitive, ignores spaces), or ``None``."""
         key = normalise_tag(tag)
         for obj in self.objects:
@@ -339,37 +379,58 @@ class AssetScene:
                 return obj
         return None
 
-    def add_gap(self, gap: str, source: str, effect: str, status: str = "open", assumed: str = "") -> None:
+    def add_gap(
+        self,
+        gap: str,
+        source: str,
+        effect: str,
+        status: str = "open",
+        assumed: str = "",
+    ) -> None:
         """Record a data gap in the task ``results.json`` shape."""
-        entry = {"gap": gap, "source": source, "status": status, "assumed": assumed, "effect": effect}
+        entry = {
+            "gap": gap,
+            "source": source,
+            "status": status,
+            "assumed": assumed,
+            "effect": effect,
+        }
         if entry not in self.data_gaps:
             self.data_gaps.append(entry)
 
     # ------------------------------------------------------------- transforms
-    def translate(self, dx: float, dy: float, dz: float) -> "AssetScene":
+    def translate(self, dx: float, dy: float, dz: float) -> AssetScene:
         """Move every object by a fixed offset in place and return self."""
         offset = (float(dx), float(dy), float(dz))
         for obj in self.objects:
             geo = obj["geometry"]
             if geo["shape"] == "polyline":
-                geo["points"] = [[p[i] + offset[i] for i in range(3)] for p in geo["points"]]
+                geo["points"] = [
+                    [p[i] + offset[i] for i in range(3)] for p in geo["points"]
+                ]
             else:
                 geo["center"] = [geo["center"][i] + offset[i] for i in range(3)]
             for noz in (obj.get("nozzles") or {}).values():
                 if "position_m" in noz:
-                    noz["position_m"] = [noz["position_m"][i] + offset[i] for i in range(3)]
+                    noz["position_m"] = [
+                        noz["position_m"][i] + offset[i] for i in range(3)
+                    ]
         for conn in self.connections:
             if conn.get("route"):
-                conn["route"] = [[p[i] + offset[i] for i in range(3)] for p in conn["route"]]
+                conn["route"] = [
+                    [p[i] + offset[i] for i in range(3)] for p in conn["route"]
+                ]
         return self
 
-    def merge(self, other: "AssetScene", prefix: str = "") -> "AssetScene":
+    def merge(self, other: AssetScene, prefix: str = "") -> AssetScene:
         """Append the objects and connections of ``other`` (ids prefixed when given)."""
         for obj in other.objects:
             new = copy.deepcopy(obj)
             new["id"] = prefix + obj["id"]
             if self.get(new["id"]) is not None:
-                raise ValueError(f"duplicate object id {new['id']!r} on merge; pass a prefix")
+                raise ValueError(
+                    f"duplicate object id {new['id']!r} on merge; pass a prefix"
+                )
             self.objects.append(new)
         for conn in other.connections:
             new = copy.deepcopy(conn)
@@ -386,7 +447,9 @@ class AssetScene:
         self.provenance.extend(other.provenance)
         return self
 
-    def subset(self, groups: Optional[Sequence[str]] = None, states: Optional[Sequence[str]] = None) -> "AssetScene":
+    def subset(
+        self, groups: Sequence[str] | None = None, states: Sequence[str] | None = None
+    ) -> AssetScene:
         """Copy holding only the chosen groups and/or states (connections kept when both ends remain)."""
         out = AssetScene(self.name, dict(self.frame), self.classification)
         for obj in self.objects:
@@ -396,23 +459,29 @@ class AssetScene:
                 continue
             out.objects.append(copy.deepcopy(obj))
         ids = {o["id"] for o in out.objects}
-        out.connections = [copy.deepcopy(c) for c in self.connections if c["from"] in ids and c["to"] in ids]
+        out.connections = [
+            copy.deepcopy(c)
+            for c in self.connections
+            if c["from"] in ids and c["to"] in ids
+        ]
         out.assumptions = list(self.assumptions)
         out.data_gaps = copy.deepcopy(self.data_gaps)
         out.provenance = copy.deepcopy(self.provenance)
         return out
 
-    def bounds(self) -> List[float]:
+    def bounds(self) -> list[float]:
         """Scene bounds ``[xmin, ymin, zmin, xmax, ymax, zmax]``."""
         if not self.objects:
             return [0.0] * 6
         all_b = [geometry_bounds(o["geometry"]) for o in self.objects]
-        return [min(b[i] for b in all_b) for i in range(3)] + [max(b[i] for b in all_b) for i in range(3, 6)]
+        return [min(b[i] for b in all_b) for i in range(3)] + [
+            max(b[i] for b in all_b) for i in range(3, 6)
+        ]
 
     # --------------------------------------------------------------- validate
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Return a list of contract violations (empty when the scene is valid)."""
-        issues: List[str] = []
+        issues: list[str] = []
         if self.frame.get("units") != "m":
             issues.append("frame units must be metres")
         seen = set()
@@ -427,18 +496,26 @@ class AssetScene:
                 issues.append(f"{oid}: unknown state {obj.get('state')!r}")
             if obj.get("source", {}).get("quality") not in QUALITIES:
                 issues.append(f"{oid}: unknown source quality")
-            issues.extend(f"{oid}: {msg}" for msg in _validate_geometry(obj.get("geometry")))
+            issues.extend(
+                f"{oid}: {msg}" for msg in _validate_geometry(obj.get("geometry"))
+            )
         for conn in self.connections:
             for end in ("from", "to"):
                 if conn.get(end) not in seen:
-                    issues.append(f"connection {conn.get('id')}: unknown {end} object {conn.get(end)!r}")
+                    issues.append(
+                        f"connection {conn.get('id')}: unknown {end} object {conn.get(end)!r}"
+                    )
             route = conn.get("route")
-            if route is not None and (len(route) < 2 or not all(len(p) == 3 and _finite(p) for p in route)):
-                issues.append(f"connection {conn.get('id')}: route needs at least two finite [x, y, z] points")
+            if route is not None and (
+                len(route) < 2 or not all(len(p) == 3 and _finite(p) for p in route)
+            ):
+                issues.append(
+                    f"connection {conn.get('id')}: route needs at least two finite [x, y, z] points"
+                )
         return issues
 
     # ------------------------------------------------------------- serialise
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """JSON-ready dict."""
         return {
             "schema": SCHEMA,
@@ -453,11 +530,13 @@ class AssetScene:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AssetScene":
+    def from_dict(cls, data: dict[str, Any]) -> AssetScene:
         """Load from a dict; raises ``ValueError`` on another schema."""
         if data.get("schema") != SCHEMA:
             raise ValueError(f"expected schema {SCHEMA}, got {data.get('schema')!r}")
-        scene = cls(data.get("name", "scene"), data.get("frame"), data.get("classification"))
+        scene = cls(
+            data.get("name", "scene"), data.get("frame"), data.get("classification")
+        )
         scene.objects = copy.deepcopy(data.get("objects", []))
         scene.connections = copy.deepcopy(data.get("connections", []))
         scene.assumptions = list(data.get("assumptions", []))
@@ -473,7 +552,7 @@ class AssetScene:
         return out
 
     @classmethod
-    def load(cls, path: Any) -> "AssetScene":
+    def load(cls, path: Any) -> AssetScene:
         """Read a scene JSON file."""
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
 

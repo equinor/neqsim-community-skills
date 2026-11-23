@@ -84,7 +84,7 @@ def assess_explosion_readiness(inputs: dict[str, object]) -> ExplosionReadiness:
         if not v:
             missing.append(k)
         elif isinstance(v, dict) and v.get("status") == "assumed":
-            findings.append("%s is an assumption: result is screening only" % k)
+            findings.append(f"{k} is an assumption: result is screening only")
     verdict = "not_ready" if missing else ("ready_screening" if findings else "ready")
     if missing:
         findings.append(
@@ -296,7 +296,7 @@ class PdrCaseSpec:
 
 def _janaf_h(fuel: str, block: str, temperature_k: float, mw: float) -> float:
     txt = (TEMPLATES / FUELS[fuel]["thermo"]).read_text(encoding="utf-8")
-    start = txt.index("\n%s\n" % block)
+    start = txt.index(f"\n{block}\n")
     seg = txt[start : start + 900]
     key = "highCpCoeffs" if temperature_k >= 1000.0 else "lowCpCoeffs"
     coeffs = [
@@ -341,25 +341,22 @@ def leak_enthalpy_source(
 
 
 def _fmt(v: Iterable[float]) -> str:
-    return "(" + " ".join("%.6g" % x for x in v) + ")"
+    return "(" + " ".join(f"{x:.6g}" for x in v) + ")"
 
 
 def _field(
     name: str, dims: str, internal: str, boundary: str, cls: str = "volScalarField"
 ) -> str:
     return (
-        _HEADER % (cls, name)
-    ) + "dimensions %s;\ninternalField %s;\nboundaryField\n{\n%s}\n" % (
-        dims,
-        internal,
-        boundary,
+        (_HEADER % (cls, name))
+        + f"dimensions {dims};\ninternalField {internal};\nboundaryField\n{{\n{boundary}}}\n"
     )
 
 
 def _bc(patch: str, body: str) -> str:
-    return "    %s\n    {\n%s    }\n" % (
+    return "    {}\n    {{\n{}    }}\n".format(
         patch,
-        "".join("        %s\n" % l for l in body.strip().splitlines()),
+        "".join(f"        {l}\n" for l in body.strip().splitlines()),
     )
 
 
@@ -382,14 +379,15 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
         txt = (TEMPLATES / tpl).read_text(encoding="utf-8")
         if tpl == "fvSolution":
             txt = txt.replace(
-                "nOuterCorrectors    10;", "nOuterCorrectors    %d;" % spec.n_outer
+                "nOuterCorrectors    10;",
+                "nOuterCorrectors    %d;" % spec.n_outer,  # noqa: UP031
             )
         (case_dir / "system" / tpl).write_text(txt, encoding="utf-8")
     if spec.xi_model != "transport":
         pdr = (case_dir / "constant" / "PDRProperties").read_text(encoding="utf-8")
         pdr = re.sub(
             r"^XiModel\s+transport;",
-            "XiModel         %s;" % spec.xi_model,
+            f"XiModel         {spec.xi_model};",
             pdr,
             count=1,
             flags=re.MULTILINE,
@@ -399,13 +397,13 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
     ign_block = "ignite no;\nignitionSites ();\n"
     if ig is not None:
         ign_block = (
-            "ignite yes;\nignitionSites\n(\n    {\n        location %s;\n        diameter %.4g;\n        start %.3g;\n"
-            "        duration %.4g;\n        strength %.4g;\n    }\n);\n"
-            % (_fmt(ig.location), ig.diameter, ig.start, ig.duration, ig.strength)
+            f"ignite yes;\nignitionSites\n(\n    {{\n        location {_fmt(ig.location)};\n        diameter {ig.diameter:.4g};\n        start {ig.start:.3g};\n"
+            f"        duration {ig.duration:.4g};\n        strength {ig.strength:.4g};\n    }}\n);\n"
         )
     comb = (_HEADER % ("dictionary", "combustionProperties")) + (
-        'laminarFlameSpeedCorrelation SCOPE;\nfuel %s;\nfuelFile "fuels/%s";\n'
-        % (fuel["fuel_name"], spec.fuel)
+        'laminarFlameSpeedCorrelation SCOPE;\nfuel {};\nfuelFile "fuels/{}";\n'.format(
+            fuel["fuel_name"], spec.fuel
+        )
         + ign_block
         + "ignitionSphereFraction 1.0;\nignitionThickness %.4g;\nignitionCircleFraction 0.5;\n"
         % (ig.thickness if ig is not None else 0.05)
@@ -419,11 +417,13 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
     mesh = _HEADER % ("dictionary", "PDRblockMeshDict") + "scale 1.0;\n"
     for ax in "xyz":
         pts, nc, rt = axes[ax]
-        mesh += "%s\n{\n    points (%s);\n    nCells (%s);\n    ratios (%s);\n}\n" % (
-            ax,
-            " ".join("%.6g" % p for p in pts),
-            " ".join(str(n) for n in nc),
-            " ".join("%.8g" % r for r in rt),
+        mesh += (
+            "{}\n{{\n    points ({});\n    nCells ({});\n    ratios ({});\n}}\n".format(
+                ax,
+                " ".join(f"{p:.6g}" for p in pts),
+                " ".join(str(n) for n in nc),
+                " ".join(f"{r:.8g}" for r in rt),
+            )
         )
     wind_faces = (
         {"xmax": 1, "ymin": 2, "ymax": 3}[spec.wind.face]
@@ -435,22 +435,19 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
         for i in (0, 1, 2, 3, 4, 5)
         if i not in spec.patches_wall_faces and i != wind_faces
     ]
-    mesh += (
-        "defaultPatch { name defaultFaces; type wall; }\nboundary\n(\n    outer { type patch; faces (%s); }\n"
-        % " ".join(map(str, open_faces))
+    mesh += "defaultPatch {{ name defaultFaces; type wall; }}\nboundary\n(\n    outer {{ type patch; faces ({}); }}\n".format(
+        " ".join(map(str, open_faces))
     )
     if wind_faces is not None:
-        mesh += "    inlet { type patch; faces (%d); }\n" % wind_faces
-    mesh += (
-        "    mergingFaces { type wall; faces (); }\n    blockedFaces { type wall; faces (); }\n    wallFaces { type wall; faces (%s); }\n);\n"
-        % (" ".join(map(str, spec.patches_wall_faces)))
+        mesh += "    inlet { type patch; faces (%d); }\n" % wind_faces  # noqa: UP031
+    mesh += "    mergingFaces {{ type wall; faces (); }}\n    blockedFaces {{ type wall; faces (); }}\n    wallFaces {{ type wall; faces ({}); }}\n);\n".format(
+        " ".join(map(str, spec.patches_wall_faces))
     )
     (case_dir / "system" / "PDRblockMeshDict").write_text(mesh, encoding="utf-8")
     cw = spec.cell_width_sub or max(spec.domain.hxyz())
     (case_dir / "system" / "PDRsetFieldsDict").write_text(
         _HEADER % ("dictionary", "PDRsetFieldsDict")
-        + 'obsFileDir "<case>/geometry";\nobsFileNames (obstaclesDict);\ncellWidth %.4g;\ncellWidthFactor 1.0;\n'
-        % cw,
+        + f'obsFileDir "<case>/geometry";\nobsFileNames (obstaclesDict);\ncellWidth {cw:.4g};\ncellWidthFactor 1.0;\n',
         encoding="utf-8",
     )
     # --- initial cloud
@@ -460,9 +457,8 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
         c = spec.cloud
         eps0 = 0.09**0.75 * c.k0**1.5 / max(c.length_scale, 1e-3)
         regions = (
-            "    boxToCell\n    {\n        box %s %s;\n        fieldValues\n        (\n            volScalarFieldValue ft %.6g\n"
-            "            volScalarFieldValue k %.6g\n            volScalarFieldValue epsilon %.6g\n        );\n    }\n"
-            % (_fmt(c.lo), _fmt(c.hi), ft, c.k0, eps0)
+            f"    boxToCell\n    {{\n        box {_fmt(c.lo)} {_fmt(c.hi)};\n        fieldValues\n        (\n            volScalarFieldValue ft {ft:.6g}\n"
+            f"            volScalarFieldValue k {c.k0:.6g}\n            volScalarFieldValue epsilon {eps0:.6g}\n        );\n    }}\n"
         )
     (case_dir / "system" / "setFieldsDict").write_text(
         _HEADER % ("dictionary", "setFieldsDict")
@@ -485,37 +481,30 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
 
         def ramp(v):
             return (
-                "{ explicit table ((0 0) (%.4g %.6g)); implicit none; }" % (r, v)
+                f"{{ explicit table ((0 0) ({r:.4g} {v:.6g})); implicit none; }}"
                 if r > 0
-                else "(%.6g 0)" % v
+                else f"({v:.6g} 0)"
             )
 
         def ramp_vec(vx, vy, vz):
             return (
-                "{ explicit table ((0 (0 0 0)) (%.4g (%.6g %.6g %.6g))); implicit none; }"
-                % (r, vx, vy, vz)
+                f"{{ explicit table ((0 (0 0 0)) ({r:.4g} ({vx:.6g} {vy:.6g} {vz:.6g}))); implicit none; }}"
                 if r > 0
-                else "((%.6g %.6g %.6g) 0)" % (vx, vy, vz)
+                else f"(({vx:.6g} {vy:.6g} {vz:.6g}) 0)"
             )
 
         fvo += (
             "leakScalar\n{\n    type scalarSemiImplicitSource;\n    active true;\n    selectionMode cellZone;\n    cellZone leakZone;\n"
-            "    volumeMode absolute;\n    sources\n    {\n        ft %s;\n        ha %s;\n    }\n}\n"
-            % (
-                ramp(lk.fuel_rate_kg_s),
-                ramp(leak_enthalpy_source(spec.fuel, lk.fuel_rate_kg_s)),
-            )
+            f"    volumeMode absolute;\n    sources\n    {{\n        ft {ramp(lk.fuel_rate_kg_s)};\n        ha {ramp(leak_enthalpy_source(spec.fuel, lk.fuel_rate_kg_s))};\n    }}\n}}\n"
         )
         fvo += (
             "leakMomentum\n{\n    type vectorSemiImplicitSource;\n    active true;\n    selectionMode cellZone;\n    cellZone leakZone;\n"
-            "    volumeMode absolute;\n    sources\n    {\n        U %s;\n    }\n}\n"
-            % ramp_vec(fx, fy, fz)
+            f"    volumeMode absolute;\n    sources\n    {{\n        U {ramp_vec(fx, fy, fz)};\n    }}\n}}\n"
         )
         (case_dir / "constant" / "fvOptions").write_text(fvo, encoding="utf-8")
         leak_actions = (
-            "    {\n        name leakCells;\n        type cellSet;\n        action new;\n        source boxToCell;\n        box %s %s;\n    }\n"
+            f"    {{\n        name leakCells;\n        type cellSet;\n        action new;\n        source boxToCell;\n        box {_fmt(lo)} {_fmt(hi)};\n    }}\n"
             "    {\n        name leakZone;\n        type cellZoneSet;\n        action new;\n        source setToCellZone;\n        set leakCells;\n    }\n"
-            % (_fmt(lo), _fmt(hi))
         )
     else:
         leak_actions = ""
@@ -523,8 +512,7 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
     (case_dir / "system" / "topoSetDict").write_text(
         _HEADER % ("dictionary", "topoSetDict")
         + "actions\n(\n    {\n        name fluidCells;\n        type cellSet;\n        action new;\n        source fieldToCell;\n"
-        "        field betav;\n        min %.3g;\n        max 1.5;\n    }\n"
-        % spec.betav_min
+        f"        field betav;\n        min {spec.betav_min:.3g};\n        max 1.5;\n    }}\n"
         + leak_actions
         + ");\n",
         encoding="utf-8",
@@ -583,7 +571,7 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
         "uniform (0 0 0)",
         io,
         "type fixedValue;\nvalue uniform (0 0 0);",
-        "type fixedValue;\nvalue uniform %s;" % _fmt(u_in),
+        f"type fixedValue;\nvalue uniform {_fmt(u_in)};",
         "type fixedValue;\nvalue uniform (0 0 0);",
         "volVectorField",
     )
@@ -599,18 +587,18 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
     build(
         "k",
         "[0 2 -2 0 0 0 0]",
-        "uniform %.6g" % k_in,
+        f"uniform {k_in:.6g}",
         io,
         "type kqRWallFunction;\nvalue $internalField;",
-        "type fixedValue;\nvalue uniform %.6g;" % k_in,
+        f"type fixedValue;\nvalue uniform {k_in:.6g};",
     )
     build(
         "epsilon",
         "[0 2 -3 0 0 0 0]",
-        "uniform %.6g" % eps_in,
+        f"uniform {eps_in:.6g}",
         io,
         "type epsilonWallFunction;\nvalue $internalField;",
-        "type fixedValue;\nvalue uniform %.6g;" % eps_in,
+        f"type fixedValue;\nvalue uniform {eps_in:.6g};",
     )
     build(
         "nut",
@@ -636,14 +624,13 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
             "uniform " + v,
             io,
             zg,
-            "type fixedValue;\nvalue uniform %s;" % v,
+            f"type fixedValue;\nvalue uniform {v};",
         )
     # --- controlDict with probes
     # PDRsetFields rewrites the 0/ fields WITHOUT the user patch "inlet"; the run re-applies the wind boundary conditions with this script
     (case_dir / "system" / "inletPatch.sh").write_text(
         "".join(
-            'foamDictionary -entry boundaryField.inlet -set "{%s}" 0/%s > /dev/null\n'
-            % (bc, n)
+            f'foamDictionary -entry boundaryField.inlet -set "{{{bc}}}" 0/{n} > /dev/null\n'
             for n, bc in inlet_cmds
         ),
         encoding="utf-8",
@@ -651,7 +638,7 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
     pts = dict(spec.monitor_points)
     for nm, pl in spec.wall_panel_points.items():
         for i, p in enumerate(pl):
-            pts["%s_%02d" % (nm, i)] = p
+            pts["%s_%02d" % (nm, i)] = p  # noqa: UP031
     names = list(pts)
     (case_dir / "system" / "monitorPoints.json").write_text(
         json.dumps({n: list(pts[n]) for n in names}, indent=1), encoding="utf-8"
@@ -660,7 +647,7 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
         (
             "    probes\n    {\n        type probes;\n        libs (sampling);\n        name probes;\n        writeControl timeStep;\n        writeInterval 1;\n"
             "        fields (p T b ft U);\n        probeLocations\n        (\n"
-            + "".join("            %s\n" % _fmt(pts[n]) for n in names)
+            + "".join(f"            {_fmt(pts[n])}\n" for n in names)
             + "        );\n    }\n"
         )
         if names
@@ -669,17 +656,9 @@ def write_case(spec: PdrCaseSpec, case_dir: Path) -> Path:
     probes += spec.extra_functions
     cd = (
         _HEADER % ("dictionary", "controlDict")
-        + "application %s;\nstartFrom startTime;\nstartTime 0;\nstopAt endTime;\nendTime %.6g;\ndeltaT 1e-5;\n"
-        "writeControl runTime;\nwriteInterval %.6g;\npurgeWrite 0;\nwriteFormat ascii;\nwritePrecision 8;\nwriteCompression off;\n"
-        "timeFormat general;\ntimePrecision 6;\nrunTimeModifiable yes;\nadjustTimeStep yes;\nmaxCo %.3g;\nmaxDeltaT %.3g;\nfunctions\n{\n%s}\n"
-        % (
-            spec.solver,
-            spec.end_time,
-            spec.write_interval,
-            spec.max_co,
-            spec.max_dt,
-            probes,
-        )
+        + f"application {spec.solver};\nstartFrom startTime;\nstartTime 0;\nstopAt endTime;\nendTime {spec.end_time:.6g};\ndeltaT 1e-5;\n"
+        f"writeControl runTime;\nwriteInterval {spec.write_interval:.6g};\npurgeWrite 0;\nwriteFormat ascii;\nwritePrecision 8;\nwriteCompression off;\n"
+        f"timeFormat general;\ntimePrecision 6;\nrunTimeModifiable yes;\nadjustTimeStep yes;\nmaxCo {spec.max_co:.3g};\nmaxDeltaT {spec.max_dt:.3g};\nfunctions\n{{\n{probes}}}\n"
     )
     (case_dir / "system" / "controlDict").write_text(cd, encoding="utf-8")
     return case_dir
@@ -700,12 +679,12 @@ def docker_run(
     ``trap_fpe=False`` disables floating-point trapping (``FOAM_SIGFPE=false``): PDRFoam raises harmless invalid operations inside the
     Xi / drag sub-models for cells next to removed (fully blocked) cells. The probes are checked for finite values afterwards instead.
     """
-    mounts = ["-v", "%s:/case" % case_dir]
+    mounts = ["-v", f"{case_dir}:/case"]
     path = "" if trap_fpe else "export FOAM_SIGFPE=false; "
     if bin_dir:
-        mounts += ["-v", "%s:/r5bin:ro" % bin_dir]
+        mounts += ["-v", f"{bin_dir}:/r5bin:ro"]
         path += "export PATH=/r5bin:$PATH; "
-    script = "cd /case && %sset -o pipefail; " % path + " && ".join(commands)
+    script = f"cd /case && {path}set -o pipefail; " + " && ".join(commands)
     cmd = (
         ["docker", "run", "--rm", "--cpus", str(cpus)]
         + mounts
@@ -718,6 +697,7 @@ def docker_run(
         text=True,
         creationflags=flags,
         timeout=timeout,
+        check=False,
         encoding="utf-8",
         errors="replace",
     )
@@ -752,16 +732,16 @@ def explosion_commands(
     cmds += ["setFields > log.setFields 2>&1"]
     if np_procs > 1:
         cmds += [
-            "printf 'FoamFile{version 2.0;format ascii;class dictionary;object decomposeParDict;}\\nnumberOfSubdomains %d;\\nmethod scotch;\\n' %d > system/decomposeParDict"
+            "printf 'FoamFile{version 2.0;format ascii;class dictionary;object decomposeParDict;}\\nnumberOfSubdomains %d;\\nmethod scotch;\\n' %d > system/decomposeParDict"  # noqa: UP031
             % (np_procs, np_procs),
             "decomposePar -force > log.decomposePar 2>&1",
-            "mpirun --allow-run-as-root --oversubscribe -np %d %s -parallel > log.%s 2>&1"
+            "mpirun --allow-run-as-root --oversubscribe -np %d %s -parallel > log.%s 2>&1"  # noqa: UP031
             % (np_procs, solver, solver),
             "reconstructPar %s > log.reconstructPar 2>&1 || true"
             % ("" if dispersion else "-latestTime"),
         ]
     else:
-        cmds += ["%s > log.%s 2>&1" % (solver, solver)]
+        cmds += [f"{solver} > log.{solver} 2>&1"]
     if dispersion:
         cmds += [
             "postProcess -func writeCellVolumes -latestTime > log.pp1 2>&1",
@@ -975,8 +955,7 @@ def closed_vessel_case(
     )
     obst = _HEADER % ("dictionary", "obstaclesDict") + (
         "scale 1.0;\nverbose 0;\ncorner_stub\n{\n    enabled true;\n    obstacles\n    (\n"
-        "        cyl { point (%.3f %.3f %.3f); direction z; length 0.06; diameter 0.02; }\n    );\n}\n"
-        % (side - 0.04, side - 0.04, 0.0)
+        f"        cyl {{ point ({side - 0.04:.3f} {side - 0.04:.3f} {0.0:.3f}); direction z; length 0.06; diameter 0.02; }}\n    );\n}}\n"
     )
     # PDRFoam needs the PDR fields (constant/betav...): a negligible 2 cm stub in a corner makes PDRsetFields write them
     spec = PdrCaseSpec(
@@ -1019,11 +998,11 @@ def open_flame_case(
     )
     obst = _HEADER % ("dictionary", "obstaclesDict") + (
         "scale 1.0;\nverbose 0;\ncorner_stub\n{\n    enabled true;\n    obstacles\n    (\n"
-        "        cyl { point (%.3f %.3f %.3f); direction z; length 0.06; diameter 0.02; }\n    );\n}\n"
-        % (half - 0.05, half - 0.05, -half + 0.01)
+        f"        cyl {{ point ({half - 0.05:.3f} {half - 0.05:.3f} {-half + 0.01:.3f}); direction z; length 0.06; diameter 0.02; }}\n    );\n}}\n"
     )
     probes = {
-        "r%03d" % int(100 * r): (r, 0.0, 0.0) for r in (0.4, 0.55, 0.7, 0.85, 1.0, 1.15)
+        "r%03d" % int(100 * r): (r, 0.0, 0.0)  # noqa: UP031
+        for r in (0.4, 0.55, 0.7, 0.85, 1.0, 1.15)
     }
     return PdrCaseSpec(
         name=name,

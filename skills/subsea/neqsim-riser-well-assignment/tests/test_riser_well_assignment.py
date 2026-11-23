@@ -266,6 +266,34 @@ def test_riser_limit_by_manifold_steers_the_well_to_the_other_header():
     assert choked.objective == pytest.approx(10.0 * 80.0)
 
 
+def test_production_profile_changes_the_best_header_over_time():
+    data = {
+        "wells": [{"id": "W", "current_riser": "A", "temp_c": [50.0, 50.0],
+                   "rates": {"HP": {"oil": [100.0, 100.0], "gas": [10.0, 10.0]}, "LP": {"oil": [150.0, 60.0], "gas": [10.0, 10.0]}}}],
+        "risers": [{"id": "A", "capacity": 1, "manifolds": ["HP", "LP"], "current_manifold": "HP"}],
+        "reach": {"A": ["W"]},
+        "config": {"stream_value": {"oil": 1.0}, "period_days": [10.0, 10.0], "allow_choking": False},
+    }
+    problem = load_problem(data)
+    sol = solve(problem)
+    assert [sol.plan.flows[t]["W"][0] for t in range(2)] == ["LP", "HP"]
+    assert sol.objective == pytest.approx(10.0 * (150.0 + 100.0))
+    assert check_solution(problem, sol) == []
+
+
+def test_well_arriving_in_a_later_period_is_not_charged_a_swap():
+    data = {
+        "wells": [{"id": "W", "current_riser": "A", "temp_c": [50.0, 50.0],
+                   "rates": {"HP": {"oil": [0.0, 100.0]}}}],
+        "risers": [{"id": "A", "capacity": 1, "manifolds": ["HP"], "current_manifold": "HP"}],
+        "reach": {"A": ["W"]},
+        "config": {"stream_value": {"oil": 1.0}, "period_days": [10.0, 10.0], "allow_choking": False, "rov_cost_per_swap": 500.0},
+    }
+    sol = solve(load_problem(data))
+    assert sol.n_swaps == 0
+    assert sol.objective == pytest.approx(1000.0)
+
+
 def test_check_solution_rejects_missing_plan_and_tampered_plan():
     problem = load_problem(_tiny(0))
     assert check_solution(problem, Solution("failed", None, None))

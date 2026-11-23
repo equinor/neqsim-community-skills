@@ -83,6 +83,15 @@ fails when the plan is missing, a constraint is broken, or the MILP and the acco
 ```
 
 `reach` (`{"R05": ["W01", ...]}`) can replace `distance_m` + riser `max_reach_m`.
+
+**Production profiles.** Every rate and temperature accepts one value per planning period, so a forecast is
+supplied as lists: `rates.HP.oil = [y1, y2, y3]`, `temp_c = [..]`, `period_days = [365, 365, 365]`. The rate of a
+well on each header and period is the profile at the current header times a header factor from the well's
+deliverability. A well that arrives later (restart, new well) has zero rates until its start period; it needs no
+swap if it is already connected (`current_riser`). The optimizer then plans swaps over time, because a limit that
+does not bind today (riser gas velocity, header gas, temperature) can bind or release as rates fall. Field-level
+forecasts (for example a Centuries profile) are allocated to wells by the caller; the optimizer does not allocate.
+When the allocation is uncertain, run the optimizer on a lower and an upper profile and report both.
 Rates per manifold come from well deliverability against the manifold pressure,
 for example NeqSim well and flowline models (skill `neqsim-integrated-production-and-lifecycle`,
 `WellDeliverabilityCurve`) or a well-test matched IPR/VLP. Use the *same* manifold

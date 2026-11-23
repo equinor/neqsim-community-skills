@@ -46,6 +46,14 @@ skills:
     tags: [reporting, writing, controlled-language, procedures, communication]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-pid-pdf-to-dexpi
+    version: "1.0.0"
+    description: "Vector-PDF P&ID to NeqSim: extracts equipment, nozzle roles, off-page connectors, traced pipe runs, tees, inline valves, instruments and the sheet data block into drawing records; writes DEXPI with PidDrawingRecordsDexpiWriter; builds and runs the flowsheet; regenerates the P&ID with results and checks the round trip. USE WHEN: a P&ID exists only as a CAD-exported PDF and must become DEXPI, a simulation or a redrawn sheet."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/engineering-data/neqsim-pid-pdf-to-dexpi/SKILL.md"
+    tags: [engineering-data, pid, dexpi, pdf, topology, simulation, process]
+    min_neqsim_version: "3.29.0"
   - name: neqsim-document-intelligence-extraction
     version: "1.0.0"
     description: "Classify mixed engineering documents and images, route native text/table, OCR, and vision extraction, and produce source-traceable evidence packages with confidence and human-review gates. USE WHEN: a NeqSim task receives PDFs, scans, Word/Excel files, drawings, charts, photographs, or multiple conflicting engineering sources."

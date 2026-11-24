@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-pid-pdf-to-dexpi"
+version = "1.1.0"
+description = "P&ID PDF (vector, or scanned best-effort) to drawing records, DEXPI, NeqSim simulation and regenerated P&IDs."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = ["pymupdf>=1.23"]
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+neqsim = ["neqsim", "jpype1"]
+raster = ["numpy", "scipy", "pillow", "pytesseract"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

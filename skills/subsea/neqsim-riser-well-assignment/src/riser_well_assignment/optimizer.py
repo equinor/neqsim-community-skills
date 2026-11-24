@@ -106,7 +106,7 @@ def swap_cost(problem: Problem, wid: str, t: int) -> float:
 
 
 def _limit_sets(problem: Problem):
-    """Yield (label, kind, ref, stream, limit) for every capacity limit."""
+    """Yield (label, kind, ref, stream, limits per period) for every capacity limit."""
     for m, d in problem.manifold_limits.items():
         for s, lim in d.items():
             yield "manifold %s %s" % (m, s), "manifold", m, s, lim
@@ -225,7 +225,8 @@ def evaluate(problem: Problem, plan: Plan, max_swaps_total: Optional[int] = None
                 totals[m][s] = totals[m].get(s, 0.0) + q * frac
             used[wid] = (rid, m, frac)
         ev.stream_totals.append(totals)
-        for label, kind, ref, stream, lim in _limit_sets(problem):
+        for label, kind, ref, stream, lims in _limit_sets(problem):
+            lim = lims[t]
             tot = 0.0
             for wid, (rid, m, frac) in used.items():
                 if (kind == "manifold" and m != ref) or (kind == "riser" and rid != ref) or (kind == "riser_man" and (rid, m) != ref):
@@ -381,7 +382,8 @@ def solve(problem: Problem, max_swaps_total: Optional[int] = None,
 
     limit_rows = []
     for t in range(n_t):
-        for label, kind, ref, stream, lim in _limit_sets(problem):
+        for label, kind, ref, stream, lims in _limit_sets(problem):
+            lim = lims[t]
             terms = []
             for (wid, rid, m, t2) in x:
                 if t2 != t or (kind == "manifold" and m != ref) or (kind == "riser" and rid != ref) \

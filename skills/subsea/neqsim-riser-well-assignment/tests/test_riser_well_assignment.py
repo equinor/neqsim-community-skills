@@ -294,6 +294,25 @@ def test_well_arriving_in_a_later_period_is_not_charged_a_swap():
     assert sol.objective == pytest.approx(1000.0)
 
 
+def test_header_limit_per_period_models_new_wells_taking_capacity():
+    data = {
+        "wells": [{"id": "W", "current_riser": "A", "temp_c": [50.0, 50.0],
+                   "rates": {"HP": {"oil": [100.0, 100.0], "gas": [50.0, 50.0]}, "LP": {"oil": [150.0, 150.0], "gas": [50.0, 50.0]}}}],
+        "risers": [{"id": "A", "capacity": 1, "manifolds": ["HP", "LP"], "current_manifold": "HP"}],
+        "reach": {"A": ["W"]},
+        "manifold_limits": {"LP": {"gas": [100.0, 30.0]}},
+        "config": {"stream_value": {"oil": 1.0}, "period_days": [10.0, 10.0], "allow_choking": False},
+    }
+    problem = load_problem(data)
+    sol = solve(problem)
+    assert [sol.plan.flows[t]["W"][0] for t in range(2)] == ["LP", "HP"]
+    assert check_solution(problem, sol) == []
+    with pytest.raises(ValueError):
+        bad = copy.deepcopy(data)
+        bad["manifold_limits"]["LP"]["gas"] = [1.0, 2.0, 3.0]
+        load_problem(bad)
+
+
 def test_check_solution_rejects_missing_plan_and_tampered_plan():
     problem = load_problem(_tiny(0))
     assert check_solution(problem, Solution("failed", None, None))

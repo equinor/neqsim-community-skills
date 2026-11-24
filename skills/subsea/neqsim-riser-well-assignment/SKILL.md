@@ -92,6 +92,11 @@ swap if it is already connected (`current_riser`). The optimizer then plans swap
 does not bind today (riser gas velocity, header gas, temperature) can bind or release as rates fall. Field-level
 forecasts (for example a Centuries profile) are allocated to wells by the caller; the optimizer does not allocate.
 When the allocation is uncertain, run the optimizer on a lower and an upper profile and report both.
+Header and riser limits (`manifold_limits`, `total_limits`, riser `limits` and `limits_by_manifold`) also accept
+one value per period, so capacity taken by new wells, tie-backs or a compressor derate is modelled as a lower
+limit in the periods it applies (for example `"LP": {"gas": [2150, 2040, 1960]}`); a scalar applies to all
+periods and a list must have one value per period. New wells that are not part of the pairing are entered this
+way, not as wells; their own revenue is then outside the reported gain.
 Rates per manifold come from well deliverability against the manifold pressure,
 for example NeqSim well and flowline models (skill `neqsim-integrated-production-and-lifecycle`,
 `WellDeliverabilityCurve`) or a well-test matched IPR/VLP. Use the *same* manifold

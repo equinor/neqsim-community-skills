@@ -51,8 +51,8 @@ class Riser:
     capacity: int = 1
     manifolds: List[str] = field(default_factory=lambda: ["HP", "LP"])
     max_temp_c: Optional[float] = None
-    limits: Dict[str, float] = field(default_factory=dict)
-    limits_by_manifold: Dict[str, Dict[str, float]] = field(default_factory=dict)
+    limits: Dict[str, List[float]] = field(default_factory=dict)
+    limits_by_manifold: Dict[str, Dict[str, List[float]]] = field(default_factory=dict)
     current_manifold: Optional[str] = None
     max_reach_m: Optional[float] = None
     available: bool = True
@@ -66,8 +66,8 @@ class Problem:
     risers: Dict[str, Riser]
     manifolds: List[str]
     reach: Dict[str, Set[str]]
-    manifold_limits: Dict[str, Dict[str, float]]
-    total_limits: Dict[str, float]
+    manifold_limits: Dict[str, Dict[str, List[float]]]
+    total_limits: Dict[str, List[float]]
     config: Dict[str, Any]
     warnings: List[str] = field(default_factory=list)
 
@@ -84,6 +84,11 @@ def _series(value: Any, n: int, what: str) -> List[Any]:
             raise ValueError("%s has %d entries, expected %d periods" % (what, len(value), n))
         return list(value)
     return [value] * n
+
+
+def _limit(value: Any, n: int, what: str) -> List[float]:
+    """A capacity limit as one value per period (a scalar applies to every period)."""
+    return [float(v) for v in _series(value, n, what)]
 
 
 def _stream_rates(raw: Dict[str, Any], n: int, what: str) -> List[Dict[str, float]]:
@@ -121,8 +126,9 @@ def load_problem(data: Dict[str, Any]) -> Problem:
             capacity=int(r.get("capacity", 1)),
             manifolds=list(r.get("manifolds", ["HP", "LP"])),
             max_temp_c=r.get("max_temp_c"),
-            limits={k: float(v) for k, v in r.get("limits", {}).items()},
-            limits_by_manifold={m: {k: float(v) for k, v in d.items()} for m, d in r.get("limits_by_manifold", {}).items()},
+            limits={k: _limit(v, n, "riser %s limit %s" % (r["id"], k)) for k, v in r.get("limits", {}).items()},
+            limits_by_manifold={m: {k: _limit(v, n, "riser %s limit %s %s" % (r["id"], m, k)) for k, v in d.items()}
+                                for m, d in r.get("limits_by_manifold", {}).items()},
             current_manifold=r.get("current_manifold"),
             max_reach_m=r.get("max_reach_m"),
             available=bool(r.get("available", True)),
@@ -203,8 +209,9 @@ def load_problem(data: Dict[str, Any]) -> Problem:
         risers=risers,
         manifolds=manifolds,
         reach=reach,
-        manifold_limits={m: {k: float(v) for k, v in d.items()} for m, d in data.get("manifold_limits", {}).items()},
-        total_limits={k: float(v) for k, v in data.get("total_limits", {}).items()},
+        manifold_limits={m: {k: _limit(v, n, "manifold %s limit %s" % (m, k)) for k, v in d.items()}
+                         for m, d in data.get("manifold_limits", {}).items()},
+        total_limits={k: _limit(v, n, "total limit %s" % k) for k, v in data.get("total_limits", {}).items()},
         config=config,
         warnings=warnings,
     )

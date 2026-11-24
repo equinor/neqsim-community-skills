@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "neqsim-skill-simulator-state-proxy"
+version = "1.0.0"
+description = "Reservoir-state proxy tables (pressure, water cut, GOR, productivity index against cumulative volumes) from Eclipse / OPM Flow summary results, for the NeqSim hybrid reservoir-well-network production model; with a result inventory, a performance-curve replay baseline and error metrics."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+resdata = ["resdata>=6.0"]
+test = ["pytest>=7.4"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

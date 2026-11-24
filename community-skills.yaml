@@ -1291,6 +1291,15 @@ skills:
     tags: [subsurface, reservoir, norne, spe-benchmark, opm, eclipse-deck, black-oil, open-data, keyless]
     min_neqsim_version: "3.7.0"
 
+  - name: neqsim-simulator-state-proxy
+    version: "1.0.0"
+    description: "Turn Eclipse or OPM Flow summary results into reservoir-state proxy tables (pressure, water cut, GOR, productivity index against cumulative volumes) for the NeqSim hybrid reservoir-well-network production model, with result inventory, profile-replay baseline and error metrics. USE WHEN: an existing reservoir simulation should drive a fast production-profile or network what-if model (choke, routing, separator pressure, injection), or a hybrid model must be validated against simulator runs."
+    author: "neqsim-community"
+    repo: "equinor/neqsim-community-skills"
+    path: "skills/subsurface/neqsim-simulator-state-proxy/SKILL.md"
+    tags: [subsurface, reservoir, eclipse, opm, proxy, production-profile, network, ipr, vlp, resdata, validation]
+    min_neqsim_version: "3.7.0"
+
   - name: neqsim-open-incident-data
     version: "1.0.0"
     description: "Open, login-free offshore incident statistics from the US BSEE Data Center: accident investigations by type (fire, explosion, blowout, fatality, crane, pollution) divided by platform structure-years, with exact Poisson intervals and explicit caveats. USE WHEN: a safety, consequence or reliability task needs a sourced open order-of-magnitude frequency or trend to cross-check an assumed fire, explosion or blowout frequency, or needs to state what open incident data can and cannot support."

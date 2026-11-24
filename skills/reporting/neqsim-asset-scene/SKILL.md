@@ -3,7 +3,7 @@ name: neqsim-asset-scene
 calculation_basis: "screening"
 version: "0.1.0"
 description: "One 3D scene contract (neqsim_asset_scene.v1) for process equipment, SURF and wells, existing and proposed, coloured by NeqSim results or live values, with nozzle-to-nozzle routed piping, span/slope/clash screening and B31.3 pipe stress in NeqSim PipeStressModel. Renders GLB, an offline HTML viewer and report PNGs with provenance. USE WHEN: a study needs a 3D figure of a plant, tie-back, well path or modification option from NeqSim models, layouts, subsea layouts or trajectories."
-last_verified: "2026-11-22"
+last_verified: "2026-11-24"
 requires:
   python_packages: []
   java_packages: []
@@ -180,6 +180,40 @@ NeqSim against closed-form beam, thermal-force, friction and B31.3 bend-factor r
 Colours: grey = existing (tinted by group), blue = proposed, orange = modified, translucent red =
 removed. `ColorBy("results", "utilisation", mode="utilisation")` uses green-amber-red with breakpoints
 at 0.8 and 1.0; `mode="sequential"` spans the data range. Objects without a value are light grey.
+
+## Realistic primitives, source register and optional NeqSim binding (added 2026-11-24)
+
+**`asset_scene.realistic`** (pure Python, tested in `tests/test_realistic.py`) replaces boxes and 12-sided tubes where a figure must look like the
+real plant: `vessel_mesh`/`vessel_parts` (ellipsoidal, hemispherical, torispherical or flat heads, saddles or skirt, nozzles with flanges),
+`fillet_path` + `swept_tube` + `pipe_parts` (long-radius elbows, parallel-transport frames, flanges), `valve_parts`, `jacket_parts`, `deck_parts`,
+`module_parts`, `flare_boom_parts`, `helideck_parts`, `crane_parts`, `xmas_tree_parts`, `template_parts`, `Seabed` (relief, flattened sites,
+`z(x, y)` to place structures), `sea_surface_mesh`, `well_string_parts` (telescoping casing and tubing), `reservoir_layer`, and converters
+`to_pyvista` (smooth normals), `to_plotly_arrays`, `merge_parts`. Materials are keys of `MATERIALS`; `"schematic"` is the neutral translucent material
+for anything that is not sourced.
+
+**Realism checklist** (before a 3D figure is accepted): proper vessel heads and saddles, pipes with elbows and flanges, valves with bonnet and handwheel,
+structures as lattices (not slabs), seabed relief with flattened sites, well strings drawn as strings, light with shadows (PyVista SSAO) and depth haze,
+perspective camera, one pressure colour scale with log ticks, consistent scale and a stated enlargement factor, annotations drawn with matplotlib (Norwegian
+letters and exact fonts), and a footnote that names what is assumed.
+
+**`asset_scene.register`** (tested in `tests/test_register.py`): an illustration source register. Every drawn element is `SOURCED` (P&ID, datasheet, line list, trajectory;
+needs `source.type` and `source.file`, ideally `doc_no` and `page`), `DERIVED` (from a task `results.json` or model file) or `ASSUMED` (needs `reason`).
+`check_register(register, legend_texts=...)` fails on a missing source, an ASSUMED element without reason, or an ASSUMED element in a figure whose
+legend/footnote does not say *antatt/skjematisk* (`legend_line()` writes the sentence). `to_markdown`/`save` produce `illustration_sources.md/json`. Draw unsourced equipment
+with the `"schematic"` material, never as real. **`neqsim_binding` is optional**: add `{unit, address, value, tolerance_rel}` only where a shown number comes from a NeqSim
+run (pressure colours, peak pressure versus design); only bound elements are compared with a fresh run through the `fresh` callable. Pure geometry needs no binding.
+Worked example: neqsim-task-solve `2026-11-24_oseberg_309_p_4_b_vest_high_pressure_gas_well_against_lp/step2_analysis/illustrations/` (`illustration_register_def.py`, `10_finalize.py`, `scene_delta.py` for a template built from sourced slot positions).
+
+**`asset_scene.subsea`** (tested in `tests/test_subsea.py`): recognisable subsea equipment with the same `(name, mesh, material)` parts as `realistic`: `xmas_tree_parts`, `plet_parts` (PLET or inline PLEM), `manifold_parts`,
+`jumper_parts` (M, W or U shape), `flowline_parts` (field joints), `riser_base_parts` (gooseneck, SSIV), `umbilical_parts`, `uta_parts`, `mudmat_parts`, `hub_parts`. Dimensions are typical North Sea values: unless a drawing
+gives the real size, register the item as ASSUMED and draw it with the figure labelled *antatt/skjematisk*.
+
+**Source-register practice** (learned on the Oseberg task): split an element into what is sourced and what is assumed (for example slot count, slot-4 position, hub sides and line lengths SOURCED from the design basis and the
+well report, frame and equipment dimensions ASSUMED); give `source.revision` and `page` (`to_markdown` prints them); derive orientations from coordinates where possible (two vessels with centres 4.3 m apart and 13.1 m long
+cannot be parallel to the line joining their centres) and register them as DERIVED; check names such as "161.5 m" against their origin before labelling them water depth; record the exact blocker (HTTP code, missing key,
+placeholder file size) for every source that could not be read. Never draw a route or structure that no source supports as if it were real.
+
+**Still open**: a scene-from-ProcessSystem helper is not implemented; `template_parts` and `xmas_tree_parts` stay simplified.
 
 ## Python Usage Pattern
 

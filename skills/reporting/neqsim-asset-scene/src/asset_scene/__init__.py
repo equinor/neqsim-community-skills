@@ -60,8 +60,12 @@ from .schema import (
 )
 from .stress import analyse_pipe_stress, neqsim_pipe_stress_class, stress_fragment
 from .style import ColorBy
+from . import realistic, register, subsea  # noqa: E402  realistic 3D primitives (vessels, pipes, jackets, seabed, wells)
 
 __all__ = [
+    "realistic",
+    "register",
+    "subsea",
     "KINDS",
     "QUALITIES",
     "SCHEMA",

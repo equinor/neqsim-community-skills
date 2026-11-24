@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
 from simulator_state_proxy import (
     StateTable,
     SummaryData,
@@ -22,19 +21,31 @@ def synthetic(shut_in: bool = False) -> SummaryData:
     t = np.arange(0.0, 31.0) * 30.0
     q1 = 1000.0 * np.exp(-t / 600.0)
     q2 = 600.0 * np.exp(-t / 900.0)
-    q1[0] = q2[0] = 0.0                       # the first report step is the initial state
+    q1[0] = q2[0] = 0.0  # the first report step is the initial state
     if shut_in:
         q1[10:13] = 0.0
     c1 = np.concatenate([[0.0], np.cumsum(q1[1:] * 30.0)])
     c2 = np.concatenate([[0.0], np.cumsum(q2[1:] * 30.0)])
     pres = 250.0 - (c1 + c2) / 2.0e4
-    return SummaryData(t, {
-        "WOPR:P1": q1, "WOPT:P1": c1, "WBHP:P1": pres - q1 / 25.0, "WWCT:P1": np.clip(c1 / 2.0e6, 0.0, 0.9),
-        "WGOR:P1": 150.0 + c1 / 1.0e4, "WBP9:P1": pres - q1 / 100.0,
-        "WOPR:P2": q2, "WOPT:P2": c2, "WBHP:P2": pres - q2 / 10.0, "WWCT:P2": np.zeros_like(t),
-        "WGOR:P2": np.full_like(t, 150.0),
-        "RPR:1": pres, "FPR": pres, "WWIT:I1": 400.0 * t,
-    })
+    return SummaryData(
+        t,
+        {
+            "WOPR:P1": q1,
+            "WOPT:P1": c1,
+            "WBHP:P1": pres - q1 / 25.0,
+            "WWCT:P1": np.clip(c1 / 2.0e6, 0.0, 0.9),
+            "WGOR:P1": 150.0 + c1 / 1.0e4,
+            "WBP9:P1": pres - q1 / 100.0,
+            "WOPR:P2": q2,
+            "WOPT:P2": c2,
+            "WBHP:P2": pres - q2 / 10.0,
+            "WWCT:P2": np.zeros_like(t),
+            "WGOR:P2": np.full_like(t, 150.0),
+            "RPR:1": pres,
+            "FPR": pres,
+            "WWIT:I1": 400.0 * t,
+        },
+    )
 
 
 def test_inventory_reports_what_can_be_built_and_what_is_missing():
@@ -51,7 +62,9 @@ def test_inventory_reports_what_can_be_built_and_what_is_missing():
 
 
 def test_well_table_recovers_the_productivity_index_of_the_reference_pressure():
-    table = well_state_table(synthetic(), "P1", "RPR:1", extra_quantities={"WATER_INJECTED": "WWIT:I1"})
+    table = well_state_table(
+        synthetic(), "P1", "RPR:1", extra_quantities={"WATER_INJECTED": "WWIT:I1"}
+    )
     assert table.abscissa == "OIL_PRODUCED"
     assert table.columns["cumulative"][0] == 0.0
     assert np.all(np.diff(table.columns["cumulative"]) > 0.0)
@@ -88,9 +101,15 @@ def test_unit_pressure_follows_the_cumulative_of_all_wells():
 
 
 def test_csv_layout_matches_the_java_reader(tmp_path):
-    table = well_state_table(synthetic(), "P1", "RPR:1", extra_quantities={"WATER_INJECTED": "WWIT:I1"})
+    table = well_state_table(
+        synthetic(), "P1", "RPR:1", extra_quantities={"WATER_INJECTED": "WWIT:I1"}
+    )
     path = table.to_csv(tmp_path / "P1.csv")
-    lines = [line for line in path.read_text(encoding="utf-8").splitlines() if not line.startswith("#")]
+    lines = [
+        line
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if not line.startswith("#")
+    ]
     assert lines[0] == "cumulative,pressure,waterCut,gor,pi,ELAPSED_TIME,WATER_INJECTED"
     assert len(lines) == table.rows + 1
     first = [float(x) for x in lines[1].split(",")]
@@ -99,7 +118,11 @@ def test_csv_layout_matches_the_java_reader(tmp_path):
 
 def test_table_needs_strictly_increasing_cumulative():
     with pytest.raises(ValueError, match="strictly increasing"):
-        StateTable("bad", "OIL_PRODUCED", {"cumulative": np.array([0.0, 1.0, 1.0]), "pressure": np.ones(3)})
+        StateTable(
+            "bad",
+            "OIL_PRODUCED",
+            {"cumulative": np.array([0.0, 1.0, 1.0]), "pressure": np.ones(3)},
+        )
 
 
 def test_replay_reproduces_the_run_it_came_from_and_ignores_the_network():
@@ -111,7 +134,7 @@ def test_replay_reproduces_the_run_it_came_from_and_ignores_the_network():
     assert cumulative[-1] == pytest.approx(data.get("WOPT:P1")[-1], rel=0.03)
     capped, _ = replay_profile(curve, data.time_days, rate_cap=400.0)
     assert capped.max() <= 400.0 + 1e-9
-    assert capped[-1] > rate[-1]              # holding the well back defers production to later
+    assert capped[-1] > rate[-1]  # holding the well back defers production to later
 
 
 def test_compare_reports_relative_and_absolute_errors():

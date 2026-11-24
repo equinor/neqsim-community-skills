@@ -10,9 +10,9 @@ Nothing here runs a simulator or needs NeqSim. ``resdata`` is only imported by :
 from __future__ import annotations
 
 import csv
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
 
 import numpy as np
 
@@ -52,15 +52,23 @@ OPTIONAL_WELL_VECTORS = {
 class SummaryData:
     """Summary vectors at the simulator time steps, keyed like Eclipse summary keys (``WOPR:A1``, ``RPR:1``)."""
 
-    def __init__(self, time_days: Sequence[float], vectors: Mapping[str, Sequence[float]]):
+    def __init__(
+        self, time_days: Sequence[float], vectors: Mapping[str, Sequence[float]]
+    ):
         self.time_days = np.asarray(time_days, dtype=float)
-        self._vectors = {key: np.asarray(values, dtype=float) for key, values in vectors.items()}
+        self._vectors = {
+            key: np.asarray(values, dtype=float) for key, values in vectors.items()
+        }
         for key, values in self._vectors.items():
             if values.shape != self.time_days.shape:
-                raise ValueError(f"vector {key} has {values.size} values, time has {self.time_days.size}")
+                raise ValueError(
+                    f"vector {key} has {values.size} values, time has {self.time_days.size}"
+                )
 
     @classmethod
-    def from_file(cls, path: str | Path, keys: Iterable[str] | None = None) -> "SummaryData":
+    def from_file(
+        cls, path: str | Path, keys: Iterable[str] | None = None
+    ) -> SummaryData:
         """Read the summary vectors of an Eclipse / OPM Flow run (``CASE.SMSPEC`` or the case base path).
 
         Every simulator time step is read, not only the report steps. ``resdata`` resamples to whole-day report
@@ -70,12 +78,16 @@ class SummaryData:
 
         ``keys`` limits what is read; by default every well, group, region and field vector is loaded.
         """
-        from resdata.summary import Summary  # imported here so the rest of the module works without resdata
+        # imported here so the rest of the module works without resdata
+        from resdata.summary import Summary
 
         summary = Summary(str(path))
-        wanted = list(keys) if keys is not None else [
-            k for k in summary.keys() if k.split(":")[0][:1] in ("W", "G", "R", "F")
-        ]
+        names = summary.keys()  # a resdata key list, not a dict
+        wanted = (
+            list(keys)
+            if keys is not None
+            else [k for k in names if k.split(":")[0][:1] in ("W", "G", "R", "F")]
+        )
         time_days = np.asarray(summary.numpy_vector("TIME"), dtype=float)
         vectors = {}
         for key in wanted:
@@ -88,7 +100,9 @@ class SummaryData:
 
     def get(self, key: str) -> np.ndarray:
         if key not in self._vectors:
-            raise KeyError(f"summary vector {key} is not in the results; add it to the SUMMARY section and rerun")
+            raise KeyError(
+                f"summary vector {key} is not in the results; add it to the SUMMARY section and rerun"
+            )
         return self._vectors[key]
 
     def keys(self) -> list[str]:
@@ -96,7 +110,9 @@ class SummaryData:
 
     def wells(self) -> list[str]:
         """Names of the wells that have an oil rate vector."""
-        return sorted(k.split(":", 1)[1] for k in self._vectors if k.startswith("WOPR:"))
+        return sorted(
+            k.split(":", 1)[1] for k in self._vectors if k.startswith("WOPR:")
+        )
 
 
 def inventory(data: SummaryData, wells: Iterable[str] | None = None) -> dict:
@@ -105,8 +121,14 @@ def inventory(data: SummaryData, wells: Iterable[str] | None = None) -> dict:
     Run this first on any existing simulator case: it tells whether the run has to be repeated with more
     SUMMARY vectors before a proxy can be built.
     """
-    report: dict = {"wells": {}, "region_pressures": [], "field_pressure": data.has("FPR"), "missing": []}
-    report["region_pressures"] = [k for k in data.keys() if k.startswith("RPR:")]
+    report: dict = {
+        "wells": {},
+        "region_pressures": [],
+        "field_pressure": data.has("FPR"),
+        "missing": [],
+    }
+    names = data.keys()  # method of SummaryData, not a dict
+    report["region_pressures"] = [k for k in names if k.startswith("RPR:")]
     for well in list(wells) if wells is not None else data.wells():
         present = {v: data.has(f"{v}:{well}") for v in WELL_VECTORS}
         optional = {v: data.has(f"{v}:{well}") for v in OPTIONAL_WELL_VECTORS}
@@ -136,7 +158,9 @@ class StateTable:
     def __post_init__(self) -> None:
         cumulative = self.columns["cumulative"]
         if cumulative.size < 2 or np.any(np.diff(cumulative) <= 0.0):
-            raise ValueError(f"table {self.name}: cumulative must have at least two strictly increasing values")
+            raise ValueError(
+                f"table {self.name}: cumulative must have at least two strictly increasing values"
+            )
 
     @property
     def rows(self) -> int:
@@ -145,14 +169,20 @@ class StateTable:
     def at(self, cumulative: float) -> dict[str, float]:
         """Interpolate every column, holding the end values outside the table (as the Java proxy does)."""
         x = self.columns["cumulative"]
-        return {k: float(np.interp(cumulative, x, v)) for k, v in self.columns.items() if k != "cumulative"}
+        return {
+            k: float(np.interp(cumulative, x, v))
+            for k, v in self.columns.items()
+            if k != "cumulative"
+        }
 
     def to_csv(self, path: str | Path) -> Path:
         """Write the table for ``ReservoirStateProxy.fromCsv(name, CumulativeQuantity.<abscissa>, path)``."""
         path = Path(path)
         header = list(self.columns)
         with path.open("w", newline="", encoding="utf-8") as handle:
-            handle.write(f"# reservoir-state proxy {self.name}; abscissa {self.abscissa}\n")
+            handle.write(
+                f"# reservoir-state proxy {self.name}; abscissa {self.abscissa}\n"
+            )
             for key, value in self.provenance.items():
                 handle.write(f"# {key}: {value}\n")
             writer = csv.writer(handle)
@@ -174,7 +204,9 @@ def _resolve(data: SummaryData, source) -> np.ndarray:
     return values
 
 
-def _strictly_increasing(cumulative: np.ndarray, keep: np.ndarray, min_increment: float) -> np.ndarray:
+def _strictly_increasing(
+    cumulative: np.ndarray, keep: np.ndarray, min_increment: float
+) -> np.ndarray:
     """Indices of the rows kept: flagged rows whose cumulative exceeds the previous kept row."""
     indices = []
     last = -np.inf
@@ -216,7 +248,9 @@ def well_state_table(
     gor = data.get(f"WGOR:{well}")
 
     flowing = rate > min_rate
-    idx = _strictly_increasing(cumulative, flowing, 1.0e-9 * max(float(cumulative.max()), 1.0))
+    idx = _strictly_increasing(
+        cumulative, flowing, 1.0e-9 * max(float(cumulative.max()), 1.0)
+    )
     if idx.size < 2:
         raise ValueError(f"well {well} has fewer than two flowing report steps")
     drawdown = p_ref[idx] - bhp[idx]
@@ -224,21 +258,28 @@ def well_state_table(
     if usable.sum() < 2:
         raise ValueError(
             f"well {well}: reference pressure {pressure!r} is not above the flowing bottom-hole pressure; "
-            "choose another pressure source")
-    pi = np.interp(cumulative[idx], cumulative[idx][usable], rate[idx][usable] / drawdown[usable])
+            "choose another pressure source"
+        )
+    pi = np.interp(
+        cumulative[idx], cumulative[idx][usable], rate[idx][usable] / drawdown[usable]
+    )
 
     p0 = float(initial_pressure) if initial_pressure is not None else float(p_ref[0])
     columns = {
         "cumulative": np.concatenate([[0.0], cumulative[idx]]),
         "pressure": np.concatenate([[p0], p_ref[idx]]),
-        "waterCut": np.clip(np.concatenate([[water_cut[idx][0]], water_cut[idx]]), 0.0, 0.999999),
+        "waterCut": np.clip(
+            np.concatenate([[water_cut[idx][0]], water_cut[idx]]), 0.0, 0.999999
+        ),
         "gor": np.concatenate([[gor[idx][0]], gor[idx]]),
         "pi": np.concatenate([[pi[0]], pi]),
         "ELAPSED_TIME": np.concatenate([[0.0], data.time_days[idx]]),
     }
     for name, source in (extra_quantities or {}).items():
         if name not in QUANTITIES:
-            raise ValueError(f"unknown cumulative quantity {name}; use one of {QUANTITIES}")
+            raise ValueError(
+                f"unknown cumulative quantity {name}; use one of {QUANTITIES}"
+            )
         values = _resolve(data, source)
         columns[name] = np.concatenate([[0.0], values[idx]])
     provenance = {
@@ -265,18 +306,27 @@ def unit_pressure_table(
     cumulative = np.sum([data.get(f"WOPT:{w}") for w in wells], axis=0)
     p_ref = _resolve(data, pressure)
     keep = np.ones_like(cumulative, dtype=bool)
-    idx = _strictly_increasing(cumulative, keep, 1.0e-9 * max(float(cumulative.max()), 1.0))
+    idx = _strictly_increasing(
+        cumulative, keep, 1.0e-9 * max(float(cumulative.max()), 1.0)
+    )
     if idx.size == 0 or cumulative[idx[0]] > 0.0:
         cum = np.concatenate([[0.0], cumulative[idx]])
         pres = np.concatenate([[float(p_ref[0])], p_ref[idx]])
         elapsed = np.concatenate([[0.0], data.time_days[idx]])
         lead = True
     else:
-        cum, pres, elapsed, lead = cumulative[idx], p_ref[idx], data.time_days[idx], False
+        cum, pres, elapsed, lead = (
+            cumulative[idx],
+            p_ref[idx],
+            data.time_days[idx],
+            False,
+        )
     columns = {"cumulative": cum, "pressure": pres, "ELAPSED_TIME": elapsed}
     for quantity, source in (extra_quantities or {}).items():
         if quantity not in QUANTITIES:
-            raise ValueError(f"unknown cumulative quantity {quantity}; use one of {QUANTITIES}")
+            raise ValueError(
+                f"unknown cumulative quantity {quantity}; use one of {QUANTITIES}"
+            )
         values = _resolve(data, source)[idx]
         columns[quantity] = np.concatenate([[0.0], values]) if lead else values
     provenance = {
@@ -286,7 +336,9 @@ def unit_pressure_table(
     return StateTable(name, "OIL_PRODUCED", columns, provenance)
 
 
-def performance_curve(data: SummaryData, well: str, min_rate: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
+def performance_curve(
+    data: SummaryData, well: str, min_rate: float = 1.0
+) -> tuple[np.ndarray, np.ndarray]:
     """Classic performance curve of a well: oil rate against its cumulative oil, from the simulator run.
 
     This is the baseline the hybrid model is compared with: replaying it gives the same rate at the same
@@ -294,8 +346,12 @@ def performance_curve(data: SummaryData, well: str, min_rate: float = 1.0) -> tu
     """
     rate = data.get(f"WOPR:{well}")
     cumulative = data.get(f"WOPT:{well}")
-    idx = _strictly_increasing(cumulative, rate > min_rate, 1.0e-9 * max(float(cumulative.max()), 1.0))
-    return np.concatenate([[0.0], cumulative[idx]]), np.concatenate([[rate[idx][0]], rate[idx]])
+    idx = _strictly_increasing(
+        cumulative, rate > min_rate, 1.0e-9 * max(float(cumulative.max()), 1.0)
+    )
+    return np.concatenate([[0.0], cumulative[idx]]), np.concatenate(
+        [[rate[idx][0]], rate[idx]]
+    )
 
 
 def replay_profile(
@@ -311,7 +367,11 @@ def replay_profile(
     """
     x, q = curve
     t = np.asarray(time_days, dtype=float)
-    caps = np.full(t.shape, np.inf) if rate_cap is None else np.broadcast_to(np.asarray(rate_cap, dtype=float), t.shape)
+    caps = (
+        np.full(t.shape, np.inf)
+        if rate_cap is None
+        else np.broadcast_to(np.asarray(rate_cap, dtype=float), t.shape)
+    )
     cumulative = np.zeros_like(t)
     rates = np.zeros_like(t)
     produced = 0.0
@@ -340,12 +400,25 @@ def compare(
     """
     t = np.asarray(reference_time, dtype=float)
     ref = np.asarray(reference, dtype=float)
-    mod = np.interp(t, np.asarray(model_time, dtype=float), np.asarray(model, dtype=float))
-    limit = floor if floor is not None else 0.01 * float(np.max(np.abs(ref))) if ref.size else 0.0
+    mod = np.interp(
+        t, np.asarray(model_time, dtype=float), np.asarray(model, dtype=float)
+    )
+    limit = (
+        floor
+        if floor is not None
+        else 0.01 * float(np.max(np.abs(ref))) if ref.size else 0.0
+    )
     mask = np.abs(ref) > limit
     if not mask.any():
-        return {"mean_abs_pct": float("nan"), "max_abs_pct": float("nan"), "bias_pct": float("nan"),
-                "rmse": float(np.sqrt(np.mean((mod - ref) ** 2))) if ref.size else float("nan"), "points": 0}
+        return {
+            "mean_abs_pct": float("nan"),
+            "max_abs_pct": float("nan"),
+            "bias_pct": float("nan"),
+            "rmse": (
+                float(np.sqrt(np.mean((mod - ref) ** 2))) if ref.size else float("nan")
+            ),
+            "points": 0,
+        }
     relative = (mod[mask] - ref[mask]) / ref[mask]
     return {
         "mean_abs_pct": float(100.0 * np.mean(np.abs(relative))),

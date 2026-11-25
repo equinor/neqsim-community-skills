@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-safety-study
 calculation_basis: "advisory"
-version: "0.2.0"
+version: "0.3.0"
 description: "Vendor-neutral workflow for a full process safety study of a tie-in, modification or new facility: scoping, evidence gates and document register, HAZID, consequence, relief/blowdown/flare, transient and OLGA verification, SIL/LOPA/SRS, explosion CFD, QRA, HAZOP preparation, barriers, ESD cause and effect, reporting. USE WHEN: a safety study needs the order of work, the skill or agent per step, acceptance gates, and the traps found in earlier studies."
 last_verified: "2026-11-25"
 requires:
@@ -79,6 +79,7 @@ Order can iterate (a SIL result can change a HAZOP node), but do not skip a gate
 - **Transient verification changes the answer.** OLGA runs showed the screening to be non-conservative for severe-slugging onset and surge volume, restart peak flow, blocked-outlet pack-up time and pigging surge, and conservative for steady-state pressure drop, holdup and cooldown. Do not write "screening is conservative" as a blanket statement; run `conservatism_gate` per row and carry the non-conservative groups to the report.
 - **Know what the transient model assumes.** Wells as a constant-rate source make pack-up pressures upper bounds; a host as a pressure node hides vessel dynamics; a PVT table limit can stop a cold blowdown run (decode the exit status).
 - **Compare with what the receiving system has already seen.** A new higher-pressure source on a separator or header with existing producers needs a table of the existing wells and inputs (riser or inlet pressure, shut-in pressure, rates, choke dP, what the relief valves were sized for), the ratio new to historical, and the effect on the failed-open or choke-collapse relief load. Check blocked outlet against the current inflow, not the design inflow, and say whether it governs: lower production today reduces blocked outlet but not failed-open or choke collapse, which usually governs when the new source pressure exceeds earlier wells. Both belong in the report as their own sections (`neqsim-hp-lp-interface-overpressure`, section 2b).
+- **Show the scenario and the valve Cv behind every relief rate.** A reviewer of a failed-open study could not tell which scenario (failed-open or blocked outlet) a relief figure belonged to, and found no installed choke Cv, although the rates depend on it. Open the relief chapter with a scenario register (study status calculated, simple estimate or qualitative; valve states; limiting mechanism; relief rate; governing or not) and an installed-Cv input table (chokes intact and collapsed and their opening, riser EV and stroke time, PV and its maximum opening, PSV orifice and set pressure, volumes, flare backpressure) with document, revision, page or ASSUMED and a quality grade. Add a Cv sensitivity for failed-open and for blocked outlet and state what the relief rate depends on and what it does not: in a reference screening case the failed-open rate followed the PV Cv and stored gas and ignored the choke Cv once a choke had collapsed, while blocked outlet was capped by the well and the choke limited it only at low Cv. End with a short statement of what the report can and cannot be used for (`neqsim-hp-lp-interface-overpressure`, section 2c).
 - **Read the host flare data.** An assumed knock-out drum volume was twice the real one; values often sit only in images (datasheet pages, valve schedules) and file ids returned by a search can be stale.
 - **SIL needs two criteria.** A SIF reached the SIL 3 PFDavg band and still missed the tolerable hazard rate until the test interval of a second layer was shortened; a layer that only works if the first closes in time is not independent. Failure data without a certificate stays a gap.
 - **CFD peaks are screening** without validation against congested-rig data; the class decides, not one run. Verification (closed vessel) and a mesh study are the minimum evidence.
@@ -114,6 +115,7 @@ Tested in `tests/test_process_safety_study.py`, including a worked example from 
 - [ ] Document register has status per document; every compliance statement passes `claim_gate`.
 - [ ] Release, relief and wave-speed numbers have a hand calculation or an independent model (`hand_calc_gate`).
 - [ ] A new source on an existing separator or header is compared with the existing wells and inputs, and blocked outlet is checked against current inflow with a stated verdict.
+- [ ] The relief chapter opens with a scenario register and an installed-Cv input table (source and grade, ASSUMED when unsourced), and a Cv sensitivity for failed-open and blocked outlet states what the relief rate depends on.
 - [ ] Transient comparisons classified per row; non-conservative rows in the report.
 - [ ] SIL verified against both the SIL band and the hazard-rate criterion; data sources named.
 - [ ] CFD carries verification, mesh study and an explicit "not validated" label where that applies.

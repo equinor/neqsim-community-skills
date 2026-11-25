@@ -574,7 +574,7 @@ skills:
     min_neqsim_version: "3.7.0"
 
   - name: neqsim-process-safety-study
-    version: "0.1.0"
+    version: "0.3.0"
     description: "Vendor-neutral workflow for a full process safety study of a tie-in, modification or new facility: scoping, evidence gates and document register, HAZID, consequence, relief/blowdown/flare, transient and OLGA verification, SIL/LOPA/SRS, explosion CFD, QRA, HAZOP preparation, barriers, ESD cause and effect, reporting. USE WHEN: a safety study needs the order of work, the skill or agent per step, acceptance gates, and the traps found in earlier studies."
     author: "neqsim-community"
     repo: "equinor/neqsim-community-skills"

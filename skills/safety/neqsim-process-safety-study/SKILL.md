@@ -1,9 +1,9 @@
 ---
 name: neqsim-process-safety-study
 calculation_basis: "advisory"
-version: "0.1.0"
+version: "0.2.0"
 description: "Vendor-neutral workflow for a full process safety study of a tie-in, modification or new facility: scoping, evidence gates and document register, HAZID, consequence, relief/blowdown/flare, transient and OLGA verification, SIL/LOPA/SRS, explosion CFD, QRA, HAZOP preparation, barriers, ESD cause and effect, reporting. USE WHEN: a safety study needs the order of work, the skill or agent per step, acceptance gates, and the traps found in earlier studies."
-last_verified: "2026-11-23"
+last_verified: "2026-11-25"
 requires:
   python_packages: []
   java_packages: []
@@ -50,7 +50,7 @@ Order can iterate (a SIL result can change a HAZOP node), but do not skip a gate
 | S02 | Governing requirements and register | `neqsim-standard-requirement-extraction`, `neqsim-standards-lookup` | `technical-document-intelligence-agent` | document, edition, clause, read status | `evidence_gate`, `claim_gate` |
 | S03 | Hazard identification | `neqsim-hazid-fmea-eta-fta`, `neqsim-process-safety` | `process-safety-agent` | guide words per phase, hazard list, SIMOPS | every scenario linked to a node and a calculation |
 | S04 | Consequence and source terms | `neqsim-consequence-analysis`, `neqsim-release-source-terms`, `neqsim-jet-fire-radiation-screening`, `neqsim-gas-dispersion-distance-screening`, `neqsim-h2s-safety-impact` | `process-safety-agent`, `flare-helideck-dispersion-agent` | inventory, state, hole sizes, isolation times | `hand_calc_gate` MATCH, validity range stated |
-| S05 | Relief, blowdown, flare | `neqsim-relief-flare-network`, `neqsim-depressurization-mdmt`, `neqsim-trapped-liquid-fire-rupture`, `neqsim-relief-load-screening`, `neqsim-depressurization-screening`, `neqsim-psv-orifice-screening`, `neqsim-flare-radiation-screening` | `process-safety-agent`, `firewater-coverage-agent` | flare tip, header, knock-out drum, valve data | dynamic header and drum check; verified versus assumed data separated |
+| S05 | Relief, blowdown, flare | `neqsim-relief-flare-network`, `neqsim-depressurization-mdmt`, `neqsim-trapped-liquid-fire-rupture`, `neqsim-relief-load-screening`, `neqsim-depressurization-screening`, `neqsim-psv-orifice-screening`, `neqsim-flare-radiation-screening` | `process-safety-agent`, `firewater-coverage-agent` | flare tip, header, knock-out drum, valve data; existing wells and inputs to the receiving separator or header and the relief basis; current inflow | dynamic header and drum check; verified versus assumed data separated; new source compared with existing wells; blocked outlet against current inflow with a verdict |
 | S06 | Transients and OLGA | `neqsim-olga-multiphase-simulator`, `neqsim-multiphase-flow-slug-screening`, `neqsim-water-hammer` | `olga-simulation-agent`, `flow-assurance-study-agent` | route profile, PVT, insulation, host boundary, licence | `conservatism_gate` on every comparison row |
 | S07 | SIL, LOPA, SRS | `neqsim-process-safety`, `neqsim-safety-function-coverage-screening` | `process-safety-agent` | demand, tolerable frequency, failure data, test regime, response budget | hazard-rate criterion and SIL band both met |
 | S08 | Explosion and dispersion CFD | `neqsim-cfd-coupling` | `cfd-coupling-agent`, `flare-helideck-dispersion-agent` | geometry, source terms, scenarios | verification and mesh study reported |
@@ -78,6 +78,7 @@ Order can iterate (a SIL result can change a HAZOP node), but do not skip a gate
 - **Models have validity ranges.** A homogeneous-equilibrium release model was valid for a hot dense gas but failed for cold dense and two-oil-phase states; a factor applied by hand to cover this was a two-phase correction that did not apply. State the range and the fallback.
 - **Transient verification changes the answer.** OLGA runs showed the screening to be non-conservative for severe-slugging onset and surge volume, restart peak flow, blocked-outlet pack-up time and pigging surge, and conservative for steady-state pressure drop, holdup and cooldown. Do not write "screening is conservative" as a blanket statement; run `conservatism_gate` per row and carry the non-conservative groups to the report.
 - **Know what the transient model assumes.** Wells as a constant-rate source make pack-up pressures upper bounds; a host as a pressure node hides vessel dynamics; a PVT table limit can stop a cold blowdown run (decode the exit status).
+- **Compare with what the receiving system has already seen.** A new higher-pressure source on a separator or header with existing producers needs a table of the existing wells and inputs (riser or inlet pressure, shut-in pressure, rates, choke dP, what the relief valves were sized for), the ratio new to historical, and the effect on the failed-open or choke-collapse relief load. Check blocked outlet against the current inflow, not the design inflow, and say whether it governs: lower production today reduces blocked outlet but not failed-open or choke collapse, which usually governs when the new source pressure exceeds earlier wells. Both belong in the report as their own sections (`neqsim-hp-lp-interface-overpressure`, section 2b).
 - **Read the host flare data.** An assumed knock-out drum volume was twice the real one; values often sit only in images (datasheet pages, valve schedules) and file ids returned by a search can be stale.
 - **SIL needs two criteria.** A SIF reached the SIL 3 PFDavg band and still missed the tolerable hazard rate until the test interval of a second layer was shortened; a layer that only works if the first closes in time is not independent. Failure data without a certificate stays a gap.
 - **CFD peaks are screening** without validation against congested-rig data; the class decides, not one run. Verification (closed vessel) and a mesh study are the minimum evidence.
@@ -112,6 +113,7 @@ Tested in `tests/test_process_safety_study.py`, including a worked example from 
 - [ ] Every input profile matches its controlled source revision (`profile_gate`).
 - [ ] Document register has status per document; every compliance statement passes `claim_gate`.
 - [ ] Release, relief and wave-speed numbers have a hand calculation or an independent model (`hand_calc_gate`).
+- [ ] A new source on an existing separator or header is compared with the existing wells and inputs, and blocked outlet is checked against current inflow with a stated verdict.
 - [ ] Transient comparisons classified per row; non-conservative rows in the report.
 - [ ] SIL verified against both the SIL band and the hazard-rate criterion; data sources named.
 - [ ] CFD carries verification, mesh study and an explicit "not validated" label where that applies.

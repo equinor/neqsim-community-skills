@@ -190,9 +190,10 @@ def _graded_lengths(total, first, ratio, target):
     """Grade section lengths from a boundary outward up to the target length.
 
     The series starts at ``first`` and grows by ``ratio`` until it reaches
-    ``target``, after which it stays uniform. The final section absorbs the
-    remainder, so the boundary section keeps the length that was asked for
-    instead of being rescaled away.
+    ``target``, after which the rest of the pipe is divided into equal sections
+    close to the target. The boundary section keeps the length that was asked
+    for instead of being rescaled away, and no short remainder section is left
+    that would force its neighbours to be split.
 
     :param total: pipe length in m
     :param first: length of the section at the boundary in m
@@ -206,7 +207,11 @@ def _graded_lengths(total, first, ratio, target):
     remaining = total
     nxt = first
     while remaining > 0.0:
-        step = min(nxt, target, remaining)
+        if nxt >= target:
+            count = max(1, round(remaining / target))
+            lengths.extend([remaining / count] * count)
+            break
+        step = min(nxt, remaining)
         if remaining - step < 0.5 * step:
             lengths.append(remaining)
             break
@@ -367,7 +372,16 @@ def discretize_route(
         uniform = lengths[i] / counts[i]
         section_lengths = [uniform] * counts[i]
         if boundary_section_length is not None and boundary_section_length > 0.0:
-            if i == 0:
+            if npipes == 1:
+                # one pipe is both the inlet and the outlet pipe: grade each half toward its own boundary
+                half = _graded_lengths(
+                    0.5 * lengths[i],
+                    boundary_section_length,
+                    max_adjacent_ratio,
+                    targets[i],
+                )
+                section_lengths = half + list(reversed(half))
+            elif i == 0:
                 section_lengths = _graded_lengths(
                     lengths[i], boundary_section_length, max_adjacent_ratio, targets[i]
                 )

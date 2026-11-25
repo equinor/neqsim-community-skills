@@ -27,7 +27,9 @@ from olga_multiphase_simulator import (
     to_csv,
     to_markdown,
 )
+from olga_multiphase_simulator.casegen import RouteProfile
 from olga_multiphase_simulator.genkey import get_parameter
+from olga_multiphase_simulator.geometry import DiscretizationError
 
 FOAM = Material("PU_FOAM", 0.12, 600.0, 1800.0)
 ID, T_STEEL = 0.2857, 0.0191
@@ -109,6 +111,36 @@ def test_mesh_has_seabed_and_riser_with_bounded_ratio(route_json):
     assert riser.length == pytest.approx(150.0, rel=1e-6)
     assert riser.elevation_change == pytest.approx(121.0)
     assert mesh.summary()["max_adjacent_ratio"] <= 1.8 + 1e-6
+
+
+def test_two_point_route_is_graded_toward_the_riser_with_default_settings():
+    # a single seabed pipe is both inlet and outlet pipe; it used to be graded at the inlet only (ratio 13.8 at the riser foot)
+    route = RouteProfile(x_m=[0.0, 15500.0], z_m=[-121.0, -121.0])
+    mesh = build_mesh(route, 150.0, 121.0)
+    assert [p.label for p in mesh.pipes] == ["SEA_01", "RIS_01"]
+    assert mesh.summary()["max_adjacent_ratio"] <= 1.8 + 1e-6
+    sea, riser = mesh.pipes
+    assert sea.section_lengths[-1] / riser.section_lengths[0] <= 1.8 + 1e-6
+    assert sum(sea.section_lengths) == pytest.approx(15500.0)
+    assert sum(riser.section_lengths) == pytest.approx(150.0)
+    assert (
+        max(sea.section_lengths) >= 200.0
+    )  # the 250 m target is kept in the middle of the line, not halved by a cascade
+
+
+def test_mesh_raises_when_the_ratio_limit_cannot_be_met():
+    # a 30 m line cannot be split below its 5 m minimum far enough to meet a 1.05 ratio next to 2 m riser sections
+    route = RouteProfile(x_m=[0.0, 30.0], z_m=[-121.0, -121.0])
+    with pytest.raises(DiscretizationError, match="neighbour section ratio"):
+        build_mesh(
+            route,
+            150.0,
+            121.0,
+            target_section_m=30.0,
+            riser_section_m=2.0,
+            boundary_section_m=30.0,
+            max_adjacent_ratio=1.05,
+        )
 
 
 def test_equivalent_insulation_reproduces_target_u():

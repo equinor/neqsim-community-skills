@@ -1,9 +1,9 @@
 ---
 name: neqsim-olga-multiphase-simulator
 calculation_basis: "neqsim-java"
-version: "1.1.0"
+version: "1.1.1"
 description: "Run the OLGA transient multiphase simulator from Python: locate it, build, configure and report its PVT table and hydrate curve from a NeqSim fluid, rule-check a genkey case, launch the batch engine, decode the exit code, and read .tpl/.ppl results. USE WHEN: executing or sweeping OLGA cases, building or documenting an OLGA PVT table or HYDRATECURVE, diagnosing an OLGA failure, or benchmarking OLGA against NeqSim pipe models."
-last_verified: "2026-11-11"
+last_verified: "2026-11-25"
 requires:
   python_packages: []
   java_packages: []
@@ -768,6 +768,14 @@ ratio is enforced across pipe boundaries as well as inside a pipe, because a ste
 change in section length is a numerical error source, and pipe lengths follow the
 route including elevation change, not the horizontal distance.
 
+A route with a single pipe (two route points, or a straight route after
+simplification) is graded toward both of its boundaries. `build_mesh` joins the
+seabed and riser meshes, enforces the ratio across the riser foot and raises
+`DiscretizationError` if the limit still cannot be met. Before version 1.1.1 a
+single seabed pipe was graded at the inlet only: the default 250 m target with a
+10 m riser section left a 13.8x jump at the riser foot, which OLGA reports as a
+section-ratio warning. Read `max_adjacent_ratio` before every run.
+
 A uniform "N sections per leg" mesh is the usual shortcut and the usual mistake:
 on a survey-derived route the legs are unequal, so a fixed count produces a
 section-length jump at every leg boundary. Always report the mesh statistics, and
@@ -919,6 +927,22 @@ legacy slug correlation):
 | Three-phase slug flow, horizontal | ~+20 % | within 0.3 K | As a conservative bound |
 | Gas-condensate / wet gas, horizontal, thin film | +12 to +23 % (conservative) | within 0.3 K | As a conservative bound - NeqSim classifies these annular where OLGA is stratified |
 
+**Annular lines and the flowing-density friction option (equinor/neqsim#5266, NeqSim builds after 2026-11-25).** The
+`+12 to +23 %` row above was measured with the annular wall friction charged at the holdup-weighted mixture density,
+which is still the default. That form is 5 % high on a lean high-pressure line and 30 to 150 % high locally on a rich
+low-pressure line, because the film moves several times slower than the mixture.
+`setAnnularFlowingDensityFriction(true)` charges the annular share at the flowing (no-slip) density instead; it is
+off by default pending broader qualification. Measured on four cases against OLGA 2025.1.0 (same fluid, geometry and
+boundaries, inlet pressure for a fixed outlet, OLGA / default / option, bara): rich gas with 38 % liquid by mass on
+15.5 km x 285.7 mm plus a 121 m riser and 13 bara at the outlet, 18 kg/s 26.49 / 30.95 / 26.05, 37 kg/s 49.71 /
+59.27 / 47.22, 55 kg/s 71.88 / 83.97 / 67.86; lean gas-condensate on 30 km x 355 mm and 80 bara at the outlet
+113.85 / 114.04 / 112.44. On ΔP the option is 3 to 7 % **below** OLGA (non-conservative, add a margin), where the
+default is 21 to 33 % above on the rich line. Run both and report both on a line with annular sections. In OLGA the local
+friction gradient is 1.03 to 1.10 times the homogeneous no-slip value in all four cases, so a homogeneous Darcy hand
+check is a good third opinion in this regime. Annular holdup is unchanged and not quotable on a rich low-pressure line
+(−38 %, +12 %, +48 % against OLGA on the three rich cases, −1 % on the lean one). With the default friction, and on
+builds without the option, expect +20 to +34 % on a rich low-pressure tie-back.
+
 What moved the slug and riser cases, in order of effect: a slug-unit closure that
 charges mixture friction to the slug body only (the unit-averaged gradient of a
 periodic unit is wall friction plus gravity; the front-acceleration term is
@@ -969,6 +993,10 @@ Three gates, not one — each catches a different silent failure:
 
 Further usage notes:
 
+- **With `setOutletPressure` the inlet stream pressure is only a starting value** (NeqSim builds after 2026-11-25,
+  equinor/neqsim#5266): the feed split is flashed at the solved inlet pressure. On earlier builds the split was
+  flashed at the stream pressure, which moved the solved inlet pressure by 1.6 bar and a lean line's holdup by a
+  factor of two between stream pressures; there, iterate the stream pressure to the solved inlet pressure.
 - **Demonstrate grid independence.** A 74 km line gave 80.39 / 80.93 / 81.20 bar
   at 80 / 160 / 320 sections. Budget for it: an honest solve costs roughly 16 s
   at 160 sections and 48 s at 320, not the sub-second the model used to return
@@ -1131,6 +1159,7 @@ from olga_multiphase_simulator import (FlowlineCaseSpec, WallLayer, Material, ST
                                        ComparisonRow, to_markdown)
 route = load_route_profile("route_profile_A.json")                       # z = -depth
 mesh = build_mesh(route, riser_length_m=150, riser_rise_m=121, target_section_m=250, riser_section_m=10)   # SEA_nn + RIS_01, ratio <= 1.8
+print(mesh.summary())                                                      # check max_adjacent_ratio and total_sections before the run
 foam = Material("PU_FOAM", 0.12, 600.0, 1800.0)
 t = equivalent_insulation_thickness(2.0, 0.2857, 0.0191, foam, h_outer=100.0)      # wall layers that reproduce a screening U (inner basis)
 layers = [WallLayer(STEEL, 0.0191), WallLayer(foam, t)]

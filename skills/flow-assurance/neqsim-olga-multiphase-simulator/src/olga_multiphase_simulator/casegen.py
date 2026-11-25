@@ -18,7 +18,13 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .geometry import Discretization, PipeSegment, discretize_route
+from .geometry import (
+    Discretization,
+    DiscretizationError,
+    PipeSegment,
+    _enforce_neighbour_ratio,
+    discretize_route,
+)
 
 __all__ = [
     "STEEL",
@@ -194,7 +200,10 @@ def build_mesh(
     """Mesh the seabed route and append an inclined riser; seabed pipes are labelled ``SEA_nn`` and the riser ``RIS_01``.
 
     The riser starts at the end of the seabed profile, has the given LENGTH along the pipe and rises ``riser_rise_m`` (its horizontal
-    span follows from the length).  The mesh is graded toward the riser so the neighbour ratio stays within the limit.
+    span follows from the length).  The mesh is graded toward the riser so the neighbour ratio stays within the limit, also when
+    the seabed route is a single pipe (two route points, or a straight route after simplification).
+
+    :raises DiscretizationError: if the neighbour ratio of the joined seabed and riser mesh still exceeds ``max_adjacent_ratio``
     """
     x, z = simplify_route(route.x_m, route.z_m, simplify_tol_m)
     boundary_section_m = min(
@@ -220,7 +229,19 @@ def build_mesh(
         max_adjacent_ratio=max_adjacent_ratio,
         label_prefix="RIS",
     )
-    return Discretization(list(sea.pipes) + list(ris.pipes))
+    mesh = Discretization(list(sea.pipes) + list(ris.pipes))
+    # the two parts are meshed separately, so the seabed/riser junction is only checked here
+    _enforce_neighbour_ratio(
+        [pipe.section_lengths for pipe in mesh.pipes], max_adjacent_ratio, 2.0
+    )
+    worst = mesh.max_adjacent_ratio
+    if worst > max_adjacent_ratio * (1.0 + 1e-6):
+        raise DiscretizationError(
+            f"neighbour section ratio {worst:.2f} exceeds the limit {max_adjacent_ratio:.2f} "
+            f"(target_section_m={target_section_m:g}, riser_section_m={riser_section_m:g}); "
+            "use a longer riser section, a shorter seabed target or a higher max_adjacent_ratio"
+        )
+    return mesh
 
 
 # ------------------------------------------------------------------------------------------------ case spec

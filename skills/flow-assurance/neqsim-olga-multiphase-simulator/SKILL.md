@@ -927,19 +927,21 @@ legacy slug correlation):
 | Three-phase slug flow, horizontal | ~+20 % | within 0.3 K | As a conservative bound |
 | Gas-condensate / wet gas, horizontal, thin film | +12 to +23 % (conservative) | within 0.3 K | As a conservative bound - NeqSim classifies these annular where OLGA is stratified |
 
-**Annular lines after the flowing-density friction fix (equinor/neqsim#5266, NeqSim builds after 2026-11-25).** The
-`+12 to +23 %` row above was measured with the annular wall friction charged at the holdup-weighted mixture density.
-That form is 5 % high on a lean high-pressure line and 30 to 150 % high locally on a rich low-pressure line, because
-the film moves several times slower than the mixture. The annular share is now charged at the flowing (no-slip)
-density. Measured on four cases against OLGA 2025.1.0 (same fluid, geometry and boundaries, inlet pressure for a fixed
-outlet, OLGA / before / after, bara): rich gas with 38 % liquid by mass on 15.5 km x 285.7 mm plus a 121 m riser and
-13 bara at the outlet, 18 kg/s 26.49 / 30.95 / 26.05, 37 kg/s 49.71 / 59.27 / 47.22, 55 kg/s 71.88 / 83.97 / 67.86;
-lean gas-condensate on 30 km x 355 mm and 80 bara at the outlet 113.85 / 114.04 / 112.44. On ΔP NeqSim is now 3 to
-7 % **below** OLGA (non-conservative, add a margin), where it was 21 to 33 % above on the rich line. In OLGA the local
+**Annular lines and the flowing-density friction option (equinor/neqsim#5266, NeqSim builds after 2026-11-25).** The
+`+12 to +23 %` row above was measured with the annular wall friction charged at the holdup-weighted mixture density,
+which is still the default. That form is 5 % high on a lean high-pressure line and 30 to 150 % high locally on a rich
+low-pressure line, because the film moves several times slower than the mixture.
+`setAnnularFlowingDensityFriction(true)` charges the annular share at the flowing (no-slip) density instead; it is
+off by default pending broader qualification. Measured on four cases against OLGA 2025.1.0 (same fluid, geometry and
+boundaries, inlet pressure for a fixed outlet, OLGA / default / option, bara): rich gas with 38 % liquid by mass on
+15.5 km x 285.7 mm plus a 121 m riser and 13 bara at the outlet, 18 kg/s 26.49 / 30.95 / 26.05, 37 kg/s 49.71 /
+59.27 / 47.22, 55 kg/s 71.88 / 83.97 / 67.86; lean gas-condensate on 30 km x 355 mm and 80 bara at the outlet
+113.85 / 114.04 / 112.44. On ΔP the option is 3 to 7 % **below** OLGA (non-conservative, add a margin), where the
+default is 21 to 33 % above on the rich line. Run both and report both on a line with annular sections. In OLGA the local
 friction gradient is 1.03 to 1.10 times the homogeneous no-slip value in all four cases, so a homogeneous Darcy hand
 check is a good third opinion in this regime. Annular holdup is unchanged and not quotable on a rich low-pressure line
-(−38 %, +12 %, +48 % against OLGA on the three rich cases, −1 % on the lean one). On builds before the fix, expect the
-earlier +20 to +34 % on a rich low-pressure tie-back.
+(−38 %, +12 %, +48 % against OLGA on the three rich cases, −1 % on the lean one). With the default friction, and on
+builds without the option, expect +20 to +34 % on a rich low-pressure tie-back.
 
 What moved the slug and riser cases, in order of effect: a slug-unit closure that
 charges mixture friction to the slug body only (the unit-averaged gradient of a

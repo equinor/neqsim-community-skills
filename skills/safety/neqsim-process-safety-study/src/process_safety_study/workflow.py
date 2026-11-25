@@ -130,11 +130,14 @@ STEPS: tuple[Step, ...] = (
             "flare tip, header and knock-out drum data of the host",
             "relief and blowdown valve data",
             "governing relief cases",
+            "existing or previous wells and inputs to the receiving separator or header (riser or inlet pressure, shut-in pressure, rates, choke dP) and what the relief basis was sized for",
+            "current (not design) inflow for the blocked-outlet check",
         ),
-        "Loads checked against the flare and KO-drum capacity with a dynamic check; verified data separated from assumed.",
+        "Loads checked against the flare and KO-drum capacity with a dynamic check; verified data separated from assumed; the new source compared with existing wells and inputs (ratio new to historical, effect on the failed-open or choke-collapse load); blocked outlet checked against current inflow with an explicit verdict.",
         (
             "Using an assumed knock-out drum volume: read the datasheet, then run the dynamic check.",
             "A lumped vapour-only blowdown model for a liquid-laden line understates the time and the flare peak.",
+            "Concluding on a new source without comparing it with the existing wells and inputs to the receiving system, or sizing on design inflow: lower production today reduces blocked outlet but not failed-open or choke collapse, which usually governs when the new source pressure exceeds earlier wells.",
         ),
     ),
     Step(

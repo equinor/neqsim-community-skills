@@ -29,6 +29,12 @@ def test_workflow_order_and_content():
     assert "neqsim-cfd-coupling" in step("S08")["skills"]
     assert "olga-simulation-agent" in agents_for(["S06"])
     assert "neqsim-hazop-node-pack" in skills_for(["S10"])
+    s05 = step("S05")
+    assert any("existing or previous wells" in item for item in s05["evidence"])
+    assert any("current (not design) inflow" in item for item in s05["evidence"])
+    assert "blocked outlet" in s05["gate"] and "choke collapse" in " ".join(
+        s05["traps"]
+    )
     with pytest.raises(KeyError):
         step("S99")
 

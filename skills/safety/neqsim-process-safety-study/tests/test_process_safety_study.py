@@ -35,6 +35,10 @@ def test_workflow_order_and_content():
     assert "blocked outlet" in s05["gate"] and "choke collapse" in " ".join(
         s05["traps"]
     )
+    assert any("scenario register" in item for item in s05["evidence"])
+    assert any("installed valve Cv" in item for item in s05["evidence"])
+    assert "Cv sensitivity" in s05["gate"] and "scenario register" in s05["gate"]
+    assert any("installed choke Cv" in trap for trap in s05["traps"])
     with pytest.raises(KeyError):
         step("S99")
 

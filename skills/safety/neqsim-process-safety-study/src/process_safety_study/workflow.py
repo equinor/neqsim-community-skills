@@ -132,12 +132,15 @@ STEPS: tuple[Step, ...] = (
             "governing relief cases",
             "existing or previous wells and inputs to the receiving separator or header (riser or inlet pressure, shut-in pressure, rates, choke dP) and what the relief basis was sized for",
             "current (not design) inflow for the blocked-outlet check",
+            "scenario register: failed-open / IVO with and without choke collapse, choke collapse alone, blocked outlet per separator or header, gas blow-by, PSV failure, fire, hydrate plug, cold JT, each with study status (calculated, simple estimate, qualitative), valve states, limiting mechanism and governing yes or no",
+            "installed valve Cv and capacity inputs with source and quality grade: choke Cv intact and collapsed and its opening, riser or production EV Cv and stroke time, PV Cv and maximum opening, PSV orifice and set pressure, line volumes, flare backpressure",
         ),
-        "Loads checked against the flare and KO-drum capacity with a dynamic check; verified data separated from assumed; the new source compared with existing wells and inputs (ratio new to historical, effect on the failed-open or choke-collapse load); blocked outlet checked against current inflow with an explicit verdict.",
+        "Loads checked against the flare and KO-drum capacity with a dynamic check; verified data separated from assumed; the new source compared with existing wells and inputs (ratio new to historical, effect on the failed-open or choke-collapse load); blocked outlet checked against current inflow with an explicit verdict; the relief chapter opens with a scenario register and an installed-Cv input table with sources, and a Cv sensitivity for failed-open and blocked outlet states what the relief rate depends on and what it does not.",
         (
             "Using an assumed knock-out drum volume: read the datasheet, then run the dynamic check.",
             "A lumped vapour-only blowdown model for a liquid-laden line understates the time and the flare peak.",
             "Concluding on a new source without comparing it with the existing wells and inputs to the receiving system, or sizing on design inflow: lower production today reduces blocked outlet but not failed-open or choke collapse, which usually governs when the new source pressure exceeds earlier wells.",
+            "Presenting a relief rate without the scenario and valve states it belongs to, or without the installed choke Cv and dP behind it: the rate depends on the installed choke Cv, the actual dP and the stored inventory, so show the Cv inputs with sources (ASSUMED when unsourced) and a Cv sensitivity for failed-open and blocked outlet.",
         ),
     ),
     Step(

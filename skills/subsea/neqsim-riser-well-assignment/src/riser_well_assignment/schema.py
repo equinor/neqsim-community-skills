@@ -41,6 +41,8 @@ class Well:
     pinned_riser: Optional[str] = None
     swap_cost: Optional[float] = None
     slot: Optional[str] = None
+    retired_from: Optional[int] = None
+    fixed_riser: Optional[List[Optional[str]]] = None
 
 
 @dataclass
@@ -56,6 +58,7 @@ class Riser:
     current_manifold: Optional[str] = None
     max_reach_m: Optional[float] = None
     available: bool = True
+    capacity_by_period: List[int] = field(default_factory=list)
 
 
 @dataclass
@@ -70,6 +73,7 @@ class Problem:
     total_limits: Dict[str, List[float]]
     config: Dict[str, Any]
     warnings: List[str] = field(default_factory=list)
+    linked_lineups: List[List[str]] = field(default_factory=list)
 
     @property
     def n_periods(self) -> int:
@@ -121,9 +125,11 @@ def load_problem(data: Dict[str, Any]) -> Problem:
     for r in data.get("risers", []):
         if r["id"] in risers:
             raise ValueError("duplicate riser id %s" % r["id"])
+        caps = [int(c) for c in _series(r.get("capacity", 1), n, "riser %s capacity" % r["id"])]
         risers[r["id"]] = Riser(
             id=r["id"],
-            capacity=int(r.get("capacity", 1)),
+            capacity=max(caps),
+            capacity_by_period=caps,
             manifolds=list(r.get("manifolds", ["HP", "LP"])),
             max_temp_c=r.get("max_temp_c"),
             limits={k: _limit(v, n, "riser %s limit %s" % (r["id"], k)) for k, v in r.get("limits", {}).items()},
@@ -153,6 +159,11 @@ def load_problem(data: Dict[str, Any]) -> Problem:
             if m not in manifolds:
                 manifolds.append(m)
         temp = _series(w.get("temp_c"), n, "well %s temp_c" % w["id"])
+        retired = w.get("retired_from")
+        if retired is not None and not 0 <= int(retired) <= n:
+            raise ValueError("well %s retired_from %s outside the %d periods" % (w["id"], retired, n))
+        fixed = w.get("fixed_riser")
+        fixed = None if fixed is None else list(_series(fixed, n, "well %s fixed_riser" % w["id"]))
         wells[w["id"]] = Well(
             id=w["id"],
             rates=rates,
@@ -161,6 +172,8 @@ def load_problem(data: Dict[str, Any]) -> Problem:
             pinned_riser=w.get("pinned_riser"),
             swap_cost=w.get("swap_cost"),
             slot=w.get("slot"),
+            retired_from=None if retired is None else int(retired),
+            fixed_riser=fixed,
         )
     if not wells:
         raise ValueError("no wells given")
@@ -172,9 +185,14 @@ def load_problem(data: Dict[str, Any]) -> Problem:
         if r.current_manifold is not None and r.current_manifold not in r.manifolds:
             raise ValueError("riser %s current manifold %s not allowed" % (rid, r.current_manifold))
     for wid, w in wells.items():
-        for ref in (w.current_riser, w.pinned_riser):
+        for ref in [w.current_riser, w.pinned_riser] + list(w.fixed_riser or []):
             if ref is not None and ref not in risers:
                 raise ValueError("well %s refers to unknown riser %s" % (wid, ref))
+    linked = [list(g) for g in data.get("linked_lineups", [])]
+    for group in linked:
+        for rid in group:
+            if rid not in risers:
+                raise ValueError("linked_lineups refers to unknown riser %s" % rid)
 
     reach = _build_reach(data, wells, risers, warnings)
     limited = set(problem_limit_streams(data))
@@ -214,6 +232,7 @@ def load_problem(data: Dict[str, Any]) -> Problem:
         total_limits={k: _limit(v, n, "total limit %s" % k) for k, v in data.get("total_limits", {}).items()},
         config=config,
         warnings=warnings,
+        linked_lineups=linked,
     )
 
 
@@ -259,17 +278,43 @@ def _build_reach(data, wells, risers, warnings) -> Dict[str, Set[str]]:
     return reach
 
 
-def connectable(problem: Problem, wid: str, rid: str) -> bool:
-    """Whether well ``wid`` can be physically connected to riser ``rid`` (reach, pin, availability)."""
+def active(problem: Problem, wid: str, t: int) -> bool:
+    """Whether well ``wid`` still exists in period ``t`` (not retired, plugged or removed)."""
+    r = problem.wells[wid].retired_from
+    return r is None or t < r
+
+
+def fixed_at(problem: Problem, wid: str, t: int) -> Optional[str]:
+    """Riser a planned operation fixes the well to in period ``t``, or ``None``."""
+    f = problem.wells[wid].fixed_riser
+    return None if f is None else f[t]
+
+
+def capacity_at(problem: Problem, rid: str, t: int) -> int:
+    """Number of wells riser ``rid`` can carry in period ``t``."""
+    return problem.risers[rid].capacity_by_period[t]
+
+
+def connectable(problem: Problem, wid: str, rid: str, t: Optional[int] = None) -> bool:
+    """Whether well ``wid`` can be physically connected to riser ``rid`` (reach, pin, availability).
+
+    With a period ``t`` it also honours retirement, planned fixed connections and riser capacity of that period.
+    """
     w, r = problem.wells[wid], problem.risers[rid]
     if not r.available or rid not in problem.reach.get(wid, set()):
         return False
+    if t is not None:
+        if not active(problem, wid, t) or capacity_at(problem, rid, t) <= 0:
+            return False
+        fixed = fixed_at(problem, wid, t)
+        if fixed is not None and fixed != rid:
+            return False
     return w.pinned_riser is None or w.pinned_riser == rid
 
 
 def feasible_options(problem: Problem, wid: str, rid: str, t: int) -> List[str]:
     """Manifolds on which well ``wid`` may flow through riser ``rid`` in period ``t``."""
-    if not connectable(problem, wid, rid):
+    if not connectable(problem, wid, rid, t):
         return []
     w, r = problem.wells[wid], problem.risers[rid]
     if r.max_temp_c is not None:

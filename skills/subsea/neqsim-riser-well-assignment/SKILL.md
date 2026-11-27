@@ -97,6 +97,14 @@ one value per period, so capacity taken by new wells, tie-backs or a compressor 
 limit in the periods it applies (for example `"LP": {"gas": [2150, 2040, 1960]}`); a scalar applies to all
 periods and a list must have one value per period. New wells that are not part of the pairing are entered this
 way, not as wells; their own revenue is then outside the reported gain.
+
+**Planning features.** `reach` is a hard well-to-riser map, for example a riser flexibility matrix (green and yellow cells allowed,
+red and blank not); current connections must be inside it. `linked_lineups: [["R02", "R04"]]` forces risers that share topside
+piping onto the same manifold in every period. A well can carry `retired_from` (index of the first period without the well, for a
+plugged or drilled-over well: its riser is free from then on and no disconnect is charged) and `fixed_riser` (one riser or `null`
+per period for a planned operation: the connection is forced and is free and outside the swap budget). Riser `capacity` may be a
+list, for example to reserve a slot for a planned well. Digitised matrices and planned events are inputs to be verified by the
+asset team; the tool does not check them.
 Rates per manifold come from well deliverability against the manifold pressure,
 for example NeqSim well and flowline models (skill `neqsim-integrated-production-and-lifecycle`,
 `WellDeliverabilityCurve`) or a well-test matched IPR/VLP. Use the *same* manifold

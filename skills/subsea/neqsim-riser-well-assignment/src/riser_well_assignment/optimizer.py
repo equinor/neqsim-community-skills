@@ -24,7 +24,7 @@ import numpy as np
 from scipy import sparse
 from scipy.optimize import Bounds, LinearConstraint, milp
 
-from .schema import Problem, connectable, feasible_options, revenue_rate
+from .schema import Problem, active, capacity_at, connectable, feasible_options, fixed_at, revenue_rate
 
 
 @dataclass
@@ -193,11 +193,21 @@ def evaluate(problem: Problem, plan: Plan, max_swaps_total: Optional[int] = None
                 bad.append("period %d: unknown well or riser in connection %s-%s" % (t + 1, wid, rid))
                 continue
             load[rid] = load.get(rid, 0) + 1
-            if prev_conn.get(wid) != rid and not connectable(problem, wid, rid):
-                bad.append("period %d: new connection %s-%s is not allowed (reach, pin or availability)" % (t + 1, wid, rid))
+            if not active(problem, wid, t):
+                bad.append("period %d: well %s is retired but connected to %s" % (t + 1, wid, rid))
+            if prev_conn.get(wid) != rid and not connectable(problem, wid, rid, t):
+                bad.append("period %d: new connection %s-%s is not allowed (reach, pin, availability or planned operation)" % (t + 1, wid, rid))
+        for wid in problem.wells:
+            fixed = fixed_at(problem, wid, t)
+            if fixed is not None and active(problem, wid, t) and conn.get(wid) != fixed:
+                bad.append("period %d: well %s must be on %s (planned operation)" % (t + 1, wid, fixed))
         for rid, n in load.items():
-            if n > problem.risers[rid].capacity:
-                bad.append("period %d: riser %s carries %d wells (capacity %d)" % (t + 1, rid, n, problem.risers[rid].capacity))
+            if n > capacity_at(problem, rid, t):
+                bad.append("period %d: riser %s carries %d wells (capacity %d)" % (t + 1, rid, n, capacity_at(problem, rid, t)))
+        for group in problem.linked_lineups:
+            lined = {line.get(rid) for rid in group if line.get(rid) is not None}
+            if len(lined) > 1:
+                bad.append("period %d: linked risers %s are lined up to different manifolds %s" % (t + 1, "/".join(group), sorted(lined)))
         for rid, m in line.items():
             if m is not None and m not in problem.risers[rid].manifolds:
                 bad.append("period %d: riser %s cannot line up to %s" % (t + 1, rid, m))
@@ -238,14 +248,14 @@ def evaluate(problem: Problem, plan: Plan, max_swaps_total: Optional[int] = None
         disturbed = set()
         n_new = 0
         for wid, rid in conn.items():
-            if prev_conn.get(wid) != rid:
+            if prev_conn.get(wid) != rid and fixed_at(problem, wid, t) != rid:
                 cost = swap_cost(problem, wid, t)
                 ev.swap_cost += cost
                 n_new += 1
                 disturbed.add(rid)
                 ev.moves.append({"period": t + 1, "well": wid, "from_riser": prev_conn.get(wid), "to_riser": rid, "cost": cost})
         for wid, old in prev_conn.items():
-            if old is not None and conn.get(wid) != old:
+            if old is not None and conn.get(wid) != old and fixed_at(problem, wid, t) is None and active(problem, wid, t):
                 ev.disconnect_cost += cfg["disconnect_cost"]
                 disturbed.add(old)
         swaps_total += n_new
@@ -253,7 +263,7 @@ def evaluate(problem: Problem, plan: Plan, max_swaps_total: Optional[int] = None
             bad.append("period %d: %d swaps > %d" % (t + 1, n_new, cfg["max_swaps_per_period"]))
         if cfg["sibling_shutin"]:
             for wid, rid in conn.items():
-                if prev_conn.get(wid) == rid and rid in disturbed and problem.risers[rid].capacity > 1:
+                if prev_conn.get(wid) == rid and rid in disturbed and capacity_at(problem, rid, t) > 1:
                     ev.sibling_cost += cfg["swap_days"] * _best_revenue(problem, wid, t)
         for rid, m in line.items():
             if m is not None and prev_line.get(rid) != m:
@@ -304,10 +314,16 @@ def solve(problem: Problem, max_swaps_total: Optional[int] = None,
                     lv[(rid, m, t)] = b.var(0, 1, True)
             b.con([(lv[(rid, m, t)], 1.0) for m in r.manifolds],
                   1.0 if r.current_manifold is not None else -np.inf, 1.0)
+        for group in problem.linked_lineups:
+            for a_id, b_id in zip(group, group[1:]):
+                for m in problem.risers[a_id].manifolds:
+                    if m in problem.risers[b_id].manifolds:
+                        b.con([(lv[(a_id, m, t)], 1.0), (lv[(b_id, m, t)], -1.0)], 0.0, 0.0)
         for wid in problem.wells:
             for rid in problem.risers:
-                if connectable(problem, wid, rid):
-                    z[(wid, rid, t)] = b.var(0, 1, True)
+                if connectable(problem, wid, rid, t):
+                    forced = fixed_at(problem, wid, t) == rid
+                    z[(wid, rid, t)] = b.var(1 if forced else 0, 1, True)
         for wid in problem.wells:
             for rid in problem.risers:
                 for m in feasible_options(problem, wid, rid, t):
@@ -340,16 +356,18 @@ def solve(problem: Problem, max_swaps_total: Optional[int] = None,
         for rid, r in problem.risers.items():
             terms = [(z[(w2, rid, t)], 1.0) for w2 in problem.wells if (w2, rid, t) in z]
             if terms:
-                b.con(terms, -np.inf, float(r.capacity))
+                b.con(terms, -np.inf, float(capacity_at(problem, rid, t)))
         for wid in problem.wells:
             for rid in problem.risers:
                 if (wid, rid, t) in z:
                     t_now, c_now = zterm(wid, rid, t, 1.0)
                     t_old, c_old = zterm(wid, rid, t - 1, -1.0)
-                    k = b.var(0, 1, False, swap_cost(problem, wid, t))
-                    mv[(wid, rid, t)] = k
-                    b.con(t_now + t_old + [(k, -1.0)], -np.inf, -(c_now + c_old))
-                if need_dm and (prev_z[(wid, rid)] > 0 or (wid, rid, 0) in z):
+                    if fixed_at(problem, wid, t) != rid:
+                        k = b.var(0, 1, False, swap_cost(problem, wid, t))
+                        mv[(wid, rid, t)] = k
+                        b.con(t_now + t_old + [(k, -1.0)], -np.inf, -(c_now + c_old))
+                planned = fixed_at(problem, wid, t) is not None or not active(problem, wid, t)
+                if need_dm and not planned and (prev_z[(wid, rid)] > 0 or (wid, rid, 0) in z):
                     k = b.var(0, 1, False, cfg["disconnect_cost"])
                     dm[(wid, rid, t)] = k
                     t_now, c_now = zterm(wid, rid, t, -1.0)
@@ -365,7 +383,7 @@ def solve(problem: Problem, max_swaps_total: Optional[int] = None,
                         b.con([(k, -1.0), (lv[(rid, m, t)], 1.0), (lv[(rid, m, t - 1)], -1.0)], -np.inf, 0.0)
         if cfg["sibling_shutin"] and cfg["swap_days"] > 0:
             for rid, r in problem.risers.items():
-                if r.capacity <= 1:
+                if capacity_at(problem, rid, t) <= 1:
                     continue
                 k = b.var(0, 1, False)
                 for w2 in problem.wells:
@@ -500,7 +518,7 @@ def brute_force(problem: Problem, max_swaps_total: Optional[int] = None,
         for wid in wells:
             opts: List[Optional[Tuple[str, Optional[str]]]] = [None]
             for rid in problem.risers:
-                if connectable(problem, wid, rid):
+                if connectable(problem, wid, rid, t):
                     opts.append((rid, None))
                 for m in feasible_options(problem, wid, rid, t):
                     opts.append((rid, m))
@@ -513,7 +531,7 @@ def brute_force(problem: Problem, max_swaps_total: Optional[int] = None,
             ok = True
             for rid in conn.values():
                 load[rid] = load.get(rid, 0) + 1
-                if load[rid] > problem.risers[rid].capacity:
+                if load[rid] > capacity_at(problem, rid, t):
                     ok = False
             if ok:
                 configs.append((conn, flows))

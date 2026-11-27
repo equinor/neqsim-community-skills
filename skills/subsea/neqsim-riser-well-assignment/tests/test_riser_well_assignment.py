@@ -313,6 +313,78 @@ def test_header_limit_per_period_models_new_wells_taking_capacity():
         load_problem(bad)
 
 
+def _linked_case():
+    """Two risers that share topside piping, one flowing well on each."""
+    return {
+        "wells": [
+            {"id": "W0", "current_riser": "A", "temp_c": [50.0, 50.0],
+             "rates": {"HP": {"oil": [100.0, 100.0]}, "LP": {"oil": [90.0, 90.0]}}},
+            {"id": "W1", "current_riser": "B", "temp_c": [50.0, 50.0],
+             "rates": {"HP": {"oil": [60.0, 60.0]}, "LP": {"oil": [200.0, 200.0]}}},
+        ],
+        "risers": [{"id": "A", "capacity": 1, "manifolds": ["HP", "LP"], "current_manifold": "HP"},
+                   {"id": "B", "capacity": 1, "manifolds": ["HP", "LP"], "current_manifold": "HP"}],
+        "reach": {"A": ["W0", "W1"], "B": ["W0", "W1"]},
+        "config": {"stream_value": {"oil": 1.0}, "period_days": [10.0, 10.0], "allow_choking": False, "swap_days": 0.0},
+    }
+
+
+def test_linked_lineups_force_the_same_header_and_match_brute_force():
+    data = _linked_case()
+    free = load_problem(data)
+    free_sol = solve(free)
+    assert [free_sol.plan.flows[0][w][0] for w in ("W0", "W1")] == ["HP", "LP"]
+    data["linked_lineups"] = [["A", "B"]]
+    linked = load_problem(data)
+    sol = solve(linked)
+    assert sol.plan.lineups[0]["A"] == sol.plan.lineups[0]["B"]
+    assert check_solution(linked, sol) == []
+    assert sol.objective == pytest.approx(brute_force(linked))
+    assert sol.objective < free_sol.objective
+
+
+def test_retired_well_frees_its_riser_and_is_not_charged_a_disconnect():
+    data = {
+        "wells": [{"id": "OLD", "current_riser": "A", "retired_from": 1, "temp_c": [50.0, 50.0],
+                   "rates": {"HP": {"oil": [50.0, 0.0]}}},
+                  {"id": "NEW", "current_riser": "B", "temp_c": [50.0, 50.0],
+                   "rates": {"HP": {"oil": [100.0, 100.0]}}}],
+        "risers": [{"id": "A", "capacity": 1, "manifolds": ["HP"], "current_manifold": "HP"},
+                   {"id": "B", "capacity": 1, "manifolds": ["HP"], "current_manifold": "HP"}],
+        "reach": {"A": ["OLD", "NEW"], "B": ["OLD", "NEW"]},
+        "config": {"stream_value": {"oil": 1.0}, "period_days": [10.0, 10.0], "allow_choking": False,
+                   "disconnect_cost": 1000.0, "rov_cost_per_swap": 0.0, "swap_days": 0.0},
+    }
+    problem = load_problem(data)
+    sol = solve(problem)
+    assert "OLD" not in sol.plan.connections[1]
+    assert sol.evaluation.disconnect_cost == 0.0
+    assert sol.objective == pytest.approx(brute_force(problem))
+    assert check_solution(problem, sol) == []
+
+
+def test_fixed_planned_connection_is_free_and_capacity_can_vary_by_period():
+    data = {
+        "wells": [{"id": "W", "current_riser": "A", "fixed_riser": [None, "B"], "temp_c": [50.0, 50.0],
+                   "rates": {"HP": {"oil": [100.0, 100.0]}}},
+                  {"id": "X", "temp_c": [50.0, 50.0], "rates": {"HP": {"oil": [80.0, 80.0]}}}],
+        "risers": [{"id": "A", "capacity": [1, 1], "manifolds": ["HP"], "current_manifold": "HP"},
+                   {"id": "B", "capacity": [0, 1], "manifolds": ["HP"], "current_manifold": "HP"}],
+        "reach": {"A": ["W", "X"], "B": ["W", "X"]},
+        "config": {"stream_value": {"oil": 1.0}, "period_days": [10.0, 10.0], "allow_choking": False,
+                   "rov_cost_per_swap": 500.0, "swap_days": 0.0},
+    }
+    problem = load_problem(data)
+    sol = solve(problem)
+    assert sol.plan.connections[1]["W"] == "B"
+    assert all(m["well"] != "W" for m in sol.moves)
+    assert "B" not in sol.plan.connections[0].values()
+    assert check_solution(problem, sol) == []
+    assert sol.objective == pytest.approx(brute_force(problem))
+    as_is = solve(problem, 0, False)
+    assert as_is.plan.connections[1]["W"] == "B"
+
+
 def test_check_solution_rejects_missing_plan_and_tampered_plan():
     problem = load_problem(_tiny(0))
     assert check_solution(problem, Solution("failed", None, None))
